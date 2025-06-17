@@ -186,10 +186,25 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
     }
 
     try {
-      const configToSave: any = { 
-        url: configText.trim(),
-        headers: getHeadersObject()
-      };
+      let configToSave: any;
+      
+      if (serverType === 'json') {
+        // Save STDIO configuration
+        const argsArray = args.trim() ? args.trim().split(/\s+/) : [];
+        const envObject = envVars.trim() ? JSON.parse(envVars.trim()) : {};
+        
+        configToSave = {
+          command: command.trim(),
+          args: argsArray,
+          env: envObject
+        };
+      } else {
+        // Save URL-based configuration (http/sse)
+        configToSave = { 
+          url: configText.trim(),
+          headers: getHeadersObject()
+        };
+      }
       
       onSave({
         name: serverName,
@@ -201,6 +216,9 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
       setConfigText('');
       setManualServerName('');
       setHeaders([{ key: '', value: '' }]);
+      setCommand('');
+      setArgs('');
+      setEnvVars('');
       setDiscoveredTools([]);
       setSelectedTools(new Set());
       setServerName('');
@@ -232,6 +250,9 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
     setConfigText('');
     setManualServerName('');
     setHeaders([{ key: '', value: '' }]);
+    setCommand('');
+    setArgs('');
+    setEnvVars('');
     setDiscoveredTools([]);
     setSelectedTools(new Set());
     setServerName('');
@@ -626,7 +647,11 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
               </Button>
               <Button
                 onClick={validateAndDiscoverTools}
-                disabled={!configText.trim() || !manualServerName.trim() || isValidating}
+                disabled={
+                  !manualServerName.trim() || 
+                  (serverType === 'json' ? !command.trim() : !configText.trim()) || 
+                  isValidating
+                }
               >
                 {isValidating ? (
                   <>
