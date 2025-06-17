@@ -21,7 +21,7 @@ interface CustomMCPDialogProps {
 
 interface CustomMCPConfiguration {
   name: string;
-  type: 'http' | 'sse';
+  type: 'http' | 'sse' | 'json';
   config: any;
   enabledTools: string[];
 }
@@ -43,11 +43,14 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
   onSave
 }) => {
   const [step, setStep] = useState<'setup' | 'tools'>('setup');
-  const [serverType, setServerType] = useState<'http' | 'sse'>('sse');
+  const [serverType, setServerType] = useState<'http' | 'sse' | 'json'>('sse');
   const [configText, setConfigText] = useState('');
   const [serverName, setServerName] = useState('');
   const [manualServerName, setManualServerName] = useState('');
   const [headers, setHeaders] = useState<HeaderPair[]>([{ key: '', value: '' }]);
+  const [command, setCommand] = useState('');
+  const [args, setArgs] = useState('');
+  const [envVars, setEnvVars] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [discoveredTools, setDiscoveredTools] = useState<MCPTool[]>([]);
@@ -101,6 +104,23 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
         parsedConfig = { 
           url,
           headers: getHeadersObject()
+        };
+        setServerName(manualServerName.trim());
+      } else if (serverType === 'json') {
+        if (!command.trim()) {
+          throw new Error('Please enter the command to run the MCP server.');
+        }
+        if (!manualServerName.trim()) {
+          throw new Error('Please enter a name for this connection.');
+        }
+        
+        const argsArray = args.trim() ? args.trim().split(/\s+/) : [];
+        const envObject = envVars.trim() ? JSON.parse(envVars.trim()) : {};
+        
+        parsedConfig = {
+          command: command.trim(),
+          args: argsArray,
+          env: envObject
         };
         setServerName(manualServerName.trim());
       }
@@ -282,7 +302,7 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
                     <Label className="text-base font-medium">How would you like to connect?</Label>
                     <RadioGroup 
                       value={serverType} 
-                      onValueChange={(value: 'http' | 'sse') => setServerType(value)}
+                      onValueChange={(value: 'http' | 'sse' | 'json') => setServerType(value)}
                       className="grid grid-cols-1 gap-3"
                     >
                       <div className={cn(
@@ -319,6 +339,23 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
                           </p>
                         </div>
                       </div>
+                      <div className={cn(
+                        "flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-all hover:bg-muted/50",
+                        serverType === 'json' ? "border-primary bg-primary/5" : "border-border"
+                      )}>
+                        <RadioGroupItem value="json" id="json" className="mt-1" />
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Code className="h-4 w-4 text-primary" />
+                            <Label htmlFor="json" className="text-base font-medium cursor-pointer">
+                              Local STDIO (Command)
+                            </Label>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Run a local MCP server using command-line interface (STDIO)
+                          </p>
+                        </div>
+                      </div>
                     </RadioGroup>
                   </div>
                 </div>
@@ -331,7 +368,11 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
                     <Input
                       id="serverName"
                       type="text"
-                      placeholder="e.g., Gmail, Slack, Customer Support Tools"
+                      placeholder={
+                        serverType === 'json' 
+                          ? "e.g., Pandoc Converter, File Processor" 
+                          : "e.g., Gmail, Slack, Customer Support Tools"
+                      }
                       value={manualServerName}
                       onChange={(e) => setManualServerName(e.target.value)}
                       className="w-full px-4 py-3 border border-input bg-background rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
@@ -341,77 +382,134 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
                     </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="config" className="text-base font-medium">
-                      Connection URL
-                    </Label>
-                    <Input
-                        id="config"
-                        type="url"
-                        placeholder={exampleConfigs[serverType]}
-                        value={configText}
-                        onChange={(e) => setConfigText(e.target.value)}
-                        className="w-full px-4 py-3 border border-input bg-muted rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent font-mono"
-                      />
-                    <p className="text-sm text-muted-foreground">
-                      Paste the complete connection URL provided by your service
-                    </p>
-                  </div>
+                  {serverType === 'json' ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="command" className="text-base font-medium">
+                          Command
+                        </Label>
+                        <Input
+                          id="command"
+                          type="text"
+                          placeholder="e.g., npx, python, node"
+                          value={command}
+                          onChange={(e) => setCommand(e.target.value)}
+                          className="w-full px-4 py-3 border border-input bg-muted rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent font-mono"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          The command to execute the MCP server
+                        </p>
+                      </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-base font-medium">
-                        Custom Headers (Optional)
+                      <div className="space-y-2">
+                        <Label htmlFor="args" className="text-base font-medium">
+                          Arguments
+                        </Label>
+                        <Input
+                          id="args"
+                          type="text"
+                          placeholder="e.g., -y @SundaramManickam/mcp-pandoc"
+                          value={args}
+                          onChange={(e) => setArgs(e.target.value)}
+                          className="w-full px-4 py-3 border border-input bg-muted rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent font-mono"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Command arguments separated by spaces
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="envVars" className="text-base font-medium">
+                          Environment Variables (Optional)
+                        </Label>
+                        <Textarea
+                          id="envVars"
+                          placeholder='{"DISPLAY": ":1", "NODE_ENV": "production"}'
+                          value={envVars}
+                          onChange={(e) => setEnvVars(e.target.value)}
+                          className="w-full px-4 py-3 border border-input bg-muted rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent font-mono"
+                          rows={3}
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          JSON object with environment variables (optional)
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="config" className="text-base font-medium">
+                        Connection URL
                       </Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addHeader}
-                        className="flex items-center gap-2"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add Header
-                      </Button>
+                      <Input
+                          id="config"
+                          type="url"
+                          placeholder={exampleConfigs[serverType]}
+                          value={configText}
+                          onChange={(e) => setConfigText(e.target.value)}
+                          className="w-full px-4 py-3 border border-input bg-muted rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent font-mono"
+                        />
+                      <p className="text-sm text-muted-foreground">
+                        Paste the complete connection URL provided by your service
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Add custom headers for authentication or other requirements (e.g., Authorization, X-API-Key)
-                    </p>
+                  )}
+
+                  {serverType !== 'json' && (
                     <div className="space-y-3">
-                      {headers.map((header, index) => (
-                        <div key={index} className="flex items-center gap-3">
-                          <div className="flex-1">
-                            <Input
-                              placeholder="Header name (e.g., Authorization)"
-                              value={header.key}
-                              onChange={(e) => updateHeader(index, 'key', e.target.value)}
-                              className="text-sm"
-                            />
+                      <div className="flex items-center justify-between">
+                        <Label className="text-base font-medium">
+                          Custom Headers (Optional)
+                        </Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addHeader}
+                          className="flex items-center gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Header
+                        </Button>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Add custom headers for authentication or other requirements (e.g., Authorization, X-API-Key)
+                      </p>
+                      <div className="space-y-3">
+                        {headers.map((header, index) => (
+                          <div key={index} className="flex items-center gap-3">
+                            <div className="flex-1">
+                              <Input
+                                placeholder="Header name (e.g., Authorization)"
+                                value={header.key}
+                                onChange={(e) => updateHeader(index, 'key', e.target.value)}
+                                className="text-sm"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <Input
+                                placeholder="Header value (e.g., Bearer your-token)"
+                                value={header.value}
+                                onChange={(e) => updateHeader(index, 'value', e.target.value)}
+                                className="text-sm"
+                                type={header.key.toLowerCase().includes('authorization') || header.key.toLowerCase().includes('token') || header.key.toLowerCase().includes('key') ? 'password' : 'text'}
+                              />
+                            </div>
+                            {headers.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeHeader(index)}
+                                className="p-2 h-9 w-9 flex-shrink-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
-                          <div className="flex-1">
-                            <Input
-                              placeholder="Header value (e.g., Bearer your-token)"
-                              value={header.value}
-                              onChange={(e) => updateHeader(index, 'value', e.target.value)}
-                              className="text-sm"
-                              type={header.key.toLowerCase().includes('authorization') || header.key.toLowerCase().includes('token') || header.key.toLowerCase().includes('key') ? 'password' : 'text'}
-                            />
-                          </div>
-                          {headers.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeHeader(index)}
-                              className="p-2 h-9 w-9 flex-shrink-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {validationError && (
