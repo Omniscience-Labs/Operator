@@ -22,6 +22,7 @@ from agentpress.response_processor import (
 )
 from services.supabase import DBConnection
 from utils.logger import logger
+from utils.encryption import encrypt_json, decrypt_json
 from langfuse import get_client
 from services.langfuse import langfuse
 import datetime
@@ -149,11 +150,12 @@ class ThreadManager:
         logger.debug(f"Adding message of type '{type}' to thread {thread_id}")
         client = await self.db.client
 
-        # Prepare data for insertion
+        # Prepare data for insertion with encrypted content
+        encrypted_content = encrypt_json(content)
         data_to_insert = {
             'thread_id': thread_id,
             'type': type,
-            'content': content,
+            'content': encrypted_content,
             'is_llm_message': is_llm_message,
             'metadata': metadata or {},
         }
@@ -198,17 +200,15 @@ class ThreadManager:
             # Return properly parsed JSON objects
             messages = []
             for item in result.data:
-                if isinstance(item['content'], str):
-                    try:
-                        parsed_item = json.loads(item['content'])
-                        parsed_item['message_id'] = item['message_id']
-                        messages.append(parsed_item)
-                    except json.JSONDecodeError:
-                        logger.error(f"Failed to parse message: {item['content']}")
-                else:
-                    content = item['content']
-                    content['message_id'] = item['message_id']
-                    messages.append(content)
+                try:
+                    content = decrypt_json(item['content'])
+                    if isinstance(content, dict):
+                        content['message_id'] = item['message_id']
+                        messages.append(content)
+                    else:
+                        messages.append({'content': content, 'message_id': item['message_id']})
+                except Exception as e:
+                    logger.error(f"Failed to decrypt message: {e}")
 
             return messages
 

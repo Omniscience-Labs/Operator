@@ -16,6 +16,7 @@ from services.supabase import DBConnection
 from services import redis
 from utils.auth_utils import get_current_user_id_from_jwt, get_user_id_from_stream_auth, verify_thread_access
 from utils.logger import logger
+from utils.encryption import decrypt_json
 from services.billing import check_billing_status, can_use_model
 from utils.config import config
 from sandbox.sandbox import create_sandbox, get_or_start_sandbox
@@ -1726,10 +1727,19 @@ async def get_agent_builder_chat_history(
         
         # Get messages from the latest thread, excluding status and summary messages
         messages_result = await client.table('messages').select('*').eq('thread_id', latest_thread_id).neq('type', 'status').neq('type', 'summary').order('created_at', desc=False).execute()
-        
-        logger.info(f"Found {len(messages_result.data)} messages for agent builder chat history")
+
+        decrypted_messages = []
+        for msg in messages_result.data:
+            content = msg.get('content')
+            try:
+                msg['content'] = decrypt_json(content)
+            except Exception as e:
+                logger.error(f"Failed to decrypt message {msg.get('message_id')}: {e}")
+            decrypted_messages.append(msg)
+
+        logger.info(f"Found {len(decrypted_messages)} messages for agent builder chat history")
         return {
-            "messages": messages_result.data,
+            "messages": decrypted_messages,
             "thread_id": latest_thread_id
         }
         

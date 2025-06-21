@@ -12,6 +12,7 @@ from litellm import token_counter, completion_cost
 from services.supabase import DBConnection
 from services.llm import make_llm_api_call
 from utils.logger import logger
+from utils.encryption import decrypt_json
 
 # Constants for token management
 DEFAULT_TOKEN_THRESHOLD = 120000  # 80k tokens threshold for summarization
@@ -116,12 +117,7 @@ class ContextManager:
                     continue
                     
                 # Parse content if it's a string
-                content = msg['content']
-                if isinstance(content, str):
-                    try:
-                        content = json.loads(content)
-                    except json.JSONDecodeError:
-                        pass  # Keep as string if not valid JSON
+                content = decrypt_json(msg['content'])
                 
                 # Ensure we have the proper format for the LLM
                 if 'role' not in content and 'type' in msg:

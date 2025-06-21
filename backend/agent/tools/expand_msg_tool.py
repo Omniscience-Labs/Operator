@@ -72,17 +72,11 @@ class ExpandMessageTool(Tool):
                 return self.fail_response(f"Message with ID {message_id} not found in thread {self.thread_id}")
 
             message_data = message.data[0]
-            message_content = message_data['content']
+            from utils.encryption import decrypt_json
+            message_content = decrypt_json(message_data['content'])
             final_content = message_content
             if isinstance(message_content, dict) and 'content' in message_content:
                 final_content = message_content['content']
-            elif isinstance(message_content, str):
-                try:
-                    parsed_content = json.loads(message_content)
-                    if isinstance(parsed_content, dict) and 'content' in parsed_content:
-                        final_content = parsed_content['content']
-                except json.JSONDecodeError:
-                    pass
 
             return self.success_response({"status": "Message expanded successfully.", "message": final_content})
         except Exception as e:

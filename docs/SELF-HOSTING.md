@@ -158,6 +158,7 @@ TAVILY_API_KEY=your-tavily-key
 # WEB SCRAPE
 FIRECRAWL_API_KEY=your-firecrawl-key
 FIRECRAWL_URL=https://api.firecrawl.dev
+MESSAGE_ENCRYPTION_KEY=your-generated-key
 
 # Sandbox container provider
 DAYTONA_API_KEY=your-daytona-key

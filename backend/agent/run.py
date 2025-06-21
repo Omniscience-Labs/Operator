@@ -289,8 +289,10 @@ async def run_agent(
 
     latest_user_message = await client.table('messages').select('*').eq('thread_id', thread_id).eq('type', 'user').order('created_at', desc=True).limit(1).execute()
     if latest_user_message.data and len(latest_user_message.data) > 0:
-        data = json.loads(latest_user_message.data[0]['content'])
-        trace.update(input=data['content'])
+        from utils.encryption import decrypt_json
+        data = decrypt_json(latest_user_message.data[0]['content'])
+        if isinstance(data, dict):
+            trace.update(input=data.get('content'))
 
     while continue_execution and iteration_count < max_iterations:
         iteration_count += 1
@@ -326,7 +328,8 @@ async def run_agent(
         latest_browser_state_msg = await client.table('messages').select('*').eq('thread_id', thread_id).eq('type', 'browser_state').order('created_at', desc=True).limit(1).execute()
         if latest_browser_state_msg.data and len(latest_browser_state_msg.data) > 0:
             try:
-                browser_content = json.loads(latest_browser_state_msg.data[0]["content"])
+                from utils.encryption import decrypt_json
+                browser_content = decrypt_json(latest_browser_state_msg.data[0]["content"])
                 screenshot_base64 = browser_content.get("screenshot_base64")
                 screenshot_url = browser_content.get("screenshot_url")
                 
@@ -368,7 +371,8 @@ async def run_agent(
         latest_image_context_msg = await client.table('messages').select('*').eq('thread_id', thread_id).eq('type', 'image_context').order('created_at', desc=True).limit(1).execute()
         if latest_image_context_msg.data and len(latest_image_context_msg.data) > 0:
             try:
-                image_context_content = json.loads(latest_image_context_msg.data[0]["content"])
+                from utils.encryption import decrypt_json
+                image_context_content = decrypt_json(latest_image_context_msg.data[0]["content"])
                 base64_image = image_context_content.get("base64")
                 mime_type = image_context_content.get("mime_type")
                 file_path = image_context_content.get("file_path", "unknown file")
@@ -463,7 +467,8 @@ async def run_agent(
                             # Parse the metadata to check for termination signal
                             metadata = chunk.get('metadata', {})
                             if isinstance(metadata, str):
-                                metadata = json.loads(metadata)
+                                from utils.encryption import decrypt_json
+                                metadata = decrypt_json(metadata)
                             
                             if metadata.get('agent_should_terminate'):
                                 agent_should_terminate = True
@@ -473,7 +478,8 @@ async def run_agent(
                                 # Extract the tool name from the status content if available
                                 content = chunk.get('content', {})
                                 if isinstance(content, str):
-                                    content = json.loads(content)
+                                    from utils.encryption import decrypt_json
+                                    content = decrypt_json(content)
                                 
                                 if content.get('function_name'):
                                     last_tool_call = content['function_name']
@@ -489,7 +495,8 @@ async def run_agent(
                             # The content field might be a JSON string or object
                             content = chunk.get('content', '{}')
                             if isinstance(content, str):
-                                assistant_content_json = json.loads(content)
+                                from utils.encryption import decrypt_json
+                                assistant_content_json = decrypt_json(content)
                             else:
                                 assistant_content_json = content
 
@@ -508,9 +515,9 @@ async def run_agent(
                                    last_tool_call = xml_tool
                                    logger.info(f"Agent used XML tool: {xml_tool}")
                                    trace.event(name="agent_used_xml_tool", level="DEFAULT", status_message=(f"Agent used XML tool: {xml_tool}"))
-                        except json.JSONDecodeError:
+                        except Exception:
                             # Handle cases where content might not be valid JSON
-                            logger.warning(f"Warning: Could not parse assistant content JSON: {chunk.get('content')}")
+                            logger.warning(f"Warning: Could not parse assistant content: {chunk.get('content')}")
                             trace.event(name="warning_could_not_parse_assistant_content_json", level="WARNING", status_message=(f"Warning: Could not parse assistant content JSON: {chunk.get('content')}"))
                         except Exception as e:
                             logger.error(f"Error processing assistant chunk: {e}")
