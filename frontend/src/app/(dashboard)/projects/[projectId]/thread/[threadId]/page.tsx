@@ -625,6 +625,7 @@ export default function ThreadPage({
               sandboxId={sandboxId || undefined}
               messages={messages}
               agentName={agent?.name || 'Operator'}
+
             />
           </div>
         </div>

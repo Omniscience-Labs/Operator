@@ -382,6 +382,7 @@ export const AgentPreview = ({ agent }: AgentPreviewProps) => {
             agentName={agent.name}
             hideAttachments={false}
             bgColor='bg-muted-foreground/10'
+
           />
         </div>
       </div>

@@ -8,10 +8,9 @@ import { cn } from '@/lib/utils';
 import { Menu, X, Github } from 'lucide-react';
 import { AnimatePresence, motion, useScroll } from 'motion/react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useTheme } from 'next-themes';
 import { useAuth } from '@/components/AuthProvider';
+import { ThreeSpinner } from '@/components/ui/three-spinner';
 
 const INITIAL_WIDTH = '70rem';
 const MAX_WIDTH = '800px';
@@ -57,7 +56,6 @@ export function Navbar() {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
-  const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { user } = useAuth();
 
@@ -99,10 +97,7 @@ export function Navbar() {
   const toggleDrawer = () => setIsDrawerOpen((prev) => !prev);
   const handleOverlayClick = () => setIsDrawerOpen(false);
 
-  // Theme-aware logo selection
-  const logoSrc = mounted && resolvedTheme === 'dark' 
-    ? '/OMNI-Logo-Dark.png' 
-    : '/OMNI-Logo-light.png';
+
 
   return (
     <header
@@ -126,13 +121,14 @@ export function Navbar() {
         >
           <div className="flex h-[56px] items-center justify-between p-4">
             <Link href="/" className="flex items-center gap-3">
-              <Image
-                src={logoSrc}
-                alt="OMNI Logo"
-                width={140}
-                height={22}
-                priority
-              /> 
+              <div className="flex items-center gap-2">
+                <ThreeSpinner 
+                  size={32} 
+                  color="currentColor"
+                  className="flex-shrink-0"
+                />
+                <span className="font-semibold text-lg">OPERATOR</span>
+              </div>
             </Link>
 
             <NavMenu />
@@ -205,16 +201,16 @@ export function Navbar() {
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <Link href="/" className="flex items-center gap-3">
-                    <Image
-                      src={logoSrc}
-                      alt="OMNI Logo"
-                      width={120}
-                      height={22}
-                      priority
-                    />
-                    <span className="font-medium text-primary text-sm">
-                      / Operator
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <ThreeSpinner 
+                        size={28} 
+                        color="currentColor"
+                        className="flex-shrink-0"
+                      />
+                      <span className="font-medium text-primary text-sm">
+                        OPERATOR
+                      </span>
+                    </div>
                   </Link>
                   <button
                     onClick={toggleDrawer}

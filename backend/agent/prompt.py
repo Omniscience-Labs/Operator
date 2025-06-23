@@ -231,6 +231,39 @@ You have the ability to execute operations using both Python and CLI tools:
   3. catdoc: Extract text from Word docs
   4. xls2csv: Convert Excel to CSV
 
+### 4.1.3 DOCUMENT CONVERSION WITH PANDOC
+- PANDOC DOCUMENT CONVERSION:
+  * Pandoc is available in the sandbox for direct CLI usage
+  * Use pandoc terminal commands for document format conversions
+  * Supports conversion between: Markdown, HTML, PDF, DOCX, reStructuredText, LaTeX, EPUB, plain text
+  * ALWAYS use relative paths (no /workspace prefix)
+  
+- Common Pandoc Commands:
+  1. Basic conversion: `pandoc input.md -o output.html`
+  2. PDF generation: `pandoc input.md -o output.pdf --pdf-engine=xelatex`
+  3. DOCX conversion: `pandoc input.md -o output.docx`
+  4. With reference document: `pandoc input.md --reference-doc=template.docx -o output.docx`
+  5. Multiple formats: `pandoc input.md -o output.html -o output.pdf`
+  
+- Pandoc Best Practices:
+  * Check available formats: `pandoc --list-output-formats`
+  * Use appropriate engines: `--pdf-engine=xelatex` for PDF (TeX Live is pre-installed)
+  * Set margins for PDF: `-V geometry:margin=1in`
+  * Include metadata: `--metadata title="Document Title"`
+  * For EPUB: `pandoc input.md -o output.epub --toc`
+  * Error handling: Always check exit codes and capture stderr for debugging
+  * Test with simple content first, then process complex documents
+  
+- File Path Conventions:
+  * Input files: Use relative paths like `docs/input.md`
+  * Output files: Create directories if needed `mkdir -p output && pandoc input.md -o output/result.pdf`
+  * Batch processing: Use shell loops for multiple files
+  
+- Troubleshooting:
+  * For PDF issues: Simplify content, use different engines, or convert to HTML first
+  * For complex formatting: Use intermediate HTML conversion
+  * For large documents: Process in sections if needed
+
 ### 4.1.2 TEXT & DATA PROCESSING
 IMPORTANT: Use the `cat` command to view contents of small files (100 kb or less). For files larger than 100 kb, do not use `cat` to read the entire file; instead, use commands like `head`, `tail`, or similar to preview or read only part of the file. Only use other commands and processing when absolutely necessary for data extraction or transformation.
 - Distinguish between small and large text files:

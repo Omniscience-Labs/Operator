@@ -4,6 +4,7 @@ import { Play, Pause, ArrowDown, FileText, Info } from 'lucide-react';
 import { UnifiedMessage } from '@/components/thread/types';
 import { safeJsonParse } from '@/components/thread/utils';
 import Link from 'next/link';
+import { ThreeSpinner } from '@/components/ui/three-spinner';
 
 // Define the set of tags whose raw XML should be hidden during streaming
 const HIDE_STREAMING_XML_TAGS = new Set([
@@ -423,12 +424,10 @@ export const PlaybackControls = ({
             <div className="flex items-center gap-2">
               <div className="flex items-center justify-center w-6 h-6 rounded-md overflow-hidden bg-primary/10">
                 <Link href="/">
-                  <img
-                    src="/OMNI-Logo-Dark.png"
-                    alt="OMNI"
-                    width={16}
-                    height={16}
-                    className="object-contain"
+                  <ThreeSpinner 
+                    size={16} 
+                    color="currentColor"
+                    className="flex-shrink-0"
                   />
                 </Link>
               </div>

@@ -49,6 +49,12 @@ RUN apt-get update && apt-get install -y \
     antiword \
     unrtf \
     catdoc \
+    # Pandoc and TeX Live for advanced document conversion
+    texlive-xetex \
+    texlive-fonts-recommended \
+    texlive-plain-generic \
+    texlive-latex-extra \
+    pandoc \
     # Text Processing Tools
     grep \
     gawk \

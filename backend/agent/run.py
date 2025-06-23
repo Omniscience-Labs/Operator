@@ -25,6 +25,7 @@ from utils.logger import logger
 from utils.auth_utils import get_account_id_from_thread
 from services.billing import check_billing_status
 from agent.tools.sb_vision_tool import SandboxVisionTool
+
 from services.langfuse import langfuse
 from langfuse.client import StatefulTraceClient
 from services.langfuse import langfuse
