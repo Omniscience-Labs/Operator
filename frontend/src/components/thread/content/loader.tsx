@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
+import { ThreeSpinner } from '@/components/ui/three-spinner';
 
 const items = [
     { id: 1, content: "Teaching my pet quantum particles how to fetch..." },
@@ -66,20 +67,22 @@ export const AgentLoader = () => {
 
   return (
     <div className="flex py-2 items-center w-full">
-      <div>✨</div>
-            <AnimatePresence>
-            <motion.div
-                key={items[index].id}
-                initial={{ y: 20, opacity: 0, filter: "blur(8px)" }}
-                animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-                exit={{ y: -20, opacity: 0, filter: "blur(8px)" }}
-                transition={{ ease: "easeInOut" }}
-                style={{ position: "absolute" }}
-                className='ml-7'
-            >
-                <AnimatedShinyText>{items[index].content}</AnimatedShinyText>
-            </motion.div>
-            </AnimatePresence>
-        </div>
+      <ThreeSpinner size={28} color="currentColor" className="flex-shrink-0 mr-3" />
+      <div className="flex-1 relative min-h-[28px] flex items-center">
+        <AnimatePresence>
+          <motion.div
+            key={items[index].id}
+            initial={{ y: 20, opacity: 0, filter: "blur(8px)" }}
+            animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
+            exit={{ y: -20, opacity: 0, filter: "blur(8px)" }}
+            transition={{ ease: "easeInOut" }}
+            style={{ position: "absolute" }}
+            className='w-full'
+          >
+            <AnimatedShinyText>{items[index].content}</AnimatedShinyText>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
   );
 };
