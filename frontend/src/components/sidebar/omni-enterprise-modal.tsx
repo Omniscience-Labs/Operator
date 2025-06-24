@@ -141,7 +141,7 @@ export function OmniProcessModal() {
             <div className="h-full overflow-auto">
               <Cal
                 namespace="enterprise-demo"
-                calLink="team/omni/enterprise-demo"
+                calLink="team/omniscience-labs/omni-intro-chat"
                 style={{ width: '100%', height: '100%' }}
                 config={{
                   layout: 'month_view',
