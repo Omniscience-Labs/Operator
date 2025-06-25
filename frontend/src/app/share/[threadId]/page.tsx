@@ -839,6 +839,7 @@ export default function ThreadPage({
           sandboxId={sandboxId || ''}
           project={project}
           isSidePanelOpen={isSidePanelOpen}
+          isLeftSidebarOpen={false}
         />
         {renderWelcomeOverlay()}
         {renderFloatingControls()}

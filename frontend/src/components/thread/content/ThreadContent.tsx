@@ -281,6 +281,8 @@ export interface ThreadContentProps {
     agentAvatar?: React.ReactNode;
     emptyStateComponent?: React.ReactNode; // Add custom empty state component prop
     isSidePanelOpen?: boolean; // Add side panel state prop
+    isLeftSidebarOpen?: boolean; // Add left sidebar state prop
+    onScrollStateChange?: (userHasScrolled: boolean, isAtBottom: boolean) => void; // Add scroll state callback
 }
 
 export const ThreadContent: React.FC<ThreadContentProps> = ({
@@ -304,12 +306,18 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     agentAvatar = <OmniLogo />,
     emptyStateComponent,
     isSidePanelOpen = false,
+    isLeftSidebarOpen = false,
+    onScrollStateChange,
 }) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const latestMessageRef = useRef<HTMLDivElement>(null);
     const [showScrollButton, setShowScrollButton] = useState(false);
     const [userHasScrolled, setUserHasScrolled] = useState(false);
+    const [isAtBottom, setIsAtBottom] = useState(true);
+    const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+    const lastScrollTopRef = useRef(0);
+    const autoScrollingRef = useRef(false);
     const { session } = useAuth();
 
     // React Query file preloader
@@ -322,17 +330,115 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     // In playback mode, we use visibleMessages instead of messages
     const displayMessages = readOnly && visibleMessages ? visibleMessages : messages;
 
-    const handleScroll = () => {
+    const checkScrollPosition = useCallback(() => {
         if (!messagesContainerRef.current) return;
+        
         const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-        const isScrolledUp = scrollHeight - scrollTop - clientHeight > 100;
-        setShowScrollButton(isScrolledUp);
-        setUserHasScrolled(isScrolledUp);
-    };
+        const isNearBottom = scrollHeight - scrollTop - clientHeight <= 150; // Increased threshold
+        const hasScrolledUp = scrollHeight - scrollTop - clientHeight > 50; // More sensitive threshold
+        
+        setIsAtBottom(isNearBottom);
+        setShowScrollButton(hasScrolledUp);
+        
+        // Always respect user scroll actions, even during auto-scroll
+        setUserHasScrolled(hasScrolledUp);
+        // Notify parent of scroll state changes
+        onScrollStateChange?.(hasScrolledUp, isNearBottom);
+    }, [onScrollStateChange]);
 
-    const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-        messagesEndRef.current?.scrollIntoView({ behavior });
-    };
+    const handleScroll = useCallback(() => {
+        if (!messagesContainerRef.current) return;
+        
+        const currentScrollTop = messagesContainerRef.current.scrollTop;
+        
+        // Clear any existing timeout
+        if (scrollTimeoutRef.current) {
+            clearTimeout(scrollTimeoutRef.current);
+        }
+
+        // Check if scroll direction indicates user interaction
+        const scrollDelta = currentScrollTop - lastScrollTopRef.current;
+        lastScrollTopRef.current = currentScrollTop;
+
+        // If scrolling up (negative delta), immediately mark as user action
+        if (scrollDelta < 0) {
+            setUserHasScrolled(true);
+            autoScrollingRef.current = false; // Stop any pending auto-scroll
+        }
+
+        checkScrollPosition();
+
+        // Reset auto-scroll flag after a shorter delay
+        scrollTimeoutRef.current = setTimeout(() => {
+            autoScrollingRef.current = false;
+        }, 150);
+    }, [checkScrollPosition]);
+
+    const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+        if (messagesEndRef.current) {
+            autoScrollingRef.current = true;
+            messagesEndRef.current.scrollIntoView({ behavior });
+            
+            // Only reset position state, but let user scroll state be handled by scroll detection
+            if (behavior === 'smooth') {
+                setTimeout(() => {
+                    setIsAtBottom(true);
+                    autoScrollingRef.current = false;
+                    // Don't automatically reset userHasScrolled - let natural scroll detection handle it
+                }, 500);
+            }
+        }
+    }, []);
+
+    // Auto-scroll for new content when user is at bottom
+    const autoScrollToBottomIfNeeded = useCallback(() => {
+        if (isAtBottom && !userHasScrolled) {
+            scrollToBottom('smooth');
+        }
+    }, [isAtBottom, userHasScrolled, scrollToBottom]);
+
+    // Expose scroll function for parent components but with user position awareness
+    const smartScrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth', force: boolean = false) => {
+        if (force || isAtBottom || !userHasScrolled) {
+            scrollToBottom(behavior);
+        }
+    }, [isAtBottom, userHasScrolled, scrollToBottom]);
+
+    // Expose smart scroll function for parent components
+    const exposedScrollToBottom = React.useCallback((behavior: ScrollBehavior = 'smooth', force: boolean = false) => {
+        smartScrollToBottom(behavior, force);
+    }, [smartScrollToBottom]);
+
+    // Auto-scroll when new messages arrive (only during active streaming, not on completion refetch)
+    const previousMessageCount = React.useRef(displayMessages.length);
+    React.useEffect(() => {
+        const messageCountIncreased = displayMessages.length > previousMessageCount.current;
+        previousMessageCount.current = displayMessages.length;
+        
+        if (messageCountIncreased && !userHasScrolled && (agentStatus === 'running' || agentStatus === 'connecting')) {
+            autoScrollToBottomIfNeeded();
+        }
+    }, [displayMessages.length, autoScrollToBottomIfNeeded, userHasScrolled, agentStatus]);
+
+    // Auto-scroll when streaming content arrives - but only if user hasn't manually scrolled up AND agent is actively working
+    React.useEffect(() => {
+        if (streamingTextContent && !userHasScrolled && (agentStatus === 'running' || agentStatus === 'connecting')) {
+            // Use a timeout to reduce frequency of auto-scroll during streaming
+            const timeoutId = setTimeout(() => {
+                autoScrollToBottomIfNeeded();
+            }, 100);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [streamingTextContent, userHasScrolled, autoScrollToBottomIfNeeded, agentStatus]);
+
+    // Clean up timeout on unmount
+    React.useEffect(() => {
+        return () => {
+            if (scrollTimeoutRef.current) {
+                clearTimeout(scrollTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Preload all message attachments when messages change or sandboxId is provided
     React.useEffect(() => {
@@ -907,54 +1013,84 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
             {/* Unified floating pill - shows either "Working" or "Scroll to latest" */}
             {((!readOnly && (agentStatus === 'running' || agentStatus === 'connecting')) || showScrollButton) && (
                 <div className={`fixed bottom-48 z-20 transform -translate-x-1/2 transition-all duration-200 ease-in-out ${
-                    isSidePanelOpen 
-                        ? 'left-[5%] sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]'
-                        : 'left-1/2'
+                    (() => {
+                        if (isSidePanelOpen && isLeftSidebarOpen) {
+                            // Both sidebars open - center between them
+                            return 'left-[calc(50%-100px)] sm:left-[calc(50%-200px)] md:left-[calc(50%-225px)] lg:left-[calc(50%-250px)] xl:left-[calc(50%-275px)]';
+                        } else if (isSidePanelOpen) {
+                            // Only right side panel open
+                            return 'left-[5%] sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]';
+                        } else if (isLeftSidebarOpen) {
+                            // Only left sidebar open - shift right to account for sidebar width
+                            return 'left-[calc(50%+120px)] sm:left-[calc(50%+130px)] md:left-[calc(50%+140px)] lg:left-[calc(50%+150px)]';
+                        } else {
+                            // No sidebars open - center normally
+                            return 'left-1/2';
+                        }
+                    })()
                 }`}>
                     <AnimatePresence mode="wait">
-                        {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') ? (
-                            <motion.button
+                        {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
+                            <motion.div
                                 key="working"
-                                initial={{ opacity: 0 }}
+                                initial={{ opacity: 0, y: 10 }}
                                 animate={{ 
                                     opacity: 1,
+                                    y: 0,
                                     transition: { 
-                                        duration: 0.6, 
+                                        duration: 0.3, 
                                         ease: [0.25, 0.46, 0.45, 0.94]
                                     }
                                 }}
                                 exit={{ 
                                     opacity: 0,
+                                    y: 10,
                                     transition: { 
-                                        duration: 0.4, 
+                                        duration: 0.2, 
                                         ease: [0.25, 0.46, 0.45, 0.94]
                                     } 
                                 }}
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                                onClick={() => scrollToBottom('smooth')}
-                                className="flex items-center gap-2 bg-background/95 backdrop-blur-sm border border-border shadow-lg rounded-full px-3 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200"
+                                className="relative"
                             >
-                                <ThreeSpinner size={36} color="currentColor" />
-                                <span>{agentName ? `${agentName} is working...` : 'Operator is working...'}</span>
-                            </motion.button>
-                        ) : showScrollButton ? (
+                                {/* Floating spinner positioned above the text container */}
+                                <div 
+                                    className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-3/5 z-10 cursor-pointer"
+                                    onClick={() => scrollToBottom('smooth')}
+                                >
+                                    <ThreeSpinner size={64} color="currentColor" />
+                                </div>
+                                
+                                {/* Text container */}
+                                <motion.button
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.99 }}
+                                    onClick={() => scrollToBottom('smooth')}
+                                    className="animate-shimmer backdrop-blur-sm border border-primary/20 shadow-lg rounded-full px-4 py-2 text-sm font-medium text-primary transition-all duration-200"
+                                >
+                                    <span>{agentName ? `${agentName} is working...` : 'Operator is working...'}</span>
+                                </motion.button>
+                            </motion.div>
+                        )}
+                        {showScrollButton && !(agentStatus === 'running' || agentStatus === 'connecting') && (
                             <motion.button
                                 key="scroll"
                                 initial={{ 
-                                    opacity: 0
+                                    opacity: 0,
+                                    y: 10
                                 }}
                                 animate={{ 
                                     opacity: 1,
+                                    y: 0,
                                     transition: { 
-                                        duration: 0.6, 
+                                        duration: 0.3, 
                                         ease: [0.25, 0.46, 0.45, 0.94]
                                     }
                                 }}
                                 exit={{ 
                                     opacity: 0,
+                                    y: 10,
                                     transition: { 
-                                        duration: 0.4, 
+                                        duration: 0.2, 
                                         ease: [0.25, 0.46, 0.45, 0.94]
                                     }
                                 }}
@@ -966,7 +1102,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 <ArrowDown className="h-4 w-4" />
                                 <span>Scroll to latest</span>
                             </motion.button>
-                        ) : null}
+                        )}
                     </AnimatePresence>
                 </div>
             )}

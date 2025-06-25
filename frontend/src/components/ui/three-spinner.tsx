@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 
 interface ThreeSpinnerProps {
@@ -10,14 +10,50 @@ interface ThreeSpinnerProps {
 }
 
 export function ThreeSpinner({ 
-  size = 32, 
+  size = 64,
   color = 'currentColor',
-  className = '' 
+  className = ''
 }: ThreeSpinnerProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const frameRef = useRef<number>();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Function to detect current theme
+  const detectTheme = useCallback(() => {
+    const darkMode = document.documentElement.classList.contains('dark') || 
+                    window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setIsDarkMode(darkMode);
+    return darkMode;
+  }, []);
+
+  // Set up theme change detection
+  useEffect(() => {
+    // Initial theme detection
+    detectTheme();
+
+    // Create a MutationObserver to watch for theme changes
+    const observer = new MutationObserver(() => {
+      detectTheme();
+    });
+
+    // Watch for class changes on document.documentElement
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    // Also listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleMediaChange = () => detectTheme();
+    mediaQuery.addEventListener('change', handleMediaChange);
+
+    return () => {
+      observer.disconnect();
+      mediaQuery.removeEventListener('change', handleMediaChange);
+    };
+  }, [detectTheme]);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -37,54 +73,87 @@ export function ThreeSpinner({
     
     mountRef.current.appendChild(renderer.domElement);
 
-    // Create wireframe geometry - icosphere for clean look
-    const geometry = new THREE.IcosahedronGeometry(1, 1);
+    // Create both simple and complex geometries - we'll blend between them based on speed
+    // Complex geometries (visible when slow)
+    const complexOuter = new THREE.IcosahedronGeometry(1, 0);
+    const complexMiddle = new THREE.DodecahedronGeometry(0.8, 0);
+    const complexInner = new THREE.TetrahedronGeometry(0.5, 0);
     
-    // Parse color - black in light mode, muted in dark mode
-    let threeColor = new THREE.Color(0x000000); // black fallback for light mode
-    if (color === 'currentColor') {
-      // Detect dark mode
-      const isDarkMode = document.documentElement.classList.contains('dark') || 
-                        window.matchMedia('(prefers-color-scheme: dark)').matches;
-      
-      if (isDarkMode) {
-        // Use muted foreground color in dark mode
-        threeColor = new THREE.Color(0x9ca3af); // gray-400
-      } else {
-        // Use black in light mode for better visibility and energy
-        threeColor = new THREE.Color(0x000000);
-      }
-    } else {
-      try {
-        threeColor = new THREE.Color(color);
-      } catch {
-        // Fallback to black for light mode
-        threeColor = new THREE.Color(0x000000);
-      }
-    }
+    // Simple geometries (visible when fast)
+    const simpleOuter = new THREE.SphereGeometry(1, 8, 6);
+    const simpleMiddle = new THREE.SphereGeometry(0.7, 6, 4);
 
-    // Create wireframe material
-    const material = new THREE.MeshBasicMaterial({
-      color: threeColor,
+    // Function to get current theme color
+    const getThemeColor = () => {
+      let threeColor = new THREE.Color(0x000000); // black fallback for light mode
+      if (color === 'currentColor') {
+        if (isDarkMode) {
+          // Use muted foreground color in dark mode
+          threeColor = new THREE.Color(0x9ca3af); // gray-400
+        } else {
+          // Use black in light mode for better visibility and energy
+          threeColor = new THREE.Color(0x000000);
+        }
+      } else {
+        try {
+          threeColor = new THREE.Color(color);
+        } catch {
+          // Fallback to theme-appropriate color
+          threeColor = new THREE.Color(isDarkMode ? 0x9ca3af : 0x000000);
+        }
+      }
+      return threeColor;
+    };
+
+    // Create materials that will have dynamic opacity based on speed
+    const complexOuterMaterial = new THREE.MeshBasicMaterial({
+      color: getThemeColor(),
       wireframe: true,
       transparent: true,
       opacity: 0.8
     });
-
-    // Create mesh
-    const wireframe = new THREE.Mesh(geometry, material);
-    scene.add(wireframe);
-
-    // Add some inner structure for more interesting visual
-    const innerGeometry = new THREE.OctahedronGeometry(0.6, 0);
-    const innerMaterial = new THREE.MeshBasicMaterial({
-      color: threeColor,
+    
+    const complexMiddleMaterial = new THREE.MeshBasicMaterial({
+      color: getThemeColor(),
       wireframe: true,
       transparent: true,
       opacity: 0.6
     });
-    const innerWireframe = new THREE.Mesh(innerGeometry, innerMaterial);
-    scene.add(innerWireframe);
+    
+    const complexInnerMaterial = new THREE.MeshBasicMaterial({
+      color: getThemeColor(),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.4
+    });
+    
+    const simpleOuterMaterial = new THREE.MeshBasicMaterial({
+      color: getThemeColor(),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.0 // Start invisible
+    });
+    
+    const simpleMiddleMaterial = new THREE.MeshBasicMaterial({
+      color: getThemeColor(),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.0 // Start invisible
+    });
+
+    // Create all meshes
+    const complexOuterMesh = new THREE.Mesh(complexOuter, complexOuterMaterial);
+    const complexMiddleMesh = new THREE.Mesh(complexMiddle, complexMiddleMaterial);
+    const complexInnerMesh = new THREE.Mesh(complexInner, complexInnerMaterial);
+    const simpleOuterMesh = new THREE.Mesh(simpleOuter, simpleOuterMaterial);
+    const simpleMiddleMesh = new THREE.Mesh(simpleMiddle, simpleMiddleMaterial);
+
+    // Add all meshes to scene
+    scene.add(complexOuterMesh);
+    scene.add(complexMiddleMesh);
+    scene.add(complexInnerMesh);
+    scene.add(simpleOuterMesh);
+    scene.add(simpleMiddleMesh);
 
     // Position camera
     camera.position.z = 2.5;
@@ -92,6 +161,16 @@ export function ThreeSpinner({
     // Store refs
     sceneRef.current = scene;
     rendererRef.current = renderer;
+
+    // Function to update material colors when theme changes
+    const updateMaterialColors = () => {
+      const newColor = getThemeColor();
+      complexOuterMaterial.color.copy(newColor);
+      complexMiddleMaterial.color.copy(newColor);
+      complexInnerMaterial.color.copy(newColor);
+      simpleOuterMaterial.color.copy(newColor);
+      simpleMiddleMaterial.color.copy(newColor);
+    };
 
     // Physics-based spinning animation
     let currentSpeed = 0;
@@ -104,6 +183,9 @@ export function ThreeSpinner({
     
     const animate = () => {
       cycleTime += 0.016; // ~60fps
+      
+      // Update material colors based on current theme
+      updateMaterialColors();
       
       // Physics-based speed control - energetic spin that slows down then speeds up again
       if (isAccelerating) {
@@ -132,16 +214,49 @@ export function ThreeSpinner({
         }
       }
       
-      // Apply rotation with variable speed and direction
-      wireframe.rotation.x += currentSpeed * spinDirection.x;
-      wireframe.rotation.y += currentSpeed * spinDirection.y;
-      wireframe.rotation.z += currentSpeed * spinDirection.z;
+      // Dynamic opacity based on speed - higher speed = more simple, lower speed = more complex
+      const speedThreshold = 0.05; // Speed above which we start transitioning to simple
+      const maxSpeed = 0.15; // Speed at which we're fully simple
       
-      // Counter-rotate inner structure with different physics for visual depth
-      const innerSpeed = currentSpeed * 0.6; // Slower than outer
-      innerWireframe.rotation.x -= innerSpeed * 0.7;
-      innerWireframe.rotation.y += innerSpeed * 1.2;
-      innerWireframe.rotation.z -= innerSpeed * 0.4;
+      // Calculate blend factor (0 = fully complex, 1 = fully simple)
+      const blendFactor = Math.min(Math.max((currentSpeed - speedThreshold) / (maxSpeed - speedThreshold), 0), 1);
+      
+      // Update complex geometry opacity (visible when slow)
+      complexOuterMaterial.opacity = (1 - blendFactor) * 0.8;
+      complexMiddleMaterial.opacity = (1 - blendFactor) * 0.6;
+      complexInnerMaterial.opacity = (1 - blendFactor) * 0.4;
+      
+      // Update simple geometry opacity (visible when fast)
+      simpleOuterMaterial.opacity = blendFactor * 0.7;
+      simpleMiddleMaterial.opacity = blendFactor * 0.5;
+
+      // Apply rotation with variable speed and direction to all meshes
+      const rotationX = currentSpeed * spinDirection.x;
+      const rotationY = currentSpeed * spinDirection.y;
+      const rotationZ = currentSpeed * spinDirection.z;
+      
+      // Complex meshes
+      complexOuterMesh.rotation.x += rotationX;
+      complexOuterMesh.rotation.y += rotationY;
+      complexOuterMesh.rotation.z += rotationZ;
+      
+      complexMiddleMesh.rotation.x -= currentSpeed * 0.8;
+      complexMiddleMesh.rotation.y += currentSpeed * 0.9;
+      complexMiddleMesh.rotation.z += currentSpeed * 0.5;
+      
+      const innerSpeed = currentSpeed * 0.6;
+      complexInnerMesh.rotation.x -= innerSpeed * 0.7;
+      complexInnerMesh.rotation.y += innerSpeed * 1.2;
+      complexInnerMesh.rotation.z -= innerSpeed * 0.4;
+      
+      // Simple meshes (rotate slightly differently for visual distinction)
+      simpleOuterMesh.rotation.x += rotationX * 1.1;
+      simpleOuterMesh.rotation.y += rotationY * 1.1;
+      simpleOuterMesh.rotation.z += rotationZ * 0.8;
+      
+      simpleMiddleMesh.rotation.x -= currentSpeed * 0.7;
+      simpleMiddleMesh.rotation.y += currentSpeed * 1.1;
+      simpleMiddleMesh.rotation.z -= currentSpeed * 0.3;
 
       renderer.render(scene, camera);
       frameRef.current = requestAnimationFrame(animate);
@@ -160,7 +275,7 @@ export function ThreeSpinner({
       }
       
       if (sceneRef.current) {
-        // Dispose of geometries and materials
+        // Dispose of all geometries and materials
         sceneRef.current.traverse((object) => {
           if (object instanceof THREE.Mesh) {
             object.geometry.dispose();
@@ -171,13 +286,27 @@ export function ThreeSpinner({
             }
           }
         });
+        
+        // Dispose of additional geometries created
+        complexOuter.dispose();
+        complexMiddle.dispose();
+        complexInner.dispose();
+        simpleOuter.dispose();
+        simpleMiddle.dispose();
+        
+        // Dispose of materials
+        complexOuterMaterial.dispose();
+        complexMiddleMaterial.dispose();
+        complexInnerMaterial.dispose();
+        simpleOuterMaterial.dispose();
+        simpleMiddleMaterial.dispose();
       }
       
       if (mountRef.current && renderer.domElement) {
         mountRef.current.removeChild(renderer.domElement);
       }
     };
-  }, [size, color]);
+  }, [size, color, isDarkMode]); // Added isDarkMode to dependencies
 
   return (
     <div 

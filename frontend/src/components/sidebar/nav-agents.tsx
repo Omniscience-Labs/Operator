@@ -392,11 +392,11 @@ export function NavAgents() {
                       className="text-muted-foreground hover:text-foreground h-7 w-7 flex items-center justify-center rounded-md"
                     >
                       <Plus className="h-4 w-4" />
-                      <span className="sr-only">New Agent</span>
+                      <span className="sr-only">New Task</span>
                     </Link>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>New Agent</TooltipContent>
+                <TooltipContent>New Task</TooltipContent>
               </Tooltip>
             )}
           </div>
