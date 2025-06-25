@@ -16,6 +16,7 @@ import { CompleteToolView } from '../CompleteToolView';
 import { ExecuteDataProviderCallToolView } from '../data-provider-tool/ExecuteDataProviderCallToolView';
 import { DataProviderEndpointsToolView } from '../data-provider-tool/DataProviderEndpointsToolView';
 import { DeployToolView } from '../DeployToolView';
+import { ExcelToolView } from '../excel-tool/ExcelToolView';
 
 
 export type ToolViewComponent = React.ComponentType<ToolViewProps>;
@@ -68,6 +69,12 @@ const defaultRegistry: ToolViewRegistryType = {
   'complete': CompleteToolView,
 
   'deploy': DeployToolView,
+  
+  // Excel tool operations
+  'create-workbook': ExcelToolView,
+  'write-data': ExcelToolView,
+  'read-data': ExcelToolView,
+  'list-sheets': ExcelToolView,
 
   'default': GenericToolView,
 };

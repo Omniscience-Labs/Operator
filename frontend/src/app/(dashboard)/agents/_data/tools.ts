@@ -6,6 +6,8 @@ export const DEFAULT_AGENTPRESS_TOOLS: Record<string, { enabled: boolean; descri
     'sb_expose_tool': { enabled: false, description: 'Expose services and manage ports for application accessibility', icon: '🔌', color: 'bg-orange-100 dark:bg-orange-800/20' },
     'web_search_tool': { enabled: false, description: 'Search the web using Tavily API and scrape webpages with Firecrawl for research', icon: '🔍', color: 'bg-yellow-100 dark:bg-yellow-800/50' },
     'sb_vision_tool': { enabled: false, description: 'Vision and image processing capabilities for visual content analysis', icon: '👁️', color: 'bg-pink-100 dark:bg-pink-800/50' },
+    'sb_excel_tool': { enabled: false, description: 'Excel file operations including creating, reading, writing, and formatting spreadsheets', icon: '📊', color: 'bg-emerald-100 dark:bg-emerald-800/50' },
+    'sb_pdf_form_tool': { enabled: false, description: 'PDF form operations including reading form fields, filling forms, and flattening PDFs', icon: '📄', color: 'bg-purple-100 dark:bg-purple-800/50' },
     'data_providers_tool': { enabled: false, description: 'Access to data providers and external APIs like Apollo (requires API key)', icon: '🔗', color: 'bg-cyan-100 dark:bg-cyan-800/50' },
 };
 
@@ -18,6 +20,8 @@ export const getToolDisplayName = (toolName: string): string => {
       'sb_expose_tool': 'Port Exposure',
       'web_search_tool': 'Web Search',
       'sb_vision_tool': 'Image Processing',
+      'sb_excel_tool': 'Excel Operations',
+      'sb_pdf_form_tool': 'PDF Form Filler',
       'data_providers_tool': 'Data Providers',
     };
     

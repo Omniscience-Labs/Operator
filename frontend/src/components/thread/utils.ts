@@ -107,6 +107,13 @@ export const getToolIcon = (toolName: string): ElementType => {
     case 'read-file':
       return FileText;
 
+    // Excel operations
+    case 'create-workbook':
+    case 'write-data':
+    case 'read-data':
+    case 'list-sheets':
+      return FileText;
+
     // Shell commands
     case 'execute-command':
       return Terminal;
@@ -297,6 +304,12 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['str-replace', 'Editing Text'],
   ['str_replace', 'Editing Text'],
   
+  // Excel operations
+  ['create-workbook', 'Creating Workbook'],
+  ['write-data', 'Writing Data'],
+  ['read-data', 'Reading Data'],
+  ['list-sheets', 'Listing Sheets'],
+  
   ['browser-click-element', 'Clicking Element'],
   ['browser-close-tab', 'Closing Tab'],
   ['browser-drag-drop', 'Dragging Element'],
@@ -348,6 +361,12 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['delete_file', 'Deleting File'],
   ['full_file_rewrite', 'Rewriting File'],
   ['str_replace', 'Editing Text'],
+  
+  // Excel operations V2
+  ['create_workbook', 'Creating Workbook'],
+  ['write_data', 'Writing Data'],
+  ['read_data', 'Reading Data'],
+  ['list_sheets', 'Listing Sheets'],
   
   ['browser_click_element', 'Clicking Element'],
   ['browser_close_tab', 'Closing Tab'],

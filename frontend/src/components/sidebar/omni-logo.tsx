@@ -19,7 +19,7 @@ export function OmniLogo() {
   return (
     <div className="flex h-6 w-6 items-center justify-center flex-shrink-0">
       <ThreeSpinner 
-        size={24} 
+        size={32} 
         color="currentColor"
         className="flex-shrink-0"
       />
