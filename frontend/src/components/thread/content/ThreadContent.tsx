@@ -1065,7 +1065,12 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                     whileHover={{ scale: 1.01 }}
                                     whileTap={{ scale: 0.99 }}
                                     onClick={() => scrollToBottom('smooth')}
-                                    className="animate-shimmer backdrop-blur-sm border border-primary/20 shadow-lg rounded-full px-4 py-2 text-sm font-medium text-primary transition-all duration-200"
+                                    className="backdrop-blur-sm border border-primary/20 shadow-lg rounded-full px-4 py-2 text-sm font-medium text-primary transition-all duration-200"
+                                    style={{
+                                        animation: 'shimmer 4s ease-in-out infinite',
+                                        backgroundImage: 'linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%)',
+                                        backgroundSize: '200% 100%'
+                                    }}
                                 >
                                     <span>{agentName ? `${agentName} is working...` : 'Operator is working...'}</span>
                                 </motion.button>
