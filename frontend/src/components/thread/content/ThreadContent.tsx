@@ -1066,7 +1066,11 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                     whileTap={{ scale: 0.99 }}
                                     onClick={() => scrollToBottom('smooth')}
                                     className="animate-shimmer backdrop-blur-sm border border-primary/20 shadow-lg rounded-full px-4 py-2 text-sm font-medium text-primary transition-all duration-200"
+                                    style={{
+                                        animationDuration: '4s'
+                                    }}
                                 >
+                                
                                     <span>{agentName ? `${agentName} is working...` : 'Operator is working...'}</span>
                                 </motion.button>
                             </motion.div>
