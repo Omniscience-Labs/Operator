@@ -10,7 +10,16 @@ export default function GlobalError({
   error: Error & { digest?: string };
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    // Capture the error with additional context
+    Sentry.withScope((scope) => {
+      if (error.digest) {
+        scope.setTag('error_digest', error.digest);
+        scope.setContext('error_details', { digest: error.digest });
+        console.error('Error digest:', error.digest);
+      }
+      scope.setTag('error_boundary', 'global');
+      Sentry.captureException(error);
+    });
   }, [error]);
 
   return (
