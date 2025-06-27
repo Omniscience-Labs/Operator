@@ -155,6 +155,9 @@ class Configuration:
     STRIPE_DEFAULT_PLAN_ID: Optional[str] = None
     STRIPE_DEFAULT_TRIAL_DAYS: int = 14
     
+    # Frontend configuration
+    NEXT_PUBLIC_URL: Optional[str] = None
+    
     # Stripe Product IDs
     STRIPE_PRODUCT_ID_PROD: str = 'prod_SZpq4RDADzr1vs'
     STRIPE_PRODUCT_ID_STAGING: str = 'prod_SZqErtOBuura60'

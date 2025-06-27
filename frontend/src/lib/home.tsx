@@ -227,7 +227,7 @@ export const siteConfig = {
     },
     {
       name: 'Pro',
-      price: '$20',
+      price: '$40',
       description: 'Everything in Free, plus:',
       buttonText: 'Try Free',
       buttonColor: 'bg-primary text-white dark:text-black',

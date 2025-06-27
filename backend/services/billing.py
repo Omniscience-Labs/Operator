@@ -634,11 +634,12 @@ async def create_portal_session(
                 else:
                     # Create a new configuration with subscription_update enabled
                     logger.info("Creating new portal configuration with subscription_update enabled")
+                    frontend_url = config.NEXT_PUBLIC_URL
                     active_config = stripe.billing_portal.Configuration.create(
                         business_profile={
                             'headline': 'Subscription Management',
-                            'privacy_policy_url': config.FRONTEND_URL + '/privacy',
-                            'terms_of_service_url': config.FRONTEND_URL + '/terms'
+                            'privacy_policy_url': frontend_url + '/legal?tab=privacy',
+                            'terms_of_service_url': frontend_url + '/legal?tab=terms'
                         },
                         features={
                             'subscription_update': {
