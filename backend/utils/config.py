@@ -40,24 +40,24 @@ class Configuration:
     ENV_MODE: EnvMode = EnvMode.LOCAL
     
     # Subscription tier IDs - Production
-    STRIPE_FREE_TIER_ID_PROD: str = 'price_1RILb4G6l1KZGqIrK4QLrx9i'
-    STRIPE_TIER_2_20_ID_PROD: str = 'price_1RILb4G6l1KZGqIrhomjgDnO'
-    STRIPE_TIER_6_50_ID_PROD: str = 'price_1RILb4G6l1KZGqIr5q0sybWn'
-    STRIPE_TIER_12_100_ID_PROD: str = 'price_1RILb4G6l1KZGqIr5Y20ZLHm'
-    STRIPE_TIER_25_200_ID_PROD: str = 'price_1RILb4G6l1KZGqIrGAD8rNjb'
-    STRIPE_TIER_50_400_ID_PROD: str = 'price_1RILb4G6l1KZGqIruNBUMTF1'
-    STRIPE_TIER_125_800_ID_PROD: str = 'price_1RILb3G6l1KZGqIrbJA766tN'
-    STRIPE_TIER_200_1000_ID_PROD: str = 'price_1RILb3G6l1KZGqIrmauYPOiN'
+    STRIPE_FREE_TIER_ID_PROD: str = 'price_1RegArRGnNhiCsluGAhYK7dx'
+    STRIPE_TIER_2_40_ID_PROD: str = 'price_1RegOhRGnNhiCslubFHARKST'
+    STRIPE_TIER_6_100_ID_PROD: str = 'price_1RegOzRGnNhiCsluQOiybjzk'
+    STRIPE_TIER_12_200_ID_PROD: str = 'price_1RILb4G6l1KZGqIr5Y20ZLHm'
+    STRIPE_TIER_25_400_ID_PROD: str = 'price_1RegPLRGnNhiCsluDOrzGyto'
+    STRIPE_TIER_50_800_ID_PROD: str = 'price_1RegPaRGnNhiCsluLNbiTfuH'
+    STRIPE_TIER_125_1600_ID_PROD: str = 'price_1RegPtRGnNhiCsluGHQEnQ6l'
+    STRIPE_TIER_200_2000_ID_PROD: str = 'price_1RegQDRGnNhiCsluNOytv8Aj'
     
     # Subscription tier IDs - Staging
-    STRIPE_FREE_TIER_ID_STAGING: str = 'price_1RIGvuG6l1KZGqIrw14abxeL'
-    STRIPE_TIER_2_20_ID_STAGING: str = 'price_1RIGvuG6l1KZGqIrCRu0E4Gi'
-    STRIPE_TIER_6_50_ID_STAGING: str = 'price_1RIGvuG6l1KZGqIrvjlz5p5V'
-    STRIPE_TIER_12_100_ID_STAGING: str = 'price_1RIGvuG6l1KZGqIrT6UfgblC'
-    STRIPE_TIER_25_200_ID_STAGING: str = 'price_1RIGvuG6l1KZGqIrOVLKlOMj'
-    STRIPE_TIER_50_400_ID_STAGING: str = 'price_1RIKNgG6l1KZGqIrvsat5PW7'
-    STRIPE_TIER_125_800_ID_STAGING: str = 'price_1RIKNrG6l1KZGqIrjKT0yGvI'
-    STRIPE_TIER_200_1000_ID_STAGING: str = 'price_1RIKQ2G6l1KZGqIrum9n8SI7'
+    STRIPE_FREE_TIER_ID_STAGING: str = 'price_1RegYKRGnNhiCsluWeXW1YVr'
+    STRIPE_TIER_2_40_ID_STAGING: str = 'price_1RegYKRGnNhiCslum8Rq2tb3'
+    STRIPE_TIER_6_100_ID_STAGING: str = 'price_1RegYKRGnNhiCslurElDw2Sk'
+    STRIPE_TIER_12_200_ID_STAGING: str = 'price_1RegYKRGnNhiCslut8FSYWI8'
+    STRIPE_TIER_25_400_ID_STAGING: str = 'price_1RegYKRGnNhiCsluG0cHtAGA'
+    STRIPE_TIER_50_800_ID_STAGING: str = 'price_1RegYKRGnNhiCslu7ZDEFcMd'
+    STRIPE_TIER_125_1600_ID_STAGING: str = 'price_1RegYKRGnNhiCsluyYL6yg2H'
+    STRIPE_TIER_200_2000_ID_STAGING: str = 'price_1RegYKRGnNhiCslu4peMXqGv'
     
     # Computed subscription tier IDs based on environment
     @property
@@ -67,46 +67,46 @@ class Configuration:
         return self.STRIPE_FREE_TIER_ID_PROD
     
     @property
-    def STRIPE_TIER_2_20_ID(self) -> str:
+    def STRIPE_TIER_2_40_ID(self) -> str:
         if self.ENV_MODE == EnvMode.STAGING:
-            return self.STRIPE_TIER_2_20_ID_STAGING
-        return self.STRIPE_TIER_2_20_ID_PROD
+            return self.STRIPE_TIER_2_40_ID_STAGING
+        return self.STRIPE_TIER_2_40_ID_PROD
     
     @property
-    def STRIPE_TIER_6_50_ID(self) -> str:
+    def STRIPE_TIER_6_100_ID(self) -> str:
         if self.ENV_MODE == EnvMode.STAGING:
-            return self.STRIPE_TIER_6_50_ID_STAGING
-        return self.STRIPE_TIER_6_50_ID_PROD
+            return self.STRIPE_TIER_6_100_ID_STAGING
+        return self.STRIPE_TIER_6_100_ID_PROD
     
     @property
-    def STRIPE_TIER_12_100_ID(self) -> str:
+    def STRIPE_TIER_12_200_ID(self) -> str:
         if self.ENV_MODE == EnvMode.STAGING:
-            return self.STRIPE_TIER_12_100_ID_STAGING
-        return self.STRIPE_TIER_12_100_ID_PROD
+            return self.STRIPE_TIER_12_200_ID_STAGING
+        return self.STRIPE_TIER_12_200_ID_PROD
     
     @property
-    def STRIPE_TIER_25_200_ID(self) -> str:
+    def STRIPE_TIER_25_400_ID(self) -> str:
         if self.ENV_MODE == EnvMode.STAGING:
-            return self.STRIPE_TIER_25_200_ID_STAGING
-        return self.STRIPE_TIER_25_200_ID_PROD
+            return self.STRIPE_TIER_25_400_ID_STAGING
+        return self.STRIPE_TIER_25_400_ID_PROD
     
     @property
-    def STRIPE_TIER_50_400_ID(self) -> str:
+    def STRIPE_TIER_50_800_ID(self) -> str:
         if self.ENV_MODE == EnvMode.STAGING:
-            return self.STRIPE_TIER_50_400_ID_STAGING
-        return self.STRIPE_TIER_50_400_ID_PROD
+            return self.STRIPE_TIER_50_800_ID_STAGING
+        return self.STRIPE_TIER_50_800_ID_PROD
     
     @property
-    def STRIPE_TIER_125_800_ID(self) -> str:
+    def STRIPE_TIER_125_1600_ID(self) -> str:
         if self.ENV_MODE == EnvMode.STAGING:
-            return self.STRIPE_TIER_125_800_ID_STAGING
-        return self.STRIPE_TIER_125_800_ID_PROD
+            return self.STRIPE_TIER_125_1600_ID_STAGING
+        return self.STRIPE_TIER_125_1600_ID_PROD
     
     @property
-    def STRIPE_TIER_200_1000_ID(self) -> str:
+    def STRIPE_TIER_200_2000_ID(self) -> str:
         if self.ENV_MODE == EnvMode.STAGING:
-            return self.STRIPE_TIER_200_1000_ID_STAGING
-        return self.STRIPE_TIER_200_1000_ID_PROD
+            return self.STRIPE_TIER_200_2000_ID_STAGING
+        return self.STRIPE_TIER_200_2000_ID_PROD
     
     # LLM API keys
     ANTHROPIC_API_KEY: str = None
@@ -156,8 +156,8 @@ class Configuration:
     STRIPE_DEFAULT_TRIAL_DAYS: int = 14
     
     # Stripe Product IDs
-    STRIPE_PRODUCT_ID_PROD: str = 'prod_SCl7AQ2C8kK1CD'
-    STRIPE_PRODUCT_ID_STAGING: str = 'prod_SCgIj3G7yPOAWY'
+    STRIPE_PRODUCT_ID_PROD: str = 'prod_SZpq4RDADzr1vs'
+    STRIPE_PRODUCT_ID_STAGING: str = 'prod_SZqErtOBuura60'
     
     # Sandbox configuration
     SANDBOX_IMAGE_NAME = "omnisciencelabs/operator:0.1.3-form-tools"

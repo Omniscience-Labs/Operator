@@ -5,7 +5,7 @@ MODEL_ACCESS_TIERS = {
         # "openrouter/google/gemini-2.5-flash-preview-05-20",
         "anthropic/claude-sonnet-4-20250514",
     ],
-    "tier_2_20": [
+    "tier_2_40": [
         # "openrouter/deepseek/deepseek-chat",
         # "xai/grok-3-mini-fast-beta",
         # "openai/gpt-4o",
@@ -20,7 +20,7 @@ MODEL_ACCESS_TIERS = {
         # "openrouter/qwen/qwen3-235b-a22b",
         "anthropic/claude-sonnet-4-20250514",
     ],
-    "tier_6_50": [
+    "tier_6_100": [
         # "openrouter/deepseek/deepseek-chat",
         # "xai/grok-3-mini-fast-beta",
         # "openai/gpt-4o",
@@ -34,7 +34,7 @@ MODEL_ACCESS_TIERS = {
         # "openrouter/deepseek/deepseek-r1",
         # "openrouter/qwen/qwen3-235b-a22b",
     ],
-    "tier_12_100": [
+    "tier_12_200": [
         # "openrouter/deepseek/deepseek-chat",
         # "xai/grok-3-mini-fast-beta",
         # "openai/gpt-4o",
@@ -48,7 +48,7 @@ MODEL_ACCESS_TIERS = {
         # "openrouter/deepseek/deepseek-r1",
         # "openrouter/qwen/qwen3-235b-a22b",
     ],
-    "tier_25_200": [
+    "tier_25_400": [
         # "openrouter/deepseek/deepseek-chat",
         # "xai/grok-3-mini-fast-beta",
         # "openai/gpt-4o",
@@ -62,7 +62,7 @@ MODEL_ACCESS_TIERS = {
         # "openrouter/deepseek/deepseek-r1",
         # "openrouter/qwen/qwen3-235b-a22b",
     ],
-    "tier_50_400": [
+    "tier_50_800": [
         # "openrouter/deepseek/deepseek-chat",
         # "xai/grok-3-mini-fast-beta",
         # "openai/gpt-4o",
@@ -76,7 +76,7 @@ MODEL_ACCESS_TIERS = {
         # "openrouter/deepseek/deepseek-r1",
         # "openrouter/qwen/qwen3-235b-a22b",
     ],
-    "tier_125_800": [
+    "tier_125_1600": [
         # "openrouter/deepseek/deepseek-chat",
         # "xai/grok-3-mini-fast-beta",
         # "openai/gpt-4o",
@@ -90,7 +90,7 @@ MODEL_ACCESS_TIERS = {
         # "openrouter/deepseek/deepseek-r1",
         # "openrouter/qwen/qwen3-235b-a22b",
     ],
-    "tier_200_1000": [
+    "tier_200_2000": [
         # "openrouter/deepseek/deepseek-chat",
         # "xai/grok-3-mini-fast-beta",
         # "openai/gpt-4o",

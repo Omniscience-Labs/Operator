@@ -25,13 +25,13 @@ router = APIRouter(prefix="/billing", tags=["billing"])
 
 SUBSCRIPTION_TIERS = {
     config.STRIPE_FREE_TIER_ID: {'name': 'free', 'minutes': 60},
-    config.STRIPE_TIER_2_20_ID: {'name': 'tier_2_20', 'minutes': 120},  # 2 hours
-    config.STRIPE_TIER_6_50_ID: {'name': 'tier_6_50', 'minutes': 360},  # 6 hours
-    config.STRIPE_TIER_12_100_ID: {'name': 'tier_12_100', 'minutes': 720},  # 12 hours
-    config.STRIPE_TIER_25_200_ID: {'name': 'tier_25_200', 'minutes': 1500},  # 25 hours
-    config.STRIPE_TIER_50_400_ID: {'name': 'tier_50_400', 'minutes': 3000},  # 50 hours
-    config.STRIPE_TIER_125_800_ID: {'name': 'tier_125_800', 'minutes': 7500},  # 125 hours
-    config.STRIPE_TIER_200_1000_ID: {'name': 'tier_200_1000', 'minutes': 12000},  # 200 hours
+    config.STRIPE_TIER_2_40_ID: {'name': 'tier_2_40', 'minutes': 120},  # 2 hours
+    config.STRIPE_TIER_6_100_ID: {'name': 'tier_6_100', 'minutes': 360},  # 6 hours
+    config.STRIPE_TIER_12_200_ID: {'name': 'tier_12_200', 'minutes': 720},  # 12 hours
+    config.STRIPE_TIER_25_400_ID: {'name': 'tier_25_400', 'minutes': 1500},  # 25 hours
+    config.STRIPE_TIER_50_800_ID: {'name': 'tier_50_800', 'minutes': 3000},  # 50 hours
+    config.STRIPE_TIER_125_1600_ID: {'name': 'tier_125_1600', 'minutes': 7500},  # 125 hours
+    config.STRIPE_TIER_200_2000_ID: {'name': 'tier_200_2000', 'minutes': 12000},  # 200 hours
 }
 
 # Pydantic models for request/response validation
@@ -119,13 +119,13 @@ async def get_user_subscription(user_id: str) -> Optional[Dict]:
                 item = sub['items']['data'][0]
                 if item.get('price') and item['price'].get('id') in [
                     config.STRIPE_FREE_TIER_ID,
-                    config.STRIPE_TIER_2_20_ID,
-                    config.STRIPE_TIER_6_50_ID,
-                    config.STRIPE_TIER_12_100_ID,
-                    config.STRIPE_TIER_25_200_ID,
-                    config.STRIPE_TIER_50_400_ID,
-                    config.STRIPE_TIER_125_800_ID,
-                    config.STRIPE_TIER_200_1000_ID
+                    config.STRIPE_TIER_2_40_ID,
+                    config.STRIPE_TIER_6_100_ID,
+                    config.STRIPE_TIER_12_200_ID,
+                    config.STRIPE_TIER_25_400_ID,
+                    config.STRIPE_TIER_50_800_ID,
+                    config.STRIPE_TIER_125_1600_ID,
+                    config.STRIPE_TIER_200_2000_ID
                 ]:
                     our_subscriptions.append(sub)
         
