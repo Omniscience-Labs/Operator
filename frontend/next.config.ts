@@ -16,7 +16,7 @@ let nextConfig: NextConfig = {
   },
 };
 
-if (process.env.NEXT_PUBLIC_VERCEL_ENV === 'production') {
+if (process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' || process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview') {
   nextConfig = withSentryConfig(nextConfig, {
     org: 'omni-ai',
     project: 'operator-nextjs',
