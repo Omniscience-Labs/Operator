@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Bot, Menu, Store } from 'lucide-react';
+import { Bot, Menu, Store, FileAudio } from 'lucide-react';
 
 import { NavAgents } from '@/components/sidebar/nav-agents';
 import { NavUserWithTeams } from '@/components/sidebar/nav-user-with-teams';
@@ -49,9 +49,10 @@ export function SidebarLeft({
   });
 
   const pathname = usePathname();
-  const { flags, loading: flagsLoading } = useFeatureFlags(['custom_agents', 'agent_marketplace']);
+  const { flags, loading: flagsLoading } = useFeatureFlags(['custom_agents', 'agent_marketplace', 'enterprise_demo']);
   const customAgentsEnabled = flags.custom_agents;
   const marketplaceEnabled = flags.agent_marketplace;
+  const enterpriseDemoEnabled = flags.enterprise_demo;
 
   // Fetch user data
   useEffect(() => {
@@ -172,9 +173,24 @@ export function SidebarLeft({
             )}
           </SidebarGroup>
         )}
+        <SidebarGroup>
+          <Link href="/meetings">
+            <SidebarMenuButton className={cn({
+              'bg-primary/10 font-medium': pathname === '/meetings' || pathname.startsWith('/meetings/'),
+            })}>
+              <FileAudio className="h-4 w-4 mr-2" />
+              <span className="flex items-center justify-between w-full">
+                Meetings
+                <Badge variant="new">
+                  New
+                </Badge>
+              </span>
+            </SidebarMenuButton>
+          </Link>
+        </SidebarGroup>
         <NavAgents />
       </SidebarContent>
-      {state !== 'collapsed' && (
+      {state !== 'collapsed' && enterpriseDemoEnabled && (
         <div className="px-3 py-2">
           <CTACard />
         </div>

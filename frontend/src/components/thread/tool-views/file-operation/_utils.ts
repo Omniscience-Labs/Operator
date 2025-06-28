@@ -1,6 +1,6 @@
-import { LucideIcon, FilePen, Replace, Trash2, FileCode, FileSpreadsheet, File } from 'lucide-react';
+import { LucideIcon, FilePen, Replace, Trash2, FileText, FileCode, FileSpreadsheet, File } from 'lucide-react';
 
-export type FileOperation = 'create' | 'rewrite' | 'delete';
+export type FileOperation = 'create' | 'rewrite' | 'delete' | 'read';
 
 export interface OperationConfig {
   icon: LucideIcon;
@@ -82,6 +82,7 @@ export const getOperationType = (name?: string, assistantContent?: any): FileOpe
     if (name.includes('create')) return 'create';
     if (name.includes('rewrite')) return 'rewrite';
     if (name.includes('delete')) return 'delete';
+    if (name.includes('read')) return 'read';
   }
 
   if (!assistantContent) return 'create';
@@ -92,6 +93,7 @@ export const getOperationType = (name?: string, assistantContent?: any): FileOpe
 
   if (contentStr.includes('<create-file>')) return 'create';
   if (contentStr.includes('<full-file-rewrite>')) return 'rewrite';
+  if (contentStr.includes('<read-file>')) return 'read';
   if (
     contentStr.includes('delete-file') ||
     contentStr.includes('<delete>')
@@ -101,6 +103,7 @@ export const getOperationType = (name?: string, assistantContent?: any): FileOpe
   if (contentStr.toLowerCase().includes('create file')) return 'create';
   if (contentStr.toLowerCase().includes('rewrite file'))
     return 'rewrite';
+  if (contentStr.toLowerCase().includes('read file')) return 'read';
   if (contentStr.toLowerCase().includes('delete file')) return 'delete';
 
   return 'create';
@@ -138,6 +141,17 @@ export const getOperationConfigs = (): Record<FileOperation, OperationConfig> =>
     gradientBg: 'bg-gradient-to-br from-rose-500/20 to-rose-600/10',
     borderColor: 'border-rose-500/20',
     badgeColor: 'bg-gradient-to-b from-rose-200 to-rose-100 text-rose-700 shadow-sm dark:from-rose-800/50 dark:to-rose-900/60 dark:text-rose-300',
+    hoverColor: 'hover:bg-neutral-200 dark:hover:bg-neutral-800'
+  },
+  read: {
+    icon: FileText,
+    color: 'text-purple-600 dark:text-purple-400',
+    successMessage: 'File read successfully',
+    progressMessage: 'Reading file...',
+    bgColor: 'bg-gradient-to-b from-purple-100 to-purple-50 shadow-inner dark:from-purple-800/40 dark:to-purple-900/60 dark:shadow-purple-950/20',
+    gradientBg: 'bg-gradient-to-br from-purple-500/20 to-purple-600/10',
+    borderColor: 'border-purple-500/20',
+    badgeColor: 'bg-gradient-to-b from-purple-200 to-purple-100 text-purple-700 shadow-sm dark:from-purple-800/50 dark:to-purple-900/60 dark:text-purple-300',
     hoverColor: 'hover:bg-neutral-200 dark:hover:bg-neutral-800'
   },
 });

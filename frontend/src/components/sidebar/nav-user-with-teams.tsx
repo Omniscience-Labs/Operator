@@ -262,7 +262,7 @@ export function NavUserWithTeams({
                 </>
               )}
 
-              {/* <DropdownMenuSeparator />
+              <DropdownMenuSeparator />
               <DialogTrigger asChild>
                 <DropdownMenuItem 
                   className="gap-2 p-2"
@@ -275,7 +275,7 @@ export function NavUserWithTeams({
                   </div>
                   <div className="text-muted-foreground font-medium">Add team</div>
                 </DropdownMenuItem>
-              </DialogTrigger> */}
+              </DialogTrigger>
               <DropdownMenuSeparator />
 
               {/* User Settings Section */}
@@ -312,7 +312,7 @@ export function NavUserWithTeams({
         </SidebarMenuItem>
       </SidebarMenu>
 
-      <DialogContent className="sm:max-w-[425px] border-subtle dark:border-white/10 bg-card-bg dark:bg-background-secondary rounded-2xl shadow-custom">
+      <DialogContent className="sm:max-w-[425px] border bg-background rounded-2xl shadow-lg">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             Create a new team

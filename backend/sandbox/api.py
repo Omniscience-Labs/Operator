@@ -1,6 +1,7 @@
 import os
 import urllib.parse
 from typing import Optional
+import mimetypes
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form, Depends, Request
 from fastapi.responses import Response
@@ -64,6 +65,57 @@ def normalize_path(path: str) -> str:
     except Exception as e:
         logger.error(f"Error normalizing path '{path}': {str(e)}")
         return path  # Return original path if decoding fails
+
+def get_mime_type(filename: str) -> str:
+    """
+    Get the MIME type for a file based on its extension.
+    
+    Args:
+        filename: The filename to determine MIME type for
+        
+    Returns:
+        The MIME type string (defaults to 'application/octet-stream' if unknown)
+    """
+    # Initialize mimetypes module
+    mimetypes.init()
+    
+    # Get MIME type based on filename extension
+    mime_type, _ = mimetypes.guess_type(filename)
+    
+    # Handle special cases for better browser compatibility
+    if mime_type:
+        return mime_type
+    
+    # Manual mapping for common files that might not be detected
+    extension = filename.lower().split('.')[-1] if '.' in filename else ''
+    extension_map = {
+        'webm': 'audio/webm',  # Ensure webm audio is properly detected
+        'mp3': 'audio/mpeg',
+        'wav': 'audio/wav',
+        'ogg': 'audio/ogg',
+        'flac': 'audio/flac',
+        'm4a': 'audio/mp4',
+        'aac': 'audio/aac',
+        'mp4': 'video/mp4',
+        'avi': 'video/x-msvideo',
+        'mov': 'video/quicktime',
+        'webp': 'image/webp',
+        'svg': 'image/svg+xml',
+        'json': 'application/json',
+        'js': 'application/javascript',
+        'css': 'text/css',
+        'html': 'text/html',
+        'htm': 'text/html',
+        'txt': 'text/plain',
+        'md': 'text/markdown',
+        'csv': 'text/csv',
+        'pdf': 'application/pdf',
+        'zip': 'application/zip',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    }
+    
+    return extension_map.get(extension, 'application/octet-stream')
 
 async def verify_sandbox_access(client, sandbox_id: str, user_id: Optional[str] = None):
     """
@@ -258,6 +310,10 @@ async def read_file(
         filename = os.path.basename(path)
         logger.info(f"Successfully read file {filename} from sandbox {sandbox_id}")
         
+        # Determine the correct MIME type based on file extension
+        mime_type = get_mime_type(filename)
+        logger.debug(f"Detected MIME type for {filename}: {mime_type}")
+        
         # Ensure proper encoding by explicitly using UTF-8 for the filename in Content-Disposition header
         # This applies RFC 5987 encoding for the filename to support non-ASCII characters
         encoded_filename = filename.encode('utf-8').decode('latin-1')
@@ -265,7 +321,7 @@ async def read_file(
         
         return Response(
             content=content,
-            media_type="application/octet-stream",
+            media_type=mime_type,
             headers={"Content-Disposition": content_disposition}
         )
     except HTTPException:

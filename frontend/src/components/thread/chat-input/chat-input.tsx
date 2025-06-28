@@ -22,6 +22,7 @@ import { ThreeSpinner } from '@/components/ui/three-spinner';
 export interface ChatInputHandles {
   getPendingFiles: () => File[];
   clearPendingFiles: () => void;
+  addExternalFile: (file: File) => void;
 }
 
 export interface ChatInputProps {
@@ -53,6 +54,10 @@ export interface UploadedFile {
   size: number;
   type: string;
   localUrl?: string;
+  metadata?: {
+    isMeetingRecording?: boolean;
+    duration?: string;
+  };
 }
 
 export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
@@ -108,6 +113,17 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
     useImperativeHandle(ref, () => ({
       getPendingFiles: () => pendingFiles,
       clearPendingFiles: () => setPendingFiles([]),
+      addExternalFile: (file: File) => {
+        handleFiles(
+          [file],
+          sandboxId,
+          setPendingFiles,
+          setUploadedFiles,
+          setIsUploading,
+          messages,
+          queryClient,
+        );
+      },
     }));
 
     useEffect(() => {
@@ -133,10 +149,23 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
       let message = value;
 
       if (uploadedFiles.length > 0) {
+        // Check if any uploaded file is a meeting recording
+        const meetingRecording = uploadedFiles.find(f => f.metadata?.isMeetingRecording);
+        
+        if (meetingRecording) {
+          // Automatically add transcription request for meeting recordings
+          const transcriptionRequest = `Please transcribe the following meeting recording (duration: ${meetingRecording.metadata?.duration}):`;
+          const fileInfo = uploadedFiles
+            .map((file) => `[Uploaded File: ${file.path}]`)
+            .join('\n');
+          message = message ? `${message}\n\n${transcriptionRequest}\n${fileInfo}` : `${transcriptionRequest}\n${fileInfo}`;
+        } else {
+          // Normal file attachment
         const fileInfo = uploadedFiles
           .map((file) => `[Uploaded File: ${file.path}]`)
           .join('\n');
         message = message ? `${message}\n\n${fileInfo}` : fileInfo;
+        }
       }
 
       let baseModelName = getActualModelId(selectedModel);

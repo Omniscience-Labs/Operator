@@ -92,15 +92,29 @@ export function FileOperationToolView({
   }
 
   if (!fileContent && operation !== 'delete') {
-    fileContent = isStreaming
-      ? extractStreamingFileContent(
-        assistantContent,
-        operation === 'create' ? 'create-file' : 'full-file-rewrite',
-      ) || ''
-      : extractFileContent(
-        assistantContent,
-        operation === 'create' ? 'create-file' : 'full-file-rewrite',
-      );
+    if (operation === 'read') {
+      // For read operations, extract content from tool result data
+      fileContent = toolToolData.fileContent || assistantToolData.fileContent;
+      
+      // If not found in standard extraction, try to extract from tool result directly
+      if (!fileContent && (toolToolData.toolResult || assistantToolData.toolResult)) {
+        const toolResult = toolToolData.toolResult || assistantToolData.toolResult;
+        if (toolResult && typeof toolResult === 'object' && 'data' in toolResult && toolResult.data) {
+          const data = toolResult.data as any;
+          fileContent = data.content || data.file_content;
+        }
+      }
+    } else {
+      fileContent = isStreaming
+        ? extractStreamingFileContent(
+          assistantContent,
+          operation === 'create' ? 'create-file' : 'full-file-rewrite',
+        ) || ''
+        : extractFileContent(
+          assistantContent,
+          operation === 'create' ? 'create-file' : 'full-file-rewrite',
+        );
+    }
   }
 
   const toolTitle = getToolTitle(name || `file-${operation}`);

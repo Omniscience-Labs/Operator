@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Settings2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DEFAULT_AGENTPRESS_TOOLS, getToolDisplayName } from '../_data/tools';
 
@@ -12,6 +13,18 @@ interface AgentToolsConfigurationProps {
 
 export const AgentToolsConfiguration = ({ tools, onToolsChange }: AgentToolsConfigurationProps) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const getToolBadge = (toolName: string) => {
+    // Add "new" badge to Excel tool, Audio transcription tool, and Data providers tool
+    if (toolName === 'sb_excel_tool' || toolName === 'sb_audio_transcription_tool' || toolName === 'data_providers_tool') {
+      return <Badge variant="new" className="ml-2 h-4 text-xs">New</Badge>;
+    }
+    // Add "beta" badge to PDF form filling tool
+    if (toolName === 'sb_pdf_form_tool') {
+      return <Badge variant="beta" className="ml-2 h-4 text-xs">Beta</Badge>;
+    }
+    return null;
+  };
 
   const handleToolToggle = (toolName: string, enabled: boolean) => {
     const updatedTools = {
@@ -72,9 +85,12 @@ export const AgentToolsConfiguration = ({ tools, onToolsChange }: AgentToolsConf
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <h4 className="font-medium text-sm">
-                    {getToolDisplayName(toolName)}
-                  </h4>
+                  <div className="flex items-center">
+                    <h4 className="font-medium text-sm">
+                      {getToolDisplayName(toolName)}
+                    </h4>
+                    {getToolBadge(toolName)}
+                  </div>
                   <Switch
                     checked={tools[toolName]?.enabled || false}
                     onCheckedChange={(checked) => handleToolToggle(toolName, checked)}

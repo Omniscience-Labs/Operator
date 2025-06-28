@@ -8,6 +8,7 @@ import { PdfRenderer } from './pdf-renderer';
 import { ImageRenderer } from './image-renderer';
 import { BinaryRenderer } from './binary-renderer';
 import { HtmlRenderer } from './html-renderer';
+import { AudioRenderer } from './audio-renderer';
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
 import { CsvRenderer } from './csv-renderer';
 
@@ -16,6 +17,7 @@ export type FileType =
   | 'code'
   | 'pdf'
   | 'image'
+  | 'audio'
   | 'text'
   | 'binary'
   | 'csv';
@@ -89,6 +91,7 @@ export function getFileTypeFromExtension(fileName: string): FileType {
     'bmp',
     'ico',
   ];
+  const audioExtensions = ['mp3', 'wav', 'ogg', 'flac', 'webm', 'm4a', 'aac'];
   const pdfExtensions = ['pdf'];
   const csvExtensions = ['csv', 'tsv'];
   const textExtensions = ['txt', 'log', 'env', 'ini'];
@@ -99,6 +102,8 @@ export function getFileTypeFromExtension(fileName: string): FileType {
     return 'code';
   } else if (imageExtensions.includes(extension)) {
     return 'image';
+  } else if (audioExtensions.includes(extension)) {
+    return 'audio';
   } else if (pdfExtensions.includes(extension)) {
     return 'pdf';
   } else if (csvExtensions.includes(extension)) {
@@ -189,6 +194,8 @@ export function FileRenderer({
         <BinaryRenderer url={binaryUrl || ''} fileName={fileName} onDownload={onDownload} isDownloading={isDownloading} />
       ) : fileType === 'image' && binaryUrl ? (
         <ImageRenderer url={binaryUrl} />
+      ) : fileType === 'audio' && binaryUrl ? (
+        <AudioRenderer url={binaryUrl} fileName={fileName} onDownload={onDownload} isDownloading={isDownloading} />
       ) : fileType === 'pdf' && binaryUrl ? (
         <PdfRenderer url={binaryUrl} />
       ) : fileType === 'markdown' ? (

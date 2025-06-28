@@ -64,6 +64,70 @@ export function DashboardContent() {
     }
   }, [searchParams, selectedAgentId, router]);
 
+  // Handle meeting attachment
+  useEffect(() => {
+    const attachMeetingId = searchParams.get('attachMeeting');
+    if (attachMeetingId) {
+      // Load meeting transcript and attach it as a file
+      import('@/lib/api-meetings').then(async ({ getMeeting }) => {
+        try {
+          const meeting = await getMeeting(attachMeetingId);
+          if (meeting.transcript) {
+            // Format transcript with enhanced metadata header
+            const createdAt = new Date(meeting.created_at);
+            const now = new Date();
+            const formattedTranscript = `Meeting Transcript
+
+MEETING INFORMATION:
+- Title: ${meeting.title}
+- Meeting Created: ${createdAt.toLocaleDateString('en-US', { 
+  year: 'numeric', 
+  month: 'long', 
+  day: 'numeric' 
+})} at ${createdAt.toLocaleTimeString('en-US', { 
+  hour: 'numeric', 
+  minute: '2-digit', 
+  hour12: true 
+})}
+- File Generated: ${now.toLocaleDateString('en-US', { 
+  year: 'numeric', 
+  month: 'long', 
+  day: 'numeric' 
+})} at ${now.toLocaleTimeString('en-US', { 
+  hour: 'numeric', 
+  minute: '2-digit', 
+  hour12: true 
+})}
+
+FULL TRANSCRIPT:
+${meeting.transcript || '(No transcript available)'}`;
+
+            console.log('Formatted transcript for operator:', formattedTranscript.substring(0, 500) + '...');
+            
+            // Create a file from the formatted transcript
+            const blob = new Blob([formattedTranscript], { type: 'text/plain' });
+            const file = new File([blob], `${meeting.title}_transcript.txt`, { type: 'text/plain' });
+            
+            // Add file to chat input
+            if (chatInputRef.current) {
+              chatInputRef.current.addExternalFile(file);
+            }
+            
+            // Set initial prompt
+            setInputValue(`I have a meeting transcript from "${meeting.title}". Please help me analyze it.`);
+            
+            // Remove the query parameter
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete('attachMeeting');
+            router.replace(newUrl.pathname + newUrl.search, { scroll: false });
+          }
+        } catch (error) {
+          console.error('Error loading meeting:', error);
+        }
+      });
+    }
+  }, [searchParams, router]);
+
   useEffect(() => {
     if (threadQuery.data && initiatedThreadId) {
       const thread = threadQuery.data;

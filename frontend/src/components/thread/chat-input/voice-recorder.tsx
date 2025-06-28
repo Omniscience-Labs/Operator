@@ -1,6 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Mic, Square, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useTranscription } from '@/hooks/react-query/transcription/use-transcription';
 
 interface VoiceRecorderProps {
@@ -155,18 +161,37 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         }
     };
 
+    const getTooltipContent = () => {
+        switch (state) {
+            case 'recording':
+                return 'Stop recording and transcribe';
+            case 'processing':
+                return 'Processing transcription...';
+            default:
+                return 'Record speech and convert to text (up to 15 minutes)';
+        }
+    };
+
     return (
-        <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleClick}
-            onContextMenu={handleRightClick}
-            disabled={disabled || state === 'processing'}
-            className={`h-8 w-8 p-0 transition-colors ${getButtonClass()}`}
-            title={state === 'recording' ? 'Click to stop' : 'Click to start recording'}
-        >
-            {getIcon()}
-        </Button>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleClick}
+                        onContextMenu={handleRightClick}
+                        disabled={disabled || state === 'processing'}
+                        className={`h-8 w-8 p-0 transition-colors ${getButtonClass()}`}
+                    >
+                        {getIcon()}
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    {getTooltipContent()}
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
     );
 }; 

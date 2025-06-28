@@ -31,7 +31,7 @@ function getFileType(filename: string): FileType {
     if (['txt', 'log', 'env'].includes(ext)) return 'text';
     if (['md', 'markdown'].includes(ext)) return 'markdown';
     if (ext === 'pdf') return 'pdf';
-    if (['mp3', 'wav', 'ogg', 'flac'].includes(ext)) return 'audio';
+    if (['mp3', 'wav', 'ogg', 'flac', 'webm', 'm4a', 'aac'].includes(ext)) return 'audio';
     if (['mp4', 'webm', 'mov', 'avi'].includes(ext)) return 'video';
     if (['csv', 'tsv'].includes(ext)) return 'csv';
     if (['xls', 'xlsx'].includes(ext)) return 'spreadsheet';

@@ -195,7 +195,12 @@ export function AgentSelector({
               <DropdownMenuSeparator />
               
               <DropdownMenuItem onClick={handleCreateAgent} className="cursor-pointer">
-                Agent Playground
+                <div className="flex items-center justify-between w-full">
+                  Agent Playground
+                  <Badge variant="new" className="ml-2">
+                    New
+                  </Badge>
+                </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

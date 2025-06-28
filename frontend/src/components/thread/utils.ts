@@ -301,6 +301,7 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['create-file', 'Creating File'],
   ['delete-file', 'Deleting File'],
   ['full-file-rewrite', 'Rewriting File'],
+  ['read-file', 'Reading File'],
   ['str-replace', 'Editing Text'],
   ['str_replace', 'Editing Text'],
   

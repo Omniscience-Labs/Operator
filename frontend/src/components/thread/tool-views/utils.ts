@@ -40,6 +40,7 @@ export function getToolTitle(toolName: string): string {
     'create-file': 'Create File',
     'full-file-rewrite': 'Rewrite File',
     'delete-file': 'Delete File',
+    'read-file': 'Read File',
     'create-workbook': 'Create Workbook',
     'write-data': 'Write Data',
     'read-data': 'Read Data',

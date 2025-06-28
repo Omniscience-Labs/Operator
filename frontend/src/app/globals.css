@@ -274,8 +274,8 @@
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(27.39% 0.005 286.03);
-  --accent-foreground: oklch(98.46% 0.002 247.84)
-    --destructive: oklch(0.396 0.141 25.723);
+  --accent-foreground: oklch(98.46% 0.002 247.84);
+  --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
@@ -629,7 +629,7 @@
   content: '';
   @apply absolute top-0 left-0 w-full h-full;
   background: linear-gradient(
-    140deg
+    140deg,
     rgba(255, 255, 255, 0) 0%,
     rgba(255, 255, 255, 0.8) 50%,
     rgba(255, 255, 255, 0) 100%

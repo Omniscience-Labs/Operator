@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,6 +17,12 @@ interface CustomMCPDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (config: CustomMCPConfiguration) => void;
+  existingConfig?: {
+    name: string;
+    customType: 'http' | 'sse';
+    config: any;
+    enabledTools: string[];
+  };
 }
 
 interface CustomMCPConfiguration {
@@ -40,8 +46,18 @@ interface HeaderPair {
 export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
   open,
   onOpenChange,
-  onSave
+  onSave,
+  existingConfig
 }) => {
+  const isEditMode = !!existingConfig;
+  
+  // Debug logging for troubleshooting
+  console.log('CustomMCPDialog - Props received:', {
+    open,
+    isEditMode,
+    existingConfig: existingConfig ? 'Has data' : 'undefined',
+    existingConfigDetails: existingConfig
+  });
   const [step, setStep] = useState<'setup' | 'tools'>('setup');
   const [serverType, setServerType] = useState<'http' | 'sse'>('sse');
   const [configText, setConfigText] = useState('');
@@ -53,6 +69,71 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
   const [discoveredTools, setDiscoveredTools] = useState<MCPTool[]>([]);
   const [selectedTools, setSelectedTools] = useState<Set<string>>(new Set());
   const [processedConfig, setProcessedConfig] = useState<any>(null);
+
+  // Effect to populate all form fields when existingConfig changes
+  useEffect(() => {
+    console.log('useEffect triggered - conditions:', {
+      open,
+      isEditMode,
+      hasExistingConfig: !!existingConfig,
+      existingConfigName: existingConfig?.name,
+      existingConfigUrl: existingConfig?.config?.url
+    });
+    
+    if (open && isEditMode && existingConfig) {
+      console.log('✅ Populating edit form with:', {
+        name: existingConfig.name,
+        url: existingConfig.config?.url,
+        headers: existingConfig.config?.headers,
+        tools: existingConfig.enabledTools?.length
+      });
+      
+      // Update all form fields
+      setServerType(existingConfig.customType || 'sse');
+      setServerName(existingConfig.name);
+      setManualServerName(existingConfig.name);
+      
+      // Handle config URL
+      if (existingConfig.config) {
+        const url = existingConfig.config.url || existingConfig.config.command || existingConfig.config.endpoint || '';
+        console.log('Setting URL field to:', url);
+        setConfigText(url);
+      }
+      
+      // Handle headers
+      if (existingConfig.config?.headers && Object.keys(existingConfig.config.headers).length > 0) {
+        const headerPairs = Object.entries(existingConfig.config.headers).map(([key, value]) => ({ 
+          key, 
+          value: String(value) 
+        }));
+        console.log('Setting headers to:', headerPairs);
+        setHeaders(headerPairs);
+      } else {
+        setHeaders([{ key: '', value: '' }]);
+      }
+      
+      // Handle tools
+      if (existingConfig.enabledTools) {
+        // Create mock tool objects from the enabled tools for editing
+        const mockTools: MCPTool[] = existingConfig.enabledTools.map(toolName => ({
+          name: toolName,
+          description: `Custom tool: ${toolName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`
+        }));
+        setDiscoveredTools(mockTools);
+        setSelectedTools(new Set(existingConfig.enabledTools));
+      }
+    } else if (!open || !isEditMode) {
+      // Reset form when dialog closes or not in edit mode
+      console.log('🔄 Resetting form fields');
+      setServerType('sse');
+      setConfigText('');
+      setServerName('');
+      setManualServerName('');
+      setHeaders([{ key: '', value: '' }]);
+      setDiscoveredTools([]);
+      setSelectedTools(new Set());
+    }
+  }, [open, isEditMode, existingConfig]);
 
   const addHeader = () => {
     setHeaders([...headers, { key: '', value: '' }]);
@@ -155,13 +236,22 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
   };
 
   const handleSave = () => {
-    if (discoveredTools.length === 0 || selectedTools.size === 0) {
+    if (!serverName.trim()) {
+      setValidationError('Please provide a name for this connection.');
+      return;
+    }
+
+    // In edit mode, allow saving even if no tools are discovered (user might just want to update config)
+    if (!isEditMode && (discoveredTools.length === 0 || selectedTools.size === 0)) {
       setValidationError('Please select at least one tool to continue.');
       return;
     }
 
-    if (!serverName.trim()) {
-      setValidationError('Please provide a name for this connection.');
+    // In edit mode with no discovered tools, use existing tools if user hasn't selected any new ones
+    const toolsToSave = selectedTools.size > 0 ? Array.from(selectedTools) : (existingConfig?.enabledTools || []);
+
+    if (toolsToSave.length === 0) {
+      setValidationError('Please select at least one tool to continue.');
       return;
     }
 
@@ -175,7 +265,7 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
         name: serverName,
         type: serverType,
         config: configToSave,
-        enabledTools: Array.from(selectedTools)
+        enabledTools: toolsToSave
       });
       
       setConfigText('');
@@ -236,11 +326,13 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
               <Zap className="h-4 w-4 text-primary" />
             </div>
-            <DialogTitle>Connect New Service</DialogTitle>
+            <DialogTitle>{isEditMode ? 'Edit Service Connection' : 'Connect New Service'}</DialogTitle>
           </div>
           <DialogDescription>
             {step === 'setup' 
-              ? 'Connect to external services to expand your capabilities with new tools and integrations.'
+              ? (isEditMode 
+                  ? 'Update your service connection settings and authentication details.'
+                  : 'Connect to external services to expand your capabilities with new tools and integrations.')
               : 'Choose which tools you\'d like to enable from this service connection.'
             }
           </DialogDescription>
@@ -518,7 +610,7 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
                 onClick={handleSave}
                 disabled={selectedTools.size === 0}
               >
-                Add Connection ({selectedTools.size} tools)
+                {isEditMode ? 'Update Connection' : 'Add Connection'} ({selectedTools.size} tools)
               </Button>
             </>
           ) : (
@@ -526,6 +618,18 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
+              {isEditMode && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // In edit mode, allow skipping directly to tools without re-validation
+                    setStep('tools');
+                  }}
+                  disabled={!manualServerName.trim()}
+                >
+                  Skip to Tools
+                </Button>
+              )}
               <Button
                 onClick={validateAndDiscoverTools}
                 disabled={!configText.trim() || !manualServerName.trim() || isValidating}
@@ -538,7 +642,7 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
                 ) : (
                   <>
                     <Sparkles className="h-5 w-5" />
-                    Connect
+                    {isEditMode ? 'Re-validate Connection' : 'Connect'}
                   </>
                 )}
               </Button>
