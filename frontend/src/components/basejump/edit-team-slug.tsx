@@ -32,7 +32,7 @@ export default function EditTeamSlug({ account }: Props) {
               id="slug"
               placeholder="my-team"
               required
-              className="h-10 rounded-lg border-subtle dark:border-white/10 bg-white dark:bg-background-secondary"
+              className="h-10 rounded-lg border-subtle dark:border-white/10 bg-white dark:bg-background-secondary text-foreground placeholder:text-muted-foreground"
             />
           </div>
         </div>

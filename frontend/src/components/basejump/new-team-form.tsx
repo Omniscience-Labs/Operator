@@ -49,7 +49,7 @@ export default function NewTeamForm() {
               value={nameValue}
               onChange={handleNameChange}
               placeholder="Acme Corporation"
-              className="h-10 pr-9 rounded-lg border-input/60 dark:border-white/10 bg-white dark:bg-background-secondary shadow-xs focus-visible:ring-primary/30"
+              className="h-10 pr-9 rounded-lg border-input/60 dark:border-white/10 bg-white dark:bg-background-secondary shadow-xs focus-visible:ring-primary/30 text-foreground placeholder:text-muted-foreground"
               required
             />
             {nameValue && (
@@ -71,7 +71,7 @@ export default function NewTeamForm() {
               (unique identifier)
             </span>
           </Label>
-          <div className="flex items-center gap-x-1.5 relative rounded-lg border-input/60 dark:border-white/10 bg-white dark:bg-background-secondary shadow-xs pl-3 border overflow-hidden focus-within:ring-3 focus-within:ring-primary/30 focus-within:border-ring group">
+          <div className="flex items-center gap-x-1.5 relative rounded-lg border-input/60 dark:border-white/10 bg-white dark:bg-background-secondary shadow-xs pl-3 border overflow-hidden focus-within:ring-3 focus-within:ring-primary/30 focus-within:border-ring group text-foreground">
             <AtSign className="size-4 text-muted-foreground group-focus-within:text-foreground/80" />
             <Input
               id="slug"
