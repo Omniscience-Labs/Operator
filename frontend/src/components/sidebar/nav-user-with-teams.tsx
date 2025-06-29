@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAccounts } from '@/hooks/use-accounts';
 import NewTeamForm from '@/components/basejump/new-team-form';
+import { PersonalizationModal } from '@/components/personalization/account-personalization';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -62,6 +63,7 @@ export function NavUserWithTeams({
   const { isMobile } = useSidebar();
   const { data: accounts } = useAccounts();
   const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false);
+  const [showPersonalizationModal, setShowPersonalizationModal] = React.useState(false);
   const { theme, setTheme } = useTheme();
 
   // Prepare personal account and team accounts
@@ -159,8 +161,9 @@ export function NavUserWithTeams({
   }
 
   return (
-    <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
-      <SidebarMenu>
+    <>
+      <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
+        <SidebarMenu>
         <SidebarMenuItem>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -280,18 +283,12 @@ export function NavUserWithTeams({
 
               {/* User Settings Section */}
               <DropdownMenuGroup>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings/billing">
-                    <CreditCard className="h-4 w-4" />
-                    Billing
-                  </Link>
+                <DropdownMenuItem
+                  onClick={() => setShowPersonalizationModal(true)}
+                >
+                  <Settings className="h-4 w-4" />
+                  Personalization
                 </DropdownMenuItem>
-                {/* <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem> */}
                 <DropdownMenuItem
                   onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
                 >
@@ -309,20 +306,29 @@ export function NavUserWithTeams({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </SidebarMenuItem>
-      </SidebarMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
 
-      <DialogContent className="sm:max-w-[425px] border-subtle dark:border-white/10 bg-card-bg dark:bg-background-secondary rounded-2xl shadow-custom">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">
-            Create a new team
-          </DialogTitle>
-          <DialogDescription className="text-foreground/70">
-            Create a team to collaborate with others.
-          </DialogDescription>
-        </DialogHeader>
-        <NewTeamForm />
-      </DialogContent>
-    </Dialog>
+        <DialogContent className="sm:max-w-[425px] border-subtle dark:border-white/10 bg-card-bg dark:bg-background-secondary rounded-2xl shadow-custom">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              Create a new team
+            </DialogTitle>
+            <DialogDescription className="text-foreground/70">
+              Create a team to collaborate with others.
+            </DialogDescription>
+          </DialogHeader>
+          <NewTeamForm />
+        </DialogContent>
+      </Dialog>
+
+      {personalAccount && (
+        <PersonalizationModal
+          open={showPersonalizationModal}
+          onOpenChange={setShowPersonalizationModal}
+          account={personalAccount}
+        />
+      )}
+    </>
   );
 }
