@@ -194,7 +194,7 @@ export function DashboardContent() {
           <div className="flex flex-col items-center text-center w-full">
             <div className="flex items-center gap-1">
               <h1 className="tracking-tight text-4xl text-muted-foreground leading-tight">
-                Hey, I am
+                Hey I am
               </h1>
               <AgentSelector
                 selectedAgentId={selectedAgentId}
