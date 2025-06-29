@@ -8,6 +8,7 @@ This module provides comprehensive conversation management, including:
 - LLM interaction with streaming support
 - Error handling and cleanup
 - Context summarization to manage token limits
+- Memory integration with mem0 for conversation context
 """
 
 import json
@@ -24,6 +25,7 @@ from services.supabase import DBConnection
 from utils.logger import logger
 from langfuse.client import StatefulGenerationClient, StatefulTraceClient
 from services.langfuse import langfuse
+from utils.memory_service import get_memory_service
 import datetime
 from litellm import token_counter
 
@@ -61,6 +63,10 @@ class ThreadManager:
             target_agent_id=self.target_agent_id
         )
         self.context_manager = ContextManager()
+        
+        # Memory service for conversation context
+        self._memory_service = None
+        self._thread_info_cache = {}
 
     def _is_tool_result_message(self, msg: Dict[str, Any]) -> bool:
         if not ("content" in msg and msg['content']):
@@ -327,6 +333,114 @@ class ThreadManager:
     def add_tool(self, tool_class: Type[Tool], function_names: Optional[List[str]] = None, **kwargs):
         """Add a tool to the ThreadManager."""
         self.tool_registry.register_tool(tool_class, function_names, **kwargs)
+    
+    async def _get_memory_service(self):
+        """Get the memory service instance."""
+        if not self._memory_service:
+            self._memory_service = await get_memory_service()
+        return self._memory_service
+    
+    async def _get_thread_info(self, thread_id: str) -> Dict[str, Any]:
+        """Get thread information including user_id and agent_id."""
+        if thread_id in self._thread_info_cache:
+            return self._thread_info_cache[thread_id]
+            
+        try:
+            client = await self.db.client
+            
+            # Get thread information with project and account details
+            result = await client.table('threads').select(
+                'thread_id, agent_id, project_id, account_id, projects!inner(account_id)'
+            ).eq('thread_id', thread_id).maybe_single().execute()
+            
+            if result.data:
+                thread_info = {
+                    'thread_id': result.data['thread_id'],
+                    'user_id': result.data['account_id'] or result.data['projects']['account_id'],
+                    'agent_id': result.data.get('agent_id'),
+                    'project_id': result.data.get('project_id')
+                }
+                self._thread_info_cache[thread_id] = thread_info
+                return thread_info
+            else:
+                logger.warning(f"Thread {thread_id} not found")
+                return {'thread_id': thread_id, 'user_id': None, 'agent_id': None, 'project_id': None}
+                
+        except Exception as e:
+            logger.error(f"Failed to get thread info for {thread_id}: {str(e)}")
+            return {'thread_id': thread_id, 'user_id': None, 'agent_id': None, 'project_id': None}
+    
+    async def _search_relevant_memories(self, thread_id: str, query: str) -> Optional[str]:
+        """Search for relevant memories and format them for inclusion in the prompt."""
+        try:
+            memory_service = await self._get_memory_service()
+            thread_info = await self._get_thread_info(thread_id)
+            
+            if not thread_info['user_id']:
+                return None
+                
+            memories = await memory_service.search_memory(
+                query=query,
+                user_id=thread_info['user_id'],
+                agent_id=thread_info['agent_id'],
+                limit=5
+            )
+            
+            if memories and len(memories) > 0:
+                memory_context = "## Relevant Context from Previous Conversations:\n"
+                for i, memory in enumerate(memories, 1):
+                    memory_text = memory.get('memory', memory.get('text', str(memory)))
+                    memory_context += f"{i}. {memory_text}\n"
+                memory_context += "\n"
+                logger.info(f"Found {len(memories)} relevant memories for thread {thread_id}")
+                return memory_context
+            else:
+                logger.debug(f"No relevant memories found for thread {thread_id}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Failed to search memories for thread {thread_id}: {str(e)}")
+            return None
+    
+    async def _add_conversation_to_memory(self, thread_id: str, messages: List[Dict[str, Any]]):
+        """Add conversation messages to memory."""
+        try:
+            memory_service = await self._get_memory_service()
+            thread_info = await self._get_thread_info(thread_id)
+            
+            if not thread_info['user_id']:
+                return
+                
+            # Filter messages to only include user and assistant messages
+            memory_messages = []
+            for msg in messages:
+                if msg.get('role') in ['user', 'assistant']:
+                    content = msg.get('content', '')
+                    if isinstance(content, dict):
+                        # Extract text content from structured content
+                        if 'content' in content:
+                            content = content['content']
+                        else:
+                            content = str(content)
+                    elif not isinstance(content, str):
+                        content = str(content)
+                    
+                    if content.strip():  # Only add non-empty messages
+                        memory_messages.append({
+                            'role': msg['role'],
+                            'content': content
+                        })
+            
+            if memory_messages:
+                await memory_service.add_memory(
+                    messages=memory_messages,
+                    user_id=thread_info['user_id'],
+                    agent_id=thread_info['agent_id']
+                )
+                logger.debug(f"Added {len(memory_messages)} messages to memory for thread {thread_id}")
+                
+        except Exception as e:
+            logger.error(f"Failed to add conversation to memory for thread {thread_id}: {str(e)}")
 
     async def add_message(
         self,
@@ -563,8 +677,47 @@ Here are the XML tools available with examples:
                 except Exception as e:
                     logger.error(f"Error counting tokens or summarizing: {str(e)}")
 
-                # 3. Prepare messages for LLM call + add temporary message if it exists
-                # Use the working_system_prompt which may contain the XML examples
+                # 3. Search for relevant memories and add to system prompt if found
+                # Find the last user message to use as search query
+                last_user_message = None
+                for msg in reversed(messages):
+                    if msg.get('role') == 'user':
+                        last_user_message = msg
+                        break
+                
+                # If we have a temporary message, use that as the search query instead
+                if temp_msg and temp_msg.get('role') == 'user':
+                    last_user_message = temp_msg
+                
+                # Search for relevant memories using the user's latest message
+                if last_user_message:
+                    query_content = last_user_message.get('content', '')
+                    if isinstance(query_content, list):
+                        # Extract text from structured content
+                        text_parts = []
+                        for part in query_content:
+                            if isinstance(part, dict) and part.get('type') == 'text':
+                                text_parts.append(part.get('text', ''))
+                        query_content = ' '.join(text_parts)
+                    elif not isinstance(query_content, str):
+                        query_content = str(query_content)
+                    
+                    if query_content.strip():
+                        memory_context = await self._search_relevant_memories(thread_id, query_content)
+                        if memory_context:
+                            # Add memory context to the system prompt
+                            system_content = working_system_prompt.get('content', '')
+                            if isinstance(system_content, str):
+                                working_system_prompt['content'] = system_content + "\n\n" + memory_context
+                            elif isinstance(system_content, list):
+                                # Find the first text block and append to it
+                                for item in system_content:
+                                    if isinstance(item, dict) and item.get('type') == 'text' and 'text' in item:
+                                        item['text'] += "\n\n" + memory_context
+                                        break
+
+                # 4. Prepare messages for LLM call + add temporary message if it exists
+                # Use the working_system_prompt which may contain the XML examples and memory context
                 prepared_messages = [working_system_prompt]
 
                 # Find the last user message index
@@ -586,7 +739,7 @@ Here are the XML tools available with examples:
                         prepared_messages.append(temp_msg)
                         logger.debug("Added temporary message to the end of prepared messages")
 
-                # 4. Prepare tools for LLM call
+                # 5. Prepare tools for LLM call
                 openapi_tool_schemas = None
                 if processor_config.native_tool_calling:
                     openapi_tool_schemas = self.tool_registry.get_openapi_schemas()
@@ -594,7 +747,7 @@ Here are the XML tools available with examples:
 
                 prepared_messages = self._compress_messages(prepared_messages, llm_model)
 
-                # 5. Make LLM API call
+                # 6. Make LLM API call
                 logger.debug("Making LLM API call")
                 try:
                     if generation:
@@ -628,7 +781,7 @@ Here are the XML tools available with examples:
                     logger.error(f"Failed to make LLM API call: {str(e)}", exc_info=True)
                     raise
 
-                # 6. Process LLM response using the ResponseProcessor
+                # 7. Process LLM response using the ResponseProcessor
                 if stream:
                     logger.debug("Processing streaming response")
                     response_generator = self.response_processor.process_streaming_response(
@@ -639,7 +792,41 @@ Here are the XML tools available with examples:
                         llm_model=llm_model,
                     )
 
-                    return response_generator
+                    # Wrap the response generator to add memory storage after completion
+                    async def memory_aware_generator():
+                        assistant_content = ""
+                        try:
+                            async for chunk in response_generator:
+                                # Collect assistant responses for memory storage
+                                if chunk.get('type') == 'content' and chunk.get('content'):
+                                    assistant_content += chunk['content']
+                                yield chunk
+                        finally:
+                            # Add conversation to memory after response is complete
+                            if assistant_content.strip():
+                                try:
+                                    # Get the latest user message for memory
+                                    memory_messages = []
+                                    if last_user_message:
+                                        user_content = last_user_message.get('content', '')
+                                        if isinstance(user_content, list):
+                                            text_parts = []
+                                            for part in user_content:
+                                                if isinstance(part, dict) and part.get('type') == 'text':
+                                                    text_parts.append(part.get('text', ''))
+                                            user_content = ' '.join(text_parts)
+                                        elif not isinstance(user_content, str):
+                                            user_content = str(user_content)
+                                        
+                                        if user_content.strip():
+                                            memory_messages.append({'role': 'user', 'content': user_content})
+                                    
+                                    memory_messages.append({'role': 'assistant', 'content': assistant_content})
+                                    await self._add_conversation_to_memory(thread_id, memory_messages)
+                                except Exception as e:
+                                    logger.error(f"Failed to store conversation in memory: {str(e)}")
+
+                    return memory_aware_generator()
                 else:
                     logger.debug("Processing non-streaming response")
                     # Pass through the response generator without try/except to let errors propagate up
@@ -650,7 +837,42 @@ Here are the XML tools available with examples:
                         prompt_messages=prepared_messages,
                         llm_model=llm_model,
                     )
-                    return response_generator # Return the generator
+                    
+                    # Wrap the response generator to add memory storage after completion
+                    async def memory_aware_non_streaming_generator():
+                        assistant_content = ""
+                        try:
+                            async for chunk in response_generator:
+                                # Collect assistant responses for memory storage
+                                if chunk.get('type') == 'content' and chunk.get('content'):
+                                    assistant_content += chunk['content']
+                                yield chunk
+                        finally:
+                            # Add conversation to memory after response is complete
+                            if assistant_content.strip():
+                                try:
+                                    # Get the latest user message for memory
+                                    memory_messages = []
+                                    if last_user_message:
+                                        user_content = last_user_message.get('content', '')
+                                        if isinstance(user_content, list):
+                                            text_parts = []
+                                            for part in user_content:
+                                                if isinstance(part, dict) and part.get('type') == 'text':
+                                                    text_parts.append(part.get('text', ''))
+                                            user_content = ' '.join(text_parts)
+                                        elif not isinstance(user_content, str):
+                                            user_content = str(user_content)
+                                        
+                                        if user_content.strip():
+                                            memory_messages.append({'role': 'user', 'content': user_content})
+                                    
+                                    memory_messages.append({'role': 'assistant', 'content': assistant_content})
+                                    await self._add_conversation_to_memory(thread_id, memory_messages)
+                                except Exception as e:
+                                    logger.error(f"Failed to store conversation in memory: {str(e)}")
+
+                    return memory_aware_non_streaming_generator()
 
             except Exception as e:
                 logger.error(f"Error in run_thread: {str(e)}", exc_info=True)
