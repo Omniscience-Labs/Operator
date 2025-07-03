@@ -68,6 +68,11 @@ class UpdateAgentTool(Tool):
                             }
                         }
                     },
+                    "knowledge_indexes": {
+                        "type": "array",
+                        "description": "List of knowledge index IDs enabled for this agent",
+                        "items": {"type": "string"}
+                    },
                     "avatar": {
                         "type": "string",
                         "description": "Emoji to use as the agent's avatar."
@@ -89,6 +94,7 @@ class UpdateAgentTool(Tool):
             {"param_name": "system_prompt", "node_type": "element", "path": "system_prompt", "required": False},
             {"param_name": "agentpress_tools", "node_type": "element", "path": "agentpress_tools", "required": False},
             {"param_name": "configured_mcps", "node_type": "element", "path": "configured_mcps", "required": False},
+            {"param_name": "knowledge_indexes", "node_type": "element", "path": "knowledge_indexes", "required": False},
             {"param_name": "avatar", "node_type": "attribute", "path": ".", "required": False},
             {"param_name": "avatar_color", "node_type": "attribute", "path": ".", "required": False}
         ],
@@ -112,6 +118,7 @@ class UpdateAgentTool(Tool):
         system_prompt: Optional[str] = None,
         agentpress_tools: Optional[Dict[str, Dict[str, Any]]] = None,
         configured_mcps: Optional[list] = None,
+        knowledge_indexes: Optional[List[str]] = None,
         avatar: Optional[str] = None,
         avatar_color: Optional[str] = None
     ) -> ToolResult:
@@ -123,6 +130,7 @@ class UpdateAgentTool(Tool):
             system_prompt: System instructions for the agent
             agentpress_tools: AgentPress tools configuration
             configured_mcps: MCP servers configuration
+            knowledge_indexes: List of knowledge index IDs
             avatar: Emoji avatar
             avatar_color: Avatar background color
             
@@ -152,6 +160,8 @@ class UpdateAgentTool(Tool):
                 if isinstance(configured_mcps, str):
                     configured_mcps = json.loads(configured_mcps)
                 update_data["configured_mcps"] = configured_mcps
+            if knowledge_indexes is not None:
+                update_data["knowledge_indexes"] = knowledge_indexes
             if avatar is not None:
                 update_data["avatar"] = avatar
             if avatar_color is not None:

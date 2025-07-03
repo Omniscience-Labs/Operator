@@ -27,6 +27,7 @@ from utils.logger import logger
 from utils.auth_utils import get_account_id_from_thread
 from services.billing import check_billing_status
 from agent.tools.sb_vision_tool import SandboxVisionTool
+from agent.tools.sb_knowledge_tool import SandboxKnowledgeTool
 
 from services.langfuse import langfuse
 from langfuse.client import StatefulTraceClient
@@ -88,6 +89,21 @@ async def run_agent(
         enabled_tools = agent_config['agentpress_tools']
         logger.info(f"Using custom tool configuration from agent")
     
+    # Get knowledge indexes for this agent if configured
+    knowledge_indexes = []
+    if agent_config and agent_config.get('knowledge_indexes'):
+        # Fetch knowledge index details from database
+        from services.supabase import DBConnection
+        db = DBConnection()
+        client = await db.client
+        
+        index_ids = agent_config.get('knowledge_indexes', [])
+        if index_ids:
+            result = await client.table('knowledge_indexes').select('*').in_('index_id', index_ids).execute()
+            if result.data:
+                knowledge_indexes = result.data
+                logger.info(f"Loaded {len(knowledge_indexes)} knowledge indexes for agent")
+    
     # Register tools based on configuration
     # If no agent config (enabled_tools is None), register ALL tools for full Suna capabilities
     # If agent config exists, only register explicitly enabled tools
@@ -114,6 +130,9 @@ async def run_agent(
         thread_manager.add_tool(SandboxPDFFormTool, project_id=project_id, thread_manager=thread_manager)
         if config.RAPID_API_KEY:
             thread_manager.add_tool(DataProvidersTool)
+        # Add knowledge tool if indexes are configured
+        if knowledge_indexes:
+            thread_manager.add_tool(SandboxKnowledgeTool, knowledge_indexes=knowledge_indexes, thread_manager=thread_manager)
     else:
         logger.info("Custom agent specified - registering only enabled tools")
         thread_manager.add_tool(ExpandMessageTool, thread_id=thread_id, thread_manager=thread_manager)
@@ -138,6 +157,9 @@ async def run_agent(
             thread_manager.add_tool(SandboxPDFFormTool, project_id=project_id, thread_manager=thread_manager)
         if config.RAPID_API_KEY and enabled_tools.get('data_providers_tool', {}).get('enabled', False):
             thread_manager.add_tool(DataProvidersTool)
+        # Add knowledge tool if enabled and indexes are configured
+        if enabled_tools.get('sb_knowledge_tool', {}).get('enabled', False) and knowledge_indexes:
+            thread_manager.add_tool(SandboxKnowledgeTool, knowledge_indexes=knowledge_indexes, thread_manager=thread_manager)
 
     # Register MCP tool wrapper if agent has configured MCPs or custom MCPs
     mcp_wrapper_instance = None

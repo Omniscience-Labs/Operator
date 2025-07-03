@@ -6,12 +6,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, Save, Settings2, Sparkles } from 'lucide-react';
+import { Loader2, Search, Save, Settings2, Sparkles, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DEFAULT_AGENTPRESS_TOOLS, getToolDisplayName } from '../_data/tools';
 import { useAgent, useUpdateAgent } from '@/hooks/react-query/agents/use-agents';
 import { MCPConfigurationNew } from './mcp/mcp-configuration-new';
+import { KnowledgeConfiguration } from './knowledge-configuration';
 
 interface AgentUpdateRequest {
   name?: string;
@@ -20,6 +21,7 @@ interface AgentUpdateRequest {
   configured_mcps?: Array<{ name: string; qualifiedName: string; config: any; enabledTools?: string[] }>;
   custom_mcps?: Array<{ name: string; type: 'json' | 'sse'; config: any; enabledTools: string[] }>;
   agentpress_tools?: Record<string, { enabled: boolean; description: string }>;
+  knowledge_indexes?: string[];
   is_default?: boolean;
 }
 
@@ -67,6 +69,7 @@ export const UpdateAgentDialog = ({ agentId, isOpen, onOpenChange, onAgentUpdate
         })),
         custom_mcps: agent.custom_mcps || [],
         agentpress_tools: agent.agentpress_tools || {},
+        knowledge_indexes: agent.knowledge_indexes || [],
         is_default: agent.is_default,
       });
     }
@@ -280,6 +283,12 @@ export const UpdateAgentDialog = ({ agentId, isOpen, onOpenChange, onAgentUpdate
                     <Sparkles className="h-4 w-4" />
                     MCP Servers
                   </TabsTrigger>
+                  <TabsTrigger 
+                    value="knowledge" 
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    Knowledge Bases
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="tools" className="flex-1 flex flex-col m-0 min-h-0">
@@ -360,15 +369,15 @@ export const UpdateAgentDialog = ({ agentId, isOpen, onOpenChange, onAgentUpdate
 
                 <TabsContent value="mcp" className="flex-1 m-0 p-6 overflow-y-auto">
                   <MCPConfigurationNew
-                    configuredMCPs={[...(formData.configured_mcps || []), ...(formData.custom_mcps || []).map(customMcp => ({
-                      name: customMcp.name,
-                      qualifiedName: `custom_${customMcp.type}_${customMcp.name.replace(' ', '_').toLowerCase()}`,
-                      config: customMcp.config,
-                      enabledTools: customMcp.enabledTools,
-                      isCustom: true,
-                      customType: customMcp.type
-                    }))]}
+                    configuredMCPs={formData.configured_mcps || []}
                     onConfigurationChange={handleMCPConfigurationChange}
+                  />
+                </TabsContent>
+
+                <TabsContent value="knowledge" className="flex-1 m-0 p-6 overflow-y-auto">
+                  <KnowledgeConfiguration
+                    selectedIndexes={formData.knowledge_indexes || []}
+                    onIndexesChange={(indexes) => handleInputChange('knowledge_indexes', indexes)}
                   />
                 </TabsContent>
               </Tabs>

@@ -9,6 +9,7 @@ export const DEFAULT_AGENTPRESS_TOOLS: Record<string, { enabled: boolean; descri
     'sb_excel_tool': { enabled: false, description: 'Excel file operations including creating, reading, writing, and formatting spreadsheets', icon: '📊', color: 'bg-emerald-100 dark:bg-emerald-800/50' },
     'sb_pdf_form_tool': { enabled: false, description: 'PDF form operations including reading form fields, filling forms, and flattening PDFs', icon: '📄', color: 'bg-purple-100 dark:bg-purple-800/50' },
     'data_providers_tool': { enabled: false, description: 'Access to data providers and external APIs like Apollo (requires API key)', icon: '🔗', color: 'bg-cyan-100 dark:bg-cyan-800/50' },
+    'sb_knowledge_tool': { enabled: false, description: 'Search through custom knowledge bases and documentation to find relevant information', icon: '📚', color: 'bg-cyan-100 dark:bg-cyan-800/50' },
 };
 
 export const getToolDisplayName = (toolName: string): string => {

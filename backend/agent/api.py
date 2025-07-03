@@ -52,6 +52,7 @@ class AgentCreateRequest(BaseModel):
     configured_mcps: Optional[List[Dict[str, Any]]] = []
     custom_mcps: Optional[List[Dict[str, Any]]] = []
     agentpress_tools: Optional[Dict[str, Any]] = {}
+    knowledge_indexes: Optional[List[str]] = []
     is_default: Optional[bool] = False
     avatar: Optional[str] = None
     avatar_color: Optional[str] = None
@@ -63,6 +64,7 @@ class AgentUpdateRequest(BaseModel):
     configured_mcps: Optional[List[Dict[str, Any]]] = None
     custom_mcps: Optional[List[Dict[str, Any]]] = None
     agentpress_tools: Optional[Dict[str, Any]] = None
+    knowledge_indexes: Optional[List[str]] = None
     is_default: Optional[bool] = None
     avatar: Optional[str] = None
     avatar_color: Optional[str] = None
@@ -76,6 +78,7 @@ class AgentResponse(BaseModel):
     configured_mcps: List[Dict[str, Any]]
     custom_mcps: Optional[List[Dict[str, Any]]] = []
     agentpress_tools: Dict[str, Any]
+    knowledge_indexes: Optional[List[str]] = []
     is_default: bool
     is_public: Optional[bool] = False
     marketplace_published_at: Optional[str] = None
@@ -600,6 +603,7 @@ async def get_thread_agent(thread_id: str, user_id: str = Depends(get_current_us
                 configured_mcps=agent_data.get('configured_mcps', []),
                 custom_mcps=agent_data.get('custom_mcps', []),
                 agentpress_tools=agent_data.get('agentpress_tools', {}),
+                knowledge_indexes=agent_data.get('knowledge_indexes', []),
                 is_default=agent_data.get('is_default', False),
                 is_public=agent_data.get('is_public', False),
                 marketplace_published_at=agent_data.get('marketplace_published_at'),
@@ -1270,6 +1274,7 @@ async def get_agents(
                 configured_mcps=agent.get('configured_mcps', []),
                 custom_mcps=agent.get('custom_mcps', []),
                 agentpress_tools=agent.get('agentpress_tools', {}),
+                knowledge_indexes=agent.get('knowledge_indexes', []),
                 is_default=agent.get('is_default', False),
                 is_public=agent.get('is_public', False),
                 marketplace_published_at=agent.get('marketplace_published_at'),
@@ -1332,6 +1337,7 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
             configured_mcps=agent_data.get('configured_mcps', []),
             custom_mcps=agent_data.get('custom_mcps', []),
             agentpress_tools=agent_data.get('agentpress_tools', {}),
+            knowledge_indexes=agent_data.get('knowledge_indexes', []),
             is_default=agent_data.get('is_default', False),
             is_public=agent_data.get('is_public', False),
             marketplace_published_at=agent_data.get('marketplace_published_at'),
@@ -1382,6 +1388,7 @@ async def create_agent(
             "configured_mcps": agent_data.configured_mcps or [],
             "custom_mcps": agent_data.custom_mcps or [],
             "agentpress_tools": agent_data.agentpress_tools or {},
+            "knowledge_indexes": agent_data.knowledge_indexes or [],
             "is_default": agent_data.is_default or False,
             "avatar": agent_data.avatar,
             "avatar_color": agent_data.avatar_color
@@ -1404,6 +1411,7 @@ async def create_agent(
             configured_mcps=agent.get('configured_mcps', []),
             custom_mcps=agent.get('custom_mcps', []),
             agentpress_tools=agent.get('agentpress_tools', {}),
+            knowledge_indexes=agent.get('knowledge_indexes', []),
             is_default=agent.get('is_default', False),
             is_public=agent.get('is_public', False),
             marketplace_published_at=agent.get('marketplace_published_at'),
@@ -1465,6 +1473,8 @@ async def update_agent(
             update_data["custom_mcps"] = agent_data.custom_mcps
         if agent_data.agentpress_tools is not None:
             update_data["agentpress_tools"] = agent_data.agentpress_tools
+        if agent_data.knowledge_indexes is not None:
+            update_data["knowledge_indexes"] = agent_data.knowledge_indexes
         if agent_data.is_default is not None:
             update_data["is_default"] = agent_data.is_default
             # If setting as default, unset other defaults first
@@ -1504,6 +1514,7 @@ async def update_agent(
             configured_mcps=agent.get('configured_mcps', []),
             custom_mcps=agent.get('custom_mcps', []),
             agentpress_tools=agent.get('agentpress_tools', {}),
+            knowledge_indexes=agent.get('knowledge_indexes', []),
             is_default=agent.get('is_default', False),
             is_public=agent.get('is_public', False),
             marketplace_published_at=agent.get('marketplace_published_at'),
@@ -1875,3 +1886,214 @@ async def get_agent_builder_chat_history(
     except Exception as e:
         logger.error(f"Error fetching agent builder chat history for agent {agent_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch chat history: {str(e)}")
+
+# Knowledge Tool API Endpoints
+class CreateKnowledgeIndexRequest(BaseModel):
+    name: str
+    description: str
+    index_type: str = "uploaded"  # "uploaded" or "external"
+    llamacloud_index_key: Optional[str] = None  # Required for external
+
+class UpdateKnowledgeIndexRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class KnowledgeIndexResponse(BaseModel):
+    index_id: str
+    name: str
+    description: str
+    llamacloud_index_key: str
+    index_type: str
+    is_active: bool
+    file_count: int = 0
+    created_at: str
+    updated_at: str
+
+@router.post("/knowledge/indexes", response_model=KnowledgeIndexResponse)
+async def create_knowledge_index(
+    request: CreateKnowledgeIndexRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Create a new knowledge index."""
+    account_id = await get_account_id_from_thread(user_id)
+    client = await db.client
+    
+    try:
+        # For external indexes, validate the key is provided
+        if request.index_type == "external" and not request.llamacloud_index_key:
+            raise HTTPException(
+                status_code=400, 
+                detail="llamacloud_index_key is required for external indexes"
+            )
+        
+        # For uploaded indexes, generate a unique key
+        if request.index_type == "uploaded":
+            import uuid
+            llamacloud_index_key = f"suna_{account_id}_{uuid.uuid4().hex[:8]}"
+        else:
+            llamacloud_index_key = request.llamacloud_index_key
+        
+        # Create the index record
+        index_data = {
+            "account_id": account_id,
+            "name": request.name,
+            "description": request.description,
+            "llamacloud_index_key": llamacloud_index_key,
+            "index_type": request.index_type,
+            "is_active": True
+        }
+        
+        result = await client.table('knowledge_indexes').insert(index_data).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to create knowledge index")
+        
+        index = result.data[0]
+        
+        return KnowledgeIndexResponse(
+            index_id=index['index_id'],
+            name=index['name'],
+            description=index['description'],
+            llamacloud_index_key=index['llamacloud_index_key'],
+            index_type=index['index_type'],
+            is_active=index['is_active'],
+            file_count=0,
+            created_at=index['created_at'],
+            updated_at=index['updated_at']
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating knowledge index: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create knowledge index: {str(e)}")
+
+@router.get("/knowledge/indexes", response_model=List[KnowledgeIndexResponse])
+async def get_knowledge_indexes(user_id: str = Depends(get_current_user_id_from_jwt)):
+    """Get all knowledge indexes for the current account."""
+    account_id = await get_account_id_from_thread(user_id)
+    client = await db.client
+    
+    try:
+        # Get indexes
+        result = await client.table('knowledge_indexes').select('*').eq('account_id', account_id).order('created_at', desc=True).execute()
+        
+        indexes = []
+        for index in result.data:
+            # Get file count
+            file_result = await client.table('knowledge_files').select('count', count='exact').eq('index_id', index['index_id']).execute()
+            file_count = file_result.count if file_result else 0
+            
+            indexes.append(KnowledgeIndexResponse(
+                index_id=index['index_id'],
+                name=index['name'],
+                description=index['description'],
+                llamacloud_index_key=index['llamacloud_index_key'],
+                index_type=index['index_type'],
+                is_active=index['is_active'],
+                file_count=file_count,
+                created_at=index['created_at'],
+                updated_at=index['updated_at']
+            ))
+        
+        return indexes
+        
+    except Exception as e:
+        logger.error(f"Error getting knowledge indexes: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get knowledge indexes: {str(e)}")
+
+@router.put("/knowledge/indexes/{index_id}", response_model=KnowledgeIndexResponse)
+async def update_knowledge_index(
+    index_id: str,
+    request: UpdateKnowledgeIndexRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Update a knowledge index."""
+    account_id = await get_account_id_from_thread(user_id)
+    client = await db.client
+    
+    try:
+        # Verify ownership
+        check_result = await client.table('knowledge_indexes').select('account_id').eq('index_id', index_id).single().execute()
+        if not check_result.data or check_result.data['account_id'] != account_id:
+            raise HTTPException(status_code=404, detail="Knowledge index not found")
+        
+        # Build update data
+        update_data = {}
+        if request.name is not None:
+            update_data['name'] = request.name
+        if request.description is not None:
+            update_data['description'] = request.description
+        if request.is_active is not None:
+            update_data['is_active'] = request.is_active
+        
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        
+        # Update the index
+        result = await client.table('knowledge_indexes').update(update_data).eq('index_id', index_id).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Knowledge index not found")
+        
+        index = result.data[0]
+        
+        # Get file count
+        file_result = await client.table('knowledge_files').select('count', count='exact').eq('index_id', index_id).execute()
+        file_count = file_result.count if file_result else 0
+        
+        return KnowledgeIndexResponse(
+            index_id=index['index_id'],
+            name=index['name'],
+            description=index['description'],
+            llamacloud_index_key=index['llamacloud_index_key'],
+            index_type=index['index_type'],
+            is_active=index['is_active'],
+            file_count=file_count,
+            created_at=index['created_at'],
+            updated_at=index['updated_at']
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating knowledge index: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update knowledge index: {str(e)}")
+
+@router.delete("/knowledge/indexes/{index_id}")
+async def delete_knowledge_index(
+    index_id: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Delete a knowledge index and its files."""
+    account_id = await get_account_id_from_thread(user_id)
+    client = await db.client
+    
+    try:
+        # Verify ownership
+        check_result = await client.table('knowledge_indexes').select('account_id, index_type').eq('index_id', index_id).single().execute()
+        if not check_result.data or check_result.data['account_id'] != account_id:
+            raise HTTPException(status_code=404, detail="Knowledge index not found")
+        
+        # TODO: If it's an uploaded index, delete from LlamaCloud
+        # if check_result.data['index_type'] == 'uploaded':
+        #     # Call LlamaCloud API to delete the index
+        #     pass
+        
+        # Delete the index (files will cascade delete)
+        await client.table('knowledge_indexes').delete().eq('index_id', index_id).execute()
+        
+        return {"message": "Knowledge index deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting knowledge index: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete knowledge index: {str(e)}")
+
+# File upload endpoint would go here, but it requires more complex handling
+# with multipart uploads and LlamaCloud integration
+
+if __name__ == "__main__":
+    # ... existing code ...

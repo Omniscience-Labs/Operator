@@ -76,6 +76,7 @@ export type AgentCreateRequest = {
     enabledTools: string[];
   }>;
   agentpress_tools?: Record<string, any>;
+  knowledge_indexes?: string[];
   is_default?: boolean;
 };
 
@@ -94,6 +95,7 @@ export type AgentUpdateRequest = {
     enabledTools: string[];
   }>;
   agentpress_tools?: Record<string, any>;
+  knowledge_indexes?: string[];
   is_default?: boolean;
 };
 
