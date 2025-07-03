@@ -127,13 +127,10 @@ class KnowledgeSearchTool(Tool):
             except ImportError:
                 return self.fail_response("LlamaCloud client not installed. Please install llama-index-indices-managed-llama-cloud")
             
-            # Set the API key
-            os.environ["LLAMA_CLOUD_API_KEY"] = self.api_key
-            
             logger.info(f"Searching index '{index_name}' with query: {query}")
             
-            # Connect to the index
-            index = LlamaCloudIndex(index_name, project_name=self.project_name)
+            # Connect to the index with API key passed directly
+            index = LlamaCloudIndex(index_name, project_name=self.project_name, api_key=self.api_key)
             
             # Configure retriever with balanced settings
             retriever = index.as_retriever(
