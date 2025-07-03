@@ -83,6 +83,7 @@
     "react": "^18",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18",
+    "react-dropzone": "^14.2.3",
     "react-hook-form": "^7.55.0",
     "react-markdown": "^10.1.0",
     "react-papaparse": "^4.4.0",

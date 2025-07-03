@@ -19,6 +19,7 @@ from pydantic import BaseModel
 import uuid
 # Import the agent API module
 from agent import api as agent_api
+from agent import knowledge_api
 from sandbox import api as sandbox_api
 from services import billing as billing_api
 from flags import api as feature_flags_api
@@ -157,6 +158,8 @@ app.add_middleware(
 )
 
 app.include_router(agent_api.router, prefix="/api")
+
+app.include_router(knowledge_api.router, prefix="/api")
 
 app.include_router(sandbox_api.router, prefix="/api")
 

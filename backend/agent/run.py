@@ -30,6 +30,7 @@ from agent.tools.sb_vision_tool import SandboxVisionTool
 from agent.tools.audio_transcription_tool import AudioTranscriptionTool
 from agent.tools.sb_podcast_tool import SandboxPodcastTool
 from agent.tools.memory_search_tool import MemorySearchTool
+from agent.tools.knowledge_search_tool import KnowledgeSearchTool
 
 from services.langfuse import langfuse
 from langfuse.client import StatefulTraceClient
@@ -119,6 +120,7 @@ async def run_agent(
         thread_manager.add_tool(AudioTranscriptionTool, project_id=project_id, thread_manager=thread_manager)
         thread_manager.add_tool(SandboxPodcastTool, project_id=project_id, thread_manager=thread_manager)
         thread_manager.add_tool(MemorySearchTool, thread_manager=thread_manager)
+        thread_manager.add_tool(KnowledgeSearchTool, thread_manager=thread_manager, agent_id=None)
         if config.RAPID_API_KEY:
             thread_manager.add_tool(DataProvidersTool)
     else:
@@ -127,6 +129,9 @@ async def run_agent(
         thread_manager.add_tool(MessageTool)
         # Always enable memory search for custom agents
         thread_manager.add_tool(MemorySearchTool, thread_manager=thread_manager)
+        # Always enable knowledge search for custom agents (if they have knowledge bases)
+        if agent_config and agent_config.get('agent_id'):
+            thread_manager.add_tool(KnowledgeSearchTool, thread_manager=thread_manager, agent_id=agent_config['agent_id'])
         if enabled_tools.get('sb_shell_tool', {}).get('enabled', False):
             thread_manager.add_tool(SandboxShellTool, project_id=project_id, thread_manager=thread_manager)
         if enabled_tools.get('sb_files_tool', {}).get('enabled', False):

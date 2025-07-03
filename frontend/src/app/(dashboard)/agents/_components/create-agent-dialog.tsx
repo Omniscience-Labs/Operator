@@ -6,10 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, Settings2, Sparkles } from 'lucide-react';
+import { Loader2, Search, Settings2, Sparkles, Database } from 'lucide-react';
 import { DEFAULT_AGENTPRESS_TOOLS, getToolDisplayName } from '../_data/tools';
 import { useCreateAgent } from '@/hooks/react-query/agents/use-agents';
 import { MCPConfigurationNew } from './mcp/mcp-configuration-new';
+import { KnowledgeBaseConfiguration } from './knowledge-base-configuration';
 
 interface AgentCreateRequest {
   name: string;
@@ -209,6 +210,12 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
                     <Sparkles className="h-4 w-4" />
                     MCP Servers
                   </TabsTrigger>
+                  <TabsTrigger 
+                    value="knowledge" 
+                  >
+                    <Database className="h-4 w-4" />
+                    Knowledge
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="tools" className="flex-1 flex flex-col m-0 min-h-0">
@@ -292,6 +299,10 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
                     configuredMCPs={formData.configured_mcps}
                     onConfigurationChange={handleMCPConfigurationChange}
                   />
+                </TabsContent>
+
+                <TabsContent value="knowledge" className="flex-1 m-0 p-6 overflow-y-auto">
+                  <KnowledgeBaseConfiguration agentId={undefined} />
                 </TabsContent>
               </Tabs>
             </div>
