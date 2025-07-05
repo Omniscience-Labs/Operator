@@ -1769,6 +1769,7 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
             marketplace_published_at=agent_data.get('marketplace_published_at'),
             download_count=agent_data.get('download_count', 0),
             tags=agent_data.get('tags', []),
+            sharing_preferences=agent_data.get('sharing_preferences', {}),
             avatar=agent_data.get('avatar'),
             avatar_color=agent_data.get('avatar_color'),
             created_at=agent_data['created_at'],
