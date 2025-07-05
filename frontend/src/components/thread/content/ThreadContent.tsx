@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowDown, CircleDashed, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ArrowDown, CircleDashed, CheckCircle, AlertTriangle, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Markdown } from '@/components/ui/markdown';
 import { ThreeSpinner } from '@/components/ui/three-spinner';
@@ -19,6 +19,7 @@ import { OmniLogo } from '@/components/sidebar/omni-logo';
 import { AgentLoader } from './loader';
 import { parseXmlToolCalls, isNewXmlFormat, extractToolNameFromStream } from '@/components/thread/tool-views/xml-parser';
 import { parseToolResult } from '@/components/thread/tool-views/tool-result-parser';
+import { ReasoningDisplay } from './ReasoningDisplay';
 
 // Define the set of  tags whose raw XML should be hidden during streaming
 const HIDE_STREAMING_XML_TAGS = new Set([
@@ -519,7 +520,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                         }
                                         // Create a new user message group
                                         groupedMessages.push({ type: 'user', messages: [message], key });
-                                    } else if (messageType === 'assistant' || messageType === 'tool' || messageType === 'browser_state') {
+                                    } else if (messageType === 'assistant' || messageType === 'tool' || messageType === 'browser_state' || messageType === 'reasoning') {
                                         if (currentGroup && currentGroup.type === 'assistant_group') {
                                             // Add to existing assistant group
                                             currentGroup.messages.push(message);
@@ -663,17 +664,61 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                         // Remove attachment info from the message content
                                         const cleanContent = messageContent.replace(/\[Uploaded File: .*?\]/g, '').trim();
 
+                                        // Copy button component
+                                        const CopyButton = () => {
+                                            const [isCopied, setIsCopied] = useState(false);
+
+                                            const handleCopy = async () => {
+                                                if (!cleanContent) return;
+                                                
+                                                try {
+                                                    await navigator.clipboard.writeText(cleanContent);
+                                                    setIsCopied(true);
+                                                    setTimeout(() => setIsCopied(false), 2000);
+                                                } catch (err) {
+                                                    console.error('Failed to copy:', err);
+                                                }
+                                            };
+
+                                            return (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={handleCopy}
+                                                    className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-muted/80"
+                                                >
+                                                    {isCopied ? (
+                                                        <Check className="h-3.5 w-3.5" />
+                                                    ) : (
+                                                        <Copy className="h-3.5 w-3.5" />
+                                                    )}
+                                                    <span className="sr-only">
+                                                        {isCopied ? 'Copied!' : 'Copy message'}
+                                                    </span>
+                                                </Button>
+                                            );
+                                        };
+
                                         return (
                                             <div key={group.key} className="flex justify-end">
-                                                <div className="flex max-w-[85%] rounded-xl bg-primary/10 px-4 py-3 break-words overflow-hidden">
-                                                    <div className="space-y-3 min-w-0 flex-1">
-                                                        {cleanContent && (
-                                                            <Markdown className="text-sm prose prose-sm dark:prose-invert chat-markdown max-w-none [&>:first-child]:mt-0 prose-headings:mt-3 break-words overflow-wrap-anywhere">{cleanContent}</Markdown>
-                                                        )}
+                                                <div className="group flex flex-col items-end max-w-[85%]">
+                                                    <div className="flex rounded-xl bg-primary/10 px-4 py-3 break-words overflow-hidden">
+                                                        <div className="space-y-3 min-w-0 flex-1">
+                                                            {cleanContent && (
+                                                                <Markdown className="text-sm prose prose-sm dark:prose-invert chat-markdown max-w-none [&>:first-child]:mt-0 prose-headings:mt-3 break-words overflow-wrap-anywhere">{cleanContent}</Markdown>
+                                                            )}
 
-                                                        {/* Use the helper function to render user attachments */}
-                                                        {renderAttachments(attachments as string[], handleOpenFileViewer, sandboxId, project)}
+                                                            {/* Use the helper function to render user attachments */}
+                                                            {renderAttachments(attachments as string[], handleOpenFileViewer, sandboxId, project)}
+                                                        </div>
                                                     </div>
+                                                    
+                                                    {/* Copy button - positioned at bottom-left, aligned with bubble edge */}
+                                                    {cleanContent && (
+                                                        <div className="self-start mt-1">
+                                                            <CopyButton />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -689,6 +734,31 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                                         <p className='ml-2 text-sm text-muted-foreground'>{agentName ? agentName : 'Operator'}</p>
                                                     </div>
                                                     
+                                                    {/* Reasoning content - show first if present */}
+                                                    {(() => {
+                                                        const reasoningMessages = group.messages.filter(msg => msg.type === 'reasoning');
+                                                        if (reasoningMessages.length > 0) {
+                                                            // Find the most complete reasoning message (prefer 'complete' status)
+                                                            const completeReasoning = reasoningMessages.find(msg => {
+                                                                const metadata = safeJsonParse<ParsedMetadata>(msg.metadata, {});
+                                                                return metadata.stream_status === 'complete';
+                                                            });
+                                                            
+                                                            const reasoningToShow = completeReasoning || reasoningMessages[reasoningMessages.length - 1];
+                                                            const metadata = safeJsonParse<ParsedMetadata>(reasoningToShow.metadata, {});
+                                                            const isStreaming = metadata.stream_status === 'streaming' || 
+                                                                               (!completeReasoning && reasoningMessages.length > 0);
+                                                            
+                                                            return (
+                                                                <ReasoningDisplay 
+                                                                    reasoningMessage={reasoningToShow}
+                                                                    isStreaming={isStreaming}
+                                                                />
+                                                            );
+                                                        }
+                                                        return null;
+                                                    })()}
+
                                                     {/* Message content - ALL messages in the group */}
                                                     <div className="flex max-w-[90%] rounded-lg text-sm break-words overflow-hidden">
                                                         <div className="space-y-2 min-w-0 flex-1">

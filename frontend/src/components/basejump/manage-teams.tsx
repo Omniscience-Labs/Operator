@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -5,20 +8,38 @@ import {
   CardHeader,
   CardTitle,
 } from '../ui/card';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/client';
 import { Table, TableRow, TableBody, TableCell } from '../ui/table';
 import { Button } from '../ui/button';
 import Link from 'next/link';
 import { Badge } from '../ui/badge';
 
-export default async function ManageTeams() {
-  const supabaseClient = await createClient();
+export default function ManageTeams() {
+  const [teams, setTeams] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data } = await supabaseClient.rpc('get_accounts');
+  useEffect(() => {
+    async function loadTeams() {
+      try {
+        const supabaseClient = createClient();
+        const { data } = await supabaseClient.rpc('get_accounts');
+        const teamData = data?.filter(
+          (team: any) => team.personal_account === false,
+        ) || [];
+        setTeams(teamData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading teams:', error);
+        setLoading(false);
+      }
+    }
 
-  const teams: any[] = data?.filter(
-    (team: any) => team.personal_account === false,
-  );
+    loadTeams();
+  }, []);
+
+  if (loading) {
+    return <div>Loading teams...</div>;
+  }
 
   return (
     <Card className="border-subtle dark:border-white/10 bg-white dark:bg-background-secondary shadow-none rounded-xl">

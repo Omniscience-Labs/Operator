@@ -32,7 +32,7 @@ export default function EditTeamSlug({ account }: Props) {
               id="slug"
               placeholder="my-team"
               required
-              className="h-10 rounded-lg border-subtle dark:border-white/10 bg-white dark:bg-background-secondary"
+              className="h-10"
             />
           </div>
         </div>
@@ -40,7 +40,7 @@ export default function EditTeamSlug({ account }: Props) {
           <SubmitButton
             formAction={editTeamSlug}
             pendingText="Updating..."
-            className="rounded-lg bg-primary hover:bg-primary/90 text-white h-10"
+            className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground h-10"
           >
             Save Changes
           </SubmitButton>

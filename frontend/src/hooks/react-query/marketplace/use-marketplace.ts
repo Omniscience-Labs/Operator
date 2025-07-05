@@ -10,7 +10,13 @@ export interface MarketplaceAgent {
   description: string;
   system_prompt: string;
   configured_mcps: any[];
+  custom_mcps?: any[];
   agentpress_tools: Record<string, any>;
+  knowledge_bases?: any[];
+  sharing_preferences?: {
+    include_knowledge_bases?: boolean;
+    include_custom_mcp_tools?: boolean;
+  };
   tags: string[];
   download_count: number;
   marketplace_published_at: string;
@@ -39,6 +45,7 @@ interface MarketplaceAgentsParams {
   tags?: string[];
   sort_by?: 'newest' | 'popular' | 'most_downloaded' | 'name';
   creator?: string;
+  account_id?: string;
 }
 
 export function useMarketplaceAgents(params: MarketplaceAgentsParams = {}) {
@@ -63,6 +70,7 @@ export function useMarketplaceAgents(params: MarketplaceAgentsParams = {}) {
         }
         if (params.sort_by) queryParams.append('sort_by', params.sort_by);
         if (params.creator) queryParams.append('creator', params.creator);
+        if (params.account_id) queryParams.append('account_id', params.account_id);
 
         const url = `${API_URL}/marketplace/agents${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
         
@@ -147,7 +155,21 @@ export function usePublishAgent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ agentId, tags = [] }: { agentId: string; tags?: string[] }): Promise<void> => {
+    mutationFn: async ({ 
+      agentId, 
+      tags = [], 
+      visibility = 'public', 
+      teamIds = [],
+      includeKnowledgeBases = true,
+      includeCustomMcpTools = true
+    }: { 
+      agentId: string; 
+      tags?: string[]; 
+      visibility?: 'public' | 'teams' | 'private';
+      teamIds?: string[];
+      includeKnowledgeBases?: boolean;
+      includeCustomMcpTools?: boolean;
+    }): Promise<void> => {
       try {
         const marketplaceEnabled = await isFlagEnabled('agent_marketplace');
         if (!marketplaceEnabled) {
@@ -166,7 +188,13 @@ export function usePublishAgent() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ tags }),
+          body: JSON.stringify({ 
+            tags,
+            visibility,
+            team_ids: teamIds,
+            include_knowledge_bases: includeKnowledgeBases,
+            include_custom_mcp_tools: includeCustomMcpTools
+          }),
         });
 
         if (!response.ok) {

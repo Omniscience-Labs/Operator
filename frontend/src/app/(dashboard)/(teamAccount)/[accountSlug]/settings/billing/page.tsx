@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/client';
 import AccountBillingStatus from '@/components/billing/account-billing-status';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
@@ -26,7 +26,7 @@ export default function TeamBillingPage({
   React.useEffect(() => {
     async function loadData() {
       try {
-        const supabaseClient = await createClient();
+        const supabaseClient = createClient();
         const { data } = await supabaseClient.rpc('get_account_by_slug', {
           slug: accountSlug,
         });

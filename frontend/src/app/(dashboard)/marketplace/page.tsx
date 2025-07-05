@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { getAgentAvatar } from '../agents/_utils/get-agent-style';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Pagination } from '../agents/_components/pagination';
+import { useCurrentAccount } from '@/hooks/use-current-account';
 
 type SortOption = 'newest' | 'popular' | 'most_downloaded' | 'name';
 
@@ -21,14 +22,16 @@ export default function MarketplacePage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [addingAgentId, setAddingAgentId] = useState<string | null>(null);
+  const currentAccount = useCurrentAccount();
   
   const queryParams = useMemo(() => ({
     page,
     limit: 20,
     search: searchQuery || undefined,
     tags: selectedTags.length > 0 ? selectedTags : undefined,
-    sort_by: sortBy
-  }), [page, searchQuery, selectedTags, sortBy]);
+    sort_by: sortBy,
+    account_id: currentAccount?.is_team_context ? currentAccount.account_id : undefined
+  }), [page, searchQuery, selectedTags, sortBy, currentAccount]);
 
   const { data: agentsResponse, isLoading, error } = useMarketplaceAgents(queryParams);
   const addToLibraryMutation = useAddAgentToLibrary();
@@ -103,7 +106,9 @@ export default function MarketplacePage() {
               Agent Marketplace
             </h1>
             <p className="text-md text-muted-foreground max-w-2xl">
-              Discover and add powerful AI agents created by the community to your personal library
+              {currentAccount?.is_team_context 
+                ? `Discover and add AI agents available to ${currentAccount.name}`
+                : 'Discover and add powerful AI agents created by the community to your personal library'}
             </p>
           </div>
         </div>

@@ -184,7 +184,7 @@ export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
           <Button
             onClick={handleManageSubscription}
             disabled={isManaging}
-            className="w-full bg-primary text-white hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
           >
             {isManaging ? 'Loading...' : 'Manage Subscription'}
           </Button>

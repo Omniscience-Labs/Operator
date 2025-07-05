@@ -44,7 +44,7 @@ docker compose up -d
 docker exec -it kortix-suna python3 -c "import openpyxl, pandas; print('Excel dependencies OK')"
 ```
 
-### 2. **Production Deployment**
+### 2. **Production Deployment**x 
 
 #### Option A: Build and Push to Registry
 ```bash

@@ -109,7 +109,7 @@ export default function NewTeamForm() {
         pendingText="Creating team..."
         className={cn(
           'w-full rounded-lg shadow-xs transition-all',
-          'bg-primary hover:bg-primary/90 text-white',
+          'bg-primary hover:bg-primary/90 text-primary-foreground',
           'dark:bg-primary/90 dark:hover:bg-primary',
         )}
         size="lg"

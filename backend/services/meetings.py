@@ -123,8 +123,8 @@ class MeetingsService:
             meeting = await self.get_meeting(meeting_id)
             current_transcript = meeting.get('transcript', '')
             
-            # Append the new text with a space
-            new_transcript = current_transcript + ' ' + text if current_transcript else text
+            # Append the new text with a newline to preserve line breaks
+            new_transcript = current_transcript + '\n' + text if current_transcript else text
             
             # Update the transcript
             await client.table('meetings').update({

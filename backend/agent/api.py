@@ -40,6 +40,7 @@ class AgentStartRequest(BaseModel):
     stream: Optional[bool] = True
     enable_context_manager: Optional[bool] = False
     agent_id: Optional[str] = None  # Custom agent to use
+    user_name: Optional[str] = None
 
 class InitiateAgentResponse(BaseModel):
     thread_id: str
@@ -53,6 +54,7 @@ class AgentCreateRequest(BaseModel):
     custom_mcps: Optional[List[Dict[str, Any]]] = []
     agentpress_tools: Optional[Dict[str, Any]] = {}
     is_default: Optional[bool] = False
+    knowledge_bases: Optional[List[Dict[str, Any]]] = []
     avatar: Optional[str] = None
     avatar_color: Optional[str] = None
 
@@ -64,6 +66,7 @@ class AgentUpdateRequest(BaseModel):
     custom_mcps: Optional[List[Dict[str, Any]]] = None
     agentpress_tools: Optional[Dict[str, Any]] = None
     is_default: Optional[bool] = None
+    knowledge_bases: Optional[List[Dict[str, Any]]] = None
     avatar: Optional[str] = None
     avatar_color: Optional[str] = None
 
@@ -78,9 +81,12 @@ class AgentResponse(BaseModel):
     agentpress_tools: Dict[str, Any]
     is_default: bool
     is_public: Optional[bool] = False
+    visibility: Optional[str] = "private"  # "public", "teams", or "private"
+    knowledge_bases: Optional[List[Dict[str, Any]]] = []
     marketplace_published_at: Optional[str] = None
     download_count: Optional[int] = 0
     tags: Optional[List[str]] = []
+    sharing_preferences: Optional[Dict[str, Any]] = {}
     avatar: Optional[str]
     avatar_color: Optional[str]
     created_at: str
@@ -460,8 +466,13 @@ async def start_agent(
         logger.error(f"Failed to start sandbox for project {project_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to initialize sandbox: {str(e)}")
 
+    # Store reasoning mode in agent run
+    reasoning_mode = body.reasoning_effort if body.enable_thinking else 'none'
+    
     agent_run = await client.table('agent_runs').insert({
-        "thread_id": thread_id, "status": "running",
+        "thread_id": thread_id, 
+        "status": "running",
+        "reasoning_mode": reasoning_mode,
         "started_at": datetime.now(timezone.utc).isoformat()
     }).execute()
     agent_run_id = agent_run.data[0]['id']
@@ -490,6 +501,7 @@ async def start_agent(
         is_agent_builder=is_agent_builder,
         target_agent_id=target_agent_id,
         request_id=request_id,
+        user_name=body.user_name,
     )
 
     return {"agent_run_id": agent_run_id, "status": "running"}
@@ -518,6 +530,365 @@ async def get_agent_runs(thread_id: str, user_id: str = Depends(get_current_user
     agent_runs = await client.table('agent_runs').select('*').eq("thread_id", thread_id).order('created_at', desc=True).execute()
     logger.debug(f"Found {len(agent_runs.data)} agent runs for thread: {thread_id}")
     return {"agent_runs": agent_runs.data}
+
+@router.get("/agent-run/{agent_run_id}/credit-usage")
+async def get_agent_run_credit_usage(
+    agent_run_id: str, 
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Get detailed credit usage for a specific agent run."""
+    structlog.contextvars.bind_contextvars(
+        agent_run_id=agent_run_id,
+    )
+    logger.info(f"Fetching credit usage for agent run: {agent_run_id}")
+    
+    try:
+        from services.credit_tracker import CreditTracker
+        credit_tracker = CreditTracker()
+        
+        # Get credit usage summary
+        usage_summary = await credit_tracker.get_credit_usage_summary(agent_run_id)
+        
+        # Get data provider specific stats
+        provider_stats = await credit_tracker.get_data_provider_usage_stats(agent_run_id=agent_run_id)
+        
+        return {
+            "agent_run_id": agent_run_id,
+            "usage_summary": usage_summary,
+            "data_provider_stats": provider_stats
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching credit usage for agent run {agent_run_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch credit usage: {str(e)}")
+
+@router.get("/credit-rates")
+async def get_credit_rates(user_id: str = Depends(get_current_user_id_from_jwt)):
+    """Get current credit rates for tools and data providers."""
+    try:
+        from services.credit_calculator import CreditCalculator
+        credit_calc = CreditCalculator()
+        
+        return {
+            "base_rates": {
+                "conversation_per_minute": credit_calc.credit_rates['base_rate'],
+                "reasoning_multipliers": {
+                    "medium": credit_calc.credit_rates['reasoning_rate_medium'],
+                    "high": credit_calc.credit_rates['reasoning_rate_high']
+                }
+            },
+            "tool_costs": credit_calc.get_all_tool_costs(),
+            "data_provider_costs": credit_calc.get_all_data_provider_costs()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching credit rates: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch credit rates: {str(e)}")
+
+@router.get("/data-provider/{provider_name}/cost-estimate")
+async def get_data_provider_cost_estimate(
+    provider_name: str,
+    route: str = None,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Get cost estimate for a specific data provider call."""
+    try:
+        from services.credit_calculator import CreditCalculator
+        credit_calc = CreditCalculator()
+        
+        estimate = credit_calc.estimate_data_provider_call_cost(provider_name, route)
+        
+        return estimate
+        
+    except Exception as e:
+        logger.error(f"Error getting cost estimate for {provider_name}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get cost estimate: {str(e)}")
+
+@router.get("/tools/cost-estimates")
+async def get_all_tool_cost_estimates(user_id: str = Depends(get_current_user_id_from_jwt)):
+    """Get cost estimates for all available tools."""
+    try:
+        from services.credit_calculator import CreditCalculator
+        credit_calc = CreditCalculator()
+        
+        # Get all tool costs
+        all_tool_costs = credit_calc.get_all_tool_costs()
+        
+        # Create enhanced estimates with descriptions and categorization
+        tool_estimates = []
+        
+        # Tool categories and descriptions
+        tool_info = {
+            # Infrastructure & Automation Tools
+            "sb_browser_tool": {
+                "display_name": "Browser Tool",
+                "description": "Automate web browsing, clicking, form filling, and page interaction",
+                "category": "automation",
+                "icon": "🌐"
+            },
+            "sb_deploy_tool": {
+                "display_name": "Deploy Tool", 
+                "description": "Deploy applications and services with automated deployment",
+                "category": "infrastructure",
+                "icon": "🚀"
+            },
+            "sb_shell_tool": {
+                "display_name": "Terminal",
+                "description": "Execute shell commands and CLI operations in tmux sessions",
+                "category": "development",
+                "icon": "💻"
+            },
+            "web_search_tool": {
+                "display_name": "Web Search",
+                "description": "Search the web using Tavily API and scrape webpages with Firecrawl",
+                "category": "research",
+                "icon": "🔍"
+            },
+            
+            # File & Media Tools
+            "sb_files_tool": {
+                "display_name": "File Manager",
+                "description": "Create, read, update, and delete files with comprehensive file management",
+                "category": "files",
+                "icon": "📁"
+            },
+            "sb_excel_tool": {
+                "display_name": "Excel Operations",
+                "description": "Create, read, write, and format Excel spreadsheets",
+                "category": "files",
+                "icon": "📊"
+            },
+            "sb_pdf_form_tool": {
+                "display_name": "PDF Form Filler",
+                "description": "Read form fields, fill forms, and flatten PDF documents",
+                "category": "files", 
+                "icon": "📄"
+            },
+            "sb_vision_tool": {
+                "display_name": "Image Processing",
+                "description": "Vision and image processing capabilities for visual content analysis",
+                "category": "ai",
+                "icon": "👁️"
+            },
+            "sb_audio_transcription_tool": {
+                "display_name": "Audio Transcription",
+                "description": "Transcribe audio files to text using speech recognition",
+                "category": "ai",
+                "icon": "🎤"
+            },
+            "sb_podcast_tool": {
+                "display_name": "Audio Overviews",
+                "description": "Generate audio summaries and overviews from content",
+                "category": "ai",
+                "icon": "🎧"
+            },
+            
+            # Data Provider Tools
+            "linkedin_data_provider": {
+                "display_name": "LinkedIn Data Provider",
+                "description": "Access LinkedIn profiles, company data, and professional information",
+                "category": "data_providers",
+                "icon": "💼"
+            },
+            "apollo_data_provider": {
+                "display_name": "Apollo Data Provider", 
+                "description": "Lead generation, contact enrichment, and company discovery",
+                "category": "data_providers",
+                "icon": "🎯"
+            },
+            "twitter_data_provider": {
+                "display_name": "Twitter Data Provider",
+                "description": "Access Twitter/X social media data and user information", 
+                "category": "data_providers",
+                "icon": "🐦"
+            },
+            "amazon_data_provider": {
+                "display_name": "Amazon Data Provider",
+                "description": "Product data, pricing, and marketplace information from Amazon",
+                "category": "data_providers", 
+                "icon": "📦"
+            },
+            "yahoo_finance_data_provider": {
+                "display_name": "Yahoo Finance Data Provider",
+                "description": "Financial data, stock prices, and market information",
+                "category": "data_providers",
+                "icon": "📈"
+            },
+            "zillow_data_provider": {
+                "display_name": "Zillow Data Provider",
+                "description": "Real estate data, property values, and market analytics",
+                "category": "data_providers",
+                "icon": "🏠"
+            },
+            "activejobs_data_provider": {
+                "display_name": "Active Jobs Data Provider",
+                "description": "Job search data and employment opportunity information",
+                "category": "data_providers",
+                "icon": "💼"
+            },
+            
+            # System Tools
+            "sb_expose_tool": {
+                "display_name": "Port Exposure",
+                "description": "Expose services and manage ports for application accessibility",
+                "category": "system",
+                "icon": "🔌"
+            },
+            "mcp_tool": {
+                "display_name": "MCP Tools",
+                "description": "External Model Context Protocol integrations",
+                "category": "integrations", 
+                "icon": "🔗"
+            },
+            "data_providers_tool": {
+                "display_name": "Legacy Data Providers",
+                "description": "Fallback for unspecified data provider calls",
+                "category": "legacy",
+                "icon": "🗃️"
+            }
+        }
+        
+        # Build tool estimates
+        for tool_name, cost in all_tool_costs.items():
+            if tool_name == "default":
+                continue
+                
+            info = tool_info.get(tool_name, {
+                "display_name": tool_name.replace('_', ' ').title(),
+                "description": f"Tool: {tool_name}",
+                "category": "other",
+                "icon": "🔧"
+            })
+            
+            # Determine cost tier
+            if cost >= 3.0:
+                cost_tier = "high"
+                tier_color = "#ef4444"  # red
+            elif cost >= 1.5:
+                cost_tier = "medium" 
+                tier_color = "#f59e0b"  # amber
+            else:
+                cost_tier = "low"
+                tier_color = "#10b981"  # emerald
+            
+            estimate = {
+                "tool_name": tool_name,
+                "display_name": info["display_name"],
+                "description": info["description"],
+                "category": info["category"],
+                "icon": info["icon"],
+                "credit_cost": cost,
+                "cost_tier": cost_tier,
+                "tier_color": tier_color,
+                "cost_explanation": f"{info['display_name']} costs {cost} credits per use"
+            }
+            
+            tool_estimates.append(estimate)
+        
+        # Sort by category, then by cost (high to low)
+        category_order = ["automation", "data_providers", "ai", "development", "files", "research", "infrastructure", "system", "integrations", "legacy", "other"]
+        
+        def sort_key(tool):
+            category_index = category_order.index(tool["category"]) if tool["category"] in category_order else len(category_order)
+            return (category_index, -tool["credit_cost"])  # negative cost for descending order
+        
+        tool_estimates.sort(key=sort_key)
+        
+        # Group by category for better organization
+        categorized_tools = {}
+        for tool in tool_estimates:
+            category = tool["category"]
+            if category not in categorized_tools:
+                categorized_tools[category] = []
+            categorized_tools[category].append(tool)
+        
+        # Calculate summary stats
+        total_tools = len(tool_estimates)
+        avg_cost = sum(tool["credit_cost"] for tool in tool_estimates) / total_tools if total_tools > 0 else 0
+        high_cost_tools = len([t for t in tool_estimates if t["cost_tier"] == "high"])
+        medium_cost_tools = len([t for t in tool_estimates if t["cost_tier"] == "medium"])
+        low_cost_tools = len([t for t in tool_estimates if t["cost_tier"] == "low"])
+        
+        return {
+            "summary": {
+                "total_tools": total_tools,
+                "average_cost": round(avg_cost, 2),
+                "cost_distribution": {
+                    "high_cost": high_cost_tools,
+                    "medium_cost": medium_cost_tools, 
+                    "low_cost": low_cost_tools
+                }
+            },
+            "tools": tool_estimates,
+            "categorized_tools": categorized_tools,
+            "cost_tiers": {
+                "high": {"min_cost": 3.0, "color": "#ef4444", "description": "Resource-intensive tools"},
+                "medium": {"min_cost": 1.5, "color": "#f59e0b", "description": "Standard functionality tools"},
+                "low": {"min_cost": 0.0, "color": "#10b981", "description": "Basic operation tools"}
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting tool cost estimates: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get tool cost estimates: {str(e)}")
+
+@router.get("/tools/costs")
+async def get_all_tool_costs_simple(user_id: str = Depends(get_current_user_id_from_jwt)):
+    """Get a simple list of all tool costs."""
+    try:
+        from services.credit_calculator import CreditCalculator
+        credit_calc = CreditCalculator()
+        
+        # Get all tool costs
+        all_tool_costs = credit_calc.get_all_tool_costs()
+        
+        # Create simple mapping of display names to costs
+        tool_display_names = {
+            "sb_browser_tool": "Browser Tool",
+            "sb_deploy_tool": "Deploy Tool", 
+            "sb_shell_tool": "Terminal",
+            "web_search_tool": "Web Search",
+            "sb_files_tool": "File Manager",
+            "sb_excel_tool": "Excel Operations",
+            "sb_pdf_form_tool": "PDF Form Filler",
+            "sb_vision_tool": "Image Processing",
+            "sb_audio_transcription_tool": "Audio Transcription",
+            "sb_podcast_tool": "Audio Overviews",
+            "linkedin_data_provider": "LinkedIn Data Provider",
+            "apollo_data_provider": "Apollo Data Provider",
+            "twitter_data_provider": "Twitter Data Provider",
+            "amazon_data_provider": "Amazon Data Provider",
+            "yahoo_finance_data_provider": "Yahoo Finance Data Provider",
+            "zillow_data_provider": "Zillow Data Provider",
+            "activejobs_data_provider": "Active Jobs Data Provider",
+            "sb_expose_tool": "Port Exposure",
+            "mcp_tool": "MCP Tools",
+            "data_providers_tool": "Legacy Data Providers"
+        }
+        
+        simplified_costs = {}
+        for tool_name, cost in all_tool_costs.items():
+            if tool_name == "default":
+                continue
+            display_name = tool_display_names.get(tool_name, tool_name.replace('_', ' ').title())
+            simplified_costs[display_name] = cost
+        
+        # Sort by cost (high to low)
+        sorted_costs = dict(sorted(simplified_costs.items(), key=lambda x: x[1], reverse=True))
+        
+        return {
+            "tool_costs": sorted_costs,
+            "total_tools": len(sorted_costs),
+            "cost_range": {
+                "highest": max(sorted_costs.values()) if sorted_costs else 0,
+                "lowest": min(sorted_costs.values()) if sorted_costs else 0,
+                "average": round(sum(sorted_costs.values()) / len(sorted_costs), 2) if sorted_costs else 0
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting simple tool costs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get tool costs: {str(e)}")
 
 @router.get("/agent-run/{agent_run_id}")
 async def get_agent_run(agent_run_id: str, user_id: str = Depends(get_current_user_id_from_jwt)):
@@ -602,6 +973,7 @@ async def get_thread_agent(thread_id: str, user_id: str = Depends(get_current_us
                 agentpress_tools=agent_data.get('agentpress_tools', {}),
                 is_default=agent_data.get('is_default', False),
                 is_public=agent_data.get('is_public', False),
+                visibility=agent_data.get('visibility', 'private'),
                 marketplace_published_at=agent_data.get('marketplace_published_at'),
                 download_count=agent_data.get('download_count', 0),
                 tags=agent_data.get('tags', []),
@@ -866,6 +1238,8 @@ async def initiate_agent_with_files(
     files: List[UploadFile] = File(default=[]),
     is_agent_builder: Optional[bool] = Form(False),
     target_agent_id: Optional[str] = Form(None),
+    user_name: Optional[str] = Form(None),
+    account_id: Optional[str] = Form(None),  # Add account_id parameter for team context
     user_id: str = Depends(get_current_user_id_from_jwt)
 ):
     """Initiate a new agent session with optional file attachments."""
@@ -892,28 +1266,41 @@ async def initiate_agent_with_files(
 
     logger.info(f"[\033[91mDEBUG\033[0m] Initiating new agent with prompt and {len(files)} files (Instance: {instance_id}), model: {model_name}, enable_thinking: {enable_thinking}")
     client = await db.client
-    account_id = user_id # In Basejump, personal account_id is the same as user_id
+    
+    # Determine the account_id to use
+    effective_account_id = account_id if account_id else user_id  # Default to personal account if not specified
+    
+    # Verify user has access to the specified account (if different from personal)
+    if account_id and account_id != user_id:
+        # Check if user has access to this account via basejump account_user table
+        account_access = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', account_id).execute()
+        if not (account_access.data and len(account_access.data) > 0):
+            logger.warning(f"User {user_id} attempted to access account {account_id} without permission")
+            raise HTTPException(status_code=403, detail="Not authorized to access this account")
+        logger.info(f"User {user_id} has access to account {account_id} with role: {account_access.data[0]['account_role']}")
+    else:
+        logger.info(f"Using personal account {user_id} for agent initiation")
     
     # Load agent configuration if agent_id is provided
     agent_config = None
     if agent_id:
-        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).eq('account_id', account_id).execute()
+        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).eq('account_id', effective_account_id).execute()
         if not agent_result.data:
             raise HTTPException(status_code=404, detail="Agent not found or access denied")
         agent_config = agent_result.data[0]
         logger.info(f"Using custom agent: {agent_config['name']} ({agent_id})")
     else:
         # Try to get default agent for the account
-        default_agent_result = await client.table('agents').select('*').eq('account_id', account_id).eq('is_default', True).execute()
+        default_agent_result = await client.table('agents').select('*').eq('account_id', effective_account_id).eq('is_default', True).execute()
         if default_agent_result.data:
             agent_config = default_agent_result.data[0]
             logger.info(f"Using default agent: {agent_config['name']} ({agent_config['agent_id']})")
     
-    can_use, model_message, allowed_models = await can_use_model(client, account_id, model_name)
+    can_use, model_message, allowed_models = await can_use_model(client, effective_account_id, model_name)
     if not can_use:
         raise HTTPException(status_code=403, detail={"message": model_message, "allowed_models": allowed_models})
 
-    can_run, message, subscription = await check_billing_status(client, account_id)
+    can_run, message, subscription = await check_billing_status(client, effective_account_id)
     if not can_run:
         raise HTTPException(status_code=402, detail={"message": message, "subscription": subscription})
 
@@ -921,11 +1308,11 @@ async def initiate_agent_with_files(
         # 1. Create Project
         placeholder_name = f"{prompt[:30]}..." if len(prompt) > 30 else prompt
         project = await client.table('projects').insert({
-            "project_id": str(uuid.uuid4()), "account_id": account_id, "name": placeholder_name,
+            "project_id": str(uuid.uuid4()), "account_id": effective_account_id, "name": placeholder_name,
             "created_at": datetime.now(timezone.utc).isoformat()
         }).execute()
         project_id = project.data[0]['project_id']
-        logger.info(f"Created new project: {project_id}")
+        logger.info(f"Created new project: {project_id} for account: {effective_account_id}")
 
         # 2. Create Sandbox
         sandbox_id = None
@@ -973,14 +1360,14 @@ async def initiate_agent_with_files(
         thread_data = {
             "thread_id": str(uuid.uuid4()), 
             "project_id": project_id, 
-            "account_id": account_id,
+            "account_id": effective_account_id,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         structlog.contextvars.bind_contextvars(
             thread_id=thread_data["thread_id"],
             project_id=project_id,
-            account_id=account_id,
+            account_id=effective_account_id,
         )
         
         # Store the agent_id in the thread if we have one
@@ -1004,7 +1391,7 @@ async def initiate_agent_with_files(
         
         thread = await client.table('threads').insert(thread_data).execute()
         thread_id = thread.data[0]['thread_id']
-        logger.info(f"Created new thread: {thread_id}")
+        logger.info(f"Created new thread: {thread_id} for account: {effective_account_id}")
 
         # Trigger Background Naming Task
         asyncio.create_task(generate_and_update_project_name(project_id=project_id, prompt=prompt))
@@ -1075,9 +1462,13 @@ async def initiate_agent_with_files(
             "created_at": datetime.now(timezone.utc).isoformat()
         }).execute()
 
-        # 6. Start Agent Run
+        # 6. Start Agent Run with reasoning mode
+        reasoning_mode = reasoning_effort if enable_thinking else 'none'
+        
         agent_run = await client.table('agent_runs').insert({
-            "thread_id": thread_id, "status": "running",
+            "thread_id": thread_id, 
+            "status": "running",
+            "reasoning_mode": reasoning_mode,
             "started_at": datetime.now(timezone.utc).isoformat()
         }).execute()
         agent_run_id = agent_run.data[0]['id']
@@ -1106,6 +1497,7 @@ async def initiate_agent_with_files(
             is_agent_builder=is_agent_builder,
             target_agent_id=target_agent_id,
             request_id=request_id,
+            user_name=user_name,
         )
 
         return {"thread_id": thread_id, "agent_run_id": agent_run_id}
@@ -1132,7 +1524,8 @@ async def get_agents(
     has_default: Optional[bool] = Query(None, description="Filter by default agents"),
     has_mcp_tools: Optional[bool] = Query(None, description="Filter by agents with MCP tools"),
     has_agentpress_tools: Optional[bool] = Query(None, description="Filter by agents with AgentPress tools"),
-    tools: Optional[str] = Query(None, description="Comma-separated list of tools to filter by")
+    tools: Optional[str] = Query(None, description="Comma-separated list of tools to filter by"),
+    account_id: Optional[str] = Query(None, description="Filter by specific account ID (for team contexts)")
 ):
     """Get agents for the current user with pagination, search, sort, and filter support."""
     if not await is_enabled("custom_agents"):
@@ -1147,56 +1540,92 @@ async def get_agents(
         # Calculate offset
         offset = (page - 1) * limit
         
-        # Start building the query
-        query = client.table('agents').select('*', count='exact').eq("account_id", user_id)
+        # Use account_id if provided (for team contexts), otherwise use user_id
+        filter_account_id = account_id if account_id else user_id
+        use_marketplace_data = False
         
-        # Apply search filter
-        if search:
-            search_term = f"%{search}%"
-            query = query.or_(f"name.ilike.{search_term},description.ilike.{search_term}")
-        
-        # Apply filters
-        if has_default is not None:
-            query = query.eq("is_default", has_default)
-        
-        # For MCP and AgentPress tools filtering, we'll need to do post-processing
-        # since Supabase doesn't have great JSON array/object filtering
-        
-        # Apply sorting
-        if sort_by == "name":
-            query = query.order("name", desc=(sort_order == "desc"))
-        elif sort_by == "updated_at":
-            query = query.order("updated_at", desc=(sort_order == "desc"))
-        elif sort_by == "created_at":
-            query = query.order("created_at", desc=(sort_order == "desc"))
+        # If account_id is provided, we need to use a different query that includes team-shared agents
+        if account_id and account_id != user_id:
+            # Simplified validation: Let database RLS policies handle access control
+            # The complex validation was causing schema access issues with basejump tables
+            # If user doesn't have access, the query will return empty results due to RLS policies
+            pass
+            
+            # For team accounts, use the database function that handles complex visibility logic
+            # This includes: owned agents, team-shared agents, and public agents
+            # Get a larger set first to allow for post-processing filters
+            marketplace_result = await client.rpc('get_marketplace_agents', {
+                'p_limit': limit * 3,  # Get more than needed for post-processing
+                'p_offset': 0,  # Always start from beginning for filtering
+                'p_search': search,
+                'p_tags': None,
+                'p_account_id': account_id
+            }).execute()
+            
+            if not marketplace_result.data:
+                marketplace_result.data = []
+            
+            # Convert marketplace result to agents format and continue with existing logic
+            agents_data = marketplace_result.data
+            total_count = len(agents_data)  # This will be recalculated after filters
+            
+            # Apply additional filters and sorting as needed
+            if has_default is not None:
+                agents_data = [a for a in agents_data if a.get('is_default') == has_default]
+            
+            # The rest of the filtering will be handled by the existing post-processing logic
+            # Skip the normal query execution for team accounts
+            use_marketplace_data = True
         else:
-            # Default to created_at
-            query = query.order("created_at", desc=(sort_order == "desc"))
+            # For personal accounts, just show their own agents
+            query = client.table('agents').select('*', count='exact').eq("account_id", filter_account_id)
         
-        # Execute query to get total count first
-        count_result = await query.execute()
-        total_count = count_result.count
-        
-        # Now get the actual data with pagination
-        query = query.range(offset, offset + limit - 1)
-        agents_result = await query.execute()
-        
-        if not agents_result.data:
-            logger.info(f"No agents found for user: {user_id}")
-            return {
-                "agents": [],
-                "pagination": {
-                    "page": page,
-                    "limit": limit,
-                    "total": 0,
-                    "pages": 0
+        # Execute query only if not using marketplace data
+        if not use_marketplace_data:
+            # Apply search filter
+            if search:
+                search_term = f"%{search}%"
+                query = query.or_(f"name.ilike.{search_term},description.ilike.{search_term}")
+            
+            # Apply filters
+            if has_default is not None:
+                query = query.eq("is_default", has_default)
+            
+            # Apply sorting
+            if sort_by == "name":
+                query = query.order("name", desc=(sort_order == "desc"))
+            elif sort_by == "updated_at":
+                query = query.order("updated_at", desc=(sort_order == "desc"))
+            elif sort_by == "created_at":
+                query = query.order("created_at", desc=(sort_order == "desc"))
+            else:
+                # Default to created_at
+                query = query.order("created_at", desc=(sort_order == "desc"))
+            
+            # Execute query to get total count first
+            count_result = await query.execute()
+            total_count = count_result.count
+            
+            # Now get the actual data with pagination
+            query = query.range(offset, offset + limit - 1)
+            agents_result = await query.execute()
+            
+            if not agents_result.data:
+                logger.info(f"No agents found for user: {user_id}")
+                return {
+                    "agents": [],
+                    "pagination": {
+                        "page": page,
+                        "limit": limit,
+                        "total": 0,
+                        "pages": 0
+                    }
                 }
-            }
+            
+            # Post-process for tool filtering and tools_count sorting
+            agents_data = agents_result.data
         
-        # Post-process for tool filtering and tools_count sorting
-        agents_data = agents_result.data
-        
-        # Apply tool-based filters
+        # Apply tool-based filters (works for both marketplace and regular data)
         if has_mcp_tools is not None or has_agentpress_tools is not None or tools:
             filtered_agents = []
             tools_filter = []
@@ -1253,15 +1682,15 @@ async def get_agents(
             
             agents_data.sort(key=get_tools_count, reverse=(sort_order == "desc"))
         
-        # Apply pagination to filtered results if we did post-processing
-        if has_mcp_tools is not None or has_agentpress_tools is not None or tools or sort_by == "tools_count":
+        # Apply pagination to filtered results if we did post-processing or used marketplace data
+        if has_mcp_tools is not None or has_agentpress_tools is not None or tools or sort_by == "tools_count" or use_marketplace_data:
             total_count = len(agents_data)
             agents_data = agents_data[offset:offset + limit]
         
         # Format the response
         agent_list = []
         for agent in agents_data:
-            agent_list.append(AgentResponse(
+                            agent_list.append(AgentResponse(
                 agent_id=agent['agent_id'],
                 account_id=agent['account_id'],
                 name=agent['name'],
@@ -1272,6 +1701,7 @@ async def get_agents(
                 agentpress_tools=agent.get('agentpress_tools', {}),
                 is_default=agent.get('is_default', False),
                 is_public=agent.get('is_public', False),
+                visibility=agent.get('visibility', 'private'),
                 marketplace_published_at=agent.get('marketplace_published_at'),
                 download_count=agent.get('download_count', 0),
                 tags=agent.get('tags', []),
@@ -1334,6 +1764,8 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
             agentpress_tools=agent_data.get('agentpress_tools', {}),
             is_default=agent_data.get('is_default', False),
             is_public=agent_data.get('is_public', False),
+            visibility=agent_data.get('visibility', 'private'),
+            knowledge_bases=agent_data.get('knowledge_bases', []),
             marketplace_published_at=agent_data.get('marketplace_published_at'),
             download_count=agent_data.get('download_count', 0),
             tags=agent_data.get('tags', []),
@@ -1383,6 +1815,7 @@ async def create_agent(
             "custom_mcps": agent_data.custom_mcps or [],
             "agentpress_tools": agent_data.agentpress_tools or {},
             "is_default": agent_data.is_default or False,
+            "knowledge_bases": agent_data.knowledge_bases or [],
             "avatar": agent_data.avatar,
             "avatar_color": agent_data.avatar_color
         }
@@ -1406,9 +1839,12 @@ async def create_agent(
             agentpress_tools=agent.get('agentpress_tools', {}),
             is_default=agent.get('is_default', False),
             is_public=agent.get('is_public', False),
+            visibility=agent.get('visibility', 'private'),
+            knowledge_bases=agent.get('knowledge_bases', []),
             marketplace_published_at=agent.get('marketplace_published_at'),
             download_count=agent.get('download_count', 0),
             tags=agent.get('tags', []),
+            sharing_preferences=agent.get('sharing_preferences', {}),
             avatar=agent.get('avatar'),
             avatar_color=agent.get('avatar_color'),
             created_at=agent['created_at'],
@@ -1470,6 +1906,8 @@ async def update_agent(
             # If setting as default, unset other defaults first
             if agent_data.is_default:
                 await client.table('agents').update({"is_default": False}).eq("account_id", user_id).eq("is_default", True).neq("agent_id", agent_id).execute()
+        if agent_data.knowledge_bases is not None:
+            update_data["knowledge_bases"] = agent_data.knowledge_bases
         if agent_data.avatar is not None:
             update_data["avatar"] = agent_data.avatar
         if agent_data.avatar_color is not None:
@@ -1506,9 +1944,12 @@ async def update_agent(
             agentpress_tools=agent.get('agentpress_tools', {}),
             is_default=agent.get('is_default', False),
             is_public=agent.get('is_public', False),
+            visibility=agent.get('visibility', 'private'),
+            knowledge_bases=agent.get('knowledge_bases', []),
             marketplace_published_at=agent.get('marketplace_published_at'),
             download_count=agent.get('download_count', 0),
             tags=agent.get('tags', []),
+            sharing_preferences=agent.get('sharing_preferences', {}),
             avatar=agent.get('avatar'),
             avatar_color=agent.get('avatar_color'),
             created_at=agent['created_at'],
@@ -1565,7 +2006,9 @@ class MarketplaceAgent(BaseModel):
     description: Optional[str]
     system_prompt: str
     configured_mcps: List[Dict[str, Any]]
+    custom_mcps: Optional[List[Dict[str, Any]]] = []
     agentpress_tools: Dict[str, Any]
+    knowledge_bases: Optional[List[Dict[str, Any]]] = []
     tags: Optional[List[str]]
     download_count: int
     marketplace_published_at: str
@@ -1580,6 +2023,10 @@ class MarketplaceAgentsResponse(BaseModel):
 
 class PublishAgentRequest(BaseModel):
     tags: Optional[List[str]] = []
+    visibility: Optional[str] = "public"  # "public", "teams", or "private"
+    team_ids: Optional[List[str]] = []  # Team account IDs to share with
+    include_knowledge_bases: Optional[bool] = True  # Whether to include knowledge bases when sharing
+    include_custom_mcp_tools: Optional[bool] = True  # Whether to include custom MCP tools when sharing
 
 @router.get("/marketplace/agents", response_model=MarketplaceAgentsResponse)
 async def get_marketplace_agents(
@@ -1588,7 +2035,8 @@ async def get_marketplace_agents(
     search: Optional[str] = Query(None, description="Search in name and description"),
     tags: Optional[str] = Query(None, description="Comma-separated string of tags"),
     sort_by: Optional[str] = Query("newest", description="Sort by: newest, popular, most_downloaded, name"),
-    creator: Optional[str] = Query(None, description="Filter by creator name")
+    creator: Optional[str] = Query(None, description="Filter by creator name"),
+    account_id: Optional[str] = Query(None, description="Filter by specific account ID for team-specific marketplace")
 ):
     """Get public agents from the marketplace with pagination, search, sort, and filter support."""
     if not await is_enabled("agent_marketplace"):
@@ -1610,7 +2058,8 @@ async def get_marketplace_agents(
             'p_search': search,
             'p_tags': tags_array,
             'p_limit': limit + 1,
-            'p_offset': offset
+            'p_offset': offset,
+            'p_account_id': account_id  # Pass account_id for team-specific filtering
         }).execute()
         
         if result.data is None:
@@ -1632,6 +2081,10 @@ async def get_marketplace_agents(
             agents_data = sorted(agents_data, key=lambda x: x.get('name', '').lower())
         else:
             agents_data = sorted(agents_data, key=lambda x: x.get('marketplace_published_at', ''), reverse=True)
+        
+        # NOTE: Sharing preferences are applied during import in add_agent_to_library function
+        # The marketplace should show what WOULD be imported, not filter it out here
+        # This allows users to see what MCPs/knowledge bases are available before importing
         
         estimated_total = (page - 1) * limit + len(agents_data)
         if has_more:
@@ -1662,14 +2115,14 @@ async def publish_agent_to_marketplace(
     publish_data: PublishAgentRequest,
     user_id: str = Depends(get_current_user_id_from_jwt)
 ):
-    """Publish an agent to the marketplace."""
+    """Publish an agent to the marketplace or share with specific teams."""
     if not await is_enabled("agent_marketplace"):
         raise HTTPException(
             status_code=403, 
             detail="Custom agent currently disabled. This feature is not available at the moment."
         )
     
-    logger.info(f"Publishing agent {agent_id} to marketplace")
+    logger.info(f"Publishing agent {agent_id} with visibility: {publish_data.visibility}")
     client = await db.client
     
     try:
@@ -1682,19 +2135,47 @@ async def publish_agent_to_marketplace(
         if agent['account_id'] != user_id:
             raise HTTPException(status_code=403, detail="Access denied")
         
-        # Update agent with marketplace data
-        update_data = {
-            'is_public': True,
-            'marketplace_published_at': datetime.now(timezone.utc).isoformat()
+        # Validate visibility
+        if publish_data.visibility not in ["public", "teams", "private"]:
+            raise HTTPException(status_code=400, detail="Invalid visibility. Must be 'public', 'teams', or 'private'")
+        
+        # Note: Team permission validation is handled by the database function
+        # publish_agent_with_visibility_by_user() which validates:
+        # 1. User owns the agent
+        # 2. User is owner of their account  
+        # 3. User is owner of all target teams (if sharing with teams)
+        
+        # Store sharing preferences for later use when serving marketplace agents
+        sharing_preferences = {
+            'include_knowledge_bases': publish_data.include_knowledge_bases,
+            'include_custom_mcp_tools': publish_data.include_custom_mcp_tools
         }
         
+        # Update agent with sharing preferences
+        await client.table('agents').update({
+            'sharing_preferences': sharing_preferences
+        }).eq('agent_id', agent_id).execute()
+        
+        # Use the new database function that accepts user_id explicitly
+        await client.rpc('publish_agent_with_visibility_by_user', {
+            'p_agent_id': agent_id,
+            'p_visibility': publish_data.visibility,
+            'p_user_id': user_id,
+            'p_team_ids': publish_data.team_ids if publish_data.visibility == "teams" else None
+        }).execute()
+        
+        # Update tags if provided
         if publish_data.tags:
-            update_data['tags'] = publish_data.tags
+            await client.table('agents').update({'tags': publish_data.tags}).eq('agent_id', agent_id).execute()
         
-        await client.table('agents').update(update_data).eq('agent_id', agent_id).execute()
+        message = {
+            "public": "Agent published to marketplace successfully",
+            "teams": f"Agent shared with {len(publish_data.team_ids or [])} team(s)",
+            "private": "Agent set to private"
+        }.get(publish_data.visibility, "Agent visibility updated")
         
-        logger.info(f"Successfully published agent {agent_id} to marketplace")
-        return {"message": "Agent published to marketplace successfully"}
+        logger.info(f"Successfully updated agent {agent_id} visibility to {publish_data.visibility}")
+        return {"message": message}
         
     except HTTPException:
         raise
@@ -1727,11 +2208,13 @@ async def unpublish_agent_from_marketplace(
         if agent['account_id'] != user_id:
             raise HTTPException(status_code=403, detail="Access denied")
         
-        # Update agent to remove from marketplace
-        await client.table('agents').update({
-            'is_public': False,
-            'marketplace_published_at': None
-        }).eq('agent_id', agent_id).execute()
+        # Update agent to remove from marketplace using the new visibility function
+        await client.rpc('publish_agent_with_visibility_by_user', {
+            'p_agent_id': agent_id,
+            'p_visibility': 'private',
+            'p_user_id': user_id,
+            'p_team_ids': None
+        }).execute()
         
         logger.info(f"Successfully unpublished agent {agent_id} from marketplace")
         return {"message": "Agent removed from marketplace successfully"}

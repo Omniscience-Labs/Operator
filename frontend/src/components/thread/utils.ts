@@ -162,8 +162,17 @@ export const getToolIcon = (toolName: string): ElementType => {
     case 'call-mcp-tool':
       return PlugIcon;
 
+    // Knowledge base tools
+    case 'list-available-knowledge-bases':
+      return BookOpen;
+
     // Default case
     default:
+      // Handle dynamic knowledge search tools
+      if (toolName?.startsWith('search_') || toolName?.startsWith('search-')) {
+        return BookOpen;
+      }
+      
       if (toolName?.startsWith('mcp_')) {
         const parts = toolName.split('_');
         if (parts.length >= 3) {
@@ -349,6 +358,9 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['configure-mcp-server', 'Configuring MCP Server'],
   ['get-popular-mcp-servers', 'Getting Popular MCP Servers'],
   ['test-mcp-server-connection', 'Testing MCP Server Connection'],
+  
+  // Knowledge base tools
+  ['list-available-knowledge-bases', 'Listing Knowledge Bases'],
 
 
   //V2
@@ -431,6 +443,12 @@ const MCP_TOOL_MAPPINGS = new Map([
 ]);
 
 export function getUserFriendlyToolName(toolName: string): string {
+  // Handle dynamic knowledge search tools
+  if (toolName?.startsWith('search_') || toolName?.startsWith('search-')) {
+    const searchTerm = toolName.replace(/^search[-_]/, '').replace(/[-_]/g, ' ');
+    return `Searching ${searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1)}`;
+  }
+  
   if (toolName?.startsWith('mcp_')) {
     const parts = toolName.split('_');
     if (parts.length >= 3) {

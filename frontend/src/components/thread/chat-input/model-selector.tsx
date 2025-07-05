@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { isLocalMode } from '@/lib/config';
 import { CustomModelDialog, CustomModelFormData } from './custom-model-dialog';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 
 interface CustomModel {
   id: string;
@@ -525,7 +526,13 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   </Tooltip>
                 </TooltipProvider>
               )}
-              <span className="truncate max-w-[100px] sm:max-w-[160px] md:max-w-[200px] lg:max-w-none">{selectedLabel}</span>
+              <span className="truncate max-w-[100px] sm:max-w-[160px] md:max-w-[200px] lg:max-w-none">
+                <GradientText 
+                  text={selectedLabel} 
+                  gradient="linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #f59e0b 100%)"
+                  transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+                />
+              </span>
               <ChevronDown className="h-3 w-3 opacity-50 ml-1 flex-shrink-0" />
             </div>
           </Button>

@@ -23,7 +23,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -46,6 +45,8 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/components/AuthProvider';
+import { ScrollProgress } from '@/components/animate-ui/components/scroll-progress';
+import { useScroll, useSpring, motion } from 'framer-motion';
 
 // Speech recognition types
 interface SpeechRecognitionEvent extends Event {
@@ -99,6 +100,14 @@ export default function MeetingPage() {
 
   const transcriptRef = useRef<HTMLDivElement>(null);
   const searchHighlightRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  
+  // Custom scroll progress tracking
+  const { scrollYProgress } = useScroll({ container: transcriptRef });
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 250,
+    damping: 40,
+    bounce: 0,
+  });
 
   // Auto-scroll to bottom when transcript updates
   useEffect(() => {
@@ -1036,13 +1045,45 @@ ${transcript}`;
   };
 
   // Start chat with transcript
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
+  
   const startChatWithTranscript = async () => {
-    // Save current transcript to ensure it's persisted
-    await updateMeeting(meetingId, { transcript });
+    if (isOpeningChat) return; // Prevent double clicks
     
-    // Navigate to dashboard with meeting attachment
-    // The formatting will happen in the dashboard component
-    router.push(`/dashboard?attachMeeting=${meetingId}`);
+    setIsOpeningChat(true);
+    
+    try {
+      // If there's a transcript, save it first
+      if (transcript && transcript.trim()) {
+        console.log('[CHAT] Saving transcript before opening chat...');
+        await updateMeeting(meetingId, { transcript });
+        console.log('[CHAT] Transcript saved successfully');
+      } else {
+        console.log('[CHAT] No transcript to save, proceeding to chat...');
+      }
+      
+      // Navigate to dashboard with meeting attachment
+      console.log('[CHAT] Navigating to dashboard with meeting attachment');
+      router.push(`/dashboard?attachMeeting=${meetingId}`);
+    } catch (error) {
+      console.error('[CHAT] Error opening chat:', error);
+      
+      // Show user-friendly error
+      if (error instanceof Error && error.message.includes('auth')) {
+        toast.error('Please log in again to open chat');
+      } else {
+        toast.error('Failed to open chat. Please try again.');
+      }
+      
+      // Still try to navigate without saving if there's an error
+      // This ensures the button always works even if the save fails
+      setTimeout(() => {
+        console.log('[CHAT] Fallback: navigating anyway');
+        router.push(`/dashboard?attachMeeting=${meetingId}`);
+      }, 1000);
+    } finally {
+      setIsOpeningChat(false);
+    }
   };
 
   // Poll for transcript while processing
@@ -1099,77 +1140,88 @@ ${transcript}`;
   return (
     <div className="flex-1 flex flex-col h-screen overflow-hidden">
       {/* Header */}
-      <div className="flex-shrink-0 border-b bg-gradient-to-r from-background/95 via-background to-background/95 backdrop-blur-sm px-6 py-5 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/meetings')}
-            className="hover:bg-accent/80 transition-all duration-200 shadow-sm hover:shadow-md"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-xl font-semibold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
-              {meeting.title}
-            </h1>
-            <div className="flex items-center gap-2 text-sm mt-2">
-              <span className="text-muted-foreground/80">
-                {format(new Date(meeting.created_at), 'MMM d, yyyy h:mm a')}
-              </span>
-              <Badge 
-                variant={meeting.status === 'active' ? 'default' : 'secondary'}
-                className="shadow-sm"
-              >
-                {meeting.status}
-              </Badge>
-              {botStatus && (
-                <Badge variant="outline" className="shadow-sm">
-                  {botStatus}
+      <div className="flex-shrink-0 border-b bg-gradient-to-r from-background/95 via-background to-background/95 backdrop-blur-sm px-4 sm:px-6 py-4 sm:py-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/meetings')}
+              className="flex-shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-xl font-semibold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text truncate">
+                {meeting.title}
+              </h1>
+              <div className="flex items-center gap-2 text-xs sm:text-sm mt-1 sm:mt-2 flex-wrap">
+                <span className="text-muted-foreground/80 flex-shrink-0">
+                  {format(new Date(meeting.created_at), 'MMM d, yyyy h:mm a')}
+                </span>
+                <Badge 
+                  variant={meeting.status === 'active' ? 'default' : 'secondary'}
+                  className="shadow-sm text-xs"
+                >
+                  {meeting.status}
                 </Badge>
-              )}
+                {botStatus && (
+                  <Badge variant="outline" className="shadow-sm text-xs">
+                    {botStatus}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center bg-card/60 backdrop-blur border border-border/50 rounded-xl p-1 shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadTranscript}
+                disabled={!transcript}
+                className="flex-shrink-0"
+              >
+                <Download className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Download</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toast.info('Sharing coming soon')}
+                className="flex-shrink-0"
+              >
+                <Share2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Share</span>
+              </Button>
+            </div>
             <Button
-              variant="ghost"
               size="sm"
-              onClick={downloadTranscript}
-              disabled={!transcript}
-              className="hover:bg-blue-50 dark:hover:bg-blue-950/30 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50"
+              onClick={startChatWithTranscript}
+              disabled={isOpeningChat}
+              className="flex-shrink-0"
             >
-              <Download className="h-4 w-4 mr-2" />
-              Download
-            </Button>
-            <div className="w-px h-6 bg-gradient-to-t from-transparent via-border to-transparent mx-1" />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => toast.info('Sharing coming soon')}
-              className="hover:bg-purple-50 dark:hover:bg-purple-950/30 text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-all duration-200 shadow-sm hover:shadow-md"
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
+              {isOpeningChat ? (
+                <>
+                  <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
+                  <span className="hidden sm:inline">Opening...</span>
+                </>
+              ) : (
+                <>
+                  <MessageSquare className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Open in Chat</span>
+                  <span className="sm:hidden">Chat</span>
+                </>
+              )}
             </Button>
           </div>
-          <Button
-            size="sm"
-            onClick={startChatWithTranscript}
-            disabled={!transcript}
-            className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50"
-          >
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Open in Chat
-          </Button>
         </div>
       </div>
 
       {/* Search bar */}
-      <div className="flex-shrink-0 px-6 py-4 border-b bg-gradient-to-r from-background/50 to-background/80 backdrop-blur">
-        <div className="relative max-w-lg">
+      <div className="flex-shrink-0 px-4 sm:px-6 py-4 border-b bg-gradient-to-r from-background/50 to-background/80 backdrop-blur">
+        <div className="relative w-full sm:max-w-lg">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60">
             <Search className="h-4 w-4" />
           </div>
@@ -1177,24 +1229,24 @@ ${transcript}`;
             placeholder="Search within transcript..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-24 h-10 bg-card/50 backdrop-blur border-border/50 shadow-sm focus:shadow-md transition-colors duration-200 placeholder:text-muted-foreground/60"
+            className="pl-10 pr-20 sm:pr-24 h-10 bg-card/50 backdrop-blur border-border/50 shadow-sm focus:shadow-md transition-colors duration-200 placeholder:text-muted-foreground/60"
           />
           {searchResults.length > 0 && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-xs">
-              <span className="text-muted-foreground/80 bg-background/80 px-2 py-1 rounded-md font-medium">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 sm:gap-2 text-xs">
+              <span className="text-muted-foreground/80 bg-background/80 px-1.5 sm:px-2 py-1 rounded-md font-medium text-xs">
                 {currentSearchIndex + 1}/{searchResults.length}
               </span>
               <div className="flex bg-background/80 backdrop-blur rounded-md border border-border/30 shadow-sm">
                 <button
                   onClick={() => navigateSearch('prev')}
-                  className="p-1.5 hover:bg-accent/80 rounded-l-md transition-all duration-200 shadow-sm hover:shadow-md text-muted-foreground hover:text-foreground"
+                  className="p-1 sm:p-1.5 hover:bg-accent/80 rounded-l-md transition-all duration-200 shadow-sm hover:shadow-md text-muted-foreground hover:text-foreground"
                   aria-label="Previous result"
                 >
                   ↑
                 </button>
                 <button
                   onClick={() => navigateSearch('next')}
-                  className="p-1.5 hover:bg-accent/80 rounded-r-md transition-all duration-200 shadow-sm hover:shadow-md text-muted-foreground hover:text-foreground"
+                  className="p-1 sm:p-1.5 hover:bg-accent/80 rounded-r-md transition-all duration-200 shadow-sm hover:shadow-md text-muted-foreground hover:text-foreground"
                   aria-label="Next result"
                 >
                   ↓
@@ -1207,10 +1259,13 @@ ${transcript}`;
 
       {/* Transcript area */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        <ScrollArea className="h-full px-6 py-4 bg-gradient-to-b from-background to-muted/10" ref={transcriptRef}>
+        <div 
+          className="h-full px-4 sm:px-6 py-4 bg-gradient-to-b from-background to-muted/10 overflow-y-auto"
+          ref={transcriptRef}
+        >
           <div className="max-w-4xl mx-auto">
           {transcript || interimTranscript ? (
-            <div className="bg-card/50 backdrop-blur border rounded-xl p-6 shadow-sm">
+            <div className="bg-card/50 backdrop-blur border rounded-xl p-4 sm:p-6 shadow-sm">
               <div className="prose dark:prose-invert max-w-none">
                 <div className="whitespace-pre-wrap text-sm leading-relaxed">
                   {transcript.split('\n').map((line, index) => {
@@ -1247,14 +1302,14 @@ ${transcript}`;
               </div>
             </div>
           ) : (
-            <div className="text-center py-20">
+            <div className="text-center py-12 sm:py-20 px-4">
               <div className="mx-auto w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mb-4">
                 <FileAudio className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold mb-2">
                 {meeting.status === 'active' ? 'Ready to Record' : 'No Transcript Available'}
               </h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
+              <p className="text-muted-foreground max-w-md mx-auto text-sm sm:text-base">
                 {meeting.status === 'active' 
                   ? 'Start recording to see the real-time transcript appear here. Choose between in-person or online meeting recording.'
                   : 'This meeting doesn\'t have any recorded transcript yet.'
@@ -1301,13 +1356,20 @@ ${transcript}`;
             </div>
           )}
         </div>
-        </ScrollArea>
+        </div>
       </div>
 
       {/* Recording controls */}
       {(meeting.status === 'active' || (meeting.status === 'completed' && transcript)) && (
         <div className="flex-shrink-0 border-t bg-gradient-to-r from-background/95 via-background to-background/95 backdrop-blur-sm">
-          <div className="px-6 py-4">
+          {/* Scroll Progress Bar */}
+          {(transcript || interimTranscript) && (
+            <motion.div
+              className="bg-gradient-to-r from-blue-500 to-purple-500 h-1 origin-left"
+              style={{ scaleX }}
+            />
+          )}
+          <div className="px-4 sm:px-6 py-4">
             <div className="max-w-4xl mx-auto">
               {!isRecording ? (
                 <div className="flex flex-col items-center justify-center space-y-4">
@@ -1318,77 +1380,57 @@ ${transcript}`;
                         <p className="text-sm font-medium text-foreground/90 mb-1">Meeting Completed</p>
                         <p className="text-xs text-muted-foreground/80">Start a new recording session to continue adding to this transcript</p>
                       </div>
-                      <div className="flex items-center gap-1 bg-card/60 backdrop-blur border border-border/50 rounded-2xl p-1.5 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 transition-all duration-300">
-                        <button
+                      <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                        <Button
                           onClick={() => continueRecording('local')}
-                          className="group flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-200 text-blue-700 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 shadow-sm hover:shadow-md active:shadow-sm"
+                          variant="outline"
+                          className="flex items-center gap-2 w-full sm:w-auto"
                         >
-                          <div className="relative">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center transition-all duration-200 shadow-sm group-hover:shadow-md">
-                              <User className="h-5 w-5" />
-                            </div>
-                          </div>
-                          <span className="text-sm font-semibold">Continue In Person</span>
-                        </button>
+                          <User className="h-4 w-4" />
+                          <span className="hidden sm:inline">Continue In Person</span>
+                          <span className="sm:hidden">In Person</span>
+                        </Button>
                         
-                        <div className="w-px h-8 bg-gradient-to-t from-transparent via-border to-transparent" />
-                        
-                        <button
+                        <Button
                           onClick={() => continueRecording('online')}
-                          className="group flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-green-50 dark:hover:bg-green-950/30 transition-all duration-200 text-green-700 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 shadow-sm hover:shadow-md active:shadow-sm"
+                          className="flex items-center gap-2 w-full sm:w-auto"
                         >
-                          <div className="relative">
-                            <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-950/50 flex items-center justify-center transition-all duration-200 shadow-sm group-hover:shadow-md">
-                              <Monitor className="h-5 w-5" />
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">Continue Online</span>
-                            <Badge variant="beta" className="bg-blue-600/20 text-blue-600 border-blue-400/30 dark:text-blue-300">
-                              Beta
-                            </Badge>
-                          </div>
-                        </button>
+                          <Monitor className="h-4 w-4" />
+                          <span className="hidden sm:inline">Continue Online</span>
+                          <span className="sm:hidden">Online</span>
+                          <Badge variant="beta" className="bg-blue-500 text-white border-blue-500 text-xs px-1.5 py-0.5">
+                            Beta
+                          </Badge>
+                        </Button>
                       </div>
                     </>
                   ) : (
                     /* Initial Recording Section */
                     <>
-                      <div className="flex items-center gap-1 bg-card/60 backdrop-blur border border-border/50 rounded-2xl p-1.5 shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/10 transition-all duration-300">
-                        <button
+                      <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                        <Button
                           onClick={() => startRecording('local')}
-                          className="group flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-950/30 transition-all duration-200 text-slate-700 hover:text-slate-800 dark:text-slate-300 dark:hover:text-slate-200 shadow-sm hover:shadow-md active:shadow-sm"
+                          variant="outline"
+                          className="flex items-center gap-2 w-full sm:w-auto"
                         >
-                          <div className="relative">
-                            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-900/50 flex items-center justify-center transition-all duration-200 shadow-sm group-hover:shadow-md">
-                              <User className="h-5 w-5" />
-                            </div>
-                          </div>
-                          <span className="text-sm font-semibold">In Person</span>
-                        </button>
+                          <User className="h-4 w-4" />
+                          In Person
+                        </Button>
                         
-                        <div className="w-px h-8 bg-gradient-to-t from-transparent via-border to-transparent" />
-                        
-                        <button
+                        <Button
                           onClick={() => startRecording('online')}
-                          className="group flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-green-50 dark:hover:bg-green-950/30 transition-all duration-200 text-green-700 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 shadow-sm hover:shadow-md active:shadow-sm"
+                          className="flex items-center gap-2 w-full sm:w-auto"
                         >
-                          <div className="relative">
-                            <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-950/50 flex items-center justify-center transition-all duration-200 shadow-sm group-hover:shadow-md">
-                              <Monitor className="h-5 w-5" />
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">Online</span>
-                            <Badge variant="beta" className="bg-blue-600/20 text-blue-600 border-blue-400/30 dark:text-blue-300">
-                              Beta
-                            </Badge>
-                          </div>
-                        </button>
+                          <Monitor className="h-4 w-4" />
+                          Online
+                          <Badge variant="beta" className="bg-blue-500 text-white border-blue-500 text-xs px-1.5 py-0.5">
+                            Beta
+                          </Badge>
+                        </Button>
                       </div>
                       
                       <div className="text-center">
-                        <p className="text-xs text-muted-foreground/80 max-w-lg mx-auto leading-relaxed">
+                        <p className="text-xs text-muted-foreground/80 max-w-lg mx-auto leading-relaxed px-4">
                           Choose <span className="font-medium text-blue-600 dark:text-blue-400">In Person</span> for real-time speech-to-text or <span className="font-medium text-green-600 dark:text-green-400">Online</span> to join virtual meetings with a bot
                         </p>
                       </div>
@@ -1397,9 +1439,9 @@ ${transcript}`;
                 </div>
               ) : (
                 <div className="flex items-center justify-center">
-                  <div className="flex items-center gap-6 bg-card/80 backdrop-blur border border-border/50 rounded-2xl px-6 py-4 shadow-lg shadow-black/5">
+                  <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-card/80 backdrop-blur border border-border/50 rounded-2xl px-4 sm:px-6 py-4 shadow-lg shadow-black/5 w-full sm:w-auto">
                     {/* Recording indicator and mode */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 justify-center">
                       {recordingMode === 'local' ? (
                         <div className="flex items-center gap-3">
                           <div className="relative">
@@ -1441,27 +1483,23 @@ ${transcript}`;
                     </div>
                     
                     {/* Control buttons */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 justify-center">
                       {/* Pause/Resume button for local recording */}
                       {recordingMode === 'local' && (
                         <Button
                           onClick={isPaused ? resumeRecording : pauseRecording}
                           size="sm"
-                          className={cn(
-                            "h-9 px-4 gap-2 font-medium transition-all duration-200 shadow-sm",
-                            isPaused
-                              ? "bg-blue-500 hover:bg-blue-600 text-white shadow-blue-500/20 hover:shadow-blue-500/30"
-                              : "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20 hover:shadow-amber-500/30"
-                          )}
+                          variant={isPaused ? "default" : "secondary"}
+                          className="min-w-[80px]"
                         >
                           {isPaused ? (
                             <>
-                              <Play className="h-3.5 w-3.5 fill-current" />
+                              <Play className="h-3.5 w-3.5 fill-current mr-1" />
                               Resume
                             </>
                           ) : (
                             <>
-                              <Pause className="h-3.5 w-3.5 fill-current" />
+                              <Pause className="h-3.5 w-3.5 fill-current mr-1" />
                               Pause
                             </>
                           )}
@@ -1472,9 +1510,10 @@ ${transcript}`;
                         <Button
                           onClick={stopRecording}
                           size="sm"
-                          className="h-9 px-4 gap-2 bg-red-500 hover:bg-red-600 text-white font-medium transition-all duration-200 shadow-sm shadow-red-500/20 hover:shadow-red-500/30"
+                          variant="destructive"
+                          className="min-w-[70px]"
                         >
-                          <Square className="h-3.5 w-3.5 fill-current" />
+                          <Square className="h-3.5 w-3.5 fill-current mr-1" />
                           Stop
                         </Button>
                       )}
@@ -1492,16 +1531,22 @@ ${transcript}`;
         setShowMeetingUrlDialog(open);
         if (!open) setMeetingUrl('');
       }}>
-        <DialogContent className="max-w-md bg-gradient-to-br from-card/95 via-card to-card/90 backdrop-blur border border-border/50 shadow-2xl">
+        <DialogContent className="max-w-md mx-4 bg-gradient-to-br from-card/95 via-card to-card/90 backdrop-blur border border-border/50 shadow-2xl">
           <DialogHeader className="space-y-3">
-            <DialogTitle className="text-xl font-semibold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
+            <DialogTitle className="text-lg sm:text-xl font-semibold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">
               Join Online Meeting
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground/80 leading-relaxed">
+            <DialogDescription className="text-muted-foreground/80 leading-relaxed text-sm">
               Enter the meeting URL to join with an AI bot that will record and transcribe the conversation
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-6 py-4">
+          <div className="space-y-4 sm:space-y-6 py-4">
+            <Alert className="border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-900/20">
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+              <AlertDescription className="text-amber-700 dark:text-amber-300 text-sm">
+                <strong>Google Meet temporarily unavailable:</strong> Our bot is currently experiencing issues with Google Meet. Please use Zoom or other supported platforms. We're working on a fix!
+              </AlertDescription>
+            </Alert>
             <div className="space-y-2">
               <Label htmlFor="meeting-url" className="text-sm font-medium text-foreground/90">
                 Meeting URL
@@ -1510,29 +1555,30 @@ ${transcript}`;
                 id="meeting-url"
                 value={meetingUrl}
                 onChange={(e) => setMeetingUrl(e.target.value)}
-                placeholder="https://zoom.us/j/123456789 or https://meet.google.com/abc-defg-hij"
+                placeholder="https://zoom.us/j/123456789"
                 onKeyDown={(e) => e.key === 'Enter' && handleStartOnlineRecording()}
                 className="h-11 bg-background/50 backdrop-blur border-border/50 shadow-sm focus:shadow-md transition-colors duration-200 placeholder:text-muted-foreground/60"
               />
             </div>
           </div>
-          <DialogFooter className="gap-3">
+          <DialogFooter className="gap-3 flex-col sm:flex-row">
             <Button 
               variant="outline" 
               onClick={() => setShowMeetingUrlDialog(false)}
-              className="shadow-sm hover:shadow-md transition-all duration-200"
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleStartOnlineRecording} 
               disabled={!meetingUrl.trim()}
-              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500/20"
+              className="w-full sm:w-auto"
             >
               <Monitor className="h-4 w-4 mr-2" />
               <span className="flex items-center gap-2">
-                Start Bot Recording
-                <Badge variant="beta" className="bg-blue-600/20 text-blue-200 border-blue-400/30">
+                <span className="hidden sm:inline">Start Bot Recording</span>
+                <span className="sm:hidden">Start Recording</span>
+                <Badge variant="beta" className="bg-blue-500 text-white border-blue-500 text-xs px-1.5 py-0.5">
                   Beta
                 </Badge>
               </span>

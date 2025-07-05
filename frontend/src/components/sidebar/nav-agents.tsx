@@ -49,6 +49,7 @@ import { ThreadWithProject } from '@/hooks/react-query/sidebar/use-sidebar';
 import { processThreadsWithProjects, useDeleteMultipleThreads, useDeleteThread, useProjects, useThreads } from '@/hooks/react-query/sidebar/use-sidebar';
 import { projectKeys, threadKeys } from '@/hooks/react-query/sidebar/keys';
 
+
 export function NavAgents() {
   const { isMobile, state } = useSidebar()
   const [loadingThreadId, setLoadingThreadId] = useState<string | null>(null)

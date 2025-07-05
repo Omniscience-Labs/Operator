@@ -8,30 +8,15 @@ import { useRouter } from 'next/navigation';
 import { getAgentAvatar } from '../_utils/get-agent-style';
 import { usePublishAgent, useUnpublishAgent } from '@/hooks/react-query/marketplace/use-marketplace';
 import { toast } from 'sonner';
-
-interface Agent {
-  agent_id: string;
-  name: string;
-  description?: string;
-  is_default: boolean;
-  is_public?: boolean;
-  marketplace_published_at?: string;
-  download_count?: number;
-  tags?: string[];
-  created_at: string;
-  updated_at?: string;
-  configured_mcps?: Array<{ name: string }>;
-  agentpress_tools?: Record<string, any>;
-  avatar?: string;
-  avatar_color?: string;
-}
+import { PublishAgentDialog } from './publish-agent-dialog';
+import { Agent } from '@/hooks/react-query/agents/utils';
 
 interface AgentsGridProps {
   agents: Agent[];
   onEditAgent: (agentId: string) => void;
   onDeleteAgent: (agentId: string) => void;
-  onToggleDefault: (agentId: string, currentDefault: boolean) => void;
-  deleteAgentMutation: { isPending: boolean };
+  onToggleDefault: (agentId: string, isDefault: boolean) => void;
+  deleteAgentMutation: any;
 }
 
 const AgentModal = ({ agent, isOpen, onClose, onCustomize, onChat, onPublish, onUnpublish, isPublishing, isUnpublishing }) => {
@@ -170,9 +155,9 @@ export const AgentsGrid = ({
   deleteAgentMutation 
 }: AgentsGridProps) => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [publishDialogAgent, setPublishDialogAgent] = useState<Agent | null>(null);
   const router = useRouter();
   
-  const publishAgentMutation = usePublishAgent();
   const unpublishAgentMutation = useUnpublishAgent();
 
   const handleAgentClick = (agent: Agent) => {
@@ -189,13 +174,11 @@ export const AgentsGrid = ({
     setSelectedAgent(null);
   };
 
-  const handlePublish = async (agentId: string) => {
-    try {
-      await publishAgentMutation.mutateAsync({ agentId, tags: [] });
-      toast.success('Agent published to marketplace successfully!');
+  const handlePublish = (agentId: string) => {
+    const agent = agents.find(a => a.agent_id === agentId);
+    if (agent) {
+      setPublishDialogAgent(agent);
       setSelectedAgent(null);
-    } catch (error: any) {
-      toast.error('Failed to publish agent to marketplace');
     }
   };
 
@@ -331,8 +314,20 @@ export const AgentsGrid = ({
           onChat={handleChat}
           onPublish={handlePublish}
           onUnpublish={handleUnpublish}
-          isPublishing={publishAgentMutation.isPending}
+          isPublishing={false}
           isUnpublishing={unpublishAgentMutation.isPending}
+        />
+      )}
+      
+      {publishDialogAgent && (
+        <PublishAgentDialog
+          agent={publishDialogAgent}
+          isOpen={!!publishDialogAgent}
+          onClose={() => setPublishDialogAgent(null)}
+          onSuccess={() => {
+            setPublishDialogAgent(null);
+            // TODO: Refresh agents list
+          }}
         />
       )}
     </>

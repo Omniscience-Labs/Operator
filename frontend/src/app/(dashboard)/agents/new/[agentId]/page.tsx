@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, Settings2, Sparkles, Check, Clock, Eye, Menu } from 'lucide-react';
+import { ArrowLeft, Loader2, Settings2, Sparkles, Check, Clock, Eye, Menu, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import { useAgent, useUpdateAgent } from '@/hooks/react-query/agents/use-agents'
 import { AgentMCPConfiguration } from '../../_components/agent-mcp-configuration';
 import { toast } from 'sonner';
 import { AgentToolsConfiguration } from '../../_components/agent-tools-configuration';
+import { AgentKnowledgeConfiguration } from '../../_components/agent-knowledge-configuration';
 import { AgentPreview } from '../../_components/agent-preview';
 import { getAgentAvatar } from '../../_utils/get-agent-style';
 import { EditableText } from '@/components/ui/editable';
@@ -46,6 +47,7 @@ export default function AgentConfigurationPage() {
     is_default: false,
     avatar: '',
     avatar_color: '',
+    knowledge_bases: [],
   });
 
   const originalDataRef = useRef<typeof formData | null>(null);
@@ -76,6 +78,7 @@ export default function AgentConfigurationPage() {
         is_default: agentData.is_default || false,
         avatar: agentData.avatar || '',
         avatar_color: agentData.avatar_color || '',
+        knowledge_bases: agentData.knowledge_bases || [],
       };
       setFormData(initialData);
       originalDataRef.current = { ...initialData };
@@ -110,7 +113,8 @@ export default function AgentConfigurationPage() {
     }
     if (JSON.stringify(newData.agentpress_tools) !== JSON.stringify(originalData.agentpress_tools) ||
         JSON.stringify(newData.configured_mcps) !== JSON.stringify(originalData.configured_mcps) ||
-        JSON.stringify(newData.custom_mcps) !== JSON.stringify(originalData.custom_mcps)) {
+        JSON.stringify(newData.custom_mcps) !== JSON.stringify(originalData.custom_mcps) ||
+        JSON.stringify(newData.knowledge_bases) !== JSON.stringify(originalData.knowledge_bases)) {
       return true;
     }
     return false;
@@ -385,6 +389,21 @@ export default function AgentConfigurationPage() {
                         onMCPsChange={(mcps) => handleBatchMCPChange({ configured_mcps: mcps, custom_mcps: formData.custom_mcps })}
                         onCustomMCPsChange={(customMcps) => handleBatchMCPChange({ configured_mcps: formData.configured_mcps, custom_mcps: customMcps })}
                         onBatchMCPChange={handleBatchMCPChange}
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="knowledge" className="border-b">
+                    <AccordionTrigger className="hover:no-underline text-sm md:text-base">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4" />
+                        Knowledge Bases
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-4 overflow-x-hidden">
+                      <AgentKnowledgeConfiguration
+                        knowledgeBases={formData.knowledge_bases || []}
+                        onKnowledgeBasesChange={(knowledgeBases) => handleFieldChange('knowledge_bases', knowledgeBases)}
                       />
                     </AccordionContent>
                   </AccordionItem>

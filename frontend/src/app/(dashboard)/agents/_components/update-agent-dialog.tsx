@@ -6,12 +6,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, Save, Settings2, Sparkles } from 'lucide-react';
+import { Loader2, Search, Save, Settings2, Sparkles, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DEFAULT_AGENTPRESS_TOOLS, getToolDisplayName } from '../_data/tools';
 import { useAgent, useUpdateAgent } from '@/hooks/react-query/agents/use-agents';
 import { MCPConfigurationNew } from './mcp/mcp-configuration-new';
+import { AgentKnowledgeConfiguration } from './agent-knowledge-configuration';
 
 interface AgentUpdateRequest {
   name?: string;
@@ -21,6 +22,7 @@ interface AgentUpdateRequest {
   custom_mcps?: Array<{ name: string; type: 'json' | 'sse'; config: any; enabledTools: string[] }>;
   agentpress_tools?: Record<string, { enabled: boolean; description: string }>;
   is_default?: boolean;
+  knowledge_bases?: Array<{ name: string; index_name: string; description: string }>;
 }
 
 interface UpdateAgentDialogProps {
@@ -68,6 +70,7 @@ export const UpdateAgentDialog = ({ agentId, isOpen, onOpenChange, onAgentUpdate
         custom_mcps: agent.custom_mcps || [],
         agentpress_tools: agent.agentpress_tools || {},
         is_default: agent.is_default,
+        knowledge_bases: agent.knowledge_bases || [],
       });
     }
   }, [agent, isOpen]);
@@ -280,6 +283,12 @@ export const UpdateAgentDialog = ({ agentId, isOpen, onOpenChange, onAgentUpdate
                     <Sparkles className="h-4 w-4" />
                     MCP Servers
                   </TabsTrigger>
+                  <TabsTrigger 
+                    value="knowledge-bases" 
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    Knowledge Bases
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="tools" className="flex-1 flex flex-col m-0 min-h-0">
@@ -369,6 +378,13 @@ export const UpdateAgentDialog = ({ agentId, isOpen, onOpenChange, onAgentUpdate
                       customType: customMcp.type
                     }))]}
                     onConfigurationChange={handleMCPConfigurationChange}
+                  />
+                </TabsContent>
+
+                <TabsContent value="knowledge-bases" className="flex-1 m-0 p-6 overflow-y-auto">
+                  <AgentKnowledgeConfiguration
+                    knowledgeBases={formData.knowledge_bases || []}
+                    onKnowledgeBasesChange={(newBases) => handleInputChange('knowledge_bases', newBases)}
                   />
                 </TabsContent>
               </Tabs>

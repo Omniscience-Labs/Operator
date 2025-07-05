@@ -18,6 +18,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { isLocalMode } from '@/lib/config';
 import { ThreadContent } from '@/components/thread/content/ThreadContent';
 import { ThreadSkeleton } from '@/components/thread/content/ThreadSkeleton';
+import { createClient } from '@/lib/supabase/client';
 import { useAddUserMessageMutation } from '@/hooks/react-query/threads/use-messages';
 import { useStartAgentMutation, useStopAgentMutation } from '@/hooks/react-query/threads/use-agent-run';
 import { useSubscription } from '@/hooks/react-query/subscriptions/use-subscriptions';
@@ -261,9 +262,14 @@ export default function ThreadPage({
           message
         });
 
+        // Get user name from Supabase auth
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        const userName = user?.user_metadata?.name;
+
         const agentPromise = startAgentMutation.mutateAsync({
           threadId,
-          options
+          options: { ...options, user_name: userName || undefined }
         });
 
         const results = await Promise.allSettled([messagePromise, agentPromise]);

@@ -33,7 +33,7 @@ export default function EditPersonalAccountName({ account }: Props) {
           <SubmitButton
             formAction={editPersonalAccountName}
             pendingText="Updating..."
-            className="rounded-lg bg-primary hover:bg-primary/90 text-white h-10"
+            className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground h-10"
           >
             Save Changes
           </SubmitButton>

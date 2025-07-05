@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ChevronDown, Plus, Star, Bot, Edit, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { CreateAgentDialog } from '@/app/(dashboard)/agents/_components/create-agent-dialog';
 import { useFeatureFlags } from '@/lib/feature-flags';
+import { useCurrentAccount } from '@/hooks/use-current-account';
 
 interface AgentSelectorProps {
   onAgentSelect?: (agentId: string | undefined) => void;
@@ -30,10 +31,12 @@ export function AgentSelector({
   className,
   variant = 'default',
 }: AgentSelectorProps) {
+  const currentAccount = useCurrentAccount();
   const { data: agentsResponse, isLoading, refetch: loadAgents } = useAgents({
     limit: 100,
     sort_by: 'name',
-    sort_order: 'asc'
+    sort_order: 'asc',
+    account_id: currentAccount?.account_id
   });
 
   
@@ -44,7 +47,10 @@ export function AgentSelector({
   const [isOpen, setIsOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const agents = agentsResponse?.agents || [];
+  // Filter agents based on account context
+  const allAgents = agentsResponse?.agents || [];
+  const agents = allAgents; // Backend now handles filtering via account_id parameter
+  
   const defaultAgent = agents.find(agent => agent.is_default);
   const currentAgent = selectedAgentId 
     ? agents.find(agent => agent.agent_id === selectedAgentId)
@@ -192,8 +198,9 @@ export function AgentSelector({
                 </>
               ) : null}
 
-              <DropdownMenuSeparator />
-              
+                          <DropdownMenuSeparator />
+            
+            {!currentAccount?.is_team_context && (
               <DropdownMenuItem onClick={handleCreateAgent} className="cursor-pointer">
                 <div className="flex items-center justify-between w-full">
                   Agent Playground
@@ -202,6 +209,7 @@ export function AgentSelector({
                   </Badge>
                 </div>
               </DropdownMenuItem>
+            )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -312,15 +320,19 @@ export function AgentSelector({
             
             <DropdownMenuSeparator />
             
-            <DropdownMenuItem onClick={handleCreateAgent} className="cursor-pointer">
-              <Plus className="h-4 w-4" />
-              Create New Agent
-            </DropdownMenuItem>
-            
-            <DropdownMenuItem onClick={handleManageAgents} className="cursor-pointer">
-              <Bot className="h-4 w-4" />
-              Manage All Agents
-            </DropdownMenuItem>
+            {!currentAccount?.is_team_context && (
+              <>
+                <DropdownMenuItem onClick={handleCreateAgent} className="cursor-pointer">
+                  <Plus className="h-4 w-4" />
+                  Create New Agent
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem onClick={handleManageAgents} className="cursor-pointer">
+                  <Bot className="h-4 w-4" />
+                  Manage All Agents
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

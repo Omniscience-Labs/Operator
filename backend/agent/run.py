@@ -28,6 +28,10 @@ from utils.auth_utils import get_account_id_from_thread
 from services.billing import check_billing_status
 from agent.tools.sb_vision_tool import SandboxVisionTool
 from agent.tools.audio_transcription_tool import AudioTranscriptionTool
+from agent.tools.sb_podcast_tool import SandboxPodcastTool
+from agent.tools.memory_search_tool import MemorySearchTool
+from agent.tools.knowledge_search_tool import KnowledgeSearchTool
+from agent.tools.datetime_tool import DateTimeTool
 
 from services.langfuse import langfuse
 from langfuse.client import StatefulTraceClient
@@ -52,7 +56,8 @@ async def run_agent(
     agent_config: Optional[dict] = None,    
     trace: Optional[StatefulTraceClient] = None,
     is_agent_builder: Optional[bool] = False,
-    target_agent_id: Optional[str] = None
+    target_agent_id: Optional[str] = None,
+    user_name: Optional[str] = None,
 ):
     """Run the development agent with specified configuration."""
     logger.info(f"🚀 Starting agent with model: {model_name}")
@@ -114,12 +119,17 @@ async def run_agent(
         thread_manager.add_tool(SandboxExcelTool, project_id=project_id, thread_manager=thread_manager)
         thread_manager.add_tool(SandboxPDFFormTool, project_id=project_id, thread_manager=thread_manager)
         thread_manager.add_tool(AudioTranscriptionTool, project_id=project_id, thread_manager=thread_manager)
+        thread_manager.add_tool(SandboxPodcastTool, project_id=project_id, thread_manager=thread_manager)
+        thread_manager.add_tool(MemorySearchTool, thread_manager=thread_manager)
+        thread_manager.add_tool(DateTimeTool)
         if config.RAPID_API_KEY:
             thread_manager.add_tool(DataProvidersTool)
     else:
         logger.info("Custom agent specified - registering only enabled tools")
         thread_manager.add_tool(ExpandMessageTool, thread_id=thread_id, thread_manager=thread_manager)
         thread_manager.add_tool(MessageTool)
+        # Always enable memory search for custom agents
+        thread_manager.add_tool(MemorySearchTool, thread_manager=thread_manager)
         if enabled_tools.get('sb_shell_tool', {}).get('enabled', False):
             thread_manager.add_tool(SandboxShellTool, project_id=project_id, thread_manager=thread_manager)
         if enabled_tools.get('sb_files_tool', {}).get('enabled', False):
@@ -140,8 +150,17 @@ async def run_agent(
             thread_manager.add_tool(SandboxPDFFormTool, project_id=project_id, thread_manager=thread_manager)
         if enabled_tools.get('sb_audio_transcription_tool', {}).get('enabled', False):
             thread_manager.add_tool(AudioTranscriptionTool, project_id=project_id, thread_manager=thread_manager)
+        if enabled_tools.get('sb_podcast_tool', {}).get('enabled', False):
+            thread_manager.add_tool(SandboxPodcastTool, project_id=project_id, thread_manager=thread_manager)
         if config.RAPID_API_KEY and enabled_tools.get('data_providers_tool', {}).get('enabled', False):
             thread_manager.add_tool(DataProvidersTool)
+        if enabled_tools.get('datetime_tool', {}).get('enabled', False):
+            thread_manager.add_tool(DateTimeTool)
+
+    # Register knowledge search tool if agent has knowledge bases configured
+    if agent_config and agent_config.get('knowledge_bases'):
+        logger.info(f"Registering knowledge search tool with {len(agent_config['knowledge_bases'])} knowledge bases")
+        thread_manager.add_tool(KnowledgeSearchTool, thread_manager=thread_manager, knowledge_bases=agent_config['knowledge_bases'])
 
     # Register MCP tool wrapper if agent has configured MCPs or custom MCPs
     mcp_wrapper_instance = None
@@ -209,7 +228,7 @@ async def run_agent(
         default_system_content = get_gemini_system_prompt()
     else:
         # Use the original prompt - the LLM can only use tools that are registered
-        default_system_content = get_system_prompt()
+        default_system_content = get_system_prompt(user_name or "Pookie")
         
     # Add sample response for non-anthropic models
     if "anthropic" not in model_name.lower():

@@ -8,12 +8,15 @@ from agent.tools.data_providers.AmazonProvider import AmazonProvider
 from agent.tools.data_providers.ZillowProvider import ZillowProvider
 from agent.tools.data_providers.TwitterProvider import TwitterProvider
 from agent.tools.data_providers.ApolloProvider import ApolloProvider
+from services.credit_calculator import CreditCalculator
+from utils.logger import logger
 
 class DataProvidersTool(Tool):
-    """Tool for making requests to various data providers."""
+    """Tool for making requests to various data providers with credit tracking."""
 
     def __init__(self):
         super().__init__()
+        self.credit_calculator = CreditCalculator()
 
         self.register_data_providers = {
             "linkedin": LinkedinProvider(),
@@ -23,6 +26,10 @@ class DataProvidersTool(Tool):
             "twitter": TwitterProvider(),
             "apollo": ApolloProvider()
         }
+
+    def get_provider_cost_estimate(self, service_name: str, route: str = None) -> Dict[str, Any]:
+        """Get cost estimate for a data provider call."""
+        return self.credit_calculator.estimate_data_provider_call_cost(service_name, route)
 
     @openapi_schema({
         "type": "function",
@@ -168,7 +175,7 @@ Use this tool when you need to discover what endpoints are available.
         payload: Union[Dict[str, Any], str, None] = None
     ) -> ToolResult:
         """
-        Execute a call to a specific data provider endpoint.
+        Execute a call to a specific data provider endpoint with credit tracking.
         
         Parameters:
         - service_name: The name of the data provider (e.g., 'linkedin')
@@ -210,13 +217,53 @@ Use this tool when you need to discover what endpoints are available.
             if route not in data_provider.get_endpoints().keys():
                 return self.fail_response(f"Endpoint '{route}' not found in {service_name} data provider.")
             
+            # Calculate credit cost BEFORE execution
+            credits, credit_details, tool_name_for_analytics = self.credit_calculator.calculate_data_provider_credits(
+                service_name, route, payload
+            )
             
+            logger.info(f"Data provider call: {service_name}.{route} will cost {credits} credits (tracked as {tool_name_for_analytics})")
+            
+            # Execute the data provider call
             result = data_provider.call_endpoint(route, payload)
-            return self.success_response(result)
+            
+            # Create enhanced result with credit information
+            enhanced_result = {
+                "data": result,
+                "credit_usage": {
+                    "provider": service_name,
+                    "route": route,
+                    "credits_charged": float(credits),
+                    "cost_tier": credit_details["cost_tier"],
+                    "calculation_details": credit_details
+                },
+                "provider_metadata": {
+                    "service_name": service_name,
+                    "endpoint_route": route,
+                    "request_timestamp": logger.info.__defaults__[0] if hasattr(logger.info, '__defaults__') else "N/A"
+                }
+            }
+            
+            # Store credit tracking metadata for response processor
+            # This will be picked up by the response processor for database logging
+            success_result = self.success_response(enhanced_result)
+            
+            # Add credit tracking metadata to the ToolResult
+            if hasattr(success_result, '__dict__'):
+                success_result.__dict__['_credit_tracking'] = {
+                    'tool_name_for_analytics': tool_name_for_analytics,
+                    'data_provider_name': service_name,
+                    'route': route,
+                    'credits': float(credits),
+                    'calculation_details': credit_details,
+                    'usage_type': 'tool'  # Treat as a tool, not separate category
+                }
+            
+            return success_result
             
         except Exception as e:
             error_message = str(e)
-            print(error_message)
+            logger.error(f"Data provider call failed: {service_name}.{route} - {error_message}")
             simplified_message = f"Error executing data provider call: {error_message[:200]}"
             if len(error_message) > 200:
                 simplified_message += "..."

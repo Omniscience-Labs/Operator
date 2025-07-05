@@ -9,9 +9,11 @@ export type Agent = {
   name: string;
   description?: string;
   system_prompt: string;
-  configured_mcps: Array<{
+  configured_mcps?: Array<{
     name: string;
+    qualifiedName?: string;
     config: Record<string, any>;
+    enabledTools?: string[];
   }>;
   custom_mcps?: Array<{
     name: string;
@@ -19,16 +21,18 @@ export type Agent = {
     config: Record<string, any>;
     enabledTools: string[];
   }>;
-  agentpress_tools: Record<string, any>;
+  agentpress_tools?: Record<string, { enabled: boolean; description: string }>;
   is_default: boolean;
   is_public?: boolean;
+  visibility?: 'public' | 'teams' | 'private';
   marketplace_published_at?: string;
   download_count?: number;
   tags?: string[];
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   avatar?: string;
   avatar_color?: string;
+  knowledge_bases?: Array<{ name: string; index_name: string; description: string }>;
 };
 
 export type PaginationInfo = {
@@ -53,6 +57,7 @@ export type AgentsParams = {
   has_mcp_tools?: boolean;
   has_agentpress_tools?: boolean;
   tools?: string;
+  account_id?: string;
 };
 
 export type ThreadAgentResponse = {
@@ -77,6 +82,7 @@ export type AgentCreateRequest = {
   }>;
   agentpress_tools?: Record<string, any>;
   is_default?: boolean;
+  knowledge_bases?: Array<{ name: string; index_name: string; description: string }>;
 };
 
 export type AgentUpdateRequest = {
@@ -95,6 +101,7 @@ export type AgentUpdateRequest = {
   }>;
   agentpress_tools?: Record<string, any>;
   is_default?: boolean;
+  knowledge_bases?: Array<{ name: string; index_name: string; description: string }>;
 };
 
 export const getAgents = async (params: AgentsParams = {}): Promise<AgentsResponse> => {
@@ -120,6 +127,7 @@ export const getAgents = async (params: AgentsParams = {}): Promise<AgentsRespon
     if (params.has_mcp_tools !== undefined) queryParams.append('has_mcp_tools', params.has_mcp_tools.toString());
     if (params.has_agentpress_tools !== undefined) queryParams.append('has_agentpress_tools', params.has_agentpress_tools.toString());
     if (params.tools) queryParams.append('tools', params.tools);
+    if (params.account_id) queryParams.append('account_id', params.account_id);
 
     const url = `${API_URL}/agents${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 

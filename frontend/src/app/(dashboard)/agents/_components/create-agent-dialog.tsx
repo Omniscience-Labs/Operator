@@ -6,10 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, Settings2, Sparkles } from 'lucide-react';
+import { Loader2, Search, Settings2, Sparkles, BookOpen } from 'lucide-react';
 import { DEFAULT_AGENTPRESS_TOOLS, getToolDisplayName } from '../_data/tools';
 import { useCreateAgent } from '@/hooks/react-query/agents/use-agents';
 import { MCPConfigurationNew } from './mcp/mcp-configuration-new';
+import { AgentKnowledgeConfiguration } from './agent-knowledge-configuration';
 
 interface AgentCreateRequest {
   name: string;
@@ -19,6 +20,7 @@ interface AgentCreateRequest {
   custom_mcps?: Array<{ name: string; type: 'json' | 'sse'; config: any; enabledTools: string[] }>;
   agentpress_tools: Record<string, { enabled: boolean; description: string }>;
   is_default: boolean;
+  knowledge_bases?: Array<{ name: string; index_name: string; description: string }>;
 }
 
 interface CreateAgentDialogProps {
@@ -42,6 +44,7 @@ const initialFormData: AgentCreateRequest = {
     ])
   ),
   is_default: false,
+  knowledge_bases: [],
 };
 
 export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: CreateAgentDialogProps) => {
@@ -209,6 +212,12 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
                     <Sparkles className="h-4 w-4" />
                     MCP Servers
                   </TabsTrigger>
+                  <TabsTrigger 
+                    value="knowledge-bases" 
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    Knowledge Bases
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="tools" className="flex-1 flex flex-col m-0 min-h-0">
@@ -291,6 +300,13 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
                   <MCPConfigurationNew
                     configuredMCPs={formData.configured_mcps}
                     onConfigurationChange={handleMCPConfigurationChange}
+                  />
+                </TabsContent>
+
+                <TabsContent value="knowledge-bases" className="flex-1 m-0 p-6 overflow-y-auto">
+                  <AgentKnowledgeConfiguration
+                    knowledgeBases={formData.knowledge_bases || []}
+                    onKnowledgeBasesChange={(bases) => handleInputChange('knowledge_bases', bases)}
                   />
                 </TabsContent>
               </Tabs>
