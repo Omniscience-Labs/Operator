@@ -5,6 +5,7 @@ import { siteConfig } from '@/lib/home';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
+import { useState } from 'react';
 
 interface UseCase {
   id: string;
@@ -15,13 +16,24 @@ interface UseCase {
   icon: React.ReactNode;
   image: string;
   url: string;
+  tags?: string[];
 }
 
 export function UseCasesSection() {
-  // Get featured use cases from siteConfig and limit to 8
-  const featuredUseCases: UseCase[] = (siteConfig.useCases || []).filter(
-    (useCase: UseCase) => useCase.featured,
-  );
+  const [selectedTag, setSelectedTag] = useState<string>('all');
+  
+  // Get all use cases from siteConfig
+  const allUseCases: UseCase[] = siteConfig.useCases || [];
+  
+  // Get unique tags from all use cases
+  const allTags = ['all', ...new Set(allUseCases.flatMap(useCase => useCase.tags || [useCase.category]))];
+  
+  // Filter use cases based on selected tag
+  const filteredUseCases = selectedTag === 'all' 
+    ? allUseCases.filter(useCase => useCase.featured)
+    : allUseCases.filter(useCase => 
+        useCase.tags?.includes(selectedTag) || useCase.category === selectedTag
+      );
 
   return (
     <section
@@ -34,13 +46,31 @@ export function UseCasesSection() {
         </h2>
         <p className="text-muted-foreground text-center text-balance font-medium">
           Explore real-world examples of how Operator completes complex tasks
-          autonomously
+          autonomously across every business function
         </p>
       </SectionHeader>
 
+      {/* Filter Tags */}
+      <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto px-6">
+        {allTags.map((tag) => (
+          <button
+            key={tag}
+            onClick={() => setSelectedTag(tag)}
+            className={cn(
+              "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
+              selectedTag === tag
+                ? "bg-primary text-primary-foreground shadow-lg"
+                : "bg-accent text-foreground hover:bg-accent/80"
+            )}
+          >
+            {tag === 'all' ? 'All Examples' : tag.charAt(0).toUpperCase() + tag.slice(1)}
+          </button>
+        ))}
+      </div>
+
       <div className="relative w-full h-full">
         <div className="grid min-[650px]:grid-cols-2 min-[900px]:grid-cols-3 min-[1200px]:grid-cols-4 gap-4 w-full max-w-6xl mx-auto px-6">
-          {featuredUseCases.map((useCase: UseCase) => (
+          {filteredUseCases.map((useCase: UseCase) => (
             <div
               key={useCase.id}
               className="rounded-xl overflow-hidden relative h-fit min-[650px]:h-full flex flex-col md:shadow-[0px_61px_24px_-10px_rgba(0,0,0,0.01),0px_34px_20px_-8px_rgba(0,0,0,0.05),0px_15px_15px_-6px_rgba(0,0,0,0.09),0px_4px_8px_-2px_rgba(0,0,0,0.10),0px_0px_0px_1px_rgba(0,0,0,0.08)] bg-accent"
@@ -99,9 +129,9 @@ export function UseCasesSection() {
           ))}
         </div>
 
-        {featuredUseCases.length === 0 && (
+        {filteredUseCases.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-muted-foreground">No use cases available yet.</p>
+            <p className="text-muted-foreground">No use cases available for this category.</p>
           </div>
         )}
       </div>

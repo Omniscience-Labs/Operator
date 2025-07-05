@@ -859,6 +859,7 @@ export const siteConfig = {
         'Analyze the market for my next company in the healthcare industry, located in the UK. Give me the major players, their market size, strengths, and weaknesses, and add their website URLs. Once done, generate a PDF report.',
       category: 'research',
       featured: true,
+      tags: ['research', 'analysis', 'competitive-intelligence', 'market-research'],
       icon: (
         <svg
           width="24"
@@ -901,6 +902,7 @@ export const siteConfig = {
         'Give me the list of the most important VC Funds in the United States based on Assets Under Management. Give me website URLs, and if possible an email to reach them out.',
       category: 'finance',
       featured: true,
+      tags: ['finance', 'venture-capital', 'fundraising', 'investment'],
       icon: (
         <svg
           width="24"
@@ -936,6 +938,7 @@ export const siteConfig = {
         "Go on LinkedIn, and find 10 profiles available - they are not working right now - for a junior software engineer position, who are located in Munich, Germany. They should have at least one bachelor's degree in Computer Science or anything related to it, and 1-year of experience in any field/role.",
       category: 'recruitment',
       featured: true,
+      tags: ['recruitment', 'hr', 'talent-acquisition', 'linkedin'],
       icon: (
         <svg
           width="24"
@@ -978,6 +981,7 @@ export const siteConfig = {
         "Generate a route plan for my company. We should go to California. We'll be 8 people. Compose the trip from the departure (Paris, France) to the activities we can do considering that the trip will be 7 days long - departure on the 21st of Jun 2025.",
       category: 'travel',
       featured: true,
+      tags: ['travel', 'planning', 'corporate', 'team-building'],
       icon: (
         <svg
           width="24"
@@ -1027,6 +1031,7 @@ export const siteConfig = {
         'My company asked to set up an Excel spreadsheet with all the information about Italian lottery games (Lotto, 10eLotto, and Million Day). Based on that, generate and send me a spreadsheet with all the basic information (public ones).',
       category: 'data',
       featured: true,
+      tags: ['data', 'spreadsheet', 'excel', 'automation'],
       icon: (
         <svg
           width="24"
@@ -1069,6 +1074,7 @@ export const siteConfig = {
         "Find 20 AI ethics speakers from Europe who've spoken at conferences in the past year. Scrapes conference sites, cross-references LinkedIn and YouTube, and outputs contact info + talk summaries.",
       category: 'research',
       featured: true,
+      tags: ['research', 'events', 'speakers', 'networking'],
       icon: (
         <svg
           width="24"
@@ -1111,6 +1117,7 @@ export const siteConfig = {
         'Research and compare scientific papers talking about Alcohol effects on our bodies during the last 5 years. Generate a report about the most important scientific papers talking about the topic I wrote before.',
       category: 'research',
       featured: true,
+      tags: ['research', 'academic', 'literature-review', 'analysis'],
       icon: (
         <svg
           width="24"
@@ -1153,6 +1160,7 @@ export const siteConfig = {
         'Research my potential customers (B2B) on LinkedIn. They should be in the clean tech industry. Find their websites and their email addresses. After that, based on the company profile, generate a personalized first contact email.',
       category: 'sales',
       featured: true,
+      tags: ['sales', 'lead-generation', 'outreach', 'email'],
       icon: (
         <svg
           width="24"
@@ -1195,6 +1203,7 @@ export const siteConfig = {
         "Based on my website operator.omni.ai, generate an SEO report analysis, find top-ranking pages by keyword clusters, and identify topics I'm missing.",
       category: 'marketing',
       featured: true,
+      tags: ['marketing', 'seo', 'analysis', 'website'],
       icon: (
         <svg
           width="24"
@@ -1244,6 +1253,7 @@ export const siteConfig = {
         'Generate a personal trip to London, with departure from Bangkok on the 1st of May. The trip will last 10 days. Find an accommodation in the center of London, with a rating on Google reviews of at least 4.5.',
       category: 'travel',
       featured: true,
+      tags: ['travel', 'planning', 'personal', 'accommodation'],
       icon: (
         <svg
           width="24"
@@ -1293,6 +1303,7 @@ export const siteConfig = {
         'Go on Crunchbase, Dealroom, and TechCrunch, filter by Series A funding rounds in the SaaS Finance Space, and build a report with company data, founders, and contact info for outbound sales.',
       category: 'finance',
       featured: true,
+      tags: ['finance', 'startups', 'funding', 'research'],
       icon: (
         <svg
           width="24"
@@ -1328,6 +1339,7 @@ export const siteConfig = {
         'I need to find the best beauty centers in Rome, but I want to find them by using open forums that speak about this topic. Go on Google, and scrape the forums by looking for beauty center discussions located in Rome.',
       category: 'research',
       featured: true,
+      tags: ['research', 'scraping', 'forums', 'local-business'],
       icon: (
         <svg
           width="24"
@@ -1362,6 +1374,316 @@ export const siteConfig = {
       image:
         'https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2400&q=80',
       url: 'https://operator.omni.ai/share/53bcd4c7-40d6-4293-9f69-e2638ddcfad8',
+    },
+    // Manufacturing & Production
+    {
+      id: 'production-planning',
+      title: 'Production Planning & Scheduling',
+      description: 'Optimize production schedules based on demand forecasts, resource availability, and delivery deadlines. Generate detailed production plans and identify bottlenecks.',
+      category: 'manufacturing',
+      featured: true,
+      tags: ['manufacturing', 'production', 'scheduling', 'operations'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    {
+      id: 'quality-control',
+      title: 'Quality Control Analytics',
+      description: 'Analyze production quality metrics, identify defect patterns, and generate quality control reports. Track quality trends and predict potential issues.',
+      category: 'manufacturing',
+      featured: true,
+      tags: ['manufacturing', 'quality', 'analytics', 'control'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    {
+      id: 'inventory-optimization',
+      title: 'Inventory Management',
+      description: 'Optimize inventory levels across multiple locations, predict stockouts, and automate reorder points. Reduce carrying costs while maintaining service levels.',
+      category: 'manufacturing',
+      featured: true,
+      tags: ['manufacturing', 'inventory', 'optimization', 'logistics'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 16V8C21 6.9 20.1 6 19 6H5C3.9 6 3 6.9 3 8V16C3 17.1 3.9 18 5 18H19C20.1 18 21 17.1 21 16Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M3 12H21" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M12 6V18" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    // Supply Chain & Logistics
+    {
+      id: 'supply-chain-optimization',
+      title: 'Supply Chain Optimization',
+      description: 'Analyze supplier performance, optimize delivery routes, and identify supply chain risks. Create contingency plans and improve overall supply chain efficiency.',
+      category: 'logistics',
+      featured: true,
+      tags: ['logistics', 'supply-chain', 'optimization', 'suppliers'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 18V6C14 5.4 13.6 5 13 5H11C10.4 5 10 5.4 10 6V18C10 18.6 10.4 19 11 19H13C13.6 19 14 18.6 14 18Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M4 12L8 8V16L4 12Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M20 12L16 8V16L20 12Z" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1494412651409-8963ce7935a7?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    {
+      id: 'warehouse-management',
+      title: 'Warehouse Operations',
+      description: 'Optimize warehouse layout, automate picking routes, and manage inventory placement. Improve order fulfillment speed and reduce operational costs.',
+      category: 'logistics',
+      featured: true,
+      tags: ['logistics', 'warehouse', 'operations', 'fulfillment'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 21H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <path d="M5 21V7L12 3L19 7V21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M9 21V12H15V21" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    {
+      id: 'fleet-management',
+      title: 'Fleet Management & Routing',
+      description: 'Optimize delivery routes, track vehicle performance, and manage fleet maintenance schedules. Reduce fuel costs and improve delivery times.',
+      category: 'logistics',
+      featured: true,
+      tags: ['logistics', 'fleet', 'routing', 'transportation'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 12H19L17 7H7L5 12Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M12 12V16" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M8 16C8 17.1 7.1 18 6 18C4.9 18 4 17.1 4 16C4 14.9 4.9 14 6 14C7.1 14 8 14.9 8 16Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M20 16C20 17.1 19.1 18 18 18C16.9 18 16 17.1 16 16C16 14.9 16.9 14 18 14C19.1 14 20 14.9 20 16Z" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    // Human Resources
+    {
+      id: 'hr-onboarding',
+      title: 'Employee Onboarding Automation',
+      description: 'Automate employee onboarding processes, create personalized training schedules, and track onboarding progress. Ensure consistent and efficient new hire experiences.',
+      category: 'hr',
+      featured: true,
+      tags: ['hr', 'onboarding', 'training', 'automation'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 21V19C20 17.9 19.1 17 18 17H6C4.9 17 4 17.9 4 19V21" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M12 13C14.2 13 16 11.2 16 9C16 6.8 14.2 5 12 5C9.8 5 8 6.8 8 9C8 11.2 9.8 13 12 13Z" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    {
+      id: 'performance-analysis',
+      title: 'Employee Performance Analytics',
+      description: 'Analyze employee performance metrics, identify top performers, and create development plans. Generate performance reports and recommendations.',
+      category: 'hr',
+      featured: true,
+      tags: ['hr', 'performance', 'analytics', 'development'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 3V21H21" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M7 16L10 13L14 17L20 11" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    // Finance & Accounting
+    {
+      id: 'financial-reporting',
+      title: 'Automated Financial Reporting',
+      description: 'Generate comprehensive financial reports, analyze cash flow trends, and create budget variance analyses. Automate monthly and quarterly reporting.',
+      category: 'finance',
+      featured: true,
+      tags: ['finance', 'reporting', 'accounting', 'analysis'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    {
+      id: 'expense-management',
+      title: 'Expense Management & Audit',
+      description: 'Analyze expense patterns, identify cost-saving opportunities, and automate expense approvals. Ensure compliance with company policies.',
+      category: 'finance',
+      featured: true,
+      tags: ['finance', 'expenses', 'audit', 'compliance'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M21 9V7C21 5.9 20.1 5 19 5H5C3.9 5 3 5.9 3 7V9" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M3 19V21C3 22.1 3.9 23 5 23H19C20.1 23 21 22.1 21 21V19" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M3 9H21V19H3V9Z" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    // Customer Service
+    {
+      id: 'customer-sentiment',
+      title: 'Customer Sentiment Analysis',
+      description: 'Analyze customer feedback across multiple channels, identify sentiment trends, and generate actionable insights to improve customer satisfaction.',
+      category: 'customer-service',
+      featured: true,
+      tags: ['customer-service', 'sentiment', 'analysis', 'feedback'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 15C21 15.5 20.5 16 20 16H7L3 20V4C3 3.5 3.5 3 4 3H20C20.5 3 21 3.5 21 4V15Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M8 10C8 10.6 8.4 11 9 11C9.6 11 10 10.6 10 10C10 9.4 9.6 9 9 9C8.4 9 8 9.4 8 10Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M14 10C14 10.6 14.4 11 15 11C15.6 11 16 10.6 16 10C16 9.4 15.6 9 15 9C14.4 9 14 9.4 14 10Z" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1553484771-371a605b060b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    {
+      id: 'support-automation',
+      title: 'Customer Support Automation',
+      description: 'Automate customer support ticket classification, generate response templates, and track resolution times. Improve support efficiency and customer satisfaction.',
+      category: 'customer-service',
+      featured: true,
+      tags: ['customer-service', 'support', 'automation', 'tickets'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M21 12C21 16.9 16.9 21 12 21C7.1 21 3 16.9 3 12C3 7.1 7.1 3 12 3C16.9 3 21 7.1 21 12Z" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1486312338219-ce68e2c6f44d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    // Operations
+    {
+      id: 'process-optimization',
+      title: 'Business Process Optimization',
+      description: 'Analyze business processes, identify bottlenecks, and recommend improvements. Create process flow diagrams and efficiency metrics.',
+      category: 'operations',
+      featured: true,
+      tags: ['operations', 'process', 'optimization', 'efficiency'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M21 12C21 16.9 16.9 21 12 21C7.1 21 3 16.9 3 12C3 7.1 7.1 3 12 3C16.9 3 21 7.1 21 12Z" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    {
+      id: 'compliance-monitoring',
+      title: 'Compliance Monitoring',
+      description: 'Monitor regulatory compliance across different departments, generate compliance reports, and track remediation actions for any violations.',
+      category: 'operations',
+      featured: true,
+      tags: ['operations', 'compliance', 'monitoring', 'regulatory'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    // Sales & Marketing
+    {
+      id: 'lead-scoring',
+      title: 'Lead Scoring & Qualification',
+      description: 'Automatically score and qualify leads based on behavior, demographics, and engagement. Prioritize high-value prospects for sales teams.',
+      category: 'sales',
+      featured: true,
+      tags: ['sales', 'leads', 'scoring', 'qualification'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 21V19C16 17.9 15.1 17 14 17H5C3.9 17 3 17.9 3 19V21" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M8.5 13C10.7 13 12.5 11.2 12.5 9C12.5 6.8 10.7 5 8.5 5C6.3 5 4.5 6.8 4.5 9C4.5 11.2 6.3 13 8.5 13Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M20 8V14L17 11L20 8Z" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1552581234-26160f608093?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    {
+      id: 'campaign-optimization',
+      title: 'Marketing Campaign Optimization',
+      description: 'Analyze campaign performance across channels, optimize ad spend, and predict campaign outcomes. Improve ROI and conversion rates.',
+      category: 'marketing',
+      featured: true,
+      tags: ['marketing', 'campaigns', 'optimization', 'roi'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 3V21H21" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M7 16L10 13L14 17L20 11" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    // IT & Technology
+    {
+      id: 'system-monitoring',
+      title: 'IT System Monitoring',
+      description: 'Monitor system performance, predict hardware failures, and automate incident response. Ensure optimal system uptime and performance.',
+      category: 'it',
+      featured: true,
+      tags: ['it', 'monitoring', 'systems', 'performance'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 4H20C20.6 4 21 4.4 21 5V19C21 19.6 20.6 20 20 20H4C3.4 20 3 19.6 3 19V5C3 4.4 3.4 4 4 4Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M9 9L11 11L15 7" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M9 16H15" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
+    },
+    {
+      id: 'security-audit',
+      title: 'Security Audit & Compliance',
+      description: 'Conduct automated security audits, identify vulnerabilities, and ensure compliance with security standards. Generate security reports and recommendations.',
+      category: 'it',
+      featured: true,
+      tags: ['it', 'security', 'audit', 'compliance'],
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="currentColor" strokeWidth="1.5"/>
+          <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="1.5"/>
+        </svg>
+      ),
+      image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&auto=format&fit=crop&w=2400&q=80',
+      url: '#',
     },
   ],
 };
