@@ -15,8 +15,10 @@ interface AgentsGridProps {
   agents: Agent[];
   onEditAgent: (agentId: string) => void;
   onDeleteAgent: (agentId: string) => void;
+  onRemoveFromLibrary: (agentId: string) => void;
   onToggleDefault: (agentId: string, isDefault: boolean) => void;
   deleteAgentMutation: any;
+  removeFromLibraryMutation: any;
 }
 
 const AgentModal = ({ agent, isOpen, onClose, onCustomize, onChat, onPublish, onUnpublish, isPublishing, isUnpublishing }) => {
@@ -163,8 +165,10 @@ export const AgentsGrid = ({
   agents, 
   onEditAgent, 
   onDeleteAgent, 
+  onRemoveFromLibrary,
   onToggleDefault,
-  deleteAgentMutation 
+  deleteAgentMutation,
+  removeFromLibraryMutation
 }: AgentsGridProps) => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [publishDialogAgent, setPublishDialogAgent] = useState<Agent | null>(null);
@@ -270,7 +274,7 @@ export const AgentsGrid = ({
                   </span>
                   
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {!agent.is_default && !agent.is_managed && (
+                    {!agent.is_default && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button 
@@ -286,13 +290,24 @@ export const AgentsGrid = ({
                         </AlertDialogTrigger>
                         <AlertDialogContent className="max-w-md">
                           <AlertDialogHeader>
-                            <AlertDialogTitle className="text-xl">Delete Agent</AlertDialogTitle>
+                            <AlertDialogTitle className="text-xl">
+                              {agent.is_managed ? 'Remove from Library' : 'Delete Agent'}
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete &quot;{agent.name}&quot;? This action cannot be undone.
-                              {agent.is_public && (
-                                <span className="block mt-2 text-amber-600 dark:text-amber-400">
-                                  Note: This agent is currently published to the marketplace and will be removed from there as well.
-                                </span>
+                              {agent.is_managed ? (
+                                <>
+                                  Are you sure you want to remove &quot;{agent.name}&quot; from your library? 
+                                  This will not delete the original agent, just remove your access to it.
+                                </>
+                              ) : (
+                                <>
+                                  Are you sure you want to delete &quot;{agent.name}&quot;? This action cannot be undone.
+                                  {agent.is_public && (
+                                    <span className="block mt-2 text-amber-600 dark:text-amber-400">
+                                      Note: This agent is currently published to the marketplace and will be removed from there as well.
+                                    </span>
+                                  )}
+                                </>
                               )}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
@@ -303,12 +318,19 @@ export const AgentsGrid = ({
                             <AlertDialogAction
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onDeleteAgent(agent.agent_id);
+                                if (agent.is_managed) {
+                                  onRemoveFromLibrary(agent.agent_id);
+                                } else {
+                                  onDeleteAgent(agent.agent_id);
+                                }
                               }}
-                              disabled={deleteAgentMutation.isPending}
+                              disabled={agent.is_managed ? removeFromLibraryMutation.isPending : deleteAgentMutation.isPending}
                               className="bg-destructive hover:bg-destructive/90 text-white"
                             >
-                              {deleteAgentMutation.isPending ? 'Deleting...' : 'Delete'}
+                              {(agent.is_managed ? removeFromLibraryMutation.isPending : deleteAgentMutation.isPending) ? 
+                                (agent.is_managed ? 'Removing...' : 'Deleting...') : 
+                                (agent.is_managed ? 'Remove' : 'Delete')
+                              }
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>

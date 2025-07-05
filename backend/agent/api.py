@@ -2279,6 +2279,10 @@ async def unpublish_agent_from_marketplace(
         if agent['account_id'] != user_id:
             raise HTTPException(status_code=403, detail="Access denied")
         
+        # Check if this is a managed agent before unpublishing
+        agent_sharing_prefs = agent.get('sharing_preferences', {})
+        is_managed_agent = agent_sharing_prefs.get('managed_agent', False)
+        
         # Update agent to remove from marketplace using the new visibility function
         await client.rpc('publish_agent_with_visibility_by_user', {
             'p_agent_id': agent_id,
@@ -2287,6 +2291,15 @@ async def unpublish_agent_from_marketplace(
             'p_team_ids': None
         }).execute()
         
+        # If this was a managed agent, remove it from all users' libraries
+        if is_managed_agent:
+            # Remove all managed references (where agent_id = original_agent_id)
+            await client.table('user_agent_library').delete().eq(
+                'agent_id', agent_id
+            ).eq('original_agent_id', agent_id).neq('user_account_id', user_id).execute()
+            
+            logger.info(f"Removed managed agent {agent_id} from all users' libraries")
+        
         logger.info(f"Successfully unpublished agent {agent_id} from marketplace")
         return {"message": "Agent removed from marketplace successfully"}
         
@@ -2294,6 +2307,44 @@ async def unpublish_agent_from_marketplace(
         raise
     except Exception as e:
         logger.error(f"Error unpublishing agent {agent_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.delete("/agents/{agent_id}/remove-from-library")
+async def remove_agent_from_library(
+    agent_id: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Remove a managed agent from user's library."""
+    if not await is_enabled("agent_marketplace"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Custom agent currently disabled. This feature is not available at the moment."
+        )
+
+    logger.info(f"Removing agent {agent_id} from user {user_id} library")
+    client = await db.client
+    
+    try:
+        # Check if this is a managed agent in user's library
+        library_entry = await client.table('user_agent_library').select('*').eq(
+            'user_account_id', user_id
+        ).eq('agent_id', agent_id).eq('original_agent_id', agent_id).execute()
+        
+        if not library_entry.data:
+            raise HTTPException(status_code=404, detail="Managed agent not found in your library")
+        
+        # Remove from library
+        await client.table('user_agent_library').delete().eq(
+            'user_account_id', user_id
+        ).eq('agent_id', agent_id).eq('original_agent_id', agent_id).execute()
+        
+        logger.info(f"Successfully removed managed agent {agent_id} from user {user_id} library")
+        return {"message": "Agent removed from library successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error removing agent {agent_id} from library: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/marketplace/agents/{agent_id}/add-to-library")

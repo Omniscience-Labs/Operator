@@ -302,6 +302,39 @@ export const deleteAgent = async (agentId: string): Promise<void> => {
   }
 };
 
+export const removeAgentFromLibrary = async (agentId: string): Promise<void> => {
+  try {
+    const agentPlaygroundEnabled = await isFlagEnabled('custom_agents');
+    if (!agentPlaygroundEnabled) {
+      throw new Error('Custom agents is not enabled');
+    }
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      throw new Error('You must be logged in to remove an agent from library');
+    }
+
+    const response = await fetch(`${API_URL}/agents/${agentId}/remove-from-library`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    console.log('[API] Removed agent from library:', agentId);
+  } catch (err) {
+    console.error('Error removing agent from library:', err);
+    throw err;
+  }
+};
+
 export const getThreadAgent = async (threadId: string): Promise<ThreadAgentResponse> => {
   try {
     const agentPlaygroundEnabled = await isFlagEnabled('custom_agents');

@@ -15,6 +15,8 @@ import { TooltipContent } from '@/components/ui/tooltip';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipProvider, TooltipTrigger } from '@radix-ui/react-tooltip';
 import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
+import { Crown } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MessageInputProps {
   value: string;
@@ -87,6 +89,8 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
     },
     ref,
   ) => {
+    const isMobile = useIsMobile();
+    
     useEffect(() => {
       const textarea = ref as React.RefObject<HTMLTextAreaElement>;
       if (!textarea.current) return;
@@ -178,7 +182,11 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
-                  <p className='text-sm text-amber-500 hidden sm:block'>Upgrade for full performance</p>
+                  {isMobile ? (
+                    <Crown className='h-4 w-4 text-amber-500' />
+                  ) : (
+                    <p className='text-sm text-amber-500'>Upgrade for full performance</p>
+                  )}
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>The free tier is severely limited by inferior models; upgrade to experience the true full Operator experience.</p>
@@ -232,13 +240,6 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
             </LiquidButton>
           </div>
         </div>
-        {subscriptionStatus === 'no_subscription' && !isLocalMode() &&
-          <div className='sm:hidden absolute -bottom-8 left-0 right-0 flex justify-center'>
-            <p className='text-xs text-amber-500 px-2 py-1'>
-              Upgrade for better performance
-            </p>
-          </div>
-        }
       </div>
     );
   },

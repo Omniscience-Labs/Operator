@@ -5,7 +5,7 @@ import { Plus, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { UpdateAgentDialog } from './_components/update-agent-dialog';
-import { useAgents, useUpdateAgent, useDeleteAgent, useOptimisticAgentUpdate, useCreateAgent } from '@/hooks/react-query/agents/use-agents';
+import { useAgents, useUpdateAgent, useDeleteAgent, useRemoveAgentFromLibrary, useOptimisticAgentUpdate, useCreateAgent } from '@/hooks/react-query/agents/use-agents';
 import { SearchAndFilters } from './_components/search-and-filters';
 import { ResultsInfo } from './_components/results-info';
 import { EmptyState } from './_components/empty-state';
@@ -84,6 +84,7 @@ export default function AgentsPage() {
   
   const updateAgentMutation = useUpdateAgent();
   const deleteAgentMutation = useDeleteAgent();
+  const removeFromLibraryMutation = useRemoveAgentFromLibrary();
   const createAgentMutation = useCreateAgent();
   const { optimisticallyUpdateAgent, revertOptimisticUpdate } = useOptimisticAgentUpdate();
 
@@ -134,6 +135,14 @@ export default function AgentsPage() {
       await deleteAgentMutation.mutateAsync(agentId);
     } catch (error) {
       console.error('Error deleting agent:', error);
+    }
+  };
+
+  const handleRemoveFromLibrary = async (agentId: string) => {
+    try {
+      await removeFromLibraryMutation.mutateAsync(agentId);
+    } catch (error) {
+      console.error('Error removing agent from library:', error);
     }
   };
 
@@ -268,8 +277,10 @@ export default function AgentsPage() {
             agents={agents}
             onEditAgent={handleEditAgent}
             onDeleteAgent={handleDeleteAgent}
+            onRemoveFromLibrary={handleRemoveFromLibrary}
             onToggleDefault={handleToggleDefault}
             deleteAgentMutation={deleteAgentMutation}
+            removeFromLibraryMutation={removeFromLibraryMutation}
           />
         )}
 
