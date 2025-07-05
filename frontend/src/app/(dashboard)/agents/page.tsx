@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import { DEFAULT_AGENTPRESS_TOOLS } from './_data/tools';
 import { AgentsParams } from '@/hooks/react-query/agents/utils';
 import { useFeatureFlags } from '@/lib/feature-flags';
+import { toast } from 'sonner';
 
 type ViewMode = 'grid' | 'list';
 type SortOption = 'name' | 'created_at' | 'updated_at' | 'tools_count';
@@ -150,6 +151,11 @@ export default function AgentsPage() {
   };
 
   const handleEditAgent = (agentId: string) => {
+    const agent = agents.find(a => a.agent_id === agentId);
+    if (agent?.sharing_preferences?.disable_customization) {
+      toast.error('Customization is disabled by the creator. Talk to the creator of the agent for modifications.');
+      return;
+    }
     setEditingAgentId(agentId);
     setEditDialogOpen(true);
   };

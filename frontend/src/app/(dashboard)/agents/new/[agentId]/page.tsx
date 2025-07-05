@@ -97,6 +97,15 @@ export default function AgentConfigurationPage() {
     }
   }, [error, router]);
 
+  // Check if customization is disabled for marketplace agents
+  useEffect(() => {
+    if (agent?.sharing_preferences?.disable_customization) {
+      toast.error('Customization is disabled by the creator. Talk to the creator of the agent for modifications.');
+      router.push('/agents');
+      return;
+    }
+  }, [agent, router]);
+
   useEffect(() => {
     currentFormDataRef.current = formData;
   }, [formData]);
