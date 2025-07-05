@@ -16,6 +16,7 @@ export interface MarketplaceAgent {
   sharing_preferences?: {
     include_knowledge_bases?: boolean;
     include_custom_mcp_tools?: boolean;
+    disable_customization?: boolean;
   };
   tags: string[];
   download_count: number;
@@ -161,7 +162,8 @@ export function usePublishAgent() {
       visibility = 'public', 
       teamIds = [],
       includeKnowledgeBases = true,
-      includeCustomMcpTools = true
+      includeCustomMcpTools = true,
+      disableCustomization = false
     }: { 
       agentId: string; 
       tags?: string[]; 
@@ -169,6 +171,7 @@ export function usePublishAgent() {
       teamIds?: string[];
       includeKnowledgeBases?: boolean;
       includeCustomMcpTools?: boolean;
+      disableCustomization?: boolean;
     }): Promise<void> => {
       try {
         const marketplaceEnabled = await isFlagEnabled('agent_marketplace');
@@ -193,7 +196,8 @@ export function usePublishAgent() {
             visibility,
             team_ids: teamIds,
             include_knowledge_bases: includeKnowledgeBases,
-            include_custom_mcp_tools: includeCustomMcpTools
+            include_custom_mcp_tools: includeCustomMcpTools,
+            disable_customization: disableCustomization
           }),
         });
 

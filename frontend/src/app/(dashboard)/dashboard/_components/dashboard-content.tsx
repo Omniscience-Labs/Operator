@@ -40,6 +40,7 @@ import { isFlagEnabled } from '@/lib/feature-flags';
 import Waves from '@/Backgrounds/Waves/Waves';
 import { HexagonBackground } from '@/components/animate-ui/backgrounds/hexagon';
 import { VantaWaves } from '@/components/animate-ui/backgrounds/vanta-waves';
+import { Novatrix } from '@/components/eldoraui/novatrix';
 import { useTheme } from 'next-themes';
 
 const PENDING_PROMPT_KEY = 'pendingAgentPrompt';
@@ -72,7 +73,7 @@ export function DashboardContent() {
   const [greetingComplete, setGreetingComplete] = useState(false);
   
   // Background selection
-  const [backgroundType, setBackgroundType] = useState<'waves' | 'hexagon' | 'vanta'>('waves');
+  const [backgroundType, setBackgroundType] = useState<'waves' | 'hexagon' | 'vanta' | 'novatrix'>('waves');
   const { billingError, handleBillingError, clearBillingError } =
     useBillingError();
   const { theme, resolvedTheme } = useTheme();
@@ -150,14 +151,14 @@ export function DashboardContent() {
     let backgrounds: string[];
     
     if (resolvedTheme === 'dark') {
-      // Dark mode: waves and vanta only
-      backgrounds = ['waves', 'vanta'];
+      // Dark mode: waves, vanta, and novatrix
+      backgrounds = ['waves', 'vanta', 'novatrix'];
     } else {
-      // Light mode: waves and hexagon only
-      backgrounds = ['waves', 'hexagon'];
+      // Light mode: waves, hexagon, and novatrix
+      backgrounds = ['waves', 'hexagon', 'novatrix'];
     }
     
-    const randomBg = backgrounds[Math.floor(Math.random() * backgrounds.length)] as 'waves' | 'hexagon' | 'vanta';
+    const randomBg = backgrounds[Math.floor(Math.random() * backgrounds.length)] as 'waves' | 'hexagon' | 'vanta' | 'novatrix';
     setBackgroundType(randomBg);
   }, [resolvedTheme]);
 
@@ -448,6 +449,8 @@ ${meeting.transcript || '(No transcript available)'}`;
         return <HexagonBackground className="absolute inset-0" />;
       case 'vanta':
         return <VantaWaves className="absolute inset-0" />;
+      case 'novatrix':
+        return <div className="absolute inset-0"><Novatrix /></div>;
       case 'waves':
       default:
         return (

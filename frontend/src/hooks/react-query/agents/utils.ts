@@ -28,6 +28,13 @@ export type Agent = {
   marketplace_published_at?: string;
   download_count?: number;
   tags?: string[];
+  sharing_preferences?: {
+    include_knowledge_bases?: boolean;
+    include_custom_mcp_tools?: boolean;
+    disable_customization?: boolean;
+    original_agent_id?: string;
+    is_marketplace_agent?: boolean;
+  };
   created_at: string;
   updated_at?: string;
   avatar?: string;

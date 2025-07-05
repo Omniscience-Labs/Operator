@@ -72,14 +72,26 @@ const AgentModal = ({ agent, isOpen, onClose, onCustomize, onChat, onPublish, on
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button
-                onClick={() => onCustomize(agent.agent_id)}
-                variant="outline"
-                className="flex-1 gap-2"
-              >
-                <Wrench className="h-4 w-4" />
-                Customize
-              </Button>
+              {agent.sharing_preferences?.disable_customization ? (
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2 opacity-50 cursor-not-allowed"
+                  disabled
+                  title="Customization is disabled by the creator. Talk to the creator of the agent for modifications."
+                >
+                  <Wrench className="h-4 w-4" />
+                  Talk to the creator
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => onCustomize(agent.agent_id)}
+                  variant="outline"
+                  className="flex-1 gap-2"
+                >
+                  <Wrench className="h-4 w-4" />
+                  Customize
+                </Button>
+              )}
               <Button
                 onClick={() => onChat(agent.agent_id)}
                 className="flex-1 gap-2 bg-primary hover:bg-primary/90"
