@@ -1607,14 +1607,15 @@ async def get_agents(
                 agent['_is_owned'] = True
             
             # 2. Get managed agents (references from user_agent_library)
-            managed_query = await client.table('user_agent_library').select(
-                'original_agent_id, agent_id'
-            ).eq('user_account_id', filter_account_id).eq('agent_id', 'original_agent_id').execute()
+            # For managed agents, agent_id equals original_agent_id (indicating it's a reference, not a copy)
+            managed_query = await client.rpc('get_managed_agents_for_user', {
+                'p_user_id': filter_account_id
+            }).execute()
             
             managed_agents = []
             if managed_query.data:
                 # Get the actual agent data for managed agents
-                managed_agent_ids = [ref['original_agent_id'] for ref in managed_query.data]
+                managed_agent_ids = [ref['agent_id'] for ref in managed_query.data]
                 if managed_agent_ids:
                     managed_agents_query = client.table('agents').select('*').in_('agent_id', managed_agent_ids)
                     
@@ -1798,11 +1799,12 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
             pass
         else:
             # Check if user has this as a managed agent in their library
-            library_check = await client.table('user_agent_library').select('*').eq(
-                'user_account_id', user_id
-            ).eq('agent_id', agent_id).eq('original_agent_id', agent_id).execute()
+            library_check = await client.rpc('get_managed_agents_for_user', {
+                'p_user_id': user_id
+            }).execute()
             
-            if library_check.data:
+            managed_agent_ids = [ref['agent_id'] for ref in (library_check.data or [])]
+            if agent_id in managed_agent_ids:
                 is_managed_by_user = True
             else:
                 raise HTTPException(status_code=403, detail="Access denied")
