@@ -46,8 +46,8 @@ void main() {
   
   vec3 finalColor;
   if (uIsDarkMode > 0.5) {
-      // Dark mode: very dark background with subtle light patterns
-      float darkPattern = 0.05 + (gray * 0.2); // Very dark base with subtle light patterns
+      // Dark mode: dark background with higher contrast light patterns
+      float darkPattern = 0.1 + (gray * 0.4); // Dark base with more visible light patterns
       finalColor = vec3(darkPattern);
   } else {
       // Light mode: light background with darker patterns

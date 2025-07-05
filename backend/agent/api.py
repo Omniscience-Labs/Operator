@@ -91,6 +91,8 @@ class AgentResponse(BaseModel):
     avatar_color: Optional[str]
     created_at: str
     updated_at: str
+    is_managed: Optional[bool] = False  # True if this is a managed agent (live reference)
+    is_owned: Optional[bool] = True  # True if user owns this agent
 
 class PaginationInfo(BaseModel):
     page: int
@@ -1582,48 +1584,81 @@ async def get_agents(
         
         # Execute query only if not using marketplace data
         if not use_marketplace_data:
-            # Apply search filter
+            # Get both owned agents and managed agents (references)
+            
+            # 1. Get owned agents
+            owned_query = client.table('agents').select('*').eq("account_id", filter_account_id)
+            
+            # Apply search filter to owned agents
             if search:
                 search_term = f"%{search}%"
-                query = query.or_(f"name.ilike.{search_term},description.ilike.{search_term}")
+                owned_query = owned_query.or_(f"name.ilike.{search_term},description.ilike.{search_term}")
             
-            # Apply filters
+            # Apply filters to owned agents
             if has_default is not None:
-                query = query.eq("is_default", has_default)
+                owned_query = owned_query.eq("is_default", has_default)
+            
+            owned_result = await owned_query.execute()
+            owned_agents = owned_result.data or []
+            
+            # Add metadata to mark as owned
+            for agent in owned_agents:
+                agent['_is_managed'] = False
+                agent['_is_owned'] = True
+            
+            # 2. Get managed agents (references from user_agent_library)
+            managed_query = await client.table('user_agent_library').select(
+                'original_agent_id, agent_id'
+            ).eq('user_account_id', filter_account_id).eq('agent_id', 'original_agent_id').execute()
+            
+            managed_agents = []
+            if managed_query.data:
+                # Get the actual agent data for managed agents
+                managed_agent_ids = [ref['original_agent_id'] for ref in managed_query.data]
+                if managed_agent_ids:
+                    managed_agents_query = client.table('agents').select('*').in_('agent_id', managed_agent_ids)
+                    
+                    # Apply search filter to managed agents
+                    if search:
+                        search_term = f"%{search}%"
+                        managed_agents_query = managed_agents_query.or_(f"name.ilike.{search_term},description.ilike.{search_term}")
+                    
+                    managed_result = await managed_agents_query.execute()
+                    managed_agents = managed_result.data or []
+                    
+                    # Add metadata to mark as managed and apply sharing preferences filtering
+                    for agent in managed_agents:
+                        agent['_is_managed'] = True
+                        agent['_is_owned'] = False
+                        # Don't show "(from marketplace)" suffix for managed agents since they're live references
+                        
+                        # Apply sharing preferences filtering for managed agents
+                        sharing_prefs = agent.get('sharing_preferences', {})
+                        if not sharing_prefs.get('include_knowledge_bases', True):
+                            agent['knowledge_bases'] = []
+                        if not sharing_prefs.get('include_custom_mcp_tools', True):
+                            agent['configured_mcps'] = []
+                            agent['custom_mcps'] = []
+            
+            # 3. Combine owned and managed agents
+            agents_data = owned_agents + managed_agents
+            
+            # Apply default filter after combining
+            if has_default is not None:
+                agents_data = [a for a in agents_data if a.get('is_default') == has_default]
             
             # Apply sorting
             if sort_by == "name":
-                query = query.order("name", desc=(sort_order == "desc"))
+                agents_data.sort(key=lambda x: x.get('name', '').lower(), reverse=(sort_order == "desc"))
             elif sort_by == "updated_at":
-                query = query.order("updated_at", desc=(sort_order == "desc"))
+                agents_data.sort(key=lambda x: x.get('updated_at', ''), reverse=(sort_order == "desc"))
             elif sort_by == "created_at":
-                query = query.order("created_at", desc=(sort_order == "desc"))
+                agents_data.sort(key=lambda x: x.get('created_at', ''), reverse=(sort_order == "desc"))
             else:
                 # Default to created_at
-                query = query.order("created_at", desc=(sort_order == "desc"))
+                agents_data.sort(key=lambda x: x.get('created_at', ''), reverse=(sort_order == "desc"))
             
-            # Execute query to get total count first
-            count_result = await query.execute()
-            total_count = count_result.count
-            
-            # Now get the actual data with pagination
-            query = query.range(offset, offset + limit - 1)
-            agents_result = await query.execute()
-            
-            if not agents_result.data:
-                logger.info(f"No agents found for user: {user_id}")
-                return {
-                    "agents": [],
-                    "pagination": {
-                        "page": page,
-                        "limit": limit,
-                        "total": 0,
-                        "pages": 0
-                    }
-                }
-            
-            # Post-process for tool filtering and tools_count sorting
-            agents_data = agents_result.data
+            total_count = len(agents_data)
         
         # Apply tool-based filters (works for both marketplace and regular data)
         if has_mcp_tools is not None or has_agentpress_tools is not None or tools:
@@ -1702,13 +1737,17 @@ async def get_agents(
                 is_default=agent.get('is_default', False),
                 is_public=agent.get('is_public', False),
                 visibility=agent.get('visibility', 'private'),
+                knowledge_bases=agent.get('knowledge_bases', []),
                 marketplace_published_at=agent.get('marketplace_published_at'),
                 download_count=agent.get('download_count', 0),
                 tags=agent.get('tags', []),
+                sharing_preferences=agent.get('sharing_preferences', {}),
                 avatar=agent.get('avatar'),
                 avatar_color=agent.get('avatar_color'),
                 created_at=agent['created_at'],
-                updated_at=agent['updated_at']
+                updated_at=agent['updated_at'],
+                is_managed=agent.get('_is_managed', False),
+                is_owned=agent.get('_is_owned', True)
             ))
         
         total_pages = (total_count + limit - 1) // limit
@@ -1741,17 +1780,41 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
     client = await db.client
     
     try:
-        # Get agent with access check - only owner or public agents
+        # Get agent with access check - only owner, public agents, or managed agents in user's library
         agent = await client.table('agents').select('*').eq("agent_id", agent_id).execute()
         
         if not agent.data:
             raise HTTPException(status_code=404, detail="Agent not found")
         
         agent_data = agent.data[0]
+        is_managed_by_user = False
         
-        # Check ownership - only owner can access non-public agents
-        if agent_data['account_id'] != user_id and not agent_data.get('is_public', False):
-            raise HTTPException(status_code=403, detail="Access denied")
+        # Check access: owner, public agent, or managed agent in user's library
+        if agent_data['account_id'] == user_id:
+            # User owns the agent
+            pass
+        elif agent_data.get('is_public', False):
+            # Public agent
+            pass
+        else:
+            # Check if user has this as a managed agent in their library
+            library_check = await client.table('user_agent_library').select('*').eq(
+                'user_account_id', user_id
+            ).eq('agent_id', agent_id).eq('original_agent_id', agent_id).execute()
+            
+            if library_check.data:
+                is_managed_by_user = True
+            else:
+                raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Apply sharing preferences filtering for managed agents
+        if is_managed_by_user:
+            sharing_prefs = agent_data.get('sharing_preferences', {})
+            if not sharing_prefs.get('include_knowledge_bases', True):
+                agent_data['knowledge_bases'] = []
+            if not sharing_prefs.get('include_custom_mcp_tools', True):
+                agent_data['configured_mcps'] = []
+                agent_data['custom_mcps'] = []
         
         return AgentResponse(
             agent_id=agent_data['agent_id'],
@@ -1773,7 +1836,9 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
             avatar=agent_data.get('avatar'),
             avatar_color=agent_data.get('avatar_color'),
             created_at=agent_data['created_at'],
-            updated_at=agent_data['updated_at']
+            updated_at=agent_data['updated_at'],
+            is_managed=is_managed_by_user,
+            is_owned=agent_data['account_id'] == user_id
         )
         
     except HTTPException:
@@ -2029,7 +2094,7 @@ class PublishAgentRequest(BaseModel):
     team_ids: Optional[List[str]] = []  # Team account IDs to share with
     include_knowledge_bases: Optional[bool] = True  # Whether to include knowledge bases when sharing
     include_custom_mcp_tools: Optional[bool] = True  # Whether to include custom MCP tools when sharing
-    disable_customization: Optional[bool] = False  # Whether to disable customization for marketplace agents
+    managed_agent: Optional[bool] = False  # Whether this is a managed agent (users get live reference instead of copy)
 
 @router.get("/marketplace/agents", response_model=MarketplaceAgentsResponse)
 async def get_marketplace_agents(
@@ -2152,7 +2217,7 @@ async def publish_agent_to_marketplace(
         sharing_preferences = {
             'include_knowledge_bases': publish_data.include_knowledge_bases,
             'include_custom_mcp_tools': publish_data.include_custom_mcp_tools,
-            'disable_customization': publish_data.disable_customization
+            'managed_agent': publish_data.managed_agent
         }
         
         # Update agent with sharing preferences

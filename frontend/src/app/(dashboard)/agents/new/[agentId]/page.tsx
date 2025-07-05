@@ -97,10 +97,10 @@ export default function AgentConfigurationPage() {
     }
   }, [error, router]);
 
-  // Check if customization is disabled for marketplace agents
+  // Check if this is a managed agent
   useEffect(() => {
-    if (agent?.sharing_preferences?.disable_customization) {
-      toast.error('Customization is disabled by the creator. Talk to the creator of the agent for modifications.');
+    if (agent?.is_managed) {
+      toast.error('This is a managed agent. Contact the creator of the agent for modifications.');
       router.push('/agents');
       return;
     }

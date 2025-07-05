@@ -31,7 +31,7 @@ export type Agent = {
   sharing_preferences?: {
     include_knowledge_bases?: boolean;
     include_custom_mcp_tools?: boolean;
-    disable_customization?: boolean;
+    managed_agent?: boolean;
     original_agent_id?: string;
     is_marketplace_agent?: boolean;
   };
@@ -40,6 +40,8 @@ export type Agent = {
   avatar?: string;
   avatar_color?: string;
   knowledge_bases?: Array<{ name: string; index_name: string; description: string }>;
+  is_managed?: boolean;  // True if this is a managed agent (live reference)
+  is_owned?: boolean;    // True if user owns this agent
 };
 
 export type PaginationInfo = {

@@ -15,9 +15,11 @@ interface Agent {
   configured_mcps?: Array<{ name: string }>;
   agentpress_tools?: Record<string, any>;
   sharing_preferences?: {
-    disable_customization?: boolean;
+    managed_agent?: boolean;
     [key: string]: any;
   };
+  is_managed?: boolean;
+  is_owned?: boolean;
 }
 
 interface AgentsListProps {
@@ -60,9 +62,9 @@ export const AgentsList = ({
                     size="sm"
                     className="h-8 w-8 p-0"
                     onClick={() => onEditAgent(agent.agent_id)}
-                    disabled={agent.sharing_preferences?.disable_customization}
-                    title={agent.sharing_preferences?.disable_customization 
-                      ? "Customization is disabled by the creator" 
+                    disabled={agent.is_managed}
+                    title={agent.is_managed 
+                      ? "This is a managed agent - contact the creator for modifications" 
                       : "Edit agent"}
                   >
                     <Settings className="h-4 w-4 text-muted-foreground" />

@@ -38,7 +38,7 @@ export function PublishAgentDialog({
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
   const [includeKnowledgeBases, setIncludeKnowledgeBases] = useState(true);
   const [includeCustomMcpTools, setIncludeCustomMcpTools] = useState(true);
-  const [disableCustomization, setDisableCustomization] = useState(false);
+  const [managedAgent, setManagedAgent] = useState(false);
   const { data: accounts } = useAccounts();
   const publishAgentMutation = usePublishAgent();
   
@@ -61,7 +61,7 @@ export function PublishAgentDialog({
         teamIds: publishType === 'teams' ? Array.from(selectedTeams) : [],
         includeKnowledgeBases,
         includeCustomMcpTools,
-        disableCustomization
+        managedAgent
       });
       
       const message = publishType === 'marketplace' 
@@ -227,16 +227,16 @@ export function PublishAgentDialog({
               {publishType === 'marketplace' && (
                 <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
                   <Checkbox
-                    id="disable-customization"
-                    checked={disableCustomization}
-                    onCheckedChange={(checked) => setDisableCustomization(checked === true)}
+                    id="managed-agent"
+                    checked={managedAgent}
+                    onCheckedChange={(checked) => setManagedAgent(checked === true)}
                   />
                   <div className="flex-1">
-                    <Label htmlFor="disable-customization" className="cursor-pointer font-medium">
-                      Disable Customization
+                    <Label htmlFor="managed-agent" className="cursor-pointer font-medium">
+                      Managed Agent
                     </Label>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Prevent users from customizing this agent after adding it to their library. The customize button will be grayed out with "Talk to the creator of the agent".
+                      Users will get a live reference to this agent. When you update the agent, all users will see the changes automatically. Users cannot customize managed agents.
                     </p>
                   </div>
                 </div>
@@ -251,10 +251,10 @@ export function PublishAgentDialog({
               </div>
             )}
 
-            {publishType === 'marketplace' && disableCustomization && (
+            {publishType === 'marketplace' && managedAgent && (
               <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  <strong>Note:</strong> Users will not be able to customize this agent. They can only use it as-is and must contact you for any modifications.
+                  <strong>Note:</strong> Users will get a live reference to this agent. Any updates you make will automatically appear for all users. Users cannot customize managed agents.
                 </p>
               </div>
             )}

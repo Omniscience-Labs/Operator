@@ -163,7 +163,7 @@ export function usePublishAgent() {
       teamIds = [],
       includeKnowledgeBases = true,
       includeCustomMcpTools = true,
-      disableCustomization = false
+      managedAgent = false
     }: { 
       agentId: string; 
       tags?: string[]; 
@@ -171,7 +171,7 @@ export function usePublishAgent() {
       teamIds?: string[];
       includeKnowledgeBases?: boolean;
       includeCustomMcpTools?: boolean;
-      disableCustomization?: boolean;
+      managedAgent?: boolean;
     }): Promise<void> => {
       try {
         const marketplaceEnabled = await isFlagEnabled('agent_marketplace');
@@ -197,7 +197,7 @@ export function usePublishAgent() {
             team_ids: teamIds,
             include_knowledge_bases: includeKnowledgeBases,
             include_custom_mcp_tools: includeCustomMcpTools,
-            disable_customization: disableCustomization
+            managed_agent: managedAgent
           }),
         });
 

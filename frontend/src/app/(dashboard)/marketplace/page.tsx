@@ -260,12 +260,12 @@ export default function MarketplacePage() {
                         <Calendar className="h-3 w-3" />
                         <span>{new Date(agent.marketplace_published_at).toLocaleDateString()}</span>
                       </div>
-                      {agent.sharing_preferences?.disable_customization && (
+                      {agent.sharing_preferences && (agent.sharing_preferences as any).managed_agent && (
                         <div className="flex items-center gap-1 text-xs">
                           <Badge variant="secondary" className="text-xs">
-                            No customization
+                            Managed Agent
                           </Badge>
-                          <span className="text-muted-foreground">Contact creator for changes</span>
+                          <span className="text-muted-foreground">Live updates from creator</span>
                         </div>
                       )}
                     </div>
