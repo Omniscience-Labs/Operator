@@ -54,20 +54,18 @@ export const siteConfig = {
   description: 'The Generalist AI Agent that acts on your behalf.',
   cta: 'Start Free',
   url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
-  keywords: ['AI Agent', 'Generalist AI', 'Open Source AI', 'Autonomous Agent'],
+  keywords: ['AI Agent', 'Generalist AI', 'Autonomous Agent'],
   links: {
     email: 'support@omni.ai',
     twitter: 'https://x.com/omni_ai',
     discord: 'https://discord.gg/omni-ai',
-    github: 'https://github.com/omni-ai/operator',
     instagram: 'https://instagram.com/omni_ai',
   },
   nav: {
     links: [
       { id: 1, name: 'Home', href: '#hero' },
       { id: 2, name: 'Use Cases', href: '#use-cases' },
-      { id: 3, name: 'Open Source', href: '#open-source' },
-      { id: 4, name: 'Pricing', href: '#pricing' },
+      { id: 3, name: 'Pricing', href: '#pricing' },
     ],
   },
   hero: {
@@ -97,8 +95,7 @@ export const siteConfig = {
         />
       </svg>
     ),
-    badge: '100% OPEN SOURCE',
-    githubUrl: 'https://github.com/omni-ai/operator',
+    badge: 'AI AGENT',
     title: 'Operator, the AI Employee.',
     description:
       'Operator by OMNI – is a generalist AI Agent that acts on your behalf.',
@@ -106,7 +103,7 @@ export const siteConfig = {
   },
   bentoSection: {
     title: 'Why Choose Operator?',
-    description: 'Discover the advantages of using our open-source AI agent',
+    description: 'Discover the advantages of using our AI agent',
     items: [
       {
         id: 1,
@@ -115,9 +112,9 @@ export const siteConfig = {
             <FlickeringGrid />
           </div>
         ),
-        title: 'Open Source Security',
+        title: 'Enterprise Security',
         description:
-          'Benefit from the security of open source code that thousands of eyes can review, audit, and improve.',
+          'Benefit from enterprise-grade security features and robust data protection.',
       },
       {
         id: 2,
@@ -182,11 +179,11 @@ export const siteConfig = {
         content: (
           <div className="flex flex-col gap-4">
             <div className="text-6xl font-bold text-primary">500+</div>
-            <div className="text-2xl font-semibold">GitHub Stars</div>
+            <div className="text-2xl font-semibold">Features</div>
           </div>
         ),
-        title: 'Open Source Growth',
-        description: 'Our growing GitHub community contributes to continuous improvements and new features that benefit everyone.',
+        title: 'Feature Growth',
+        description: 'Our growing community contributes to continuous improvements and new features that benefit everyone.',
       },
       {
         id: 3,
@@ -204,11 +201,11 @@ export const siteConfig = {
         content: (
           <div className="flex flex-col gap-4">
             <div className="text-6xl font-bold text-primary">100%</div>
-            <div className="text-2xl font-semibold">Open Source</div>
+            <div className="text-2xl font-semibold">Reliable</div>
           </div>
         ),
-        title: 'Fully Transparent',
-        description: 'Complete transparency with open source code that you can inspect, modify, and contribute to.',
+        title: 'Fully Reliable',
+        description: 'Complete reliability with enterprise-grade uptime and performance guarantees.',
       },
     ],
   },
@@ -464,9 +461,9 @@ export const siteConfig = {
           </svg>
         ),
 
-        title: 'Open Source Security',
+        title: 'Enterprise Security',
         description:
-          'Benefit from the security of open source code that thousands of eyes can review, audit, and improve.',
+          'Benefit from enterprise-grade security features and robust data protection.',
       },
       {
         id: 2,
@@ -484,7 +481,7 @@ export const siteConfig = {
   },
   quoteSection: {
     quote:
-      'Operator has transformed how we approach everyday tasks. The level of automation it provides, combined with its open source nature, makes it an invaluable tool for our entire organization.',
+      'Operator has transformed how we approach everyday tasks. The level of automation it provides, combined with its powerful capabilities, makes it an invaluable tool for our entire organization.',
     author: {
       name: 'Alex Johnson',
       role: 'CTO, Innovatech',
@@ -492,9 +489,9 @@ export const siteConfig = {
     },
   },
   pricing: {
-    title: 'Open Source & Free Forever',
+    title: 'Simple & Transparent Pricing',
     description:
-      'Operator is 100% open source and free to use. No hidden fees, no premium features locked behind paywalls.',
+      'Operator offers transparent pricing with no hidden fees or premium features locked behind paywalls.',
     pricingItems: [
       {
         name: 'Community',
@@ -505,7 +502,6 @@ export const siteConfig = {
         features: [
           'Full agent capabilities',
           'Unlimited usage',
-          'Full source code access',
           'Community support',
         ],
         description: 'Perfect for individual users and developers',
@@ -522,7 +518,6 @@ export const siteConfig = {
         features: [
           'Full agent capabilities',
           'Unlimited usage',
-          'Full source code access',
           'Custom deployment',
           'Local data storage',
           'Integration with your tools',
@@ -789,7 +784,7 @@ export const siteConfig = {
         id: 5,
         question: 'How can I contribute to Operator?',
         answer:
-          'You can contribute to Operator by submitting pull requests on GitHub, reporting bugs, suggesting new features, or helping with documentation. Join our Discord community to connect with other contributors and Hire Operator.',
+          'You can contribute to Operator by reporting bugs, suggesting new features, or helping with documentation. Join our Discord community to connect with other contributors and our team.',
       },
       {
         id: 6,
@@ -824,10 +819,9 @@ export const siteConfig = {
         {
           id: 5,
           title: 'Documentation',
-          url: 'https://github.com/omni-ai/operator',
+          url: 'https://operator.omni.ai/docs',
         },
         { id: 7, title: 'Discord', url: 'https://discord.gg/Py6pCBUUPw' },
-        { id: 8, title: 'GitHub', url: 'https://github.com/omni-ai/operator' },
       ],
     },
     {
@@ -843,11 +837,7 @@ export const siteConfig = {
           title: 'Terms of Service',
           url: 'https://operator.omni.ai/legal?tab=terms',
         },
-        {
-          id: 11,
-          title: 'License Apache 2.0',
-          url: 'https://github.com/omni-ai/operator/blob/main/LICENSE',
-        },
+
       ],
     },
   ],

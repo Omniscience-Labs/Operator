@@ -80,7 +80,7 @@ export const CustomModelDialog: React.FC<CustomModelDialogProps> = ({
                         Operator uses <b>LiteLLM</b> under the hood, which makes it compatible with over 100 models. You can easily choose any <a href="https://openrouter.ai/models" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 underline">model from OpenRouter</a> or any other LiteLLM-compatible provider.
                     </DialogDescription>
                     <p className="text-sm text-muted-foreground">
-                        For advanced users: If your chosen model isn't supported by LiteLLM, you might have to modify the <a href="https://github.com/omni-ai/operator/blob/main/backend/services/llm.py" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 underline">llm.py</a>, set the correct environment variables, and rebuild
+                        For advanced users: If your chosen model isn't supported by LiteLLM, you might need to set the correct environment variables and contact our support team for assistance.
                     </p>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4">
