@@ -20,6 +20,7 @@ import { AgentLoader } from './loader';
 import { parseXmlToolCalls, isNewXmlFormat, extractToolNameFromStream } from '@/components/thread/tool-views/xml-parser';
 import { parseToolResult } from '@/components/thread/tool-views/tool-result-parser';
 import { ReasoningDisplay } from './ReasoningDisplay';
+import StarBorder from '@/Animations/StarBorder/StarBorder';
 
 // Define the set of  tags whose raw XML should be hidden during streaming
 const HIDE_STREAMING_XML_TAGS = new Set([
@@ -1131,18 +1132,18 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 </div>
                                 
                                 {/* Text container */}
-                                <motion.button
+                                <StarBorder
+                                    as={motion.button}
                                     whileHover={{ scale: 1.01 }}
                                     whileTap={{ scale: 0.99 }}
                                     onClick={() => scrollToBottom('smooth')}
-                                    className="animate-shimmer backdrop-blur-sm border border-primary/20 shadow-lg rounded-full px-4 py-2 text-sm font-medium text-primary transition-all duration-200"
-                                    style={{
-                                        animationDuration: '4s'
-                                    }}
+                                    className="backdrop-blur-sm border border-primary/20 shadow-lg rounded-full px-4 py-2 text-sm font-medium text-primary transition-all duration-200"
+                                    color="hsl(var(--primary))"
+                                    speed="4s"
+                                    thickness={1}
                                 >
-                                
                                     <span>{agentName ? `${agentName} is working...` : 'Operator is working...'}</span>
-                                </motion.button>
+                                </StarBorder>
                             </motion.div>
                         )}
                         {showScrollButton && !(agentStatus === 'running' || agentStatus === 'connecting') && (

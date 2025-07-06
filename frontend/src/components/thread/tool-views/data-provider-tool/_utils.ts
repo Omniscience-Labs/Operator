@@ -180,7 +180,7 @@ const extractProviderName = (content: string | object | undefined | null): strin
   const contentStr = normalizeContentToString(content);
   if (!contentStr) return null;
 
-  let detectedServiceName = extractServiceName(contentStr);
+  const detectedServiceName = extractServiceName(contentStr);
   if (detectedServiceName) {
     return detectedServiceName.toLowerCase();
   }

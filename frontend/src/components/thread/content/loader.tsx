@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
+import StarBorder from '@/Animations/StarBorder/StarBorder';
 import { ThreeSpinner } from '@/components/ui/three-spinner';
 
 const items = [
@@ -79,7 +79,15 @@ export const AgentLoader = () => {
             style={{ position: "absolute" }}
             className='w-full'
           >
-            <AnimatedShinyText>{items[index].content}</AnimatedShinyText>
+            <StarBorder
+              as="div"
+              className="text-neutral-600/70 dark:text-neutral-400/70 px-2 py-1 rounded-md inline-block"
+              color="hsl(var(--primary))"
+              speed="4s"
+              thickness={1}
+            >
+              {items[index].content}
+            </StarBorder>
           </motion.div>
         </AnimatePresence>
       </div>

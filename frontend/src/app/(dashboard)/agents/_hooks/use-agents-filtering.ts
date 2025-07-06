@@ -46,7 +46,7 @@ export function useAgentsFiltering(agents: Agent[]) {
   }, [agents]);
 
   const filteredAndSortedAgents = useMemo(() => {
-    let filtered = agents.filter(agent => {
+    const filtered = agents.filter(agent => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const matchesName = agent.name.toLowerCase().includes(query);

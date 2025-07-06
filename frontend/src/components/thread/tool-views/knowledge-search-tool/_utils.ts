@@ -36,8 +36,8 @@ export function extractKnowledgeSearchData(
   let knowledgeBaseName: string | null = null;
   let description: string | null = null;
   let actualIsSuccess = isSuccess;
-  let actualToolTimestamp: string | null = toolTimestamp || null;
-  let actualAssistantTimestamp: string | null = assistantTimestamp || null;
+  const actualToolTimestamp: string | null = toolTimestamp || null;
+  const actualAssistantTimestamp: string | null = assistantTimestamp || null;
 
   // Debug logging
   // console.log('Knowledge Search Debug:', {

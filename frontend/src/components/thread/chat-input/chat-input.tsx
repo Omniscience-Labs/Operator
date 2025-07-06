@@ -202,7 +202,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
         }
       }
 
-      let baseModelName = getActualModelId(selectedModel);
+      const baseModelName = getActualModelId(selectedModel);
 
       onSubmit(message, {
         model_name: baseModelName,
