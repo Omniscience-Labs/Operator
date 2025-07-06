@@ -1798,14 +1798,15 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
             # Public agent
             pass
         else:
-            # Check if user has this as a managed agent in their library
-            library_check = await client.rpc('get_managed_agents_for_user', {
-                'p_user_id': user_id
-            }).execute()
+            # Check if user has this agent in their library (either managed or copied)
+            library_check = await client.table('user_agent_library').select('*').eq(
+                'user_account_id', user_id
+            ).eq('agent_id', agent_id).execute()
             
-            managed_agent_ids = [ref['agent_id'] for ref in (library_check.data or [])]
-            if agent_id in managed_agent_ids:
-                is_managed_by_user = True
+            if library_check.data:
+                # Check if it's a managed agent (agent_id == original_agent_id)
+                library_entry = library_check.data[0]
+                is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
             else:
                 raise HTTPException(status_code=403, detail="Access denied")
         
