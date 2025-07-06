@@ -2555,6 +2555,74 @@ async def get_agent_builder_chat_history(
         logger.error(f"Error fetching agent builder chat history for agent {agent_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch chat history: {str(e)}")
 
+@router.put("/thread/{thread_id}/message/{message_id}/edit")
+async def edit_message(
+    thread_id: str,
+    message_id: str,
+    new_content: str = Body(..., embed=True),
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Edit a message and remove all subsequent messages from the thread."""
+    structlog.contextvars.bind_contextvars(
+        thread_id=thread_id,
+        message_id=message_id,
+    )
+    logger.info(f"Editing message {message_id} in thread {thread_id}")
+    
+    client = await db.client
+    
+    try:
+        # Verify thread access
+        await verify_thread_access(client, thread_id, user_id)
+        
+        # Get the message to edit
+        message_result = await client.table('messages')\
+            .select('*')\
+            .eq('message_id', message_id)\
+            .eq('thread_id', thread_id)\
+            .execute()
+        
+        if not message_result.data:
+            raise HTTPException(status_code=404, detail="Message not found")
+        
+        message = message_result.data[0]
+        
+        # Only allow editing user messages
+        if message['type'] != 'user':
+            raise HTTPException(status_code=400, detail="Only user messages can be edited")
+        
+        # Update the message content
+        parsed_content = json.loads(message['content'])
+        parsed_content['content'] = new_content
+        updated_content = json.dumps(parsed_content)
+        
+        await client.table('messages')\
+            .update({'content': updated_content, 'updated_at': datetime.now(timezone.utc).isoformat()})\
+            .eq('message_id', message_id)\
+            .execute()
+        
+        # Delete all messages that came AFTER this message
+        delete_result = await client.table('messages')\
+            .delete()\
+            .eq('thread_id', thread_id)\
+            .gt('created_at', message['created_at'])\
+            .execute()
+        
+        deleted_count = len(delete_result.data) if delete_result.data else 0
+        
+        logger.info(f"Successfully edited message {message_id} and deleted {deleted_count} subsequent messages")
+        return {
+            "success": True, 
+            "message": "Message edited successfully",
+            "deleted_messages_count": deleted_count
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error editing message {message_id} in thread {thread_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to edit message: {str(e)}")
+
 # Agent Share Link Models
 class CreateAgentShareRequest(BaseModel):
     share_type: Literal["persistent", "ephemeral"]

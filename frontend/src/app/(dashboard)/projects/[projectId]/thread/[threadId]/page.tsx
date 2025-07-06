@@ -19,7 +19,7 @@ import { isLocalMode } from '@/lib/config';
 import { ThreadContent } from '@/components/thread/content/ThreadContent';
 import { ThreadSkeleton } from '@/components/thread/content/ThreadSkeleton';
 import { createClient } from '@/lib/supabase/client';
-import { useAddUserMessageMutation } from '@/hooks/react-query/threads/use-messages';
+import { useAddUserMessageMutation, useEditMessage } from '@/hooks/react-query/threads/use-messages';
 import { useStartAgentMutation, useStopAgentMutation } from '@/hooks/react-query/threads/use-agent-run';
 import { useSubscription } from '@/hooks/react-query/subscriptions/use-subscriptions';
 import { SubscriptionStatus } from '@/components/thread/chat-input/_use-model-selection';
@@ -123,6 +123,7 @@ export default function ThreadPage({
   });
 
   const addUserMessageMutation = useAddUserMessageMutation();
+  const editMessageMutation = useEditMessage();
   const startAgentMutation = useStartAgentMutation();
   const stopAgentMutation = useStopAgentMutation();
   const { data: agent } = useAgent(threadQuery.data?.agent_id);
@@ -352,6 +353,25 @@ export default function ThreadPage({
     setUserHasScrolled(userScrolled);
     setIsAtBottom(atBottom);
   }, []);
+
+  const handleEditMessage = useCallback(async (messageId: string, newContent: string) => {
+    try {
+      await editMessageMutation.mutateAsync({
+        threadId,
+        messageId,
+        newContent
+      });
+      
+      // Refetch messages to get the updated state after edit
+      messagesQuery.refetch();
+      
+      toast.success('Message edited successfully');
+    } catch (error) {
+      console.error('Failed to edit message:', error);
+      toast.error('Failed to edit message. Please try again.');
+      throw error; // Re-throw so the component can handle the error state
+    }
+  }, [threadId, editMessageMutation, messagesQuery]);
 
   const toolViewAssistant = useCallback(
     (assistantContent?: string, toolContent?: string) => {
@@ -603,6 +623,8 @@ export default function ThreadPage({
           isSidePanelOpen={isSidePanelOpen}
           isLeftSidebarOpen={leftSidebarState !== 'collapsed'}
           onScrollStateChange={handleScrollStateChange}
+          onEditMessage={handleEditMessage}
+          threadId={threadId}
         />
 
         <div

@@ -1934,3 +1934,38 @@ export const getAgentBuilderChatHistory = async (agentId: string): Promise<{mess
 
   return data;
 };
+
+export const editMessage = async (
+  threadId: string,
+  messageId: string,
+  newContent: string
+): Promise<{ success: boolean; message: string; deleted_messages_count: number }> => {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    throw new NoAccessTokenAvailableError();
+  }
+
+  const response = await fetch(`${API_URL}/thread/${threadId}/message/${messageId}/edit`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ new_content: newContent }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => 'No error details available');
+    console.error(`Error editing message: ${response.status} ${response.statusText}`, errorText);
+    throw new Error(`Error editing message: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  console.log('[API] Message edited successfully:', data);
+
+  return data;
+};
