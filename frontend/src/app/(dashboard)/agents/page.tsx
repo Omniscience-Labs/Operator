@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { UpdateAgentDialog } from './_components/update-agent-dialog';
 import { PublishAgentDialog } from './_components/publish-agent-dialog';
+import { ShareAgentDialog } from './_components/share-agent-dialog';
 import { useAgents, useUpdateAgent, useDeleteAgent, useRemoveAgentFromLibrary, useOptimisticAgentUpdate, useCreateAgent } from '@/hooks/react-query/agents/use-agents';
 import { usePublishAgent, useUnpublishAgent } from '@/hooks/react-query/marketplace/use-marketplace';
 import { SearchAndFilters } from './_components/search-and-filters';
@@ -42,6 +43,7 @@ export default function AgentsPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
   const [publishDialogAgent, setPublishDialogAgent] = useState<any>(null);
+  const [shareDialogAgent, setShareDialogAgent] = useState<any>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [highlightedAgentId, setHighlightedAgentId] = useState<string | null>(null);
   
@@ -209,6 +211,13 @@ export default function AgentsPage() {
     }
   };
 
+  const handleShare = (agentId: string) => {
+    const agent = agents.find(a => a.agent_id === agentId);
+    if (agent) {
+      setShareDialogAgent(agent);
+    }
+  };
+
   const handleMakePrivate = async (agentId: string) => {
     try {
       await unpublishAgentMutation.mutateAsync(agentId);
@@ -335,6 +344,7 @@ export default function AgentsPage() {
                 onRemoveFromLibrary={handleRemoveFromLibrary}
                 onPublish={handlePublish}
                 onMakePrivate={handleMakePrivate}
+                onShare={handleShare}
                 isLoading={(deleteAgentMutation.isPending && deleteAgentMutation.variables === agent.agent_id) || (removeFromLibraryMutation.isPending && removeFromLibraryMutation.variables === agent.agent_id)}
                 enableTilt={true}
                 isHighlighted={highlightedAgentId === agent.agent_id}
@@ -369,6 +379,17 @@ export default function AgentsPage() {
             isOpen={!!publishDialogAgent}
             onClose={() => {
               setPublishDialogAgent(null);
+              loadAgents();
+            }}
+          />
+        )}
+
+        {shareDialogAgent && (
+          <ShareAgentDialog
+            agent={shareDialogAgent}
+            isOpen={!!shareDialogAgent}
+            onClose={() => {
+              setShareDialogAgent(null);
               loadAgents();
             }}
           />

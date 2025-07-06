@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Globe, Users, Check } from 'lucide-react';
+import { Globe, Check } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,11 +11,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAccounts } from '@/hooks/use-accounts';
 import { usePublishAgent } from '@/hooks/react-query/marketplace/use-marketplace';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -34,41 +32,24 @@ export function PublishAgentDialog({
   onClose,
   onSuccess 
 }: PublishAgentDialogProps) {
-  const [publishType, setPublishType] = useState<'marketplace' | 'teams'>('marketplace');
-  const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
   const [includeKnowledgeBases, setIncludeKnowledgeBases] = useState(true);
   const [includeCustomMcpTools, setIncludeCustomMcpTools] = useState(true);
   const [managedAgent, setManagedAgent] = useState(false);
-  const { data: accounts } = useAccounts();
   const publishAgentMutation = usePublishAgent();
-  
-  // Filter teams where user is an admin (owner)
-  const adminTeams = accounts?.filter(
-    account => !account.personal_account && (account as any).account_role === 'owner'
-  ) || [];
 
   const handlePublish = async () => {
     try {
-      if (publishType === 'teams' && selectedTeams.size === 0) {
-        toast.error('Please select at least one team');
-        return;
-      }
-      
       await publishAgentMutation.mutateAsync({
         agentId: agent.agent_id,
         tags: [],
-        visibility: publishType === 'marketplace' ? 'public' : 'teams',
-        teamIds: publishType === 'teams' ? Array.from(selectedTeams) : [],
+        visibility: 'public',
+        teamIds: [],
         includeKnowledgeBases,
         includeCustomMcpTools,
         managedAgent
       });
       
-      const message = publishType === 'marketplace' 
-        ? 'Agent published to marketplace successfully!'
-        : `Agent shared with ${selectedTeams.size} team${selectedTeams.size > 1 ? 's' : ''}`;
-      
-      toast.success(message);
+      toast.success('Agent published to marketplace successfully!');
       onSuccess?.();
       onClose();
     } catch (error: any) {
@@ -76,134 +57,56 @@ export function PublishAgentDialog({
     }
   };
 
-  const toggleTeam = (teamId: string) => {
-    setSelectedTeams(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(teamId)) {
-        newSet.delete(teamId);
-      } else {
-        newSet.add(teamId);
-      }
-      return newSet;
-    });
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Publish Agent</DialogTitle>
+          <DialogTitle>Publish to Marketplace</DialogTitle>
           <DialogDescription>
-            Choose how you want to share "{agent.name}"
+            Share "{agent.name}" publicly on the marketplace for everyone to discover
           </DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="flex-1 overflow-y-auto">
           <div className="space-y-4 px-1 pb-4">
-            <RadioGroup value={publishType} onValueChange={(value: any) => setPublishType(value)}>
-              <div className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
-                <RadioGroupItem value="marketplace" id="marketplace" className="mt-1" />
-                <Label htmlFor="marketplace" className="flex-1 cursor-pointer">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Globe className="h-4 w-4" />
-                    <span className="font-medium">Public Marketplace</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Share with everyone. Your agent will be discoverable by all users.
-                  </p>
-                </Label>
-              </div>
-
-              <div className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
-                <RadioGroupItem value="teams" id="teams" className="mt-1" />
-                <Label htmlFor="teams" className="flex-1 cursor-pointer">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Users className="h-4 w-4" />
-                    <span className="font-medium">Specific Teams</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Share only with teams where you're an admin.
-                    {adminTeams.length === 0 && (
-                      <span className="block mt-1">
-                        <Badge variant="secondary" className="text-xs">No teams available</Badge>
-                      </span>
-                    )}
-                  </p>
-                </Label>
-              </div>
-            </RadioGroup>
-
-            {publishType === 'teams' && adminTeams.length > 0 && (
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Select teams to share with:</Label>
-                <ScrollArea className="h-[150px] rounded-md border p-2">
-                  <div className="space-y-2">
-                    {adminTeams.map(team => (
-                      <div
-                        key={team.account_id}
-                        className="flex items-center space-x-2 p-2 rounded hover:bg-muted/50"
-                      >
-                        <Checkbox
-                          id={team.account_id}
-                          checked={selectedTeams.has(team.account_id)}
-                          onCheckedChange={() => toggleTeam(team.account_id)}
-                        />
-                        <Label
-                          htmlFor={team.account_id}
-                          className="flex-1 cursor-pointer"
-                        >
-                          {team.name}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-                {selectedTeams.size > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {selectedTeams.size} team{selectedTeams.size > 1 ? 's' : ''} selected
-                  </p>
-                )}
-              </div>
-            )}
-
-            {publishType === 'teams' && adminTeams.length === 0 && (
-              <div className="p-4 rounded-lg bg-muted/50 text-center">
+            <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
+              <Globe className="h-5 w-5 mt-1 text-green-600" />
+              <div className="flex-1">
+                <div className="font-medium">Public Marketplace</div>
                 <p className="text-sm text-muted-foreground">
-                  You need to be an admin of at least one team to share agents with teams.
+                  Your agent will be discoverable by all users and can be added to their library.
                 </p>
               </div>
-            )}
+            </div>
 
             {/* Agent Type */}
-            {publishType === 'marketplace' && (
-              <div className="space-y-3 pt-2 border-t">
-                <Label className="text-sm font-medium">Agent Type:</Label>
-                
-                <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
-                  <Checkbox
-                    id="managed-agent"
-                    checked={managedAgent}
-                    onCheckedChange={(checked) => setManagedAgent(checked === true)}
-                  />
-                  <div className="flex-1">
-                    <Label htmlFor="managed-agent" className="cursor-pointer font-medium">
-                      Managed Agent
-                    </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Users will get a live reference to this agent. When you update the agent, all users will see the changes automatically. Users cannot customize managed agents.
-                    </p>
-                  </div>
+            <div className="space-y-3 pt-2 border-t">
+              <Label className="text-sm font-medium">Agent Type:</Label>
+              
+              <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
+                <Checkbox
+                  id="managed-agent"
+                  checked={managedAgent}
+                  onCheckedChange={(checked) => setManagedAgent(checked === true)}
+                />
+                <div className="flex-1">
+                  <Label htmlFor="managed-agent" className="cursor-pointer font-medium">
+                    Managed Agent
+                  </Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Users will get a live reference to this agent. When you update the agent, all users will see the changes automatically. Users cannot customize managed agents.
+                  </p>
                 </div>
-
-                {managedAgent && (
-                  <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      <strong>Note:</strong> Users will get a live reference to this agent. Any updates you make will automatically appear for all users. Users cannot customize managed agents.
-                    </p>
-                  </div>
-                )}
               </div>
-            )}
+
+              {managedAgent && (
+                <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    <strong>Note:</strong> Users will get a live reference to this agent. Any updates you make will automatically appear for all users. Users cannot customize managed agents.
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* Sharing Options */}
             <div className="space-y-3 pt-2 border-t">
@@ -274,10 +177,7 @@ export function PublishAgentDialog({
           </Button>
           <Button
             onClick={handlePublish}
-            disabled={
-              publishAgentMutation.isPending ||
-              (publishType === 'teams' && (adminTeams.length === 0 || selectedTeams.size === 0))
-            }
+            disabled={publishAgentMutation.isPending}
           >
             {publishAgentMutation.isPending ? (
               <>
@@ -287,7 +187,7 @@ export function PublishAgentDialog({
             ) : (
               <>
                 <Check className="h-4 w-4 mr-2" />
-                Publish
+                Publish to Marketplace
               </>
             )}
           </Button>

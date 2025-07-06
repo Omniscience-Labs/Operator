@@ -5,7 +5,7 @@ import json
 import traceback
 from datetime import datetime, timezone
 import uuid
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 import jwt
 from pydantic import BaseModel
 import tempfile
@@ -1881,7 +1881,7 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
                 library_entry = library_check.data[0]
                 is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
             else:
-            raise HTTPException(status_code=403, detail="Access denied")
+                raise HTTPException(status_code=403, detail="Access denied")
         
         # Apply sharing preferences filtering for managed agents
         if is_managed_by_user:
@@ -2554,3 +2554,299 @@ async def get_agent_builder_chat_history(
     except Exception as e:
         logger.error(f"Error fetching agent builder chat history for agent {agent_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch chat history: {str(e)}")
+
+# Agent Share Link Models
+class CreateAgentShareRequest(BaseModel):
+    share_type: Literal["persistent", "ephemeral"]
+    expires_in_hours: Optional[int] = None  # For ephemeral links
+    max_uses: Optional[int] = None  # For limited use links
+    include_knowledge_bases: bool = True
+    include_custom_mcp_tools: bool = True
+    managed_agent: bool = False
+
+class AgentShareResponse(BaseModel):
+    share_id: str
+    token: str
+    share_url: str
+    expires_at: Optional[datetime]
+    access_count: int
+    sharing_preferences: Optional[Dict[str, Any]] = {}
+
+class AgentShareListResponse(BaseModel):
+    shares: List[AgentShareResponse]
+
+class SharedAgentResponse(BaseModel):
+    agent: AgentResponse
+    share_info: Dict[str, Any]
+
+# Agent Share Link Endpoints
+
+@router.post("/agents/{agent_id}/share")
+async def create_agent_share_link(
+    agent_id: str,
+    share_data: CreateAgentShareRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Create a share link for an agent."""
+    if not await is_enabled("agent_marketplace"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Agent sharing currently disabled. This feature is not available at the moment."
+        )
+    
+    logger.info(f"Creating share link for agent {agent_id} by user {user_id}")
+    client = await db.client
+    
+    try:
+        # Verify agent ownership
+        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
+        if not agent_result.data:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        agent = agent_result.data[0]
+        if agent['account_id'] != user_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Validate share type and expiration
+        if share_data.share_type == "ephemeral" and not share_data.expires_in_hours:
+            raise HTTPException(status_code=400, detail="Ephemeral links require expiration time")
+        
+        if share_data.expires_in_hours and share_data.expires_in_hours < 1:
+            raise HTTPException(status_code=400, detail="Expiration must be at least 1 hour")
+        
+        # Store sharing preferences
+        sharing_preferences = {
+            'include_knowledge_bases': share_data.include_knowledge_bases,
+            'include_custom_mcp_tools': share_data.include_custom_mcp_tools,
+            'managed_agent': share_data.managed_agent
+        }
+        
+        # Create share link using database function
+        result = await client.rpc('create_agent_share_link', {
+            'p_agent_id': agent_id,
+            'p_share_type': share_data.share_type,
+            'p_expires_in_hours': share_data.expires_in_hours,
+            'p_max_uses': share_data.max_uses,
+            'p_sharing_preferences': sharing_preferences
+        }).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to create share link")
+        
+        share = result.data[0]
+        
+        logger.info(f"Successfully created share link {share['share_id']} for agent {agent_id}")
+        return AgentShareResponse(
+            share_id=share['share_id'],
+            token=share['token'],
+            share_url=share['share_url'],
+            expires_at=share['expires_at'],
+            access_count=0,
+            sharing_preferences=share.get('sharing_preferences', {})
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating share link for agent {agent_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/agents/{agent_id}/shares")
+async def get_agent_share_links(
+    agent_id: str,
+    user_id: str = Depends(get_current_user_id_from_jwt),
+    request: Request = None
+):
+    """Get all share links for an agent."""
+    logger.info(f"Getting share links for agent {agent_id}")
+    client = await db.client
+    
+    try:
+        # Verify agent ownership
+        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
+        if not agent_result.data:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        agent = agent_result.data[0]
+        if agent['account_id'] != user_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Get all share links for this agent
+        shares_result = await client.table('agent_shares').select('*').eq('agent_id', agent_id).eq('creator_account_id', user_id).execute()
+        
+        shares = []
+        for share in shares_result.data or []:
+            share_url = f"{request.url.scheme}://{request.url.netloc}/shared-agents/{share['token']}"
+            shares.append(AgentShareResponse(
+                share_id=share['id'],
+                token=share['token'],
+                share_url=share_url,
+                expires_at=share['expires_at'],
+                access_count=share['access_count'],
+                sharing_preferences=share.get('sharing_preferences', {})
+            ))
+        
+        return AgentShareListResponse(shares=shares)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting share links for agent {agent_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.delete("/agents/{agent_id}/shares/{share_id}")
+async def revoke_agent_share_link(
+    agent_id: str,
+    share_id: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Revoke a specific agent share link."""
+    logger.info(f"Revoking share link {share_id} for agent {agent_id}")
+    client = await db.client
+    
+    try:
+        # Verify agent ownership
+        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
+        if not agent_result.data:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        agent = agent_result.data[0]
+        if agent['account_id'] != user_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Verify share ownership and get share info
+        share_result = await client.table('agent_shares').select('*').eq('id', share_id).eq('creator_account_id', user_id).execute()
+        if not share_result.data:
+            raise HTTPException(status_code=404, detail="Share link not found")
+
+        # Delete the share link
+        await client.table('agent_shares').delete().eq('id', share_id).execute()
+        
+        logger.info(f"Successfully revoked share link {share_id} for agent {agent_id}")
+        return {"message": "Share link revoked successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error revoking share link {share_id} for agent {agent_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.post("/agents/{agent_id}/unshare-managed")
+async def unshare_managed_agent(
+    agent_id: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Completely unshare a managed agent - revoke all share links and remove from all users' libraries."""
+    logger.info(f"Unsharing managed agent {agent_id}")
+    client = await db.client
+    
+    try:
+        # Verify agent ownership
+        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
+        if not agent_result.data:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        agent = agent_result.data[0]
+        if agent['account_id'] != user_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Check if this is a managed agent
+        sharing_prefs = agent.get('sharing_preferences', {})
+        is_managed_agent = sharing_prefs.get('managed_agent', False)
+        
+        if not is_managed_agent:
+            raise HTTPException(status_code=400, detail="Agent is not a managed agent")
+
+        # Get all share links for this agent
+        shares_result = await client.table('agent_shares').select('*').eq('agent_id', agent_id).eq('creator_account_id', user_id).execute()
+        share_count = len(shares_result.data) if shares_result.data else 0
+        
+        # Delete all share links for this agent
+        await client.table('agent_shares').delete().eq('agent_id', agent_id).eq('creator_account_id', user_id).execute()
+        
+        # Remove this managed agent from all users' libraries
+        # Note: We only remove managed agents (where agent_id == original_agent_id)
+        library_result = await client.table('user_agent_library').delete().eq('agent_id', agent_id).eq('original_agent_id', agent_id).execute()
+        
+        removed_count = len(library_result.data) if library_result.data else 0
+        
+        logger.info(f"Successfully unshared managed agent {agent_id}: revoked {share_count} share links, removed from {removed_count} libraries")
+        return {
+            "message": "Managed agent unshared successfully",
+            "share_links_revoked": share_count,
+            "libraries_removed": removed_count
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error unsharing managed agent {agent_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/shared-agents/{token}")
+async def get_shared_agent(
+    token: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Get a shared agent by token."""
+    logger.info(f"Accessing shared agent with token {token} by user {user_id}")
+    client = await db.client
+    
+    try:
+        # Get shared agent data using database function
+        result = await client.rpc('get_shared_agent', {
+            'p_token': token
+        }).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Share link not found, expired, or exceeded usage limit")
+        
+        shared_data = result.data[0]
+        agent_data = shared_data['agent_data']
+        sharing_preferences = shared_data['sharing_preferences']
+        share_info = shared_data['share_info']
+        
+        # Apply sharing preferences filtering
+        if not sharing_preferences.get('include_knowledge_bases', True):
+            agent_data['knowledge_bases'] = []
+        if not sharing_preferences.get('include_custom_mcp_tools', True):
+            agent_data['configured_mcps'] = []
+            agent_data['custom_mcps'] = []
+        
+        # Convert to AgentResponse format
+        agent_response = AgentResponse(
+            agent_id=agent_data['agent_id'],
+            account_id=agent_data['account_id'],
+            name=agent_data['name'],
+            description=agent_data.get('description'),
+            system_prompt=agent_data['system_prompt'],
+            configured_mcps=agent_data.get('configured_mcps', []),
+            custom_mcps=agent_data.get('custom_mcps', []),
+            agentpress_tools=agent_data.get('agentpress_tools', {}),
+            is_default=agent_data.get('is_default', False),
+            is_public=agent_data.get('is_public', False),
+            visibility=agent_data.get('visibility', 'private'),
+            knowledge_bases=agent_data.get('knowledge_bases', []),
+            marketplace_published_at=agent_data.get('marketplace_published_at'),
+            download_count=agent_data.get('download_count', 0),
+            tags=agent_data.get('tags', []),
+            sharing_preferences=sharing_preferences,
+            avatar=agent_data.get('avatar'),
+            avatar_color=agent_data.get('avatar_color'),
+            created_at=agent_data['created_at'],
+            updated_at=agent_data['updated_at'],
+            is_managed=sharing_preferences.get('managed_agent', False),
+            is_owned=False  # User doesn't own shared agents
+        )
+        
+        logger.info(f"Successfully retrieved shared agent {agent_data['agent_id']} via token {token}")
+        return SharedAgentResponse(
+            agent=agent_response,
+            share_info=share_info
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting shared agent with token {token}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")

@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useMemo, useState, useEffect } from 'react';
-import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, User, Calendar, Tags, Sparkles, Zap, BookOpen } from 'lucide-react';
+import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, User, Calendar, Tags, Sparkles, Zap, BookOpen, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -46,6 +46,7 @@ interface AgentProfileCardProps {
   onAddToLibrary?: (agentId: string) => void;
   onPublish?: (agentId: string) => void;
   onMakePrivate?: (agentId: string) => void;
+  onShare?: (agentId: string) => void;
   isLoading?: boolean;
   enableTilt?: boolean;
   isHighlighted?: boolean;
@@ -105,6 +106,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
   onAddToLibrary,
   onPublish,
   onMakePrivate,
+  onShare,
   isLoading = false,
   enableTilt = true,
   isHighlighted = false,
@@ -694,6 +696,21 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                     Publish
                   </Button>
                 )
+              )}
+              
+              {/* Share Button */}
+              {!agent.is_managed && agent.is_owned && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onShare?.(agent.agent_id);
+                  }}
+                  size="sm"
+                  variant="outline"
+                  className="bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
               )}
             </>
           )}
