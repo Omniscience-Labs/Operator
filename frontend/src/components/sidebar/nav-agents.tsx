@@ -390,14 +390,14 @@ export function NavAgents() {
                 <TooltipTrigger asChild>
                   <LiquidButton
                     size="sm"
-                    className="h-8 w-8 bg-primary hover:bg-primary/90 text-primary-foreground border-none shadow-sm hover:shadow-md transition-shadow"
+                    className="h-8 px-3 bg-primary text-white dark:text-black hover:text-primary-foreground border-none shadow-sm hover:shadow-md transition-shadow [--liquid-button-color:var(--primary)]"
                     onClick={() => window.location.href = '/dashboard'}
                   >
                     <Plus className="h-4 w-4" />
-                    <span className="sr-only">New Agent</span>
+                    <span className="ml-1 text-sm font-medium">New Task</span>
                   </LiquidButton>
                 </TooltipTrigger>
-                <TooltipContent>New Agent</TooltipContent>
+                <TooltipContent>New Task</TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -406,19 +406,19 @@ export function NavAgents() {
 
       <SidebarMenu className="overflow-y-auto max-h-[calc(100vh-200px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         {state === 'collapsed' && (
-          <SidebarMenuItem>
+          <SidebarMenuItem className="flex justify-center">
             <Tooltip>
               <TooltipTrigger asChild>
                 <LiquidButton
                   size="sm"
-                  className="h-9 w-9 min-w-9 bg-primary hover:bg-primary/90 text-primary-foreground border-none shadow-sm hover:shadow-md transition-shadow mx-auto"
+                  className="h-9 w-9 min-w-[2.25rem] bg-primary text-white dark:text-black hover:text-primary-foreground border-none shadow-sm hover:shadow-md transition-shadow flex items-center justify-center [--liquid-button-color:var(--primary)]"
                   onClick={() => window.location.href = '/dashboard'}
                 >
                   <Plus className="h-4 w-4" />
-                  <span className="sr-only">New Agent</span>
+                  <span className="sr-only">New Task</span>
                 </LiquidButton>
               </TooltipTrigger>
-              <TooltipContent>New Agent</TooltipContent>
+              <TooltipContent>New Task</TooltipContent>
             </Tooltip>
           </SidebarMenuItem>
         )}
