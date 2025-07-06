@@ -125,7 +125,7 @@ async def main():
     print("- Memory is added automatically when messages are saved")
     print("- Agents can search memory using the search_memory tool")
     print("- Default operators use user_id only")
-    print("- Custom agents use user_id + agent_id")
+    print("- Custom agents use combined user_id:agent_id identifier")
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -122,11 +122,23 @@ class MemoryService:
         Returns:
             Dictionary of parameters for mem0 calls
         """
-        params = {"user_id": user_id}
-        
-        # Add agent_id for custom agents
+        # Create a combined memory identifier to ensure complete isolation
+        # For managed agents, this ensures each user has their own memory even with same agent_id
+        # 
+        # Examples:
+        # - Default operator: user_123 -> memory scope: "user_123"
+        # - Custom agent: user_123 + agent_456 -> memory scope: "user_123:agent_456" 
+        # - Managed agent: user_123 + managed_agent_789 -> memory scope: "user_123:managed_agent_789"
+        # - Same managed agent, different user: user_999 + managed_agent_789 -> memory scope: "user_999:managed_agent_789"
+        #
+        # This ensures complete memory isolation between users, even for the same managed agent
         if agent_id:
-            params["agent_id"] = agent_id
+            # Use combined user_id:agent_id for complete isolation
+            memory_id = f"{user_id}:{agent_id}"
+            params = {"user_id": memory_id}
+        else:
+            # Default operator uses just user_id
+            params = {"user_id": user_id}
             
         return params
     

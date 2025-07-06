@@ -44,9 +44,11 @@ Provides agents with explicit memory search capabilities:
 - **Usage**: Memories are shared across all conversations for the user
 - **Example**: All conversations with the default operator share the same memory pool
 
-### Custom Agents  
-- **Scope**: `user_id` + `agent_id`
-- **Usage**: Memories are specific to the user + agent combination
+### Custom Agents (Including Managed Agents)
+- **Scope**: `user_id:agent_id` (combined identifier)
+- **Usage**: Memories are completely isolated per user + agent combination
+- **Managed Agents**: Each user has their own separate memory for the same managed agent
+- **Example**: User A and User B using the same managed agent will have completely separate memories
 - **Example**: Travel agent memories are separate from coding assistant memories
 
 ## Setup

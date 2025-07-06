@@ -121,8 +121,8 @@ async def demo_memory_integration():
     
     # Scenario 2: Custom agent conversation
     print("🎯 Scenario 2: Custom Agent Conversation")
-    print("   - User ID + Agent ID")
-    print("   - Agent-specific memories")
+    print("   - Combined User ID:Agent ID identifier")
+    print("   - Agent-specific memories isolated per user")
     print()
     
     agent_id = "travel_agent_456"
