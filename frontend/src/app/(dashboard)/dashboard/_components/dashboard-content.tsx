@@ -569,40 +569,55 @@ ${meeting.transcript || '(No transcript available)'}`;
                     <Skeleton className="h-8 w-64 sm:h-7 sm:w-56" />
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-4 justify-center">
-                    <div className="flex items-center gap-2 flex-wrap justify-center">
-                                              {customAgentEnabled ? (
-                          <div className="flex items-center gap-0.5 justify-center">
-                            <BlurText
-                              text={`Hey ${userName || 'there'}, I'm`}
-                              className="tracking-tight text-4xl text-muted-foreground leading-tight"
-                              delay={200}
-                              animateBy="words"
-                              direction="bottom"
-                            />
-                            <AgentSelector
-                              selectedAgentId={selectedAgentId}
-                              onAgentSelect={setSelectedAgentId}
-                              variant="heading"
-                            />
-                          </div>
+                                    <div className="flex flex-col items-center gap-3 justify-center">
+                    {/* Line 1: Hey [name] */}
+                    <div className="flex items-center justify-center">
+                      <BlurText
+                        text={`Hey ${userName || 'there'}`}
+                        className="tracking-tight text-4xl text-muted-foreground leading-tight text-center"
+                        delay={200}
+                        animateBy="words"
+                        direction="bottom"
+                      />
+                    </div>
+                    
+                    {/* Line 2: I'm [Agent Selector] */}
+                    <div className="flex items-center justify-center">
+                      {customAgentEnabled ? (
+                        <div className="flex items-center gap-1 justify-center">
+                          <BlurText
+                            text="I'm"
+                            className="tracking-tight text-4xl text-muted-foreground leading-tight"
+                            delay={600}
+                            animateBy="words"
+                            direction="bottom"
+                          />
+                          <AgentSelector
+                            selectedAgentId={selectedAgentId}
+                            onAgentSelect={setSelectedAgentId}
+                            variant="heading"
+                          />
+                        </div>
                       ) : (
                         <BlurText
-                          text={`Hey ${userName || 'there'}, I'm Operator`}
+                          text="I'm Operator"
                           className="tracking-tight text-4xl text-muted-foreground leading-tight"
-                          delay={200}
+                          delay={600}
                           animateBy="words"
                           direction="bottom"
                         />
                       )}
                     </div>
                     
-                    <TypingText
-                      text={`What would you like to do this ${getTimeBasedGreeting()}?`}
-                      className="tracking-tight text-3xl font-normal text-muted-foreground/80"
-                      duration={60} // Animation speed: milliseconds per character for typing effect
-                      delay={1500} // Wait time: milliseconds before starting the typing animation
-                    />
+                    {/* Line 3: What would you like to do this [time]? */}
+                    <div className="flex items-center justify-center">
+                      <TypingText
+                        text={`What would you like to do this ${getTimeBasedGreeting()}?`}
+                        className="tracking-tight text-3xl font-normal text-muted-foreground/80 text-center"
+                        duration={60} // Animation speed: milliseconds per character for typing effect
+                        delay={1500} // Wait time: milliseconds before starting the typing animation
+                      />
+                    </div>
                     
                     {/* Name editing section for users without a name */}
                     {!userName && (
