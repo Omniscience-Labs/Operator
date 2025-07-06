@@ -571,10 +571,10 @@ ${meeting.transcript || '(No transcript available)'}`;
                 ) : (
                                     <div className="flex flex-col items-center gap-3 justify-center">
                     {/* Line 1: Hey [name] */}
-                    <div className="flex items-center justify-center">
+                    <div className="flex items-center justify-center w-full">
                       <BlurText
                         text={`Hey ${userName || 'there'}`}
-                        className="tracking-tight text-4xl text-muted-foreground leading-tight text-center"
+                        className="tracking-tight text-4xl text-muted-foreground leading-tight text-center w-full"
                         delay={200}
                         animateBy="words"
                         direction="bottom"
@@ -582,10 +582,10 @@ ${meeting.transcript || '(No transcript available)'}`;
                     </div>
                     
                     {/* Line 2: I'm [Agent Selector] */}
-                    <div className="flex items-center justify-center">
+                    <div className="flex items-center justify-center w-full">
                       {customAgentEnabled ? (
-                        <div className="flex items-center gap-1 justify-center">
-                          <span className="tracking-tight text-4xl text-muted-foreground leading-tight">I'm</span>
+                        <div className="flex items-center gap-1 justify-center w-full">
+                          <span className="tracking-tight text-4xl text-muted-foreground leading-tight text-center">I'm</span>
                           <AgentSelector
                             selectedAgentId={selectedAgentId}
                             onAgentSelect={setSelectedAgentId}
@@ -595,7 +595,7 @@ ${meeting.transcript || '(No transcript available)'}`;
                       ) : (
                         <BlurText
                           text="I'm Operator"
-                          className="tracking-tight text-4xl text-muted-foreground leading-tight"
+                          className="tracking-tight text-4xl text-muted-foreground leading-tight text-center w-full"
                           delay={600}
                           animateBy="words"
                           direction="bottom"
@@ -604,10 +604,10 @@ ${meeting.transcript || '(No transcript available)'}`;
                     </div>
                     
                     {/* Line 3: What would you like to do this [time]? */}
-                    <div className="flex items-center justify-center">
+                    <div className="flex items-center justify-center w-full">
                       <TypingText
                         text={`What would you like to do this ${getTimeBasedGreeting()}?`}
-                        className="tracking-tight text-3xl font-normal text-muted-foreground/80 text-center"
+                        className="tracking-tight text-3xl font-normal text-muted-foreground/80 text-center w-full"
                         duration={60} // Animation speed: milliseconds per character for typing effect
                         delay={1500} // Wait time: milliseconds before starting the typing animation
                       />
