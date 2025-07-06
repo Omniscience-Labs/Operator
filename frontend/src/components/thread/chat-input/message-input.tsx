@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect } from 'react';
+import React, { forwardRef, useEffect, useRef, useState, useCallback } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Square, Loader2, ArrowUp } from 'lucide-react';
@@ -90,6 +90,65 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
     ref,
   ) => {
     const isMobile = useIsMobile();
+    const upgradeElementRef = useRef<HTMLDivElement>(null);
+    const [showCrownIcon, setShowCrownIcon] = useState(false);
+    
+    // Function to check if the upgrade element overlaps with other elements
+    const checkOverlap = useCallback(() => {
+      if (!upgradeElementRef.current) return;
+      
+      const upgradeRect = upgradeElementRef.current.getBoundingClientRect();
+      const container = upgradeElementRef.current.closest('.flex');
+      
+      if (!container) return;
+      
+      // Get all sibling elements in the same container
+      const siblings = Array.from(container.children).filter(
+        child => child !== upgradeElementRef.current && child !== upgradeElementRef.current?.parentElement
+      );
+      
+      let hasOverlap = false;
+      
+      siblings.forEach(sibling => {
+        const siblingRect = sibling.getBoundingClientRect();
+        
+        // Check if rectangles overlap
+        const overlap = !(
+          upgradeRect.right <= siblingRect.left ||
+          upgradeRect.left >= siblingRect.right ||
+          upgradeRect.bottom <= siblingRect.top ||
+          upgradeRect.top >= siblingRect.bottom
+        );
+        
+        if (overlap) {
+          hasOverlap = true;
+        }
+      });
+      
+      setShowCrownIcon(hasOverlap);
+    }, []);
+    
+    // Set up ResizeObserver to detect layout changes
+    useEffect(() => {
+      if (!upgradeElementRef.current) return;
+      
+      const resizeObserver = new ResizeObserver(checkOverlap);
+      const container = upgradeElementRef.current.closest('.flex');
+      
+      if (container) {
+        resizeObserver.observe(container);
+        
+        // Also observe the upgrade element itself
+        resizeObserver.observe(upgradeElementRef.current);
+      }
+      
+      // Initial check
+      checkOverlap();
+      
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }, [checkOverlap]);
     
     useEffect(() => {
       const textarea = ref as React.RefObject<HTMLTextAreaElement>;
@@ -179,20 +238,22 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
             )}
           </div>
           {subscriptionStatus === 'no_subscription' && !isLocalMode() &&
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  {isMobile ? (
-                    <Crown className='h-4 w-4 text-amber-500' />
-                  ) : (
-                    <p className='text-sm text-amber-500'>Upgrade for full performance</p>
-                  )}
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>The free tier is severely limited by inferior models; upgrade to experience the true full Operator experience.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div ref={upgradeElementRef}>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    {isMobile || showCrownIcon ? (
+                      <Crown className='h-4 w-4 text-amber-500' />
+                    ) : (
+                      <p className='text-sm text-amber-500'>Upgrade for full performance</p>
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>The free tier is severely limited by inferior models; upgrade to experience the true full Operator experience.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           }
           <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
             <ModelSelector
