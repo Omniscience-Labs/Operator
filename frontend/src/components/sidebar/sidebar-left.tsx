@@ -186,7 +186,7 @@ export function SidebarLeft({
                     damping: 25
                   }}
                 >
-                  <span className="font-semibold text-foreground">Omni</span>
+                  <span className="font-semibold text-foreground text-lg">Omni</span>
                 </motion.div>
               )}
             </motion.div>
