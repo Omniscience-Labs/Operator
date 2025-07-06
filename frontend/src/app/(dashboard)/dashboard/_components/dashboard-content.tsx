@@ -552,7 +552,7 @@ ${meeting.transcript || '(No transcript available)'}`;
             />
             
             {/* Main Content Container */}
-            <div className="relative flex flex-col items-center px-8 pt-8 pb-12 rounded-3xl overflow-hidden">
+            <div className="relative flex flex-col items-center justify-center px-8 pt-8 pb-12 rounded-3xl overflow-hidden">
               {/* Greeting Section */}
               <motion.div 
                 className="flex flex-col items-center text-center w-full"
@@ -657,7 +657,7 @@ ${meeting.transcript || '(No transcript available)'}`;
               {/* Chat Input Section */}
               {showChatInput && (
                 <motion.div 
-                  className={cn('w-full', 'max-w-full', 'sm:max-w-3xl')}
+                  className={cn('w-full', 'max-w-full', 'sm:max-w-3xl', 'flex', 'justify-center')}
                   initial={{ 
                     y: 112, 
                     opacity: 0, 
@@ -675,22 +675,24 @@ ${meeting.transcript || '(No transcript available)'}`;
                     ease: [0.25, 0.46, 0.45, 0.94]
                   }}
                 >
-                  <ChatInput
-                    ref={chatInputRef}
-                    onSubmit={handleSubmit}
-                    loading={isSubmitting}
-                    placeholder="Describe what you need help with..."
-                    value={inputValue}
-                    onChange={setInputValue}
-                    hideAttachments={false}
-                  />
+                  <div className="w-full">
+                    <ChatInput
+                      ref={chatInputRef}
+                      onSubmit={handleSubmit}
+                      loading={isSubmitting}
+                      placeholder="Describe what you need help with..."
+                      value={inputValue}
+                      onChange={setInputValue}
+                      hideAttachments={false}
+                    />
+                  </div>
                 </motion.div>
               )}
 
               {/* Examples Section */}
               {showExamples && (
                 <motion.div 
-                  className="w-full"
+                  className="w-full flex justify-center"
                   initial={{ 
                     y: 124, 
                     opacity: 0, 
@@ -708,7 +710,9 @@ ${meeting.transcript || '(No transcript available)'}`;
                     ease: [0.16, 1, 0.3, 1]
                   }}
                 >
-                  <Examples onSelectPrompt={setInputValue} />
+                  <div className="w-full">
+                    <Examples onSelectPrompt={setInputValue} />
+                  </div>
                 </motion.div>
               )}
             </div>
