@@ -363,15 +363,44 @@ export default function ThreadPage({
       });
       
       // Refetch messages to get the updated state after edit
-      messagesQuery.refetch();
+      await messagesQuery.refetch();
       
-      toast.success('Message edited successfully');
+      // Get user name from Supabase auth for agent start
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      const userName = user?.user_metadata?.name;
+      
+      // Automatically start the agent from the edited point
+      const agentResult = await startAgentMutation.mutateAsync({
+        threadId,
+        options: { user_name: userName || undefined }
+      });
+      
+      setAgentRunId(agentResult.agent_run_id);
+      agentRunsQuery.refetch();
+      
+      toast.success('Message edited and agent restarted');
     } catch (error) {
-      console.error('Failed to edit message:', error);
-      toast.error('Failed to edit message. Please try again.');
+      console.error('Failed to edit message or start agent:', error);
+      
+      // Check if it's a billing error
+      if (error instanceof BillingError) {
+        console.log("Caught BillingError during edit:", error.detail);
+        setBillingData({
+          currentUsage: error.detail.currentUsage as number | undefined,
+          limit: error.detail.limit as number | undefined,
+          message: error.detail.message || 'Monthly usage limit reached. Please upgrade.',
+          accountId: project?.account_id || null
+        });
+        setShowBillingAlert(true);
+        toast.error('Edit successful but agent start failed due to billing limits');
+      } else {
+        toast.error('Failed to edit message or start agent. Please try again.');
+      }
+      
       throw error; // Re-throw so the component can handle the error state
     }
-  }, [threadId, editMessageMutation, messagesQuery]);
+  }, [threadId, editMessageMutation, messagesQuery, startAgentMutation, setAgentRunId, agentRunsQuery, setBillingData, setShowBillingAlert, project?.account_id]);
 
   const toolViewAssistant = useCallback(
     (assistantContent?: string, toolContent?: string) => {
