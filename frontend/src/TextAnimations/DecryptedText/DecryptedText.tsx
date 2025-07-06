@@ -11,7 +11,7 @@ const styles = {
     whiteSpace: 'pre-wrap',
   },
   srOnly: {
-    position: 'absolute' as 'absolute',
+    position: 'absolute' as const,
     width: '1px',
     height: '1px',
     padding: 0,
