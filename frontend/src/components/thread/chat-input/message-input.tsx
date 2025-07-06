@@ -162,10 +162,6 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
                 messages={messages}
               />
             )}
-            <VoiceRecorder
-              onTranscription={onTranscription}
-              disabled={loading || (disabled && !isAgentRunning)}
-            />
             {!hideAttachments && (
               <MeetingRecorder
                 onFileAttached={(file) => setUploadedFiles(prev => [...prev, file])}
@@ -205,6 +201,10 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
               disabled={loading || (disabled && !isAgentRunning)}
               modelName={selectedModel}
               subscriptionStatus={subscriptionStatus}
+            />
+            <VoiceRecorder
+              onTranscription={onTranscription}
+              disabled={loading || (disabled && !isAgentRunning)}
             />
             {isAgentRunning ? (
               <Button
