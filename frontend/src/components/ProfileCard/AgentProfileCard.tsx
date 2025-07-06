@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useMemo } from 'react';
-import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, User, Calendar, Tags } from 'lucide-react';
+import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, User, Calendar, Tags, Sparkles, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -44,14 +44,14 @@ interface AgentProfileCardProps {
 
 const getAgentAvatar = (agentId: string) => {
   const avatars = ['🤖', '🎭', '🧠', '⚡', '🔥', '🌟', '🚀', '💎', '🎯', '🎪', '🎨', '🔮', '🌈', '⭐', '🎵'];
-  const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'];
+  const colors = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6366F1', '#14B8A6', '#F97316', '#8B5CF6', '#06B6D4'];
   
   const avatarIndex = parseInt(agentId?.slice(-2), 16) % avatars.length;
   const colorIndex = parseInt(agentId?.slice(-3, -1), 16) % colors.length;
   
   return {
     avatar: avatars[avatarIndex] || '🤖',
-    color: colors[colorIndex] || '#4ECDC4'
+    color: colors[colorIndex] || '#3B82F6'
   };
 };
 
@@ -64,10 +64,20 @@ const getToolsCount = (agent: Agent) => {
   return mcpCount + customMcpCount + agentpressCount;
 };
 
-const truncateDescription = (description?: string, maxLength = 80) => {
-  if (!description) return 'AI Agent';
+const truncateDescription = (description?: string, maxLength = 100) => {
+  if (!description) return 'AI Agent ready to help you with various tasks';
   if (description.length <= maxLength) return description;
   return description.substring(0, maxLength).trim() + '...';
+};
+
+const formatDate = (dateString?: string) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  });
 };
 
 export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
@@ -81,7 +91,6 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
   isLoading = false,
   enableTilt = true,
 }) => {
-  const wrapRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Get agent styling
@@ -92,12 +101,11 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
     return getAgentAvatar(agent.agent_id);
   }, [agent.agent_id, agent.avatar, agent.avatar_color]);
 
-  // Simple tilt effect
+  // Subtle tilt effect
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!enableTilt || !cardRef.current || !wrapRef.current) return;
+    if (!enableTilt || !cardRef.current) return;
     
     const card = cardRef.current;
-    const wrap = wrapRef.current;
     const rect = card.getBoundingClientRect();
     
     const x = e.clientX - rect.left;
@@ -105,179 +113,227 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
     
-    const rotateX = (y - centerY) / 10;
-    const rotateY = (centerX - x) / 10;
+    const rotateX = (y - centerY) / 30; // Much more subtle
+    const rotateY = (centerX - x) / 30; // Much more subtle
     
-    wrap.style.setProperty('--rotate-x', `${rotateX}deg`);
-    wrap.style.setProperty('--rotate-y', `${rotateY}deg`);
-    wrap.style.setProperty('--pointer-x', `${(x / rect.width) * 100}%`);
-    wrap.style.setProperty('--pointer-y', `${(y / rect.height) * 100}%`);
+    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(0)`;
   }, [enableTilt]);
 
   const handleMouseLeave = useCallback(() => {
-    if (!wrapRef.current) return;
-    const wrap = wrapRef.current;
-    wrap.style.setProperty('--rotate-x', '0deg');
-    wrap.style.setProperty('--rotate-y', '0deg');
+    if (!cardRef.current) return;
+    cardRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0)';
   }, []);
 
   const toolsCount = getToolsCount(agent);
 
   return (
     <div
-      ref={wrapRef}
-      className={cn('pc-card-wrapper cursor-pointer', className)}
-      style={{
-        '--behind-gradient': 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(266,100%,90%,var(--card-opacity)) 4%,hsla(266,50%,80%,calc(var(--card-opacity)*0.75)) 10%,hsla(266,25%,70%,calc(var(--card-opacity)*0.5)) 50%,hsla(266,0%,60%,0) 100%)',
-        '--inner-gradient': 'linear-gradient(145deg,#60496e8c 0%,#71C4FF44 100%)',
-      } as React.CSSProperties}
+      ref={cardRef}
+      className={cn(
+        'group relative w-full h-[400px] rounded-2xl overflow-hidden transition-all duration-300 ease-out cursor-pointer',
+        'hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-1',
+        className
+      )}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      style={{
+        background: `
+          linear-gradient(135deg, 
+            ${agentStyling.color}08 0%, 
+            ${agentStyling.color}03 100%
+          ),
+          linear-gradient(145deg, 
+            rgba(255, 255, 255, 0.1) 0%, 
+            rgba(255, 255, 255, 0.05) 100%
+          )
+        `,
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+      }}
     >
-      <section ref={cardRef} className="pc-card">
-        <div className="pc-inside">
-          <div className="pc-shine" />
-          <div className="pc-glare" />
-          
-          {/* Agent Background */}
-          <div className="pc-content pc-avatar-content">
+      {/* Subtle gradient overlay on hover */}
+      <div 
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{
+          background: `
+            linear-gradient(135deg, 
+              ${agentStyling.color}15 0%, 
+              ${agentStyling.color}08 100%
+            )
+          `,
+        }}
+      />
+      
+      {/* Content */}
+      <div className="relative h-full flex flex-col p-6">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
             <div 
-              className="absolute inset-0 rounded-[var(--card-radius)]"
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-lg"
               style={{
-                background: `linear-gradient(135deg, ${agentStyling.color}40 0%, ${agentStyling.color}20 100%)`,
+                background: `linear-gradient(135deg, ${agentStyling.color}20 0%, ${agentStyling.color}40 100%)`,
+                border: `1px solid ${agentStyling.color}30`,
               }}
-            />
-            
-            {/* Large Agent Avatar */}
-            <div className="avatar text-8xl flex items-center justify-center h-full">
+            >
               {agentStyling.avatar}
             </div>
-            
-            {/* Status Indicators */}
-            <div className="absolute top-6 right-6 flex gap-2">
-              {agent.is_default && (
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
-                  <Star className="h-4 w-4 text-white fill-white" />
-                </div>
-              )}
-              
-              {agent.is_public && (
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
-                  <Globe className="h-4 w-4 text-white" />
-                </div>
-              )}
-              
-              {mode === 'marketplace' && (
-                <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1">
-                  <Download className="h-3 w-3 text-white" />
-                  <span className="text-white text-sm font-medium">
-                    {agent.download_count || 0}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Agent Info */}
-          <div className="pc-content">
-            <div className="pc-details">
-              <h3 className="text-2xl font-bold">{agent.name}</h3>
-              <p className="text-sm opacity-90 mb-2">
-                {truncateDescription(agent.description)}
-              </p>
-              
-              {/* Additional Info */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {toolsCount > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {toolsCount} tool{toolsCount !== 1 ? 's' : ''}
+            <div>
+              <h3 className="text-xl font-semibold text-white/90 truncate max-w-[200px]">
+                {agent.name}
+              </h3>
+              <div className="flex items-center gap-2 mt-1">
+                {agent.is_default && (
+                  <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-200 border-amber-500/30">
+                    <Star className="h-3 w-3 mr-1" />
+                    Default
                   </Badge>
                 )}
-                
+                {agent.is_public && (
+                  <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-200 border-green-500/30">
+                    <Globe className="h-3 w-3 mr-1" />
+                    Public
+                  </Badge>
+                )}
                 {agent.is_managed && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-200 border-blue-500/30">
+                    <Sparkles className="h-3 w-3 mr-1" />
                     Managed
                   </Badge>
                 )}
-                
-                {mode === 'marketplace' && agent.creator_name && (
-                  <div className="text-xs opacity-75">
-                    By {agent.creator_name}
-                  </div>
-                )}
               </div>
             </div>
           </div>
           
-          {/* Action Buttons */}
-          <div className="absolute bottom-4 left-4 right-4 z-10">
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-3">
-              <div className="flex gap-2 justify-center">
-                {mode === 'marketplace' ? (
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAddToLibrary?.(agent.agent_id);
-                    }}
-                    disabled={isLoading}
-                    size="sm"
-                    className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm flex-1"
-                  >
-                    {isLoading ? (
-                      <>
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
-                        Adding...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-3 w-3 mr-2" />
-                        Add to Library
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <>
-                    {agent.is_managed ? (
-                      <Button
-                        disabled
-                        size="sm"
-                        className="bg-white/10 text-white/50 border-white/10 flex-1"
-                      >
-                        <Wrench className="h-3 w-3 mr-2" />
-                        Managed
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onCustomize?.(agent.agent_id);
-                        }}
-                        size="sm"
-                        className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm flex-1"
-                      >
-                        <Wrench className="h-3 w-3 mr-2" />
-                        Edit
-                      </Button>
-                    )}
-                    
-                    <Button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onChat?.(agent.agent_id);
-                      }}
-                      size="sm"
-                      className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm flex-1"
-                    >
-                      <MessageCircle className="h-3 w-3 mr-2" />
-                      Chat
-                    </Button>
-                  </>
-                )}
-              </div>
+          {/* Download count for marketplace */}
+          {mode === 'marketplace' && (
+            <div className="flex items-center gap-1 text-white/60 text-sm">
+              <Download className="h-4 w-4" />
+              <span>{agent.download_count || 0}</span>
             </div>
-          </div>
+          )}
         </div>
-      </section>
+
+        {/* Description */}
+        <div className="flex-1 mb-4">
+          <p className="text-white/70 text-sm leading-relaxed">
+            {truncateDescription(agent.description)}
+          </p>
+        </div>
+
+        {/* Tools and Info */}
+        <div className="space-y-3 mb-4">
+          {/* Tools */}
+          {toolsCount > 0 && (
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-white/60" />
+              <span className="text-white/80 text-sm">
+                {toolsCount} tool{toolsCount !== 1 ? 's' : ''} available
+              </span>
+            </div>
+          )}
+
+          {/* Creator info for marketplace */}
+          {mode === 'marketplace' && agent.creator_name && (
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-white/60" />
+              <span className="text-white/60 text-sm">
+                By {agent.creator_name}
+              </span>
+            </div>
+          )}
+
+          {/* Date */}
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-white/60" />
+            <span className="text-white/60 text-sm">
+              {mode === 'marketplace' ? 
+                `Published ${formatDate(agent.marketplace_published_at)}` : 
+                `Created ${formatDate(agent.created_at)}`
+              }
+            </span>
+          </div>
+
+          {/* Tags */}
+          {agent.tags && agent.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {agent.tags.slice(0, 3).map((tag, index) => (
+                <Badge 
+                  key={index} 
+                  variant="secondary" 
+                  className="text-xs bg-white/10 text-white/70 border-white/20"
+                >
+                  {tag}
+                </Badge>
+              ))}
+              {agent.tags.length > 3 && (
+                <Badge 
+                  variant="secondary" 
+                  className="text-xs bg-white/10 text-white/70 border-white/20"
+                >
+                  +{agent.tags.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          {mode === 'marketplace' ? (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToLibrary?.(agent.agent_id);
+              }}
+              disabled={isLoading}
+              size="sm"
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
+            >
+              {isLoading ? (
+                <>
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Add to Library
+                </>
+              )}
+            </Button>
+          ) : (
+            <>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChat?.(agent.agent_id);
+                }}
+                size="sm"
+                className="flex-1 bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
+              >
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Chat
+              </Button>
+              
+              {!agent.is_managed && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCustomize?.(agent.agent_id);
+                  }}
+                  size="sm"
+                  variant="outline"
+                  className="bg-white/5 hover:bg-white/10 text-white/80 border-white/20 backdrop-blur-sm"
+                >
+                  <Wrench className="h-4 w-4" />
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

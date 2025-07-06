@@ -7,18 +7,33 @@ interface LoadingStateProps {
 }
 
 export const LoadingState = ({ viewMode }: LoadingStateProps) => {
-  const skeletonCount = viewMode === 'grid' ? 4 : 8;
+  const skeletonCount = viewMode === 'grid' ? 8 : 8;
   
   return (
-    <div className={viewMode === 'grid' ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-4" : "space-y-4"}>
+    <div className={viewMode === 'grid' ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" : "space-y-4"}>
       {Array.from({ length: skeletonCount }, (_, i) => (
-        <div key={i} className="bg-neutral-100 dark:bg-sidebar border border-border rounded-2xl overflow-hidden">
-          <Skeleton className="h-50" />
-          <div className="p-4 space-y-3">
-            <Skeleton className="h-5 rounded" />
-            <div className="space-y-2">
+        <div key={i} className="h-[400px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden">
+          <div className="p-6 space-y-4 h-full flex flex-col">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-12 w-12 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-32 rounded" />
+                <Skeleton className="h-4 w-20 rounded" />
+              </div>
+            </div>
+            <div className="flex-1 space-y-3">
               <Skeleton className="h-4 rounded" />
               <Skeleton className="h-4 rounded w-3/4" />
+              <Skeleton className="h-4 rounded w-1/2" />
+            </div>
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-40 rounded" />
+              <Skeleton className="h-4 w-32 rounded" />
+              <Skeleton className="h-4 w-36 rounded" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-10 flex-1 rounded" />
+              <Skeleton className="h-10 w-12 rounded" />
             </div>
           </div>
         </div>

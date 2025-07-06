@@ -174,17 +174,23 @@ export default function MarketplacePage() {
         </div>
 
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-neutral-100 dark:bg-sidebar border border-border rounded-2xl overflow-hidden">
-                <Skeleton className="h-50" />
-                <div className="p-4 space-y-3">
-                  <Skeleton className="h-5 rounded" />
-                  <div className="space-y-2">
+              <div key={i} className="h-[400px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden">
+                <div className="p-6 space-y-4 h-full flex flex-col">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-12 w-12 rounded-xl" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-32 rounded" />
+                      <Skeleton className="h-4 w-20 rounded" />
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-3">
                     <Skeleton className="h-4 rounded" />
                     <Skeleton className="h-4 rounded w-3/4" />
+                    <Skeleton className="h-4 rounded w-1/2" />
                   </div>
-                  <Skeleton className="h-8" />
+                  <Skeleton className="h-10 rounded" />
                 </div>
               </div>
             ))}
@@ -198,10 +204,10 @@ export default function MarketplacePage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {agents.map((agent) => (
               <AgentProfileCard
-                key={agent.agent_id}
+                key={agent.agent_id} 
                 agent={agent}
                 mode="marketplace"
                 onAddToLibrary={(agentId) => handleAddToLibrary(agentId, agent.name)}
