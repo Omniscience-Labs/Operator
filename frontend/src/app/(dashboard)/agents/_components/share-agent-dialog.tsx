@@ -59,7 +59,7 @@ export function ShareAgentDialog({
   onClose,
   onSuccess 
 }: ShareAgentDialogProps) {
-  const [shareType, setShareType] = useState<'teams' | 'links'>('teams');
+  const [shareType, setShareType] = useState<'teams' | 'links'>('links');
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
   const [includeKnowledgeBases, setIncludeKnowledgeBases] = useState(true);
   const [includeCustomMcpTools, setIncludeCustomMcpTools] = useState(true);
@@ -332,6 +332,19 @@ export function ShareAgentDialog({
 
             <RadioGroup value={shareType} onValueChange={(value: any) => setShareType(value)}>
               <div className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                <RadioGroupItem value="links" id="links" className="mt-1" />
+                <Label htmlFor="links" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Link className="h-4 w-4" />
+                    <span className="font-medium">Share Links</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Create shareable links that can be sent to anyone.
+                  </p>
+                </Label>
+              </div>
+
+              <div className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
                 <RadioGroupItem value="teams" id="teams" className="mt-1" />
                 <Label htmlFor="teams" className="flex-1 cursor-pointer">
                   <div className="flex items-center gap-2 mb-1">
@@ -345,19 +358,6 @@ export function ShareAgentDialog({
                         <Badge variant="secondary" className="text-xs">No teams available</Badge>
                       </span>
                     )}
-                  </p>
-                </Label>
-              </div>
-
-              <div className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
-                <RadioGroupItem value="links" id="links" className="mt-1" />
-                <Label htmlFor="links" className="flex-1 cursor-pointer">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Link className="h-4 w-4" />
-                    <span className="font-medium">Share Links</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Create shareable links that can be sent to anyone.
                   </p>
                 </Label>
               </div>
