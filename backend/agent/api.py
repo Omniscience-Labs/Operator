@@ -458,8 +458,8 @@ async def start_agent(
             
             if agent_data:
                 agent_config = agent_data
-                source = "request" if body.agent_id else "thread"
-                logger.info(f"Using agent from {source}: {agent_config['name']} ({effective_agent_id})")
+            source = "request" if body.agent_id else "thread"
+            logger.info(f"Using agent from {source}: {agent_config['name']} ({effective_agent_id})")
     
     # If no agent found yet, try to get default agent for the account
     if not agent_config:
@@ -1881,7 +1881,7 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
                 library_entry = library_check.data[0]
                 is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
             else:
-                raise HTTPException(status_code=403, detail="Access denied")
+            raise HTTPException(status_code=403, detail="Access denied")
         
         # Apply sharing preferences filtering for managed agents
         if is_managed_by_user:

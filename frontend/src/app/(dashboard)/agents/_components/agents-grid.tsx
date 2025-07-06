@@ -301,11 +301,11 @@ export const AgentsGrid = ({
                                 </>
                               ) : (
                                 <>
-                                  Are you sure you want to delete &quot;{agent.name}&quot;? This action cannot be undone.
-                                  {agent.is_public && (
-                                    <span className="block mt-2 text-amber-600 dark:text-amber-400">
-                                      Note: This agent is currently published to the marketplace and will be removed from there as well.
-                                    </span>
+                              Are you sure you want to delete &quot;{agent.name}&quot;? This action cannot be undone.
+                              {agent.is_public && (
+                                <span className="block mt-2 text-amber-600 dark:text-amber-400">
+                                  Note: This agent is currently published to the marketplace and will be removed from there as well.
+                                </span>
                                   )}
                                 </>
                               )}
@@ -321,7 +321,7 @@ export const AgentsGrid = ({
                                 if (agent.is_managed) {
                                   onRemoveFromLibrary(agent.agent_id);
                                 } else {
-                                  onDeleteAgent(agent.agent_id);
+                                onDeleteAgent(agent.agent_id);
                                 }
                               }}
                               disabled={agent.is_managed ? removeFromLibraryMutation.isPending : deleteAgentMutation.isPending}

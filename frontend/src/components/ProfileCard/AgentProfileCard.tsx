@@ -3,6 +3,7 @@ import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, Us
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import './AgentProfileCard.css';
 
 // Simple Agent interface matching existing codebase
@@ -38,6 +39,7 @@ interface AgentProfileCardProps {
   onChat?: (agentId: string) => void;
   onCustomize?: (agentId: string) => void;
   onDelete?: (agentId: string) => void;
+  onRemoveFromLibrary?: (agentId: string) => void;
   onAddToLibrary?: (agentId: string) => void;
   onPublish?: (agentId: string) => void;
   onMakePrivate?: (agentId: string) => void;
@@ -94,6 +96,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
   onChat,
   onCustomize,
   onDelete,
+  onRemoveFromLibrary,
   onAddToLibrary,
   onPublish,
   onMakePrivate,
@@ -277,13 +280,79 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
             </div>
           </div>
           
-          {/* Download count for marketplace */}
-          {mode === 'marketplace' && (
-            <div className="flex items-center gap-1 text-white/60 text-sm transition-colors duration-300 group-hover:text-white/80">
-              <Download className="h-4 w-4" />
-              <span>{agent.download_count || 0}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Download count for marketplace */}
+            {mode === 'marketplace' && (
+              <div className="flex items-center gap-1 text-white/60 text-sm transition-colors duration-300 group-hover:text-white/80">
+                <Download className="h-4 w-4" />
+                <span>{agent.download_count || 0}</span>
+              </div>
+            )}
+            
+            {/* Delete/Remove from Library button for library mode */}
+            {mode === 'library' && !agent.is_default && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500/20 hover:text-red-300 text-white/60"
+                    disabled={isLoading}
+                    title={agent.is_managed ? "Remove from library" : "Delete agent"}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="max-w-md">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-xl">
+                      {agent.is_managed ? 'Remove from Library' : 'Delete Agent'}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {agent.is_managed ? (
+                        <>
+                          Are you sure you want to remove &quot;{agent.name}&quot; from your library? 
+                          This will not delete the original agent, just remove your access to it.
+                        </>
+                      ) : (
+                        <>
+                          Are you sure you want to delete &quot;{agent.name}&quot;? This action cannot be undone.
+                          {agent.is_public && (
+                            <span className="block mt-2 text-amber-600 dark:text-amber-400">
+                              Note: This agent is currently published to the marketplace and will be removed from there as well.
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (agent.is_managed) {
+                          onRemoveFromLibrary?.(agent.agent_id);
+                        } else {
+                          onDelete?.(agent.agent_id);
+                        }
+                      }}
+                      disabled={isLoading}
+                      className="bg-destructive hover:bg-destructive/90 text-white"
+                    >
+                      {isLoading ? 
+                        (agent.is_managed ? 'Removing...' : 'Deleting...') : 
+                        (agent.is_managed ? 'Remove' : 'Delete')
+                      }
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </div>
 
         {/* Description */}

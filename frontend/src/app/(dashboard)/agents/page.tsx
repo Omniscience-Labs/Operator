@@ -304,9 +304,10 @@ export default function AgentsPage() {
                 onChat={(agentId) => router.push(`/dashboard?agent_id=${agentId}`)}
                 onCustomize={handleEditAgent}
                 onDelete={handleDeleteAgent}
+                onRemoveFromLibrary={handleRemoveFromLibrary}
                 onPublish={handlePublish}
                 onMakePrivate={handleMakePrivate}
-                isLoading={deleteAgentMutation.isPending && deleteAgentMutation.variables === agent.agent_id}
+                isLoading={(deleteAgentMutation.isPending && deleteAgentMutation.variables === agent.agent_id) || (removeFromLibraryMutation.isPending && removeFromLibraryMutation.variables === agent.agent_id)}
                 enableTilt={true}
               />
             ))}
