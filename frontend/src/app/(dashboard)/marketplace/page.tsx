@@ -23,6 +23,7 @@ export default function MarketplacePage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [addingAgentId, setAddingAgentId] = useState<string | null>(null);
+  const [highlightedAgentId, setHighlightedAgentId] = useState<string | null>(null);
   const currentAccount = useCurrentAccount();
   
   const queryParams = useMemo(() => ({
@@ -66,6 +67,10 @@ export default function MarketplacePage() {
         ? prev.filter(t => t !== tag)
         : [...prev, tag]
     );
+  };
+
+  const handleHighlightChange = (agentId: string | null) => {
+    setHighlightedAgentId(agentId);
   };
 
 
@@ -213,6 +218,8 @@ export default function MarketplacePage() {
                 onAddToLibrary={(agentId) => handleAddToLibrary(agentId, agent.name)}
                 isLoading={addingAgentId === agent.agent_id}
                 enableTilt={true}
+                isHighlighted={highlightedAgentId === agent.agent_id}
+                onHighlightChange={handleHighlightChange}
               />
             ))}
           </div>

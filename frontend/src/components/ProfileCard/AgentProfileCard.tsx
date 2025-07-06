@@ -48,6 +48,8 @@ interface AgentProfileCardProps {
   onMakePrivate?: (agentId: string) => void;
   isLoading?: boolean;
   enableTilt?: boolean;
+  isHighlighted?: boolean;
+  onHighlightChange?: (agentId: string | null) => void;
 }
 
 const getAgentAvatar = (agentId: string) => {
@@ -105,10 +107,12 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
   onMakePrivate,
   isLoading = false,
   enableTilt = true,
+  isHighlighted = false,
+  onHighlightChange,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
-  const [isTapped, setIsTapped] = useState(false);
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   // Get agent styling
   const agentStyling = useMemo(() => {
@@ -118,20 +122,47 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
     return getAgentAvatar(agent.agent_id);
   }, [agent.agent_id, agent.avatar, agent.avatar_color]);
 
-  // Mobile tap handlers - toggle behavior
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (isMobile) {
-      // Prevent triggering click events
-      e.preventDefault();
-      // Toggle the tapped state
-      setIsTapped(prev => !prev);
+  // Mobile tap handlers with scroll detection
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (isMobile && e.touches.length === 1) {
+      const touch = e.touches[0];
+      touchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now()
+      };
     }
   }, [isMobile]);
 
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (isMobile && touchStartRef.current && onHighlightChange) {
+      const touch = e.changedTouches[0];
+      const touchStart = touchStartRef.current;
+      
+      // Calculate movement and time
+      const deltaX = Math.abs(touch.clientX - touchStart.x);
+      const deltaY = Math.abs(touch.clientY - touchStart.y);
+      const deltaTime = Date.now() - touchStart.time;
+      
+      // Only highlight if:
+      // 1. Movement is small (< 10px in any direction) - not scrolling
+      // 2. Touch duration is reasonable (< 500ms) - not a long press
+      const isValidTap = deltaX < 10 && deltaY < 10 && deltaTime < 500;
+      
+      if (isValidTap) {
+        // Prevent triggering click events
+        e.preventDefault();
+        // Toggle highlight state
+        onHighlightChange(isHighlighted ? null : agent.agent_id);
+      }
+      
+      touchStartRef.current = null;
+    }
+  }, [isMobile, onHighlightChange, isHighlighted, agent.agent_id]);
+
   const handleTouchCancel = useCallback(() => {
     if (isMobile) {
-      // Only clear on cancel, not on normal touch end
-      setIsTapped(false);
+      touchStartRef.current = null;
     }
   }, [isMobile]);
 
@@ -176,7 +207,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         'before:absolute before:inset-0 before:rounded-2xl before:p-[1px] before:bg-gradient-to-br before:opacity-0',
         'hover:before:opacity-100 before:transition-opacity before:duration-500',
         // Mobile tap effects (same as hover)
-        isTapped && [
+        isHighlighted && [
           'shadow-2xl shadow-black/30 -translate-y-2',
           'before:opacity-100'
         ],
@@ -184,6 +215,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
       )}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}
       style={{
@@ -209,7 +241,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
       <div 
         className={cn(
           "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 card-border-glow",
-          isTapped && "opacity-100"
+          isHighlighted && "opacity-100"
         )}
         style={{
           background: `
@@ -228,7 +260,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
       <div 
         className={cn(
           "absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-300 pointer-events-none",
-          isTapped && "opacity-30"
+          isHighlighted && "opacity-30"
         )}
         style={{
           background: `
@@ -245,7 +277,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
       <div 
         className={cn(
           "absolute inset-0 opacity-0 group-hover:opacity-70 transition-opacity duration-500 pointer-events-none overflow-hidden glare-sweep-colored-animation",
-          isTapped && "opacity-70"
+          isHighlighted && "opacity-70"
         )}
         style={{
           background: `
@@ -266,7 +298,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
       <div 
         className={cn(
           "absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500",
-          isTapped && "opacity-100"
+          isHighlighted && "opacity-100"
         )}
         style={{
           background: `
@@ -286,7 +318,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
             <div 
               className={cn(
                 "w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:scale-105 agent-avatar",
-                isTapped && "shadow-xl scale-105"
+                isHighlighted && "shadow-xl scale-105"
               )}
               style={{
                 background: `linear-gradient(135deg, ${agentStyling.color}25 0%, ${agentStyling.color}45 100%)`,
@@ -300,7 +332,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
             <div>
               <h3 className={cn(
                 "text-xl font-semibold text-foreground/90 truncate max-w-[200px] transition-colors duration-300 group-hover:text-foreground",
-                isTapped && "text-foreground"
+                isHighlighted && "text-foreground"
               )}>
                 {agent.name}
               </h3>
@@ -345,7 +377,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                     size="sm"
                     className={cn(
                       "h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500/20 hover:text-red-400 dark:hover:text-red-300 text-muted-foreground",
-                      isTapped && "opacity-100"
+                      isHighlighted && "opacity-100"
                     )}
                     disabled={isLoading}
                     title={agent.is_managed ? "Remove from library" : "Delete agent"}
@@ -409,7 +441,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         <div className="flex-1 mb-4">
           <p className={cn(
             "text-muted-foreground text-sm leading-relaxed transition-colors duration-300 group-hover:text-foreground/85",
-            isTapped && "text-foreground/85"
+            isHighlighted && "text-foreground/85"
           )}>
             {truncateDescription(agent.description)}
           </p>

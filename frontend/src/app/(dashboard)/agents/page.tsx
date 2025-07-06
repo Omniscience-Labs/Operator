@@ -43,6 +43,7 @@ export default function AgentsPage() {
   const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
   const [publishDialogAgent, setPublishDialogAgent] = useState<any>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [highlightedAgentId, setHighlightedAgentId] = useState<string | null>(null);
   
   
   // Server-side parameters
@@ -218,6 +219,10 @@ export default function AgentsPage() {
     }
   };
 
+  const handleHighlightChange = (agentId: string | null) => {
+    setHighlightedAgentId(agentId);
+  };
+
   if (error) {
     return (
       <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full">
@@ -332,6 +337,8 @@ export default function AgentsPage() {
                 onMakePrivate={handleMakePrivate}
                 isLoading={(deleteAgentMutation.isPending && deleteAgentMutation.variables === agent.agent_id) || (removeFromLibraryMutation.isPending && removeFromLibraryMutation.variables === agent.agent_id)}
                 enableTilt={true}
+                isHighlighted={highlightedAgentId === agent.agent_id}
+                onHighlightChange={handleHighlightChange}
               />
             ))}
           </div>
