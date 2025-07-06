@@ -37,7 +37,6 @@ import { TypingText } from '@/components/animate-ui/text/typing';
 import { GradientText } from '@/components/animate-ui/text/gradient';
 import BlurText from '@/TextAnimations/BlurText/BlurText';
 import { useAgents } from '@/hooks/react-query/agents/use-agents';
-import { isFlagEnabled } from '@/lib/feature-flags';
 import Waves from '@/Backgrounds/Waves/Waves';
 import { HexagonBackground } from '@/components/animate-ui/backgrounds/hexagon';
 import { VantaWaves } from '@/components/animate-ui/backgrounds/vanta-waves';
@@ -66,7 +65,7 @@ export function DashboardContent() {
   const [initiatedThreadId, setInitiatedThreadId] = useState<string | null>(
     null,
   );
-  const [customAgentEnabled, setCustomAgentEnabled] = useState(false);
+
   
   // Animation state
   const [showChatInput, setShowChatInput] = useState(false);
@@ -138,14 +137,7 @@ export function DashboardContent() {
     }
   }, [isLoadingUserName, userName]);
 
-  // Check custom agent flag
-  useEffect(() => {
-    const checkFlag = async () => {
-      const enabled = await isFlagEnabled('custom_agents');
-      setCustomAgentEnabled(enabled);
-    };
-    checkFlag();
-  }, []);
+
 
   // Random background selection on mount
   useEffect(() => {
@@ -578,17 +570,11 @@ ${meeting.transcript || '(No transcript available)'}`;
                         animateBy="words"
                         direction="bottom"
                       />
-                      {customAgentEnabled ? (
-                        <AgentSelector
-                          selectedAgentId={selectedAgentId}
-                          onAgentSelect={setSelectedAgentId}
-                          variant="heading"
-                        />
-                      ) : (
-                        <span className="tracking-tight text-4xl text-foreground leading-tight font-medium">
-                          {selectedAgent?.name || defaultAgent?.name || 'Operator'}
-                        </span>
-                      )}
+                      <AgentSelector
+                        selectedAgentId={selectedAgentId}
+                        onAgentSelect={setSelectedAgentId}
+                        variant="heading"
+                      />
                     </div>
                     
                     <TypingText
