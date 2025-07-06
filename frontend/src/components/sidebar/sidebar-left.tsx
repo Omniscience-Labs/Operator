@@ -180,7 +180,7 @@ export function SidebarLeft({
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: 0.3 }}
             >
-              {/* <span className="font-semibold"> OPERATOR</span> */}
+              <span className="font-semibold text-foreground">Omni</span>
             </motion.div>
           )}
           <div className="ml-auto flex items-center gap-2">
