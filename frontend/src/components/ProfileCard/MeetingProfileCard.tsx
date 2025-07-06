@@ -81,33 +81,33 @@ const getStatusColor = (status: string) => {
       return {
         background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
         color: '#10B981',
-        textColor: 'text-emerald-200',
-        bgColor: 'bg-emerald-500/20',
-        borderColor: 'border-emerald-500/30'
+        textColor: 'text-white',
+        bgColor: 'bg-emerald-600',
+        borderColor: 'border-emerald-600/50'
       };
     case 'completed':
       return {
         background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
         color: '#6366F1',
-        textColor: 'text-indigo-200',
-        bgColor: 'bg-indigo-500/20',
-        borderColor: 'border-indigo-500/30'
+        textColor: 'text-white',
+        bgColor: 'bg-indigo-600',
+        borderColor: 'border-indigo-600/50'
       };
     case 'failed':
       return {
         background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
         color: '#EF4444',
-        textColor: 'text-red-200',
-        bgColor: 'bg-red-500/20',
-        borderColor: 'border-red-500/30'
+        textColor: 'text-white',
+        bgColor: 'bg-red-600',
+        borderColor: 'border-red-600/50'
       };
     default:
       return {
         background: 'linear-gradient(135deg, #64748B 0%, #475569 100%)',
         color: '#64748B',
-        textColor: 'text-slate-200',
-        bgColor: 'bg-slate-500/20',
-        borderColor: 'border-slate-500/30'
+        textColor: 'text-white',
+        bgColor: 'bg-slate-600',
+        borderColor: 'border-slate-600/50'
       };
   }
 };
@@ -116,9 +116,9 @@ const getFolderColor = () => {
   return {
     background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
     color: '#F59E0B',
-    textColor: 'text-amber-200',
-    bgColor: 'bg-amber-500/20',
-    borderColor: 'border-amber-500/30'
+    textColor: 'text-white',
+    bgColor: 'bg-amber-600',
+    borderColor: 'border-amber-600/50'
   };
 };
 
@@ -396,11 +396,11 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
                 <Badge 
                   variant="secondary" 
                   className={cn(
-                    "text-xs transition-all duration-300",
+                    "text-xs font-medium transition-all duration-300 shadow-md",
                     statusColors.bgColor,
                     statusColors.textColor,
                     statusColors.borderColor,
-                    "group-hover:bg-opacity-40"
+                    "group-hover:shadow-lg"
                   )}
                 >
                   {meeting.status}
@@ -820,11 +820,11 @@ const FolderCard: React.FC<FolderProfileCardProps> = ({
                 <Badge 
                   variant="secondary" 
                   className={cn(
-                    "text-xs transition-all duration-300",
+                    "text-xs font-medium transition-all duration-300 shadow-md",
                     folderColors.bgColor,
                     folderColors.textColor,
                     folderColors.borderColor,
-                    "group-hover:bg-opacity-40"
+                    "group-hover:shadow-lg"
                   )}
                 >
                   Folder
