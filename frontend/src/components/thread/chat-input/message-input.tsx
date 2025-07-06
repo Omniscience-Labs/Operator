@@ -210,34 +210,43 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
               modelName={selectedModel}
               subscriptionStatus={subscriptionStatus}
             />
-            <LiquidButton
-              type="submit"
-              onClick={isAgentRunning && onStopAgent ? onStopAgent : onSubmit}
-              size="icon"
-              variant={isAgentRunning ? "secondary" : "default"}
-              className={cn(
-                'w-8 h-8 flex-shrink-0 rounded-lg p-0',
-                isAgentRunning && '[--liquid-button-color:rgb(239_68_68)]',
-                (!value.trim() && uploadedFiles.length === 0 && !isAgentRunning) ||
-                  loading ||
-                  (disabled && !isAgentRunning)
-                  ? 'opacity-50'
-                  : '',
-              )}
-              disabled={
-                (!value.trim() && uploadedFiles.length === 0 && !isAgentRunning) ||
-                loading ||
-                (disabled && !isAgentRunning)
-              }
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : isAgentRunning ? (
+            {isAgentRunning ? (
+              <Button
+                type="button"
+                onClick={onStopAgent}
+                size="icon"
+                variant="destructive"
+                className="w-8 h-8 flex-shrink-0 rounded-lg p-0"
+              >
                 <Square className="h-4 w-4" />
-              ) : (
-                <ArrowUp className="h-4 w-4" />
-              )}
-            </LiquidButton>
+              </Button>
+            ) : (
+              <LiquidButton
+                type="submit"
+                onClick={onSubmit}
+                size="icon"
+                variant="default"
+                className={cn(
+                  'w-8 h-8 flex-shrink-0 rounded-lg p-0',
+                  (!value.trim() && uploadedFiles.length === 0) ||
+                    loading ||
+                    disabled
+                    ? 'opacity-50'
+                    : '',
+                )}
+                disabled={
+                  (!value.trim() && uploadedFiles.length === 0) ||
+                  loading ||
+                  disabled
+                }
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowUp className="h-4 w-4" />
+                )}
+              </LiquidButton>
+            )}
           </div>
         </div>
       </div>
