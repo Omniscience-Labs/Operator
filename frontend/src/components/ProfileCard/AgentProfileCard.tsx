@@ -272,7 +272,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                     Public
                   </Badge>
                 )}
-                {agent.is_managed && (
+                {(agent.is_managed || (mode === 'marketplace' && agent.sharing_preferences?.managed_agent)) && (
                   <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-200 border-blue-500/30 transition-all duration-300 group-hover:bg-blue-500/30 group-hover:text-blue-100">
                     <Sparkles className="h-3 w-3 mr-1" />
                     Managed
