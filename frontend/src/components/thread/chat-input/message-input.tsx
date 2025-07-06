@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useRef, useState, useCallback } from 'react';
+import React, { forwardRef, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Square, Loader2, ArrowUp } from 'lucide-react';
@@ -90,88 +90,6 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
     ref,
   ) => {
     const isMobile = useIsMobile();
-    const upgradeElementRef = useRef<HTMLDivElement>(null);
-    const [showCrownIcon, setShowCrownIcon] = useState(false);
-    
-    // Function to check if the upgrade element overlaps with other elements
-    const checkOverlap = useCallback(() => {
-      if (!upgradeElementRef.current) return;
-      
-      const upgradeRect = upgradeElementRef.current.getBoundingClientRect();
-      const container = upgradeElementRef.current.closest('.flex');
-      
-      if (!container) return;
-      
-      let hasOverlap = false;
-      
-      // Check all elements in the container hierarchy
-      const allElements = container.querySelectorAll('*');
-      
-      allElements.forEach(element => {
-        // Skip the upgrade element itself and its children
-        if (element === upgradeElementRef.current || 
-            upgradeElementRef.current?.contains(element) ||
-            element.contains(upgradeElementRef.current)) {
-          return;
-        }
-        
-        const elementRect = element.getBoundingClientRect();
-        
-        // Add some padding to make overlap detection more sensitive
-        const padding = 8;
-        const expandedUpgradeRect = {
-          left: upgradeRect.left - padding,
-          right: upgradeRect.right + padding,
-          top: upgradeRect.top - padding,
-          bottom: upgradeRect.bottom + padding
-        };
-        
-        // Check if rectangles overlap (with padding)
-        const overlap = !(
-          expandedUpgradeRect.right <= elementRect.left ||
-          expandedUpgradeRect.left >= elementRect.right ||
-          expandedUpgradeRect.bottom <= elementRect.top ||
-          expandedUpgradeRect.top >= elementRect.bottom
-        );
-        
-        if (overlap) {
-          hasOverlap = true;
-        }
-      });
-      
-      setShowCrownIcon(hasOverlap);
-    }, []);
-    
-    // Set up ResizeObserver to detect layout changes
-    useEffect(() => {
-      if (!upgradeElementRef.current) return;
-      
-      const resizeObserver = new ResizeObserver(() => {
-        // Add a small delay to ensure DOM has settled
-        setTimeout(checkOverlap, 10);
-      });
-      
-      const container = upgradeElementRef.current.closest('.flex');
-      
-      if (container) {
-        resizeObserver.observe(container);
-        
-        // Also observe the upgrade element itself
-        resizeObserver.observe(upgradeElementRef.current);
-      }
-      
-      // Initial check with delay
-      setTimeout(checkOverlap, 100);
-      
-      // Also check on window resize
-      const handleResize = () => setTimeout(checkOverlap, 10);
-      window.addEventListener('resize', handleResize);
-      
-      return () => {
-        resizeObserver.disconnect();
-        window.removeEventListener('resize', handleResize);
-      };
-    }, [checkOverlap]);
     
     useEffect(() => {
       const textarea = ref as React.RefObject<HTMLTextAreaElement>;
@@ -261,22 +179,16 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
             )}
           </div>
           {subscriptionStatus === 'no_subscription' && !isLocalMode() &&
-            <div ref={upgradeElementRef}>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    {isMobile || showCrownIcon ? (
-                      <Crown className='h-4 w-4 text-amber-500' />
-                    ) : (
-                      <p className='text-sm text-amber-500'>Upgrade for full performance</p>
-                    )}
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>The free tier is severely limited by inferior models; upgrade to experience the true full Operator experience.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Crown className='h-4 w-4 text-amber-500' />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>The free tier is severely limited by inferior models; upgrade to experience the true full Operator experience.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           }
           <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
             <ModelSelector
