@@ -462,15 +462,15 @@ ${meeting.transcript}`;
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {/* Show "Go to Root" button when in empty folders */}
-            {currentFolderId && meetings.length === 0 && folders.length === 0 && (
+            {/* Show back button when in any folder */}
+            {currentFolderId && (
               <Button 
-                onClick={() => navigateToBreadcrumb(0)} 
+                onClick={() => navigateToBreadcrumb(Math.max(0, breadcrumbs.length - 2))} 
                 variant="outline"
                 className="shadow-sm hover:shadow-md transition-all duration-200 hover:bg-accent/80 w-full sm:w-auto"
               >
                 <FolderOpen className="h-4 w-4 mr-2" />
-                Go to Root
+                Back
               </Button>
             )}
             <div className="flex items-center gap-3">

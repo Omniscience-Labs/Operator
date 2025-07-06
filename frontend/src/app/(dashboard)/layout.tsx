@@ -83,10 +83,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <DeleteOperationProvider>
       <SidebarProvider>
-        <SidebarLeft />
-        <SidebarInset>
-          <div className="bg-background min-h-screen overflow-y-auto">{children}</div>
-        </SidebarInset>
+        <div className="flex h-screen w-full">
+          <SidebarLeft />
+          <SidebarInset className="flex-1 overflow-hidden">
+            <div className="bg-background h-full overflow-y-auto">{children}</div>
+          </SidebarInset>
+        </div>
 
         {/* <PricingAlert 
           open={showPricingAlert} 
