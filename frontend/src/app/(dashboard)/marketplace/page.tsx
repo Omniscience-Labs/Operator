@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useMarketplaceAgents, useAddAgentToLibrary } from '@/hooks/react-query/marketplace/use-marketplace';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { getAgentAvatar } from '../agents/_utils/get-agent-style';
+
+import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Pagination } from '../agents/_components/pagination';
 import { useCurrentAccount } from '@/hooks/use-current-account';
@@ -67,15 +68,7 @@ export default function MarketplacePage() {
     );
   };
 
-  const getAgentStyling = (agent: any) => {
-    if (agent.avatar && agent.avatar_color) {
-      return {
-        avatar: agent.avatar,
-        color: agent.avatar_color,
-      };
-    }
-    return getAgentAvatar(agent.agent_id);
-  };
+
 
   const allTags = React.useMemo(() => {
     const tags = new Set<string>();
@@ -205,97 +198,17 @@ export default function MarketplacePage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {agents.map((agent) => {
-              const { avatar, color } = getAgentStyling(agent);
-              
-              return (
-                <div 
-                  key={agent.agent_id} 
-                  className="bg-neutral-100 dark:bg-sidebar border border-border rounded-2xl overflow-hidden hover:bg-muted/50 transition-all duration-200 cursor-pointer group flex flex-col h-full"
-                >
-                  <div className={`h-50 flex items-center justify-center relative`} style={{ backgroundColor: color }}>
-                    <div className="text-4xl">
-                      {avatar}
-                    </div>
-                    <div className="absolute top-3 right-3 flex gap-2">
-                      <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">
-                        <Download className="h-3 w-3 text-white" />
-                        <span className="text-white text-xs font-medium">{agent.download_count || 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 flex flex-col flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-foreground font-medium text-lg line-clamp-1 flex-1">
-                        {agent.name}
-                      </h3>
-                    </div>
-                    <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
-                      {agent.description || 'No description available'}
-                    </p>
-                    
-                    {agent.tags && agent.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {agent.tags.slice(0, 2).map(tag => (
-                          <Badge key={tag} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {agent.tags.length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{agent.tags.length - 2}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="space-y-1 mb-4">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <User className="h-3 w-3" />
-                        <span>By {agent.creator_name}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        <span>{new Date(agent.marketplace_published_at).toLocaleDateString()}</span>
-                      </div>
-                      {agent.sharing_preferences && (agent.sharing_preferences as any).managed_agent && (
-                        <div className="flex items-center gap-1 text-xs">
-                          <Badge variant="secondary" className="text-xs">
-                            Managed Agent
-                          </Badge>
-                          <span className="text-muted-foreground">Live updates from creator</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <Button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToLibrary(agent.agent_id, agent.name);
-                      }}
-                      disabled={addingAgentId === agent.agent_id}
-                      className="w-full transition-opacity mt-auto"
-                      size="sm"
-                      key={agent.agent_id} 
-                    >
-                      {addingAgentId === agent.agent_id ? (
-                        <>
-                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-background border-t-transparent mr-2" />
-                          Adding...
-                        </>
-                      ) : (
-                        <>
-                          <Download className="h-3 w-3" />
-                          Add to Library
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {agents.map((agent) => (
+              <AgentProfileCard
+                key={agent.agent_id}
+                agent={agent}
+                mode="marketplace"
+                onAddToLibrary={(agentId) => handleAddToLibrary(agentId, agent.name)}
+                isLoading={addingAgentId === agent.agent_id}
+                enableTilt={true}
+              />
+            ))}
           </div>
         )}
 

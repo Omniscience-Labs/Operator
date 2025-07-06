@@ -9,8 +9,9 @@ import { useAgents, useUpdateAgent, useDeleteAgent, useRemoveAgentFromLibrary, u
 import { SearchAndFilters } from './_components/search-and-filters';
 import { ResultsInfo } from './_components/results-info';
 import { EmptyState } from './_components/empty-state';
-import { AgentsGrid } from './_components/agents-grid';
+
 import { AgentsList } from './_components/agents-list';
+import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
 import { LoadingState } from './_components/loading-state';
 import { Pagination } from './_components/pagination';
 import { useRouter } from 'next/navigation';
@@ -273,15 +274,20 @@ export default function AgentsPage() {
             onClearFilters={clearFilters}
           />
         ) : (
-          <AgentsGrid
-            agents={agents}
-            onEditAgent={handleEditAgent}
-            onDeleteAgent={handleDeleteAgent}
-            onRemoveFromLibrary={handleRemoveFromLibrary}
-            onToggleDefault={handleToggleDefault}
-            deleteAgentMutation={deleteAgentMutation}
-            removeFromLibraryMutation={removeFromLibraryMutation}
-          />
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {agents.map((agent) => (
+              <AgentProfileCard
+                key={agent.agent_id}
+                agent={agent}
+                mode="library"
+                onChat={(agentId) => router.push(`/dashboard?agent_id=${agentId}`)}
+                onCustomize={handleEditAgent}
+                onDelete={handleDeleteAgent}
+                isLoading={deleteAgentMutation.isPending && deleteAgentMutation.variables === agent.agent_id}
+                enableTilt={true}
+              />
+            ))}
+          </div>
         )}
 
         {pagination && pagination.pages > 1 && (
