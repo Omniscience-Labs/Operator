@@ -386,19 +386,14 @@ export function NavAgents() {
                 </Button>
               </>
             ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <LiquidButton
-                    size="sm"
-                    className="h-8 px-3 bg-gray-100 dark:bg-gray-800 text-black dark:text-white hover:text-white dark:hover:text-black border-none shadow-sm hover:shadow-md transition-shadow [--liquid-button-color:black] dark:[--liquid-button-color:white] mb-2"
-                    onClick={() => window.location.href = '/dashboard'}
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span className="ml-1 text-sm font-medium">New Task</span>
-                  </LiquidButton>
-                </TooltipTrigger>
-                <TooltipContent>New Task</TooltipContent>
-              </Tooltip>
+              <LiquidButton
+                size="sm"
+                className="h-8 px-3 bg-gray-100 dark:bg-gray-800 text-black dark:text-white hover:text-white dark:hover:text-black border-none shadow-sm hover:shadow-md transition-shadow [--liquid-button-color:black] dark:[--liquid-button-color:white] mb-2"
+                onClick={() => window.location.href = '/dashboard'}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="ml-1 text-sm font-medium">New Task</span>
+              </LiquidButton>
             )}
           </div>
         ) : null}
