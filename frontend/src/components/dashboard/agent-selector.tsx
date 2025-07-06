@@ -122,7 +122,7 @@ export function AgentSelector({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="flex items-center gap-1 px-2 py-1 h-auto hover:bg-transparent hover:text-primary transition-colors group"
+                className="flex items-center gap-0 px-0 py-0 h-auto hover:bg-transparent hover:text-primary transition-colors group"
               >
                 <span className="underline decoration-dashed underline-offset-6 decoration-muted-foreground/50 tracking-tight text-4xl font-semibold leading-tight text-primary">
                   {displayName}
@@ -130,7 +130,7 @@ export function AgentSelector({
                     {agentAvatar && agentAvatar}
                   </span>
                 </span>
-                <div className="flex items-center opacity-60 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center opacity-60 group-hover:opacity-100 transition-opacity ml-1">
                   <ChevronDown className="h-5 w-5 text-muted-foreground" />
                   <Edit className="h-4 w-4 text-muted-foreground ml-1" />
                 </div>
