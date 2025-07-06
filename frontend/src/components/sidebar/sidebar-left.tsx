@@ -176,7 +176,7 @@ export function SidebarLeft({
           {state !== 'collapsed' && (
             <Link href="/dashboard">
               <motion.div 
-                className="ml-3 mt-1 whitespace-nowrap cursor-pointer"
+                className="ml-2 mt-1.5 whitespace-nowrap cursor-pointer"
                 initial={{ opacity: 0, x: -20, scale: 0.8 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: -20, scale: 0.8 }}
