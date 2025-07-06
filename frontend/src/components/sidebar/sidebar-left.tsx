@@ -166,34 +166,31 @@ export function SidebarLeft({
         >
           <Link href="/dashboard">
             <motion.div
+              className="flex items-center"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               transition={{ duration: 0.2 }}
             >
               <OmniLogo />
+              {state !== 'collapsed' && (
+                <motion.div 
+                  className="ml-2 mt-1.5 whitespace-nowrap"
+                  initial={{ opacity: 0, x: -20, scale: 0.8 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -20, scale: 0.8 }}
+                  transition={{ 
+                    duration: 0.3, 
+                    delay: 0.1,
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 25
+                  }}
+                >
+                  <span className="font-semibold text-foreground">Omni</span>
+                </motion.div>
+              )}
             </motion.div>
           </Link>
-          {state !== 'collapsed' && (
-            <Link href="/dashboard">
-              <motion.div 
-                className="ml-2 mt-1.5 whitespace-nowrap cursor-pointer"
-                initial={{ opacity: 0, x: -20, scale: 0.8 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: -20, scale: 0.8 }}
-                transition={{ 
-                  duration: 0.3, 
-                  delay: 0.1,
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 25
-                }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <span className="font-semibold text-foreground">Omni</span>
-              </motion.div>
-            </Link>
-          )}
           <div className="ml-auto flex items-center gap-2">
             {state !== 'collapsed' && (
               <Tooltip>
