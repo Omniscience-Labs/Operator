@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedShinyText } from '@/components/ui/animated-shiny-text';
 import { ThreeSpinner } from '@/components/ui/three-spinner';
+import StarBorder from '@/Animations/StarBorder/StarBorder';
 
 const items = [
     { id: 1, content: "Teaching my pet quantum particles how to fetch..." },
@@ -79,7 +80,9 @@ export const AgentLoader = () => {
             style={{ position: "absolute" }}
             className='w-full'
           >
-            <AnimatedShinyText>{items[index].content}</AnimatedShinyText>
+            <StarBorder as="div" className="w-full inline-block" color="rgb(59, 130, 246)" speed="4s" thickness={1}>
+              <AnimatedShinyText>{items[index].content}</AnimatedShinyText>
+            </StarBorder>
           </motion.div>
         </AnimatePresence>
       </div>

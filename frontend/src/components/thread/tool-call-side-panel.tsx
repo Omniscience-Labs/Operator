@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { ToolView } from './tool-views/wrapper';
+import StarBorder from '@/Animations/StarBorder/StarBorder';
 
 export interface ToolCallInput {
   assistantCall: {
@@ -432,9 +433,11 @@ export function ToolCallSidePanel({
               <div className="flex items-center justify-between">
                 <div className="ml-2 flex items-center gap-2">
                   <Computer className="h-4 w-4" />
-                  <h2 className="text-md font-medium text-zinc-900 dark:text-zinc-100">
-                    {agentName ? `${agentName}'s Computer` : "Operator's Computer"}
-                  </h2>
+                  <StarBorder as="span" className="inline-block" color="rgb(59, 130, 246)" speed="4s" thickness={1}>
+                    <h2 className="text-md font-medium text-zinc-900 dark:text-zinc-100">
+                      {agentName ? `${agentName}'s Computer` : "Operator's Computer"}
+                    </h2>
+                  </StarBorder>
                 </div>
                 <Button
                   variant="ghost"
@@ -468,9 +471,11 @@ export function ToolCallSidePanel({
             <div className="flex items-center justify-between">
               <div className="ml-2 flex items-center gap-2">
                 <Computer className="h-4 w-4" />
-                <h2 className="text-md font-medium text-zinc-900 dark:text-zinc-100">
-                  {agentName ? `${agentName}'s Computer` : "Operator's Computer"}
-                </h2>
+                <StarBorder as="span" className="inline-block" color="rgb(59, 130, 246)" speed="4s" thickness={1}>
+                  <h2 className="text-md font-medium text-zinc-900 dark:text-zinc-100">
+                    {agentName ? `${agentName}'s Computer` : "Operator's Computer"}
+                  </h2>
+                </StarBorder>
               </div>
               <Button
                 variant="ghost"
@@ -515,9 +520,11 @@ export function ToolCallSidePanel({
               <div className="flex items-center justify-between">
                 <div className="ml-2 flex items-center gap-2">
                   <Computer className="h-4 w-4" />
-                  <h2 className="text-md font-medium text-zinc-900 dark:text-zinc-100">
-                    {agentName ? `${agentName}'s Computer` : "Operator's Computer"}
-                  </h2>
+                  <StarBorder as="span" className="inline-block" color="rgb(59, 130, 246)" speed="4s" thickness={1}>
+                    <h2 className="text-md font-medium text-zinc-900 dark:text-zinc-100">
+                      {agentName ? `${agentName}'s Computer` : "Operator's Computer"}
+                    </h2>
+                  </StarBorder>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 flex items-center gap-1.5">
@@ -562,9 +569,11 @@ export function ToolCallSidePanel({
             <div className="flex items-center justify-between">
               <div className="ml-2 flex items-center gap-2">
                 <Computer className="h-4 w-4" />
-                <h2 className="text-md font-medium text-zinc-900 dark:text-zinc-100">
-                  {agentName ? `${agentName}'s Computer` : "Operator's Computer"}
-                </h2>
+                <StarBorder as="span" className="inline-block" color="rgb(59, 130, 246)" speed="4s" thickness={1}>
+                  <h2 className="text-md font-medium text-zinc-900 dark:text-zinc-100">
+                    {agentName ? `${agentName}'s Computer` : "Operator's Computer"}
+                  </h2>
+                </StarBorder>
               </div>
               <Button
                 variant="ghost"
@@ -610,9 +619,11 @@ export function ToolCallSidePanel({
           <div className="flex items-center justify-between">
             <div className="ml-2 flex items-center gap-2">
               <Computer className="h-4 w-4" />
-              <h2 className="text-md font-medium text-zinc-900 dark:text-zinc-100">
-                {agentName ? `${agentName}'s Computer` : "Operator's Computer"}
-              </h2>
+              <StarBorder as="span" className="inline-block" color="rgb(59, 130, 246)" speed="4s" thickness={1}>
+                <h2 className="text-md font-medium text-zinc-900 dark:text-zinc-100">
+                  {agentName ? `${agentName}'s Computer` : "Operator's Computer"}
+                </h2>
+              </StarBorder>
             </div>
 
             {displayToolCall.toolResult?.content && !isStreaming && (
