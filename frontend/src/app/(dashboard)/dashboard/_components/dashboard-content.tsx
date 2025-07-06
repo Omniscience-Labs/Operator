@@ -33,7 +33,8 @@ import { useThreadQuery } from '@/hooks/react-query/threads/use-threads';
 import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
-import { TypingText } from '@/components/animate-ui/text/typing';
+// import { TypingText } from '@/components/animate-ui/text/typing';
+import DecryptedText from '@/TextAnimations/DecryptedText/DecryptedText';
 import { GradientText } from '@/components/animate-ui/text/gradient';
 import { useAgents } from '@/hooks/react-query/agents/use-agents';
 import { isFlagEnabled } from '@/lib/feature-flags';
@@ -110,14 +111,15 @@ export function DashboardContent() {
   // Trigger cascade animation after greeting completes
   useEffect(() => {
     if (!isLoadingUserName) {
-      // Calculate total greeting animation time
+      // Calculate total greeting animation time for DecryptedText
       const firstTextLength = `Hey ${userName || 'there'}, I'm`.length;
       const secondTextLength = `What would you like to do this ${getTimeBasedGreeting()}?`.length;
       
-      const firstAnimationTime = 400 + (firstTextLength * 50); // delay + duration per char
-      const secondAnimationTime = 2000 + (secondTextLength * 80); // delay + duration per char
+      // DecryptedText timing: speed (80-90ms) * maxIterations (6-8) + buffer for sequential reveal
+      const firstAnimationTime = 80 * 6 + (firstTextLength * 40); // speed * iterations + sequential reveal time
+      const secondAnimationTime = 90 * 8 + (secondTextLength * 40); // speed * iterations + sequential reveal time
       
-      const totalGreetingTime = Math.max(firstAnimationTime, secondAnimationTime) + 500; // Add buffer
+      const totalGreetingTime = Math.max(firstAnimationTime, secondAnimationTime) + 800; // Add buffer
       
       const timer = setTimeout(() => {
         setGreetingComplete(true);
@@ -570,11 +572,20 @@ ${meeting.transcript || '(No transcript available)'}`;
                 ) : (
                   <div className="flex flex-col items-center gap-4 justify-center">
                     <div className="flex items-center gap-2 flex-wrap justify-center">
-                      <TypingText
+                      {/* <TypingText
                         text={`Hey ${userName || 'there'}, I'm`}
                         className="tracking-tight text-4xl text-muted-foreground leading-tight"
                         duration={60}
                         delay={400}
+                      /> */}
+                      <DecryptedText
+                        text={`Hey ${userName || 'there'}, I'm`}
+                        className="tracking-tight text-4xl text-muted-foreground leading-tight"
+                        animateOn="view"
+                        sequential={true}
+                        speed={80}
+                        maxIterations={6}
+                        revealDirection="start"
                       />
                       {customAgentEnabled ? (
                         <AgentSelector
@@ -589,11 +600,20 @@ ${meeting.transcript || '(No transcript available)'}`;
                       )}
                     </div>
                     
-                    <TypingText
+                    {/* <TypingText
                       text={`What would you like to do this ${getTimeBasedGreeting()}?`}
                       className="tracking-tight text-3xl font-normal text-muted-foreground/80"
                       duration={60} // Animation speed: milliseconds per character for typing effect
                       delay={1500} // Wait time: milliseconds before starting the typing animation
+                    /> */}
+                    <DecryptedText
+                      text={`What would you like to do this ${getTimeBasedGreeting()}?`}
+                      className="tracking-tight text-3xl font-normal text-muted-foreground/80"
+                      animateOn="view"
+                      sequential={true}
+                      speed={90}
+                      maxIterations={8}
+                      revealDirection="start"
                     />
                     
                     {/* Name editing section for users without a name */}
