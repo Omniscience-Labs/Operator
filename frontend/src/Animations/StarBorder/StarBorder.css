@@ -35,9 +35,9 @@
 
 .inner-content {
   position: relative;
-  background: linear-gradient(to bottom, #060010, #111);
-  border: 1px solid #222;
-  color: white;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
   font-size: 16px;
   text-align: center;
   padding: 16px 26px;
