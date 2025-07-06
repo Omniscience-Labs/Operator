@@ -173,6 +173,37 @@ export function PublishAgentDialog({
             </div>
           )}
 
+          {/* Agent Type */}
+          {publishType === 'marketplace' && (
+            <div className="space-y-3 pt-2 border-t">
+              <Label className="text-sm font-medium">Agent Type:</Label>
+              
+              <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
+                <Checkbox
+                  id="managed-agent"
+                  checked={managedAgent}
+                  onCheckedChange={(checked) => setManagedAgent(checked === true)}
+                />
+                <div className="flex-1">
+                  <Label htmlFor="managed-agent" className="cursor-pointer font-medium">
+                    Managed Agent
+                  </Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Users will get a live reference to this agent. When you update the agent, all users will see the changes automatically. Users cannot customize managed agents.
+                  </p>
+                </div>
+              </div>
+
+              {managedAgent && (
+                <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    <strong>Note:</strong> Users will get a live reference to this agent. Any updates you make will automatically appear for all users. Users cannot customize managed agents.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Sharing Options */}
           <div className="space-y-3 pt-2 border-t">
             <Label className="text-sm font-medium">What to include when sharing:</Label>
@@ -223,38 +254,12 @@ export function PublishAgentDialog({
                   </p>
                 </div>
               </div>
-
-              {publishType === 'marketplace' && (
-                <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
-                  <Checkbox
-                    id="managed-agent"
-                    checked={managedAgent}
-                    onCheckedChange={(checked) => setManagedAgent(checked === true)}
-                  />
-                  <div className="flex-1">
-                    <Label htmlFor="managed-agent" className="cursor-pointer font-medium">
-                      Managed Agent
-                    </Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Users will get a live reference to this agent. When you update the agent, all users will see the changes automatically. Users cannot customize managed agents.
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
 
             {(!includeKnowledgeBases || !includeCustomMcpTools) && (
               <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
                 <p className="text-sm text-amber-700 dark:text-amber-300">
                   <strong>Note:</strong> Excluded components will not be available to users who add this agent to their library.
-                </p>
-              </div>
-            )}
-
-            {publishType === 'marketplace' && managedAgent && (
-              <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  <strong>Note:</strong> Users will get a live reference to this agent. Any updates you make will automatically appear for all users. Users cannot customize managed agents.
                 </p>
               </div>
             )}
