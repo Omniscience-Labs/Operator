@@ -3,6 +3,7 @@ import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, Us
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import './AgentProfileCard.css';
 
 // Simple Agent interface matching existing codebase
 interface Agent {
@@ -170,7 +171,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
     >
       {/* Animated border glow on hover */}
       <div 
-        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 card-border-glow"
         style={{
           background: `
             linear-gradient(135deg, 
@@ -200,7 +201,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
       
       {/* Animated Glare Effect */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none overflow-hidden"
+        className="absolute inset-0 opacity-0 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none overflow-hidden glare-sweep-animation"
         style={{
           background: `
             linear-gradient(
@@ -212,14 +213,12 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               transparent 65%
             )
           `,
-          transform: 'translateX(-100%)',
-          animation: 'glare-sweep 2.5s ease-in-out infinite',
         }}
       />
       
       {/* Secondary Glare Layer */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none overflow-hidden"
+        className="absolute inset-0 opacity-0 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none overflow-hidden glare-sweep-colored-animation"
         style={{
           background: `
             linear-gradient(
@@ -231,8 +230,6 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               transparent 70%
             )
           `,
-          transform: 'translateX(-100%)',
-          animation: 'glare-sweep-colored 3s ease-in-out infinite 0.5s',
         }}
       />
       
@@ -271,6 +268,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
             )
           `,
           maskComposite: 'intersect',
+          WebkitMaskComposite: 'intersect',
         }}
       />
       
@@ -293,12 +291,13 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:scale-105"
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:scale-105 agent-avatar"
               style={{
                 background: `linear-gradient(135deg, ${agentStyling.color}25 0%, ${agentStyling.color}45 100%)`,
                 border: `1px solid ${agentStyling.color}40`,
                 boxShadow: `0 4px 15px ${agentStyling.color}20`,
-              }}
+                '--agent-color': agentStyling.color,
+              } as React.CSSProperties}
             >
               {agentStyling.avatar}
             </div>
@@ -473,33 +472,6 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
           )}
         </div>
       </div>
-      
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes glare-sweep {
-          0% {
-            transform: translateX(-100%) skewX(-15deg);
-          }
-          50% {
-            transform: translateX(100%) skewX(-15deg);
-          }
-          100% {
-            transform: translateX(100%) skewX(-15deg);
-          }
-        }
-        
-        @keyframes glare-sweep-colored {
-          0% {
-            transform: translateX(-100%) skewX(-10deg);
-          }
-          60% {
-            transform: translateX(100%) skewX(-10deg);
-          }
-          100% {
-            transform: translateX(100%) skewX(-10deg);
-          }
-        }
-      `}</style>
     </div>
   );
 };
