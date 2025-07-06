@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { usePathname, useRouter } from "next/navigation"
+import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
 
 import {
   DropdownMenu,
@@ -387,17 +388,16 @@ export function NavAgents() {
             ) : (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div>
-                    <Link
-                      href="/dashboard"
-                      className="text-muted-foreground hover:text-foreground h-7 w-7 flex items-center justify-center rounded-md"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span className="sr-only">New Task</span>
-                    </Link>
-                  </div>
+                  <LiquidButton
+                    size="sm"
+                    className="h-8 w-8 bg-black dark:bg-white text-white dark:text-black hover:bg-black/80 dark:hover:bg-white/80 border-none"
+                    onClick={() => window.location.href = '/dashboard'}
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="sr-only">New Agent</span>
+                  </LiquidButton>
                 </TooltipTrigger>
-                <TooltipContent>New Task</TooltipContent>
+                <TooltipContent>New Agent</TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -409,14 +409,14 @@ export function NavAgents() {
           <SidebarMenuItem>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div>
-                  <SidebarMenuButton asChild>
-                    <Link href="/dashboard" className="flex items-center">
-                      <Plus className="h-4 w-4" />
-                      <span>New Agent</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </div>
+                <LiquidButton
+                  size="sm"
+                  className="w-full justify-start bg-black dark:bg-white text-white dark:text-black hover:bg-black/80 dark:hover:bg-white/80 border-none"
+                  onClick={() => window.location.href = '/dashboard'}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>New Agent</span>
+                </LiquidButton>
               </TooltipTrigger>
               <TooltipContent>New Agent</TooltipContent>
             </Tooltip>
