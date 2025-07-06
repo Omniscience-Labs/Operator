@@ -169,7 +169,7 @@ export const AgentKnowledgeConfiguration = ({
           <div className="space-y-3">
             <div className="space-y-2">
               <Label htmlFor="new-name" className="text-xs text-muted-foreground">
-                Tool Name <span className="text-muted-foreground/70">(lowercase letters and dashes only)</span>
+                Index Name <span className="text-muted-foreground/70">(lowercase letters and dashes only)</span>
               </Label>
               <Input
                 id="new-name"
