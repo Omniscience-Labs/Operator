@@ -44,6 +44,7 @@ import {
 import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
+import { MeetingProfileCard } from '@/components/ProfileCard/MeetingProfileCard';
 
 export default function MeetingsPage() {
   const router = useRouter();
@@ -367,6 +368,15 @@ ${meeting.transcript}`;
     }
   };
 
+  // Wrapper functions for MeetingProfileCard
+  const handleMoveMeeting = async (meetingId: string, targetFolderId?: string) => {
+    return handleMoveToFolder('meeting', meetingId, targetFolderId);
+  };
+
+  const handleMoveFolder = async (folderId: string, targetFolderId?: string) => {
+    return handleMoveToFolder('folder', folderId, targetFolderId);
+  };
+
   // Build folder tree for context menu
   const buildFolderTree = (folders: MeetingFolder[], parentId?: string): MeetingFolder[] => {
     return folders
@@ -411,12 +421,12 @@ ${meeting.transcript}`;
 
   if (isLoading) {
     return (
-      <div className="flex-1 p-8">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           <Skeleton className="h-8 w-48 mb-8" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-24" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <Skeleton key={i} className="h-[400px] rounded-2xl" />
             ))}
           </div>
         </div>
@@ -530,7 +540,7 @@ ${meeting.transcript}`;
         {/* Folders and Meetings Grid */}
         <div 
           className={cn(
-            "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 min-h-32 rounded-xl transition-all duration-300",
+            "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 min-h-32 rounded-xl transition-all duration-300",
             dragOverTarget === 'root' && "bg-gradient-to-br from-blue-50/80 to-blue-100/60 dark:from-blue-950/60 dark:to-blue-900/40 border-2 border-dashed border-blue-300 dark:border-blue-600 shadow-lg"
           )}
           onDragOver={(e) => handleDragOver(e)}
@@ -539,236 +549,43 @@ ${meeting.transcript}`;
         >
           {/* Folders */}
           {folders.map((folder) => (
-            <div
-              key={folder.folder_id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, 'folder', folder.folder_id)}
-              onDragOver={(e) => handleDragOver(e, folder.folder_id)}
-              onDragLeave={(e) => handleDragLeave(e, folder.folder_id)}
-              onDrop={(e) => handleDrop(e, folder.folder_id)}
-              className={cn(
-                "group bg-gradient-to-br from-card/60 via-card to-card/80 backdrop-blur border border-border/50 rounded-xl p-4 sm:p-5 hover:bg-gradient-to-br hover:from-accent/30 hover:to-accent/10 cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-black/5",
-                dragOverTarget === folder.folder_id && "bg-gradient-to-br from-blue-50/80 to-blue-100/60 dark:from-blue-950/60 dark:to-blue-900/40 border-blue-300 dark:border-blue-600 shadow-lg shadow-blue-500/20",
-                draggedItem?.id === folder.folder_id && "opacity-50 scale-95"
-              )}
-              onClick={() => navigateToFolder(folder)}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-4 flex-1 min-w-0">
-                  <div className="relative">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/40 flex items-center justify-center transition-all duration-200 shadow-sm group-hover:shadow-md">
-                      <Folder className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                      {folder.name}
-                    </h3>
-                  </div>
-                </div>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-accent/80 h-8 w-8 p-0"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingItem({ type: 'folder', id: folder.folder_id, name: folder.name });
-                    }}>
-                      <Edit2 className="h-4 w-4 mr-2" />
-                      Rename
-                    </DropdownMenuItem>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <Move className="h-4 w-4 mr-2" />
-                        Move to Folder
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        {/* Only show "Move to Root" if not already in root */}
-                        {currentFolderId && (
-                          <>
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              handleMoveToFolder('folder', folder.folder_id, null);
-                            }}>
-                              <FolderOpen className="h-4 w-4 mr-2" />
-                              Move to Root
-                            </DropdownMenuItem>
-                            {buildFolderTree(allFolders).length > 0 && <DropdownMenuSeparator />}
-                          </>
-                        )}
-                        {buildFolderTree(allFolders)
-                          .filter(f => f.folder_id !== folder.folder_id)
-                          .map(f => renderFolderMenuItem(f, 'folder', folder.folder_id))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteFolder(folder.folder_id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              
-              {/* Meeting count on bottom row */}
-              <div className="mt-4 pt-3 border-t border-border/30">
-                <div className="flex items-center gap-1">
-                  <span className="text-xs font-medium text-muted-foreground/70">
-                    {getMeetingCountForFolder(folder.folder_id)}
-                  </span>
-                  <span className="text-xs text-muted-foreground/60">
-                    {getMeetingCountForFolder(folder.folder_id) === 1 ? 'meeting' : 'meetings'}
-                  </span>
-                </div>
-              </div>
-            </div>
+                          <MeetingProfileCard
+                key={folder.folder_id}
+                folder={folder}
+                type="folder"
+                meetingCount={getMeetingCountForFolder(folder.folder_id)}
+                folders={allFolders}
+                isDragging={draggedItem?.id === folder.folder_id}
+                dragOverTarget={dragOverTarget}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onNavigate={navigateToFolder}
+                onEdit={(folderId, currentName) => setEditingItem({ type: 'folder', id: folderId, name: currentName })}
+                onDelete={handleDeleteFolder}
+                onMove={handleMoveFolder}
+              />
           ))}
 
           {/* Meetings */}
           {meetings.map((meeting) => (
             <div
               key={meeting.meeting_id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, 'meeting', meeting.meeting_id)}
-              className={cn(
-                "group bg-gradient-to-br from-card/60 via-card to-card/80 backdrop-blur border border-border/50 rounded-xl p-4 sm:p-5 hover:bg-gradient-to-br hover:from-accent/30 hover:to-accent/10 cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-black/5",
-                draggedItem?.id === meeting.meeting_id && "opacity-50 scale-95"
-              )}
               onClick={() => router.push(`/meetings/${meeting.meeting_id}`)}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-4 flex-1 min-w-0">
-                  <div className="relative">
-                    <div className={cn(
-                      "w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 shadow-sm group-hover:shadow-md",
-                      meeting.status === 'active' 
-                        ? "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/40"
-                        : "bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950/30 dark:to-slate-900/40"
-                    )}>
-                      <FileAudio className={cn(
-                        "h-6 w-6",
-                        meeting.status === 'active' 
-                          ? "text-emerald-600 dark:text-emerald-400"
-                          : "text-slate-600 dark:text-slate-400"
-                      )} />
-                    </div>
-                    {/* Subtle active recording indicator */}
-                    {meeting.status === 'active' && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full shadow-sm" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                      {meeting.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground/80 mt-1">
-                      {format(new Date(meeting.created_at), 'MMM d, yyyy h:mm a')}
-                    </p>
-                    <div className="flex items-center mt-2">
-                      <span className={cn(
-                        "text-xs px-3 py-1 rounded-full font-medium border",
-                        meeting.status === 'active' 
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-700'
-                          : meeting.status === 'completed' 
-                          ? 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-950/30 dark:text-slate-300 dark:border-slate-700'
-                          : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-700'
-                      )}>
-                        {meeting.status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-accent/80 h-8 w-8 p-0"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation();
-                      startChatWithMeeting(meeting.meeting_id);
-                    }}>
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Open in Chat
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingItem({ type: 'meeting', id: meeting.meeting_id, name: meeting.title });
-                    }}>
-                      <Edit2 className="h-4 w-4 mr-2" />
-                      Rename
-                    </DropdownMenuItem>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <Move className="h-4 w-4 mr-2" />
-                        Move to Folder
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent>
-                        {/* Only show "Move to Root" if not already in root */}
-                        {currentFolderId && (
-                          <>
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              handleMoveToFolder('meeting', meeting.meeting_id, null);
-                            }}>
-                              <FolderOpen className="h-4 w-4 mr-2" />
-                              Move to Root
-                            </DropdownMenuItem>
-                            {buildFolderTree(allFolders).length > 0 && <DropdownMenuSeparator />}
-                          </>
-                        )}
-                        {buildFolderTree(allFolders).map(f => renderFolderMenuItem(f, 'meeting', meeting.meeting_id))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation();
-                      downloadTranscript(meeting);
-                    }}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Download Transcript
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={(e) => {
-                      e.stopPropagation();
-                      // TODO: Implement sharing
-                      toast.info('Sharing coming soon');
-                    }}>
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteMeeting(meeting.meeting_id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              <MeetingProfileCard
+                meeting={meeting}
+                type="meeting"
+                folders={allFolders}
+                isDragging={draggedItem?.id === meeting.meeting_id}
+                onDragStart={handleDragStart}
+                onEdit={(meetingId, currentTitle) => setEditingItem({ type: 'meeting', id: meetingId, name: currentTitle })}
+                onDelete={handleDeleteMeeting}
+                onDownloadTranscript={downloadTranscript}
+                onOpenInChat={startChatWithMeeting}
+                onMove={handleMoveMeeting}
+              />
             </div>
           ))}
         </div>
