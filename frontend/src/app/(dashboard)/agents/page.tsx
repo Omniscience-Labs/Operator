@@ -254,7 +254,7 @@ export default function AgentsPage() {
       )}
       
       <div className="space-y-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-8 sm:mt-0">
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               Your Agents
