@@ -57,7 +57,7 @@ export function SidebarLeft({
   const marketplaceEnabled = flags.agent_marketplace;
   const enterpriseDemoEnabled = flags.enterprise_demo;
   
-  // Hide agent playground for team accounts
+  // Hide agents for team accounts
   const showAgentPlayground = customAgentsEnabled && !currentAccount?.is_team_context;
 
   // Fetch user data
@@ -238,7 +238,7 @@ export function SidebarLeft({
                     )}>
                       <Bot className="h-4 w-4 mr-2" />
                       <span className="flex items-center justify-between w-full">
-                        Agent Playground
+                        Agents
                         <Badge variant="new">
                           New
                         </Badge>

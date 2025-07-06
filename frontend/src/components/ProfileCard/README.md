@@ -121,7 +121,7 @@ interface Agent {
 - **Purpose**: Personal agent collection management
 - **Actions**: Chat, Customize, Delete, Toggle Default
 - **Features**: Full management capabilities, status indicators
-- **Best for**: Agent playground, personal workspace
+- **Best for**: Agents, personal workspace
 
 #### Marketplace Mode
 - **Purpose**: Browse and download public agents

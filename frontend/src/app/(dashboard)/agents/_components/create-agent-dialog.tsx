@@ -179,7 +179,7 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
 
               <div className="space-y-2 flex-1">
                 <Label htmlFor="system-instructions" className="text-sm font-medium">
-                  System Instructions
+                  Instructions
                 </Label>
                 <Textarea
                   id="system-instructions"

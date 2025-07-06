@@ -355,7 +355,7 @@ export default function AgentConfigurationPage() {
                   value={formData.system_prompt}
                   onSave={(value) => handleFieldChange('system_prompt', value)}
                   className='bg-transparent hover:bg-transparent border-none focus-visible:ring-0 shadow-none text-sm md:text-base'
-                  placeholder='Click to set system instructions...'
+                  placeholder='Click to set instructions...'
                   multiline={true}
                   minHeight="150px"
                 />
