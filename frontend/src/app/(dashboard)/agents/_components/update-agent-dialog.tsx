@@ -221,9 +221,9 @@ export const UpdateAgentDialog = ({ agentId, isOpen, onOpenChange, onAgentUpdate
         </DialogHeader>
 
         <div className="flex-1 w-full overflow-hidden min-h-0">
-          <div className="flex w-full h-full">
+          <div className="flex flex-col md:flex-row w-full h-full">
             {/* Left Panel - Basic Configuration */}
-            <div className="p-6 py-4 w-[40%] space-y-6 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+            <div className="p-6 py-4 w-full md:w-[40%] space-y-6 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
               <div className="space-y-2">
                 <Label htmlFor="agent-name" className="text-sm font-medium">
                   Name
@@ -261,14 +261,14 @@ export const UpdateAgentDialog = ({ agentId, isOpen, onOpenChange, onAgentUpdate
                   value={formData.system_prompt || ''}
                   onChange={(e) => handleInputChange('system_prompt', e.target.value)}
                   placeholder="Describe the agent's role, behavior, and expertise..."
-                  className="min-h-[250px] resize-none"
+                  className="min-h-[200px] md:min-h-[250px] resize-none"
                   disabled={updateAgentMutation.isPending}
                 />
               </div>
             </div>
 
             {/* Right Panel - Tools & MCP */}
-            <div className="border-l w-[60%] bg-muted/30 flex flex-col min-h-0">
+            <div className="border-t md:border-t-0 md:border-l w-full md:w-[60%] bg-muted/30 flex flex-col min-h-0">
               <Tabs defaultValue="tools" className="flex flex-col h-full">
                 <TabsList className="w-full justify-start rounded-none border-b h-10">
                   <TabsTrigger 

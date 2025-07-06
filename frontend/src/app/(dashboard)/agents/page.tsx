@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Plus, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, AlertCircle, Loader2, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { UpdateAgentDialog } from './_components/update-agent-dialog';
@@ -11,7 +11,6 @@ import { usePublishAgent, useUnpublishAgent } from '@/hooks/react-query/marketpl
 import { SearchAndFilters } from './_components/search-and-filters';
 import { ResultsInfo } from './_components/results-info';
 import { EmptyState } from './_components/empty-state';
-
 import { AgentsList } from './_components/agents-list';
 import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
 import { LoadingState } from './_components/loading-state';
@@ -21,6 +20,9 @@ import { DEFAULT_AGENTPRESS_TOOLS } from './_data/tools';
 import { AgentsParams } from '@/hooks/react-query/agents/utils';
 import { useFeatureFlags } from '@/lib/feature-flags';
 import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useSidebar } from '@/components/ui/sidebar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ViewMode = 'grid' | 'list';
 type SortOption = 'name' | 'created_at' | 'updated_at' | 'tools_count';
@@ -35,6 +37,8 @@ interface FilterOptions {
 
 export default function AgentsPage() {
   const router = useRouter();
+  const isMobile = useIsMobile();
+  const { setOpenMobile } = useSidebar();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
   const [publishDialogAgent, setPublishDialogAgent] = useState<any>(null);
@@ -229,7 +233,26 @@ export default function AgentsPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full">
+    <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full relative">
+      {isMobile && (
+        <div className="absolute top-4 left-4 z-20">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setOpenMobile(true)}
+              >
+                <Menu className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Open menu</TooltipContent>
+          </Tooltip>
+        </div>
+      )}
+      
       <div className="space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">

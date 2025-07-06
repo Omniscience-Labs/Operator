@@ -1,9 +1,10 @@
-import React, { useRef, useCallback, useMemo } from 'react';
+import React, { useRef, useCallback, useMemo, useState, useEffect } from 'react';
 import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, User, Calendar, Tags, Sparkles, Zap, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useIsMobile } from '@/hooks/use-mobile';
 import './AgentProfileCard.css';
 
 // Simple Agent interface matching existing codebase
@@ -106,6 +107,8 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
   enableTilt = true,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const [isCenteredOnMobile, setIsCenteredOnMobile] = useState(false);
 
   // Get agent styling
   const agentStyling = useMemo(() => {
@@ -114,6 +117,41 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
     }
     return getAgentAvatar(agent.agent_id);
   }, [agent.agent_id, agent.avatar, agent.avatar_color]);
+
+  // Mobile center detection
+  useEffect(() => {
+    if (!isMobile || !cardRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const rect = entry.boundingClientRect;
+            const viewportHeight = window.innerHeight;
+            const cardCenter = rect.top + rect.height / 2;
+            const viewportCenter = viewportHeight / 2;
+            
+            // Check if card center is within 20% of viewport center
+            const centerThreshold = viewportHeight * 0.2;
+            const isInCenter = Math.abs(cardCenter - viewportCenter) < centerThreshold;
+            
+            setIsCenteredOnMobile(isInCenter);
+          } else {
+            setIsCenteredOnMobile(false);
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '0px',
+        threshold: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+      }
+    );
+
+    observer.observe(cardRef.current);
+
+    return () => observer.disconnect();
+  }, [isMobile]);
 
   // Enhanced tilt effect with subtle rotation
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -155,6 +193,11 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         // Enhanced hover glow effect
         'before:absolute before:inset-0 before:rounded-2xl before:p-[1px] before:bg-gradient-to-br before:opacity-0',
         'hover:before:opacity-100 before:transition-opacity before:duration-500',
+        // Mobile centered effects (same as hover)
+        isCenteredOnMobile && [
+          'shadow-2xl shadow-black/30 -translate-y-2',
+          'before:opacity-100'
+        ],
         className
       )}
       onMouseMove={handleMouseMove}
@@ -180,7 +223,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
     >
       {/* Animated border glow on hover */}
       <div 
-        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 card-border-glow"
+        className={cn(
+          "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 card-border-glow",
+          isCenteredOnMobile && "opacity-100"
+        )}
         style={{
           background: `
             linear-gradient(135deg, 
@@ -196,7 +242,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
       
       {/* Spotlight effect following mouse */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-300 pointer-events-none"
+        className={cn(
+          "absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-300 pointer-events-none",
+          isCenteredOnMobile && "opacity-30"
+        )}
         style={{
           background: `
             radial-gradient(
@@ -210,7 +259,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
       
       {/* Enhanced Colored Glare Effect */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-70 transition-opacity duration-500 pointer-events-none overflow-hidden glare-sweep-colored-animation"
+        className={cn(
+          "absolute inset-0 opacity-0 group-hover:opacity-70 transition-opacity duration-500 pointer-events-none overflow-hidden glare-sweep-colored-animation",
+          isCenteredOnMobile && "opacity-70"
+        )}
         style={{
           background: `
             linear-gradient(
@@ -228,7 +280,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
       
       {/* Subtle gradient overlay with enhanced hover effect */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
+        className={cn(
+          "absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500",
+          isCenteredOnMobile && "opacity-100"
+        )}
         style={{
           background: `
             linear-gradient(135deg, 
@@ -245,7 +300,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:scale-105 agent-avatar"
+              className={cn(
+                "w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:scale-105 agent-avatar",
+                isCenteredOnMobile && "shadow-xl scale-105"
+              )}
               style={{
                 background: `linear-gradient(135deg, ${agentStyling.color}25 0%, ${agentStyling.color}45 100%)`,
                 border: `1px solid ${agentStyling.color}40`,
@@ -256,7 +314,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               {agentStyling.avatar}
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white/90 truncate max-w-[200px] transition-colors duration-300 group-hover:text-white">
+              <h3 className={cn(
+                "text-xl font-semibold text-white/90 truncate max-w-[200px] transition-colors duration-300 group-hover:text-white",
+                isCenteredOnMobile && "text-white"
+              )}>
                 {agent.name}
               </h3>
               <div className="flex items-center gap-2 mt-1">
@@ -298,7 +359,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500/20 hover:text-red-300 text-white/60"
+                    className={cn(
+                      "h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500/20 hover:text-red-300 text-white/60",
+                      isCenteredOnMobile && "opacity-100"
+                    )}
                     disabled={isLoading}
                     title={agent.is_managed ? "Remove from library" : "Delete agent"}
                     onClick={(e) => e.stopPropagation()}
@@ -359,7 +423,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
 
         {/* Description */}
         <div className="flex-1 mb-4">
-          <p className="text-white/70 text-sm leading-relaxed transition-colors duration-300 group-hover:text-white/85">
+          <p className={cn(
+            "text-white/70 text-sm leading-relaxed transition-colors duration-300 group-hover:text-white/85",
+            isCenteredOnMobile && "text-white/85"
+          )}>
             {truncateDescription(agent.description)}
           </p>
         </div>
