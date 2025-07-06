@@ -226,7 +226,7 @@ export const UpdateAgentDialog = ({ agentId, isOpen, onOpenChange, onAgentUpdate
             <div className="p-6 py-4 w-[40%] space-y-6 overflow-y-auto scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
               <div className="space-y-2">
                 <Label htmlFor="agent-name" className="text-sm font-medium">
-                  Agent Name
+                  Name
                 </Label>
                 <Input
                   id="agent-name"
@@ -275,7 +275,7 @@ export const UpdateAgentDialog = ({ agentId, isOpen, onOpenChange, onAgentUpdate
                     value="tools" 
                   >
                     <Settings2 className="h-4 w-4" />
-                    AgentPress Tools
+                    Tools
                   </TabsTrigger>
                   <TabsTrigger 
                     value="mcp" 

@@ -151,7 +151,7 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
             <div className="p-6 py-4 w-[40%] space-y-6 overflow-y-auto">
               <div className="space-y-2">
                 <Label htmlFor="agent-name" className="text-sm font-medium">
-                  Agent Name
+                  Name
                 </Label>
                 <Input
                   id="agent-name"
@@ -204,7 +204,7 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
                     value="tools" 
                   >
                     <Settings2 className="h-4 w-4" />
-                    AgentPress Tools
+                    Tools
                   </TabsTrigger>
                   <TabsTrigger 
                     value="mcp" 
