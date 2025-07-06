@@ -199,76 +199,21 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         }}
       />
       
-      {/* Animated Glare Effect */}
+      {/* Enhanced Colored Glare Effect */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none overflow-hidden glare-sweep-animation"
-        style={{
-          background: `
-            linear-gradient(
-              105deg,
-              transparent 25%,
-              rgba(255, 255, 255, 0.4) 35%,
-              rgba(255, 255, 255, 0.6) 45%,
-              rgba(255, 255, 255, 0.4) 55%,
-              transparent 65%
-            )
-          `,
-        }}
-      />
-      
-      {/* Secondary Glare Layer */}
-      <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none overflow-hidden glare-sweep-colored-animation"
+        className="absolute inset-0 opacity-0 group-hover:opacity-70 transition-opacity duration-500 pointer-events-none overflow-hidden glare-sweep-colored-animation"
         style={{
           background: `
             linear-gradient(
               75deg,
-              transparent 30%,
-              ${agentStyling.color}30 40%,
-              ${agentStyling.color}60 50%,
-              ${agentStyling.color}30 60%,
-              transparent 70%
+              transparent 20%,
+              ${agentStyling.color}40 35%,
+              ${agentStyling.color}80 45%,
+              ${agentStyling.color}60 55%,
+              ${agentStyling.color}40 65%,
+              transparent 80%
             )
           `,
-        }}
-      />
-      
-      {/* Prismatic Edge Shine */}
-      <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
-        style={{
-          background: `
-            linear-gradient(
-              45deg,
-              transparent,
-              rgba(255, 255, 255, 0.1) 45%,
-              rgba(255, 255, 255, 0.2) 50%,
-              rgba(255, 255, 255, 0.1) 55%,
-              transparent
-            )
-          `,
-          maskImage: `
-            linear-gradient(
-              to bottom,
-              black 0%,
-              black 20%,
-              transparent 22%,
-              transparent 78%,
-              black 80%,
-              black 100%
-            ),
-            linear-gradient(
-              to right,
-              black 0%,
-              black 20%,
-              transparent 22%,
-              transparent 78%,
-              black 80%,
-              black 100%
-            )
-          `,
-          maskComposite: 'intersect',
-          WebkitMaskComposite: 'intersect',
         }}
       />
       
