@@ -585,13 +585,7 @@ ${meeting.transcript || '(No transcript available)'}`;
                     <div className="flex items-center justify-center">
                       {customAgentEnabled ? (
                         <div className="flex items-center gap-1 justify-center">
-                          <BlurText
-                            text="I'm"
-                            className="tracking-tight text-4xl text-muted-foreground leading-tight"
-                            delay={600}
-                            animateBy="words"
-                            direction="bottom"
-                          />
+                          <span className="tracking-tight text-4xl text-muted-foreground leading-tight">I'm</span>
                           <AgentSelector
                             selectedAgentId={selectedAgentId}
                             onAgentSelect={setSelectedAgentId}
