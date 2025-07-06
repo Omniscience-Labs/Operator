@@ -118,22 +118,19 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
     return getAgentAvatar(agent.agent_id);
   }, [agent.agent_id, agent.avatar, agent.avatar_color]);
 
-  // Mobile tap handlers
-  const handleTouchStart = useCallback(() => {
+  // Mobile tap handlers - toggle behavior
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (isMobile) {
-      setIsTapped(true);
-    }
-  }, [isMobile]);
-
-  const handleTouchEnd = useCallback(() => {
-    if (isMobile) {
-      // Keep highlighted for a brief moment to show the effect
-      setTimeout(() => setIsTapped(false), 150);
+      // Prevent triggering click events
+      e.preventDefault();
+      // Toggle the tapped state
+      setIsTapped(prev => !prev);
     }
   }, [isMobile]);
 
   const handleTouchCancel = useCallback(() => {
     if (isMobile) {
+      // Only clear on cancel, not on normal touch end
       setIsTapped(false);
     }
   }, [isMobile]);
@@ -187,7 +184,6 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
       )}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}
       style={{
@@ -303,26 +299,26 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
             </div>
             <div>
               <h3 className={cn(
-                "text-xl font-semibold text-white/90 truncate max-w-[200px] transition-colors duration-300 group-hover:text-white",
-                isTapped && "text-white"
+                "text-xl font-semibold text-foreground/90 truncate max-w-[200px] transition-colors duration-300 group-hover:text-foreground",
+                isTapped && "text-foreground"
               )}>
                 {agent.name}
               </h3>
               <div className="flex items-center gap-2 mt-1">
                 {agent.is_default && (
-                  <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-200 border-amber-500/30 transition-all duration-300 group-hover:bg-amber-500/30 group-hover:text-amber-100">
+                  <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30 transition-all duration-300 group-hover:bg-amber-500/30">
                     <Star className="h-3 w-3 mr-1" />
                     Default
                   </Badge>
                 )}
                 {agent.is_public && (
-                  <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-200 border-green-500/30 transition-all duration-300 group-hover:bg-green-500/30 group-hover:text-green-100">
+                  <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30 transition-all duration-300 group-hover:bg-green-500/30">
                     <Globe className="h-3 w-3 mr-1" />
                     Public
                   </Badge>
                 )}
                 {(agent.is_managed || (mode === 'marketplace' && agent.sharing_preferences?.managed_agent)) && (
-                  <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-200 border-blue-500/30 transition-all duration-300 group-hover:bg-blue-500/30 group-hover:text-blue-100">
+                  <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30 transition-all duration-300 group-hover:bg-blue-500/30">
                     <Sparkles className="h-3 w-3 mr-1" />
                     Managed
                   </Badge>
@@ -334,7 +330,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
           <div className="flex items-center gap-2">
             {/* Download count for marketplace */}
             {mode === 'marketplace' && (
-              <div className="flex items-center gap-1 text-white/60 text-sm transition-colors duration-300 group-hover:text-white/80">
+              <div className="flex items-center gap-1 text-muted-foreground text-sm transition-colors duration-300 group-hover:text-foreground/80">
                 <Download className="h-4 w-4" />
                 <span>{agent.download_count || 0}</span>
               </div>
@@ -348,7 +344,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                     variant="ghost" 
                     size="sm"
                     className={cn(
-                      "h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500/20 hover:text-red-300 text-white/60",
+                      "h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-500/20 hover:text-red-400 dark:hover:text-red-300 text-muted-foreground",
                       isTapped && "opacity-100"
                     )}
                     disabled={isLoading}
@@ -412,8 +408,8 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         {/* Description */}
         <div className="flex-1 mb-4">
           <p className={cn(
-            "text-white/70 text-sm leading-relaxed transition-colors duration-300 group-hover:text-white/85",
-            isTapped && "text-white/85"
+            "text-muted-foreground text-sm leading-relaxed transition-colors duration-300 group-hover:text-foreground/85",
+            isTapped && "text-foreground/85"
           )}>
             {truncateDescription(agent.description)}
           </p>
@@ -435,9 +431,9 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               
               if (displayCount > 0) {
                 return (
-                  <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-white/90">
-                    <Zap className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
-                    <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
+                  <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-foreground/90">
+                    <Zap className="h-4 w-4 text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300" />
+                    <span className="text-muted-foreground text-sm group-hover:text-foreground/90 transition-colors duration-300">
                       {displayCount} tool{displayCount !== 1 ? 's' : ''} available
                     </span>
                   </div>
@@ -447,9 +443,9 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               // In library mode, show all tools
               if (toolsCount > 0) {
                 return (
-                  <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-white/90">
-                    <Zap className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
-                    <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
+                  <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-foreground/90">
+                    <Zap className="h-4 w-4 text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300" />
+                    <span className="text-muted-foreground text-sm group-hover:text-foreground/90 transition-colors duration-300">
                       {toolsCount} tool{toolsCount !== 1 ? 's' : ''} available
                     </span>
                   </div>
@@ -469,9 +465,9 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
             
             if (shouldShow) {
               return (
-                <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-white/90">
-                  <BookOpen className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
-                  <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
+                <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-foreground/90">
+                  <BookOpen className="h-4 w-4 text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300" />
+                  <span className="text-muted-foreground text-sm group-hover:text-foreground/90 transition-colors duration-300">
                     {knowledgeBasesCount} knowledge base{knowledgeBasesCount !== 1 ? 's' : ''} connected
                   </span>
                 </div>
@@ -483,8 +479,8 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
           {/* Creator info for marketplace */}
           {mode === 'marketplace' && agent.creator_name && (
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
-              <span className="text-white/60 text-sm group-hover:text-white/80 transition-colors duration-300">
+              <User className="h-4 w-4 text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300" />
+              <span className="text-muted-foreground text-sm group-hover:text-foreground/80 transition-colors duration-300">
                 By {agent.creator_name}
               </span>
             </div>
@@ -492,8 +488,8 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
 
           {/* Date */}
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
-            <span className="text-white/60 text-sm group-hover:text-white/80 transition-colors duration-300">
+            <Calendar className="h-4 w-4 text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300" />
+            <span className="text-muted-foreground text-sm group-hover:text-foreground/80 transition-colors duration-300">
               {mode === 'marketplace' ? 
                 `Published ${formatDate(agent.marketplace_published_at)}` : 
                 `Created ${formatDate(agent.created_at)}`
@@ -508,7 +504,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                 <Badge 
                   key={index} 
                   variant="secondary" 
-                  className="text-xs bg-white/10 text-white/70 border-white/20 transition-all duration-300 group-hover:bg-white/15 group-hover:text-white/85"
+                  className="text-xs bg-muted/50 text-muted-foreground border-border/50 transition-all duration-300 group-hover:bg-muted/70 group-hover:text-foreground/85"
                 >
                   {tag}
                 </Badge>
@@ -516,7 +512,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               {agent.tags.length > 3 && (
                 <Badge 
                   variant="secondary" 
-                  className="text-xs bg-white/10 text-white/70 border-white/20 transition-all duration-300 group-hover:bg-white/15 group-hover:text-white/85"
+                  className="text-xs bg-muted/50 text-muted-foreground border-border/50 transition-all duration-300 group-hover:bg-muted/70 group-hover:text-foreground/85"
                 >
                   +{agent.tags.length - 3}
                 </Badge>
@@ -535,14 +531,14 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               }}
               disabled={isLoading}
               size="sm"
-              className="flex-1 bg-white/10 hover:bg-white/25 text-white border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+              className="flex-1 bg-background/10 hover:bg-background/25 text-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
               style={{
                 boxShadow: `0 4px 15px ${agentStyling.color}10`,
               }}
             >
               {isLoading ? (
                 <>
-                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent mr-2" />
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-foreground border-t-transparent mr-2" />
                   Adding...
                 </>
               ) : (
@@ -560,7 +556,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                   onChat?.(agent.agent_id);
                 }}
                 size="sm"
-                className="flex-1 bg-white/10 hover:bg-white/25 text-white border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+                className="flex-1 bg-background/10 hover:bg-background/25 text-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
                 style={{
                   boxShadow: `0 4px 15px ${agentStyling.color}10`,
                 }}
@@ -577,7 +573,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                   }}
                   size="sm"
                   variant="outline"
-                  className="bg-white/5 hover:bg-white/15 text-white/80 border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-white"
+                  className="bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
                 >
                   <Wrench className="h-4 w-4" />
                 </Button>
@@ -593,7 +589,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                           onClick={(e) => e.stopPropagation()}
                           size="sm"
                           variant="outline"
-                          className="bg-white/5 hover:bg-white/15 text-white/80 border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-white"
+                          className="bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
                         >
                           <Globe className="h-4 w-4 mr-2" />
                           Make Private
@@ -640,7 +636,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                       }}
                       size="sm"
                       variant="outline"
-                      className="bg-white/5 hover:bg-white/15 text-white/80 border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-white"
+                      className="bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
                     >
                       <Globe className="h-4 w-4 mr-2" />
                       Make Private
@@ -654,7 +650,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                     }}
                     size="sm"
                     variant="outline"
-                    className="bg-white/5 hover:bg-white/15 text-white/80 border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-white"
+                    className="bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
                   >
                     <Globe className="h-4 w-4 mr-2" />
                     Publish
