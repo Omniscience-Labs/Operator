@@ -98,8 +98,8 @@ BEGIN
         cu.usage_type,
         SUM(cu.credit_amount) as total_credits,
         COUNT(*)::INTEGER as usage_count,
-        json_agg(
-            json_build_object(
+        jsonb_agg(
+            jsonb_build_object(
                 'tool_name', cu.tool_name,
                 'data_provider_name', cu.data_provider_name,
                 'credit_amount', cu.credit_amount,

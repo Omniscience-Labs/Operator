@@ -47,8 +47,7 @@ class SandboxPodcastTool(SandboxToolsBase):
         # Validate required environment variables
         if not self.openai_key and not self.gemini_key:
             raise ValueError("Either OPENAI_API_KEY or GEMINI_API_KEY must be set")
-        if not self.elevenlabs_key:
-            raise ValueError("ELEVENLABS_API_KEY must be set")
+        # Note: ELEVENLABS_API_KEY is now optional - will be validated when tool is used
 
     def _validate_file_exists(self, file_path: str) -> bool:
         """Check if a file exists in the sandbox."""
@@ -260,6 +259,10 @@ class SandboxPodcastTool(SandboxToolsBase):
             # Validate inputs
             if not any([urls, file_paths, text, topic]):
                 return self.fail_response("At least one content source (URLs, files, text, or topic) must be provided")
+            
+            # Check for ElevenLabs API key when actually using the tool
+            if not self.elevenlabs_key:
+                return self.fail_response("ELEVENLABS_API_KEY must be set to generate podcasts. Please configure this environment variable.")
             
             # Process URLs - combine with file content for now
             processed_urls = []
