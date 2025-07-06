@@ -572,22 +572,18 @@ ${meeting.transcript || '(No transcript available)'}`;
                   <div className="flex flex-col items-center gap-4 justify-center">
                     <div className="flex items-center gap-2 flex-wrap justify-center">
                       <BlurText
-                        text={`Hey ${userName || 'there'}, I'm`}
+                        text={`Hey ${userName || 'there'}, I'm ${selectedAgent?.name || defaultAgent?.name || 'Operator'}`}
                         className="tracking-tight text-4xl text-muted-foreground leading-tight"
                         delay={200}
                         animateBy="words"
                         direction="bottom"
                       />
-                      {customAgentEnabled ? (
+                      {customAgentEnabled && (
                         <AgentSelector
                           selectedAgentId={selectedAgentId}
                           onAgentSelect={setSelectedAgentId}
                           variant="heading"
                         />
-                      ) : (
-                        <span className="tracking-tight text-4xl text-foreground leading-tight font-medium">
-                          {selectedAgent?.name || defaultAgent?.name || 'Operator'}
-                        </span>
                       )}
                     </div>
                     
