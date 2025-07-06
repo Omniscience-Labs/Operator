@@ -386,7 +386,10 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
               )}
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white/90 truncate max-w-[200px] transition-colors duration-300 group-hover:text-white">
+              <h3 className={cn(
+                "text-xl font-semibold text-foreground/90 truncate max-w-[200px] transition-colors duration-300 group-hover:text-foreground",
+                isHighlighted && "text-foreground"
+              )}>
                 {meeting.title}
               </h3>
               <div className="flex items-center gap-2 mt-1">
@@ -412,11 +415,11 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
                 variant="ghost" 
                 size="sm" 
                 className={cn(
-                  "opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-white/10 h-8 w-8 p-0",
+                  "opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-background/10 h-8 w-8 p-0",
                   isHighlighted && "opacity-100"
                 )}
               >
-                <MoreHorizontal className="h-4 w-4 text-white" />
+                <MoreHorizontal className="h-4 w-4 text-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -490,8 +493,8 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
           <div className="space-y-3">
             {/* Date */}
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
-              <span className="text-white/60 text-sm group-hover:text-white/80 transition-colors duration-300">
+              <Calendar className="h-4 w-4 text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300" />
+              <span className="text-muted-foreground text-sm group-hover:text-foreground/80 transition-colors duration-300">
                 {format(new Date(meeting.created_at), 'MMM d, yyyy h:mm a')}
               </span>
             </div>
@@ -499,8 +502,8 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
             {/* Duration */}
             {meeting.duration && (
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
-                <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
+                <Clock className="h-4 w-4 text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300" />
+                <span className="text-muted-foreground text-sm group-hover:text-foreground/90 transition-colors duration-300">
                   {formatDuration(meeting.duration)}
                 </span>
               </div>
@@ -509,8 +512,8 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
             {/* Participants */}
             {meeting.participant_count && (
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
-                <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
+                <Users className="h-4 w-4 text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300" />
+                <span className="text-muted-foreground text-sm group-hover:text-foreground/90 transition-colors duration-300">
                   {meeting.participant_count} participant{meeting.participant_count !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -518,7 +521,7 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
 
             {/* Time ago */}
             <div className="flex items-center gap-2">
-              <span className="text-white/70 text-sm group-hover:text-white/85 transition-colors duration-300">
+              <span className="text-muted-foreground text-sm group-hover:text-foreground/85 transition-colors duration-300">
                 {formatDistanceToNow(new Date(meeting.created_at), { addSuffix: true })}
               </span>
             </div>
@@ -533,7 +536,7 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
               onOpenInChat?.(meeting.meeting_id);
             }}
             size="sm"
-            className="flex-1 bg-white/10 hover:bg-white/25 text-white border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+            className="flex-1 bg-background/10 hover:bg-background/25 text-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
             style={{
               boxShadow: `0 4px 15px ${statusColors.color}10`,
             }}
@@ -804,10 +807,13 @@ const FolderCard: React.FC<FolderProfileCardProps> = ({
                 '--agent-color': folderColors.color,
               } as React.CSSProperties}
             >
-              <Folder className="h-6 w-6 text-white" />
+              <Folder className="h-6 w-6 text-foreground" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white/90 truncate max-w-[200px] transition-colors duration-300 group-hover:text-white">
+              <h3 className={cn(
+                "text-xl font-semibold text-foreground/90 truncate max-w-[200px] transition-colors duration-300 group-hover:text-foreground",
+                isHighlighted && "text-foreground"
+              )}>
                 {folder.name}
               </h3>
               <div className="flex items-center gap-2 mt-1">
@@ -833,11 +839,11 @@ const FolderCard: React.FC<FolderProfileCardProps> = ({
                 variant="ghost" 
                 size="sm" 
                 className={cn(
-                  "opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-white/10 h-8 w-8 p-0",
+                  "opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-background/10 h-8 w-8 p-0",
                   isHighlighted && "opacity-100"
                 )}
               >
-                <MoreHorizontal className="h-4 w-4 text-white" />
+                <MoreHorizontal className="h-4 w-4 text-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -887,13 +893,13 @@ const FolderCard: React.FC<FolderProfileCardProps> = ({
           <div className="space-y-3">
             {/* Meeting count */}
             <div className="flex items-center gap-2">
-              <FileAudio className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
-              <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
+              <FileAudio className="h-4 w-4 text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300" />
+              <span className="text-muted-foreground text-sm group-hover:text-foreground/90 transition-colors duration-300">
                 {meetingCount} meeting{meetingCount !== 1 ? 's' : ''}
               </span>
             </div>
 
-            <div className="text-white/70 text-sm group-hover:text-white/85 transition-colors duration-300">
+            <div className="text-muted-foreground text-sm group-hover:text-foreground/85 transition-colors duration-300">
               Click to explore this folder
             </div>
           </div>
