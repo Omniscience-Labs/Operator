@@ -90,7 +90,7 @@ export function PublishAgentDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Publish Agent</DialogTitle>
           <DialogDescription>
@@ -98,175 +98,177 @@ export function PublishAgentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <RadioGroup value={publishType} onValueChange={(value: any) => setPublishType(value)}>
-            <div className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
-              <RadioGroupItem value="marketplace" id="marketplace" className="mt-1" />
-              <Label htmlFor="marketplace" className="flex-1 cursor-pointer">
-                <div className="flex items-center gap-2 mb-1">
-                  <Globe className="h-4 w-4" />
-                  <span className="font-medium">Public Marketplace</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Share with everyone. Your agent will be discoverable by all users.
-                </p>
-              </Label>
-            </div>
+        <ScrollArea className="flex-1 overflow-y-auto">
+          <div className="space-y-4 px-1 pb-4">
+            <RadioGroup value={publishType} onValueChange={(value: any) => setPublishType(value)}>
+              <div className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                <RadioGroupItem value="marketplace" id="marketplace" className="mt-1" />
+                <Label htmlFor="marketplace" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Globe className="h-4 w-4" />
+                    <span className="font-medium">Public Marketplace</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Share with everyone. Your agent will be discoverable by all users.
+                  </p>
+                </Label>
+              </div>
 
-            <div className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
-              <RadioGroupItem value="teams" id="teams" className="mt-1" />
-              <Label htmlFor="teams" className="flex-1 cursor-pointer">
-                <div className="flex items-center gap-2 mb-1">
-                  <Users className="h-4 w-4" />
-                  <span className="font-medium">Specific Teams</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Share only with teams where you're an admin.
-                  {adminTeams.length === 0 && (
-                    <span className="block mt-1">
-                      <Badge variant="secondary" className="text-xs">No teams available</Badge>
-                    </span>
-                  )}
-                </p>
-              </Label>
-            </div>
-          </RadioGroup>
+              <div className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                <RadioGroupItem value="teams" id="teams" className="mt-1" />
+                <Label htmlFor="teams" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Users className="h-4 w-4" />
+                    <span className="font-medium">Specific Teams</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Share only with teams where you're an admin.
+                    {adminTeams.length === 0 && (
+                      <span className="block mt-1">
+                        <Badge variant="secondary" className="text-xs">No teams available</Badge>
+                      </span>
+                    )}
+                  </p>
+                </Label>
+              </div>
+            </RadioGroup>
 
-          {publishType === 'teams' && adminTeams.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Select teams to share with:</Label>
-              <ScrollArea className="h-[200px] rounded-md border p-2">
-                <div className="space-y-2">
-                  {adminTeams.map(team => (
-                    <div
-                      key={team.account_id}
-                      className="flex items-center space-x-2 p-2 rounded hover:bg-muted/50"
-                    >
-                      <Checkbox
-                        id={team.account_id}
-                        checked={selectedTeams.has(team.account_id)}
-                        onCheckedChange={() => toggleTeam(team.account_id)}
-                      />
-                      <Label
-                        htmlFor={team.account_id}
-                        className="flex-1 cursor-pointer"
+            {publishType === 'teams' && adminTeams.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Select teams to share with:</Label>
+                <ScrollArea className="h-[150px] rounded-md border p-2">
+                  <div className="space-y-2">
+                    {adminTeams.map(team => (
+                      <div
+                        key={team.account_id}
+                        className="flex items-center space-x-2 p-2 rounded hover:bg-muted/50"
                       >
-                        {team.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-              {selectedTeams.size > 0 && (
+                        <Checkbox
+                          id={team.account_id}
+                          checked={selectedTeams.has(team.account_id)}
+                          onCheckedChange={() => toggleTeam(team.account_id)}
+                        />
+                        <Label
+                          htmlFor={team.account_id}
+                          className="flex-1 cursor-pointer"
+                        >
+                          {team.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                {selectedTeams.size > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {selectedTeams.size} team{selectedTeams.size > 1 ? 's' : ''} selected
+                  </p>
+                )}
+              </div>
+            )}
+
+            {publishType === 'teams' && adminTeams.length === 0 && (
+              <div className="p-4 rounded-lg bg-muted/50 text-center">
                 <p className="text-sm text-muted-foreground">
-                  {selectedTeams.size} team{selectedTeams.size > 1 ? 's' : ''} selected
-                </p>
-              )}
-            </div>
-          )}
-
-          {publishType === 'teams' && adminTeams.length === 0 && (
-            <div className="p-4 rounded-lg bg-muted/50 text-center">
-              <p className="text-sm text-muted-foreground">
-                You need to be an admin of at least one team to share agents with teams.
-              </p>
-            </div>
-          )}
-
-          {/* Agent Type */}
-          {publishType === 'marketplace' && (
-            <div className="space-y-3 pt-2 border-t">
-              <Label className="text-sm font-medium">Agent Type:</Label>
-              
-              <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
-                <Checkbox
-                  id="managed-agent"
-                  checked={managedAgent}
-                  onCheckedChange={(checked) => setManagedAgent(checked === true)}
-                />
-                <div className="flex-1">
-                  <Label htmlFor="managed-agent" className="cursor-pointer font-medium">
-                    Managed Agent
-                  </Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Users will get a live reference to this agent. When you update the agent, all users will see the changes automatically. Users cannot customize managed agents.
-                  </p>
-                </div>
-              </div>
-
-              {managedAgent && (
-                <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    <strong>Note:</strong> Users will get a live reference to this agent. Any updates you make will automatically appear for all users. Users cannot customize managed agents.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Sharing Options */}
-          <div className="space-y-3 pt-2 border-t">
-            <Label className="text-sm font-medium">What to include when sharing:</Label>
-            
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
-                <Checkbox
-                  id="include-knowledge-bases"
-                  checked={includeKnowledgeBases}
-                  onCheckedChange={(checked) => setIncludeKnowledgeBases(checked === true)}
-                />
-                <div className="flex-1">
-                  <Label htmlFor="include-knowledge-bases" className="cursor-pointer font-medium">
-                    Knowledge Bases {agent.knowledge_bases && agent.knowledge_bases.length > 0 && (
-                      <Badge variant="secondary" className="ml-2">
-                        {agent.knowledge_bases.length} configured
-                      </Badge>
-                    )}
-                  </Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Include configured knowledge bases and search tools. Recipients will be able to use the same knowledge sources.
-                    {!agent.knowledge_bases || agent.knowledge_bases.length === 0 && (
-                      <span className="text-amber-600 dark:text-amber-400"> No knowledge bases configured.</span>
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
-                <Checkbox
-                  id="include-custom-mcp-tools"
-                  checked={includeCustomMcpTools}
-                  onCheckedChange={(checked) => setIncludeCustomMcpTools(checked === true)}
-                />
-                <div className="flex-1">
-                  <Label htmlFor="include-custom-mcp-tools" className="cursor-pointer font-medium">
-                    Custom MCP Tools {(agent.configured_mcps && agent.configured_mcps.length > 0) || (agent.custom_mcps && agent.custom_mcps.length > 0) ? (
-                      <Badge variant="secondary" className="ml-2">
-                        {(agent.configured_mcps?.length || 0) + (agent.custom_mcps?.length || 0)} configured
-                      </Badge>
-                    ) : null}
-                  </Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Include custom MCP server configurations. Recipients will need access to the same MCP servers.
-                    {(!agent.configured_mcps || agent.configured_mcps.length === 0) && (!agent.custom_mcps || agent.custom_mcps.length === 0) && (
-                      <span className="text-amber-600 dark:text-amber-400"> No custom MCP tools configured.</span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {(!includeKnowledgeBases || !includeCustomMcpTools) && (
-              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                <p className="text-sm text-amber-700 dark:text-amber-300">
-                  <strong>Note:</strong> Excluded components will not be available to users who add this agent to their library.
+                  You need to be an admin of at least one team to share agents with teams.
                 </p>
               </div>
             )}
-          </div>
-        </div>
 
-        <DialogFooter>
+            {/* Agent Type */}
+            {publishType === 'marketplace' && (
+              <div className="space-y-3 pt-2 border-t">
+                <Label className="text-sm font-medium">Agent Type:</Label>
+                
+                <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
+                  <Checkbox
+                    id="managed-agent"
+                    checked={managedAgent}
+                    onCheckedChange={(checked) => setManagedAgent(checked === true)}
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="managed-agent" className="cursor-pointer font-medium">
+                      Managed Agent
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Users will get a live reference to this agent. When you update the agent, all users will see the changes automatically. Users cannot customize managed agents.
+                    </p>
+                  </div>
+                </div>
+
+                {managedAgent && (
+                  <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      <strong>Note:</strong> Users will get a live reference to this agent. Any updates you make will automatically appear for all users. Users cannot customize managed agents.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Sharing Options */}
+            <div className="space-y-3 pt-2 border-t">
+              <Label className="text-sm font-medium">What to include when sharing:</Label>
+              
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
+                  <Checkbox
+                    id="include-knowledge-bases"
+                    checked={includeKnowledgeBases}
+                    onCheckedChange={(checked) => setIncludeKnowledgeBases(checked === true)}
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="include-knowledge-bases" className="cursor-pointer font-medium">
+                      Knowledge Bases {agent.knowledge_bases && agent.knowledge_bases.length > 0 && (
+                        <Badge variant="secondary" className="ml-2">
+                          {agent.knowledge_bases.length} configured
+                        </Badge>
+                      )}
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Include configured knowledge bases and search tools. Recipients will be able to use the same knowledge sources.
+                      {!agent.knowledge_bases || agent.knowledge_bases.length === 0 && (
+                        <span className="text-amber-600 dark:text-amber-400"> No knowledge bases configured.</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
+                  <Checkbox
+                    id="include-custom-mcp-tools"
+                    checked={includeCustomMcpTools}
+                    onCheckedChange={(checked) => setIncludeCustomMcpTools(checked === true)}
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="include-custom-mcp-tools" className="cursor-pointer font-medium">
+                      Custom MCP Tools {(agent.configured_mcps && agent.configured_mcps.length > 0) || (agent.custom_mcps && agent.custom_mcps.length > 0) ? (
+                        <Badge variant="secondary" className="ml-2">
+                          {(agent.configured_mcps?.length || 0) + (agent.custom_mcps?.length || 0)} configured
+                        </Badge>
+                      ) : null}
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Include custom MCP server configurations. Recipients will need access to the same MCP servers.
+                      {(!agent.configured_mcps || agent.configured_mcps.length === 0) && (!agent.custom_mcps || agent.custom_mcps.length === 0) && (
+                        <span className="text-amber-600 dark:text-amber-400"> No custom MCP tools configured.</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {(!includeKnowledgeBases || !includeCustomMcpTools) && (
+                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    <strong>Note:</strong> Excluded components will not be available to users who add this agent to their library.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </ScrollArea>
+
+        <DialogFooter className="mt-4">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
