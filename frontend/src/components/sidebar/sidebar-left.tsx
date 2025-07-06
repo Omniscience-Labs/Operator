@@ -174,14 +174,25 @@ export function SidebarLeft({
             </motion.div>
           </Link>
           {state !== 'collapsed' && (
-            <motion.div 
-              className="ml-2 transition-all duration-200 ease-in-out whitespace-nowrap"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: 0.3 }}
-            >
-              <span className="font-semibold text-foreground">Omni</span>
-            </motion.div>
+            <Link href="/dashboard">
+              <motion.div 
+                className="ml-3 mt-1 whitespace-nowrap cursor-pointer"
+                initial={{ opacity: 0, x: -20, scale: 0.8 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -20, scale: 0.8 }}
+                transition={{ 
+                  duration: 0.3, 
+                  delay: 0.1,
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 25
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="font-semibold text-foreground">Omni</span>
+              </motion.div>
+            </Link>
           )}
           <div className="ml-auto flex items-center gap-2">
             {state !== 'collapsed' && (
