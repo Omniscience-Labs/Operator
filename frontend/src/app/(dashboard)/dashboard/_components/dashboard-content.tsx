@@ -572,7 +572,7 @@ ${meeting.transcript || '(No transcript available)'}`;
                   <div className="flex flex-col items-center gap-4 justify-center">
                     <div className="flex items-center gap-2 flex-wrap justify-center">
                                               {customAgentEnabled ? (
-                          <div className="flex items-center gap-1 justify-center">
+                          <div className="flex items-center gap-0.5 justify-center">
                             <BlurText
                               text={`Hey ${userName || 'there'}, I'm`}
                               className="tracking-tight text-4xl text-muted-foreground leading-tight"
