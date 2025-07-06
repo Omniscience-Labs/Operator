@@ -1286,10 +1286,44 @@ async def initiate_agent_with_files(
     # Load agent configuration if agent_id is provided
     agent_config = None
     if agent_id:
-        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).eq('account_id', effective_account_id).execute()
+        # Use the same access logic as get_agent endpoint
+        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
         if not agent_result.data:
+            raise HTTPException(status_code=404, detail="Agent not found")
+            
+        agent_data = agent_result.data[0]
+        
+        # Check access: owner, public agent, or agent in user's library
+        has_access = False
+        if agent_data['account_id'] == user_id:
+            # User owns the agent
+            has_access = True
+        elif agent_data.get('is_public', False):
+            # Public agent
+            has_access = True
+        else:
+            # Check if user has this agent in their library (either managed or copied)
+            library_check = await client.table('user_agent_library').select('*').eq(
+                'user_account_id', user_id
+            ).eq('agent_id', agent_id).execute()
+            
+            if library_check.data:
+                has_access = True
+                # Apply sharing preferences filtering for managed agents
+                library_entry = library_check.data[0]
+                is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
+                if is_managed_by_user:
+                    sharing_prefs = agent_data.get('sharing_preferences', {})
+                    if not sharing_prefs.get('include_knowledge_bases', True):
+                        agent_data['knowledge_bases'] = []
+                    if not sharing_prefs.get('include_custom_mcp_tools', True):
+                        agent_data['configured_mcps'] = []
+                        agent_data['custom_mcps'] = []
+        
+        if not has_access:
             raise HTTPException(status_code=404, detail="Agent not found or access denied")
-        agent_config = agent_result.data[0]
+            
+        agent_config = agent_data
         logger.info(f"Using custom agent: {agent_config['name']} ({agent_id})")
     else:
         # Try to get default agent for the account
