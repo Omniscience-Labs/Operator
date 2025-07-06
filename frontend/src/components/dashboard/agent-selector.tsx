@@ -203,7 +203,7 @@ export function AgentSelector({
             {!currentAccount?.is_team_context && (
               <DropdownMenuItem onClick={handleCreateAgent} className="cursor-pointer">
                 <div className="flex items-center justify-between w-full">
-                  Agent Playground
+                  Agents
                   <Badge variant="new" className="ml-2">
                     New
                   </Badge>

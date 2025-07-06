@@ -1,9 +1,8 @@
 import React, { useRef, useCallback, useMemo } from 'react';
-import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, User, Calendar, Tags, Sparkles, Zap } from 'lucide-react';
+import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, User, Calendar, Tags, Sparkles, Zap, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import './ProfileCard.css';
 
 // Simple Agent interface matching existing codebase
 interface Agent {
@@ -24,6 +23,7 @@ interface Agent {
   created_at?: string;
   marketplace_published_at?: string;
   creator_name?: string;
+  knowledge_bases?: Array<{ name: string; [key: string]: any }>;
   sharing_preferences?: {
     managed_agent?: boolean;
     [key: string]: any;
@@ -64,6 +64,10 @@ const getToolsCount = (agent: Agent) => {
   return mcpCount + customMcpCount + agentpressCount;
 };
 
+const getKnowledgeBasesCount = (agent: Agent) => {
+  return agent.knowledge_bases?.length || 0;
+};
+
 const truncateDescription = (description?: string, maxLength = 100) => {
   if (!description) return 'AI Agent ready to help you with various tasks';
   if (description.length <= maxLength) return description;
@@ -101,7 +105,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
     return getAgentAvatar(agent.agent_id);
   }, [agent.agent_id, agent.avatar, agent.avatar_color]);
 
-  // Subtle tilt effect
+  // Enhanced tilt effect with subtle rotation
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!enableTilt || !cardRef.current) return;
     
@@ -113,10 +117,16 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
     
-    const rotateX = (y - centerY) / 30; // Much more subtle
-    const rotateY = (centerX - x) / 30; // Much more subtle
+    const rotateX = (y - centerY) / 25; // Slightly more pronounced
+    const rotateY = (centerX - x) / 25; // Slightly more pronounced
     
-    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(0)`;
+    // Calculate position percentages for gradient effects
+    const xPercent = (x / rect.width) * 100;
+    const yPercent = (y / rect.height) * 100;
+    
+    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(5px)`;
+    card.style.setProperty('--mouse-x', `${xPercent}%`);
+    card.style.setProperty('--mouse-y', `${yPercent}%`);
   }, [enableTilt]);
 
   const handleMouseLeave = useCallback(() => {
@@ -130,8 +140,11 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
     <div
       ref={cardRef}
       className={cn(
-        'group relative w-full h-[400px] rounded-2xl overflow-hidden transition-all duration-300 ease-out cursor-pointer',
-        'hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-1',
+        'group relative w-full h-[400px] rounded-2xl overflow-hidden transition-all duration-500 ease-out cursor-pointer',
+        'hover:shadow-2xl hover:shadow-black/30 hover:-translate-y-2',
+        // Enhanced hover glow effect
+        'before:absolute before:inset-0 before:rounded-2xl before:p-[1px] before:bg-gradient-to-br before:opacity-0',
+        'hover:before:opacity-100 before:transition-opacity before:duration-500',
         className
       )}
       onMouseMove={handleMouseMove}
@@ -150,54 +163,88 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-      }}
+        // CSS variables for mouse position
+        '--mouse-x': '50%',
+        '--mouse-y': '50%',
+      } as React.CSSProperties}
     >
-      {/* Subtle gradient overlay on hover */}
+      {/* Animated border glow on hover */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{
           background: `
             linear-gradient(135deg, 
-              ${agentStyling.color}15 0%, 
-              ${agentStyling.color}08 100%
+              ${agentStyling.color}40 0%, 
+              ${agentStyling.color}20 50%,
+              ${agentStyling.color}40 100%
+            )
+          `,
+          filter: 'blur(8px)',
+          zIndex: -1,
+        }}
+      />
+      
+      {/* Spotlight effect following mouse */}
+      <div 
+        className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-300 pointer-events-none"
+        style={{
+          background: `
+            radial-gradient(
+              200px circle at var(--mouse-x) var(--mouse-y),
+              ${agentStyling.color}20 0%,
+              transparent 50%
+            )
+          `,
+        }}
+      />
+      
+      {/* Subtle gradient overlay with enhanced hover effect */}
+      <div 
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
+        style={{
+          background: `
+            linear-gradient(135deg, 
+              ${agentStyling.color}12 0%, 
+              ${agentStyling.color}06 100%
             )
           `,
         }}
       />
       
       {/* Content */}
-      <div className="relative h-full flex flex-col p-6">
+      <div className="relative h-full flex flex-col p-6 z-10">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-lg"
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:scale-105"
               style={{
-                background: `linear-gradient(135deg, ${agentStyling.color}20 0%, ${agentStyling.color}40 100%)`,
-                border: `1px solid ${agentStyling.color}30`,
+                background: `linear-gradient(135deg, ${agentStyling.color}25 0%, ${agentStyling.color}45 100%)`,
+                border: `1px solid ${agentStyling.color}40`,
+                boxShadow: `0 4px 15px ${agentStyling.color}20`,
               }}
             >
               {agentStyling.avatar}
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white/90 truncate max-w-[200px]">
+              <h3 className="text-xl font-semibold text-white/90 truncate max-w-[200px] transition-colors duration-300 group-hover:text-white">
                 {agent.name}
               </h3>
               <div className="flex items-center gap-2 mt-1">
                 {agent.is_default && (
-                  <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-200 border-amber-500/30">
+                  <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-200 border-amber-500/30 transition-all duration-300 group-hover:bg-amber-500/30 group-hover:text-amber-100">
                     <Star className="h-3 w-3 mr-1" />
                     Default
                   </Badge>
                 )}
                 {agent.is_public && (
-                  <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-200 border-green-500/30">
+                  <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-200 border-green-500/30 transition-all duration-300 group-hover:bg-green-500/30 group-hover:text-green-100">
                     <Globe className="h-3 w-3 mr-1" />
                     Public
                   </Badge>
                 )}
                 {agent.is_managed && (
-                  <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-200 border-blue-500/30">
+                  <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-200 border-blue-500/30 transition-all duration-300 group-hover:bg-blue-500/30 group-hover:text-blue-100">
                     <Sparkles className="h-3 w-3 mr-1" />
                     Managed
                   </Badge>
@@ -208,7 +255,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
           
           {/* Download count for marketplace */}
           {mode === 'marketplace' && (
-            <div className="flex items-center gap-1 text-white/60 text-sm">
+            <div className="flex items-center gap-1 text-white/60 text-sm transition-colors duration-300 group-hover:text-white/80">
               <Download className="h-4 w-4" />
               <span>{agent.download_count || 0}</span>
             </div>
@@ -217,7 +264,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
 
         {/* Description */}
         <div className="flex-1 mb-4">
-          <p className="text-white/70 text-sm leading-relaxed">
+          <p className="text-white/70 text-sm leading-relaxed transition-colors duration-300 group-hover:text-white/85">
             {truncateDescription(agent.description)}
           </p>
         </div>
@@ -226,10 +273,20 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         <div className="space-y-3 mb-4">
           {/* Tools */}
           {toolsCount > 0 && (
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-white/60" />
-              <span className="text-white/80 text-sm">
+            <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-white/90">
+              <Zap className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
+              <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
                 {toolsCount} tool{toolsCount !== 1 ? 's' : ''} available
+              </span>
+            </div>
+          )}
+
+          {/* Knowledge Bases */}
+          {getKnowledgeBasesCount(agent) > 0 && (
+            <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-white/90">
+              <BookOpen className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
+              <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
+                {getKnowledgeBasesCount(agent)} knowledge base{getKnowledgeBasesCount(agent) !== 1 ? 's' : ''} connected
               </span>
             </div>
           )}
@@ -237,8 +294,8 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
           {/* Creator info for marketplace */}
           {mode === 'marketplace' && agent.creator_name && (
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-white/60" />
-              <span className="text-white/60 text-sm">
+              <User className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
+              <span className="text-white/60 text-sm group-hover:text-white/80 transition-colors duration-300">
                 By {agent.creator_name}
               </span>
             </div>
@@ -246,8 +303,8 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
 
           {/* Date */}
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-white/60" />
-            <span className="text-white/60 text-sm">
+            <Calendar className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
+            <span className="text-white/60 text-sm group-hover:text-white/80 transition-colors duration-300">
               {mode === 'marketplace' ? 
                 `Published ${formatDate(agent.marketplace_published_at)}` : 
                 `Created ${formatDate(agent.created_at)}`
@@ -262,7 +319,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                 <Badge 
                   key={index} 
                   variant="secondary" 
-                  className="text-xs bg-white/10 text-white/70 border-white/20"
+                  className="text-xs bg-white/10 text-white/70 border-white/20 transition-all duration-300 group-hover:bg-white/15 group-hover:text-white/85"
                 >
                   {tag}
                 </Badge>
@@ -270,7 +327,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               {agent.tags.length > 3 && (
                 <Badge 
                   variant="secondary" 
-                  className="text-xs bg-white/10 text-white/70 border-white/20"
+                  className="text-xs bg-white/10 text-white/70 border-white/20 transition-all duration-300 group-hover:bg-white/15 group-hover:text-white/85"
                 >
                   +{agent.tags.length - 3}
                 </Badge>
@@ -289,7 +346,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               }}
               disabled={isLoading}
               size="sm"
-              className="flex-1 bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
+              className="flex-1 bg-white/10 hover:bg-white/25 text-white border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+              style={{
+                boxShadow: `0 4px 15px ${agentStyling.color}10`,
+              }}
             >
               {isLoading ? (
                 <>
@@ -311,7 +371,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                   onChat?.(agent.agent_id);
                 }}
                 size="sm"
-                className="flex-1 bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
+                className="flex-1 bg-white/10 hover:bg-white/25 text-white border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+                style={{
+                  boxShadow: `0 4px 15px ${agentStyling.color}10`,
+                }}
               >
                 <MessageCircle className="h-4 w-4 mr-2" />
                 Chat
@@ -325,7 +388,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                   }}
                   size="sm"
                   variant="outline"
-                  className="bg-white/5 hover:bg-white/10 text-white/80 border-white/20 backdrop-blur-sm"
+                  className="bg-white/5 hover:bg-white/15 text-white/80 border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-white"
                 >
                   <Wrench className="h-4 w-4" />
                 </Button>
