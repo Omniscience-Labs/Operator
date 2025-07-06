@@ -16,7 +16,6 @@ export interface MarketplaceAgent {
   sharing_preferences?: {
     include_knowledge_bases?: boolean;
     include_custom_mcp_tools?: boolean;
-    disable_customization?: boolean;
   };
   tags: string[];
   download_count: number;

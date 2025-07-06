@@ -28,6 +28,8 @@ interface Agent {
   knowledge_bases?: Array<{ name: string; [key: string]: any }>;
   sharing_preferences?: {
     managed_agent?: boolean;
+    include_knowledge_bases?: boolean;
+    include_custom_mcp_tools?: boolean;
     [key: string]: any;
   };
 }
@@ -362,27 +364,66 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
           </p>
         </div>
 
-        {/* Tools and Info */}
+                  {/* Tools and Info */}
         <div className="space-y-3 mb-4">
-          {/* Tools */}
-          {toolsCount > 0 && (
-            <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-white/90">
-              <Zap className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
-              <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
-                {toolsCount} tool{toolsCount !== 1 ? 's' : ''} available
-              </span>
-            </div>
-          )}
+          {/* Tools - show count based on what's actually available in marketplace vs library */}
+          {(() => {
+            if (mode === 'marketplace') {
+              // In marketplace, only show tools that will actually be shared
+              const mcpCount = (agent.configured_mcps?.length || 0) + (agent.custom_mcps?.length || 0);
+              const mcpToolsIncluded = agent.sharing_preferences?.include_custom_mcp_tools !== false;
+              const agentpressCount = Object.values(agent.agentpress_tools || {}).filter(
+                tool => tool && typeof tool === 'object' && tool.enabled
+              ).length;
+              
+              const displayCount = (mcpToolsIncluded ? mcpCount : 0) + agentpressCount;
+              
+              if (displayCount > 0) {
+                return (
+                  <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-white/90">
+                    <Zap className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
+                    <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
+                      {displayCount} tool{displayCount !== 1 ? 's' : ''} available
+                    </span>
+                  </div>
+                );
+              }
+            } else {
+              // In library mode, show all tools
+              if (toolsCount > 0) {
+                return (
+                  <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-white/90">
+                    <Zap className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
+                    <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
+                      {toolsCount} tool{toolsCount !== 1 ? 's' : ''} available
+                    </span>
+                  </div>
+                );
+              }
+            }
+            return null;
+          })()}
 
-          {/* Knowledge Bases */}
-          {getKnowledgeBasesCount(agent) > 0 && (
-            <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-white/90">
-              <BookOpen className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
-              <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
-                {getKnowledgeBasesCount(agent)} knowledge base{getKnowledgeBasesCount(agent) !== 1 ? 's' : ''} connected
-              </span>
-            </div>
-          )}
+          {/* Knowledge Bases - only show if shared in marketplace mode */}
+          {(() => {
+            const knowledgeBasesCount = getKnowledgeBasesCount(agent);
+            const shouldShow = knowledgeBasesCount > 0 && (
+              mode === 'library' || 
+              (mode === 'marketplace' && agent.sharing_preferences?.include_knowledge_bases !== false)
+            );
+            
+            if (shouldShow) {
+              return (
+                <div className="flex items-center gap-2 transition-colors duration-300 group-hover:text-white/90">
+                  <BookOpen className="h-4 w-4 text-white/60 group-hover:text-white/80 transition-colors duration-300" />
+                  <span className="text-white/80 text-sm group-hover:text-white/90 transition-colors duration-300">
+                    {knowledgeBasesCount} knowledge base{knowledgeBasesCount !== 1 ? 's' : ''} connected
+                  </span>
+                </div>
+              );
+            }
+            return null;
+          })()}
 
           {/* Creator info for marketplace */}
           {mode === 'marketplace' && agent.creator_name && (
@@ -487,33 +528,83 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                 </Button>
               )}
               
-              {/* Publish/Make Private Button */}
+              {/* Publish/Make Private Button with confirmation for managed agents */}
               {!agent.is_managed && agent.is_owned && (
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (agent.is_public || agent.marketplace_published_at) {
-                      onMakePrivate?.(agent.agent_id);
-                    } else {
-                      onPublish?.(agent.agent_id);
-                    }
-                  }}
-                  size="sm"
-                  variant="outline"
-                  className="bg-white/5 hover:bg-white/15 text-white/80 border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-white"
-                >
-                  {agent.is_public || agent.marketplace_published_at ? (
-                    <>
+                agent.is_public || agent.marketplace_published_at ? (
+                  agent.sharing_preferences?.managed_agent ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          onClick={(e) => e.stopPropagation()}
+                          size="sm"
+                          variant="outline"
+                          className="bg-white/5 hover:bg-white/15 text-white/80 border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-white"
+                        >
+                          <Globe className="h-4 w-4 mr-2" />
+                          Make Private
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="max-w-md">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="text-xl">
+                            Make Managed Agent Private
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to make &quot;{agent.name}&quot; private? 
+                            <br /><br />
+                            <strong>This will:</strong>
+                            <ul className="list-disc list-inside mt-2 space-y-1">
+                              <li>Remove it from the marketplace</li>
+                              <li>Remove it from all users&apos; libraries who added it</li>
+                              <li>Stop all live updates to users who had this agent</li>
+                            </ul>
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onMakePrivate?.(agent.agent_id);
+                            }}
+                            disabled={isLoading}
+                            className="bg-destructive hover:bg-destructive/90 text-white"
+                          >
+                            {isLoading ? 'Making Private...' : 'Make Private'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onMakePrivate?.(agent.agent_id);
+                      }}
+                      size="sm"
+                      variant="outline"
+                      className="bg-white/5 hover:bg-white/15 text-white/80 border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-white"
+                    >
                       <Globe className="h-4 w-4 mr-2" />
                       Make Private
-                    </>
-                  ) : (
-                    <>
-                      <Globe className="h-4 w-4 mr-2" />
-                      Publish
-                    </>
-                  )}
-                </Button>
+                    </Button>
+                  )
+                ) : (
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPublish?.(agent.agent_id);
+                    }}
+                    size="sm"
+                    variant="outline"
+                    className="bg-white/5 hover:bg-white/15 text-white/80 border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-white"
+                  >
+                    <Globe className="h-4 w-4 mr-2" />
+                    Publish
+                  </Button>
+                )
               )}
             </>
           )}
