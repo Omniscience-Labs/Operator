@@ -390,7 +390,7 @@ export function NavAgents() {
                 <TooltipTrigger asChild>
                   <LiquidButton
                     size="sm"
-                    className="h-8 w-8 bg-black dark:bg-white text-white dark:text-black hover:bg-black/80 dark:hover:bg-white/80 border-none"
+                    className="h-8 w-8 bg-black dark:bg-white text-white dark:text-black hover:bg-black/80 dark:hover:bg-white/80 border-none shadow-sm hover:shadow-md transition-shadow"
                     onClick={() => window.location.href = '/dashboard'}
                   >
                     <Plus className="h-4 w-4" />
@@ -411,11 +411,11 @@ export function NavAgents() {
               <TooltipTrigger asChild>
                 <LiquidButton
                   size="sm"
-                  className="w-full justify-start bg-black dark:bg-white text-white dark:text-black hover:bg-black/80 dark:hover:bg-white/80 border-none"
+                  className="h-9 w-9 min-w-9 bg-black dark:bg-white text-white dark:text-black hover:bg-black/80 dark:hover:bg-white/80 border-none shadow-sm hover:shadow-md transition-shadow mx-auto"
                   onClick={() => window.location.href = '/dashboard'}
                 >
                   <Plus className="h-4 w-4" />
-                  <span>New Agent</span>
+                  <span className="sr-only">New Agent</span>
                 </LiquidButton>
               </TooltipTrigger>
               <TooltipContent>New Agent</TooltipContent>
