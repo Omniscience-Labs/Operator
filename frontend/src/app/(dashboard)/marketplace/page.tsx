@@ -80,7 +80,7 @@ export default function MarketplacePage() {
 
   if (error) {
     return (
-      <div className="container mx-auto max-w-7xl px-4 py-8">
+      <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full">
         <Alert variant="destructive">
           <AlertDescription>
             Failed to load marketplace agents. Please try again later.
@@ -91,7 +91,7 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8">
+    <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full">
       <div className="space-y-8">
         <div className="space-y-4">
           <div className="space-y-2">

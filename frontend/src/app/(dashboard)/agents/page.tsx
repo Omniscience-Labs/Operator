@@ -195,7 +195,7 @@ export default function AgentsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto max-w-7xl px-4 py-8">
+      <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -208,7 +208,7 @@ export default function AgentsPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8">
+    <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full">
       <div className="space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">

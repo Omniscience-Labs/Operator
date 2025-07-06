@@ -85,7 +85,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       <SidebarProvider>
         <SidebarLeft />
         <SidebarInset>
-          <div className="bg-background">{children}</div>
+          <div className="bg-background min-h-screen overflow-y-auto">{children}</div>
         </SidebarInset>
 
         {/* <PricingAlert 
