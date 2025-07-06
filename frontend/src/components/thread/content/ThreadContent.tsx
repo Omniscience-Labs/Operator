@@ -536,14 +536,6 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
 
     return (
         <>
-            {/* Blur overlay when editing */}
-            {editingMessageId && (
-                <div 
-                    className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-all duration-200"
-                    onClick={cancelEditing}
-                />
-            )}
-            
             {displayMessages.length === 0 && !streamingTextContent && !streamingToolCall &&
                 !streamingText && !currentToolCall && agentStatus === 'idle' ? (
                 // Render empty state outside scrollable container
@@ -558,10 +550,18 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                 // Render scrollable content container
                 <div
                     ref={messagesContainerRef}
-                    className={containerClassName}
+                    className={`${containerClassName} ${editingMessageId ? 'relative' : ''}`}
                     onScroll={handleScroll}
                 >
-                    <div className="mx-auto max-w-3xl md:px-8 min-w-0">
+                    {/* Blur overlay for non-editing messages */}
+                    {editingMessageId && (
+                        <div 
+                            className="absolute inset-0 bg-background/60 backdrop-blur-sm z-30 transition-all duration-200"
+                            onClick={cancelEditing}
+                        />
+                    )}
+                    
+                    <div className={`mx-auto max-w-3xl md:px-8 min-w-0 ${editingMessageId ? 'relative z-40' : ''}`}>
                         <div className="space-y-8 min-w-0">
                             {(() => {
 
