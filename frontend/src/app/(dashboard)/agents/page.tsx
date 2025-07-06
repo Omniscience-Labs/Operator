@@ -235,7 +235,7 @@ export default function AgentsPage() {
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full relative">
       {isMobile && (
-        <div className="absolute top-4 left-4 z-20">
+        <div className="absolute top-6 left-2 z-20">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
