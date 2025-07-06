@@ -198,6 +198,82 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         }}
       />
       
+      {/* Animated Glare Effect */}
+      <div 
+        className="absolute inset-0 opacity-0 group-hover:opacity-60 transition-opacity duration-300 pointer-events-none overflow-hidden"
+        style={{
+          background: `
+            linear-gradient(
+              105deg,
+              transparent 25%,
+              rgba(255, 255, 255, 0.4) 35%,
+              rgba(255, 255, 255, 0.6) 45%,
+              rgba(255, 255, 255, 0.4) 55%,
+              transparent 65%
+            )
+          `,
+          transform: 'translateX(-100%)',
+          animation: 'glare-sweep 2.5s ease-in-out infinite',
+        }}
+      />
+      
+      {/* Secondary Glare Layer */}
+      <div 
+        className="absolute inset-0 opacity-0 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none overflow-hidden"
+        style={{
+          background: `
+            linear-gradient(
+              75deg,
+              transparent 30%,
+              ${agentStyling.color}30 40%,
+              ${agentStyling.color}60 50%,
+              ${agentStyling.color}30 60%,
+              transparent 70%
+            )
+          `,
+          transform: 'translateX(-100%)',
+          animation: 'glare-sweep-colored 3s ease-in-out infinite 0.5s',
+        }}
+      />
+      
+      {/* Prismatic Edge Shine */}
+      <div 
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+        style={{
+          background: `
+            linear-gradient(
+              45deg,
+              transparent,
+              rgba(255, 255, 255, 0.1) 45%,
+              rgba(255, 255, 255, 0.2) 50%,
+              rgba(255, 255, 255, 0.1) 55%,
+              transparent
+            )
+          `,
+          maskImage: `
+            linear-gradient(
+              to bottom,
+              black 0%,
+              black 20%,
+              transparent 22%,
+              transparent 78%,
+              black 80%,
+              black 100%
+            ),
+            linear-gradient(
+              to right,
+              black 0%,
+              black 20%,
+              transparent 22%,
+              transparent 78%,
+              black 80%,
+              black 100%
+            )
+          `,
+          maskComposite: 'intersect',
+        }}
+      />
+      
       {/* Subtle gradient overlay with enhanced hover effect */}
       <div 
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
@@ -397,6 +473,33 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
           )}
         </div>
       </div>
+      
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes glare-sweep {
+          0% {
+            transform: translateX(-100%) skewX(-15deg);
+          }
+          50% {
+            transform: translateX(100%) skewX(-15deg);
+          }
+          100% {
+            transform: translateX(100%) skewX(-15deg);
+          }
+        }
+        
+        @keyframes glare-sweep-colored {
+          0% {
+            transform: translateX(-100%) skewX(-10deg);
+          }
+          60% {
+            transform: translateX(100%) skewX(-10deg);
+          }
+          100% {
+            transform: translateX(100%) skewX(-10deg);
+          }
+        }
+      `}</style>
     </div>
   );
 };
