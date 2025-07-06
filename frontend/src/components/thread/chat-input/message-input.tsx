@@ -102,22 +102,36 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
       
       if (!container) return;
       
-      // Get all sibling elements in the same container
-      const siblings = Array.from(container.children).filter(
-        child => child !== upgradeElementRef.current && child !== upgradeElementRef.current?.parentElement
-      );
-      
       let hasOverlap = false;
       
-      siblings.forEach(sibling => {
-        const siblingRect = sibling.getBoundingClientRect();
+      // Check all elements in the container hierarchy
+      const allElements = container.querySelectorAll('*');
+      
+      allElements.forEach(element => {
+        // Skip the upgrade element itself and its children
+        if (element === upgradeElementRef.current || 
+            upgradeElementRef.current?.contains(element) ||
+            element.contains(upgradeElementRef.current)) {
+          return;
+        }
         
-        // Check if rectangles overlap
+        const elementRect = element.getBoundingClientRect();
+        
+        // Add some padding to make overlap detection more sensitive
+        const padding = 8;
+        const expandedUpgradeRect = {
+          left: upgradeRect.left - padding,
+          right: upgradeRect.right + padding,
+          top: upgradeRect.top - padding,
+          bottom: upgradeRect.bottom + padding
+        };
+        
+        // Check if rectangles overlap (with padding)
         const overlap = !(
-          upgradeRect.right <= siblingRect.left ||
-          upgradeRect.left >= siblingRect.right ||
-          upgradeRect.bottom <= siblingRect.top ||
-          upgradeRect.top >= siblingRect.bottom
+          expandedUpgradeRect.right <= elementRect.left ||
+          expandedUpgradeRect.left >= elementRect.right ||
+          expandedUpgradeRect.bottom <= elementRect.top ||
+          expandedUpgradeRect.top >= elementRect.bottom
         );
         
         if (overlap) {
@@ -132,7 +146,11 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
     useEffect(() => {
       if (!upgradeElementRef.current) return;
       
-      const resizeObserver = new ResizeObserver(checkOverlap);
+      const resizeObserver = new ResizeObserver(() => {
+        // Add a small delay to ensure DOM has settled
+        setTimeout(checkOverlap, 10);
+      });
+      
       const container = upgradeElementRef.current.closest('.flex');
       
       if (container) {
@@ -142,11 +160,16 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
         resizeObserver.observe(upgradeElementRef.current);
       }
       
-      // Initial check
-      checkOverlap();
+      // Initial check with delay
+      setTimeout(checkOverlap, 100);
+      
+      // Also check on window resize
+      const handleResize = () => setTimeout(checkOverlap, 10);
+      window.addEventListener('resize', handleResize);
       
       return () => {
         resizeObserver.disconnect();
+        window.removeEventListener('resize', handleResize);
       };
     }, [checkOverlap]);
     
