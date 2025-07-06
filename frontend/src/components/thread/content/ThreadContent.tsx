@@ -20,7 +20,6 @@ import { AgentLoader } from './loader';
 import { parseXmlToolCalls, isNewXmlFormat, extractToolNameFromStream } from '@/components/thread/tool-views/xml-parser';
 import { parseToolResult } from '@/components/thread/tool-views/tool-result-parser';
 import { ReasoningDisplay } from './ReasoningDisplay';
-import StarBorder from '@/Animations/StarBorder/StarBorder';
 
 // Define the set of  tags whose raw XML should be hidden during streaming
 const HIDE_STREAMING_XML_TAGS = new Set([
@@ -732,9 +731,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                                         <div className="rounded-md flex items-center justify-center">
                                                             {agentAvatar}
                                                         </div>
-                                                        <StarBorder as="span" className="ml-2 inline-block" color="rgb(59, 130, 246)" speed="4s" thickness={1}>
-                                                            <p className='text-sm text-muted-foreground'>{agentName ? agentName : 'Operator'}</p>
-                                                        </StarBorder>
+                                                        <p className='ml-2 text-sm text-muted-foreground'>{agentName ? agentName : 'Operator'}</p>
                                                     </div>
                                                     
                                                     {/* Reasoning content - show first if present */}
@@ -1038,9 +1035,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                             <div className="rounded-md flex items-center justify-center">
                                                 {agentAvatar}
                                             </div>
-                                            <StarBorder as="span" className="ml-2 inline-block" color="rgb(59, 130, 246)" speed="4s" thickness={1}>
-                                                <p className='text-sm text-muted-foreground'>{agentName}</p>
-                                            </StarBorder>
+                                            <p className='ml-2 text-sm text-muted-foreground'>{agentName}</p>
                                         </div>
                                         
                                         {/* Tool call content */}
@@ -1146,9 +1141,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                     }}
                                 >
                                 
-                                    <StarBorder as="span" className="inline-block" color="rgb(59, 130, 246)" speed="4s" thickness={1}>
-                                        <span>{agentName ? `${agentName} is working...` : 'Operator is working...'}</span>
-                                    </StarBorder>
+                                    <span>{agentName ? `${agentName} is working...` : 'Operator is working...'}</span>
                                 </motion.button>
                             </motion.div>
                         )}
