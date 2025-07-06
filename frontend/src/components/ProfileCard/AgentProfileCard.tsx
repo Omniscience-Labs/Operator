@@ -562,7 +562,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 pt-2 mt-auto">
           {mode === 'marketplace' ? (
             <Button
               onClick={(e) => {
@@ -571,20 +571,20 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               }}
               disabled={isLoading}
               size="sm"
-              className="flex-1 bg-background/10 hover:bg-background/25 text-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+              className="flex-1 min-w-0 bg-background/10 hover:bg-background/25 text-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
               style={{
                 boxShadow: `0 4px 15px ${agentStyling.color}10`,
               }}
             >
               {isLoading ? (
                 <>
-                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-foreground border-t-transparent mr-2" />
-                  Adding...
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-foreground border-t-transparent mr-2 flex-shrink-0" />
+                  <span className="truncate">Adding...</span>
                 </>
               ) : (
                 <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Add to Library
+                  <Download className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">Add to Library</span>
                 </>
               )}
             </Button>
@@ -596,13 +596,13 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                   onChat?.(agent.agent_id);
                 }}
                 size="sm"
-                className="flex-1 bg-background/10 hover:bg-background/25 text-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+                className="flex-1 min-w-0 bg-background/10 hover:bg-background/25 text-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
                 style={{
                   boxShadow: `0 4px 15px ${agentStyling.color}10`,
                 }}
               >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Chat
+                <MessageCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Chat</span>
               </Button>
               
               {!agent.is_managed && (
@@ -613,7 +613,8 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                   }}
                   size="sm"
                   variant="outline"
-                  className="bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
+                  className="flex-shrink-0 w-10 h-8 p-0 bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
+                  title="Customize agent"
                 >
                   <Wrench className="h-4 w-4" />
                 </Button>
@@ -629,10 +630,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                           onClick={(e) => e.stopPropagation()}
                           size="sm"
                           variant="outline"
-                          className="bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
+                          className="flex-shrink-0 whitespace-nowrap bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
                         >
-                          <Globe className="h-4 w-4 mr-2" />
-                          Make Private
+                          <Globe className="h-4 w-4 mr-1 flex-shrink-0" />
+                          <span className="hidden sm:inline">Private</span>
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent className="max-w-md">
@@ -676,10 +677,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                       }}
                       size="sm"
                       variant="outline"
-                      className="bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
+                      className="flex-shrink-0 whitespace-nowrap bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
                     >
-                      <Globe className="h-4 w-4 mr-2" />
-                      Make Private
+                      <Globe className="h-4 w-4 mr-1 flex-shrink-0" />
+                      <span className="hidden sm:inline">Private</span>
                     </Button>
                   )
                 ) : (
@@ -690,10 +691,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                     }}
                     size="sm"
                     variant="outline"
-                    className="bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
+                    className="flex-shrink-0 whitespace-nowrap bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
                   >
-                    <Globe className="h-4 w-4 mr-2" />
-                    Publish
+                    <Globe className="h-4 w-4 mr-1 flex-shrink-0" />
+                    <span className="hidden sm:inline">Publish</span>
                   </Button>
                 )
               )}
@@ -707,7 +708,8 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                   }}
                   size="sm"
                   variant="outline"
-                  className="bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
+                  className="flex-shrink-0 w-10 h-8 p-0 bg-background/5 hover:bg-background/15 text-muted-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-foreground"
+                  title="Share agent"
                 >
                   <Share2 className="h-4 w-4" />
                 </Button>
