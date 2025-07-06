@@ -39,6 +39,8 @@ interface AgentProfileCardProps {
   onCustomize?: (agentId: string) => void;
   onDelete?: (agentId: string) => void;
   onAddToLibrary?: (agentId: string) => void;
+  onPublish?: (agentId: string) => void;
+  onMakePrivate?: (agentId: string) => void;
   isLoading?: boolean;
   enableTilt?: boolean;
 }
@@ -93,6 +95,8 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
   onCustomize,
   onDelete,
   onAddToLibrary,
+  onPublish,
+  onMakePrivate,
   isLoading = false,
   enableTilt = true,
 }) => {
@@ -413,6 +417,35 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                   <Wrench className="h-4 w-4" />
                 </Button>
               )}
+              
+              {/* Publish/Make Private Button */}
+              {!agent.is_managed && agent.is_owned && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (agent.is_public || agent.marketplace_published_at) {
+                      onMakePrivate?.(agent.agent_id);
+                    } else {
+                      onPublish?.(agent.agent_id);
+                    }
+                  }}
+                  size="sm"
+                  variant="outline"
+                  className="bg-white/5 hover:bg-white/15 text-white/80 border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:text-white"
+                >
+                  {agent.is_public || agent.marketplace_published_at ? (
+                    <>
+                      <Globe className="h-4 w-4 mr-2" />
+                      Make Private
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="h-4 w-4 mr-2" />
+                      Publish
+                    </>
+                  )}
+                </Button>
+              )}
             </>
           )}
         </div>
@@ -421,4 +454,4 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
   );
 };
 
-export default AgentProfileCard; 
+export default AgentProfileCard;

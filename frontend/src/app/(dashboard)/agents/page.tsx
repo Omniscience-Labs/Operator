@@ -5,7 +5,9 @@ import { Plus, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { UpdateAgentDialog } from './_components/update-agent-dialog';
+import { PublishAgentDialog } from './_components/publish-agent-dialog';
 import { useAgents, useUpdateAgent, useDeleteAgent, useRemoveAgentFromLibrary, useOptimisticAgentUpdate, useCreateAgent } from '@/hooks/react-query/agents/use-agents';
+import { usePublishAgent, useUnpublishAgent } from '@/hooks/react-query/marketplace/use-marketplace';
 import { SearchAndFilters } from './_components/search-and-filters';
 import { ResultsInfo } from './_components/results-info';
 import { EmptyState } from './_components/empty-state';
@@ -35,6 +37,7 @@ export default function AgentsPage() {
   const router = useRouter();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
+  const [publishDialogAgent, setPublishDialogAgent] = useState<any>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   
   
@@ -87,6 +90,7 @@ export default function AgentsPage() {
   const deleteAgentMutation = useDeleteAgent();
   const removeFromLibraryMutation = useRemoveAgentFromLibrary();
   const createAgentMutation = useCreateAgent();
+  const unpublishAgentMutation = useUnpublishAgent();
   const { optimisticallyUpdateAgent, revertOptimisticUpdate } = useOptimisticAgentUpdate();
 
   const agents = agentsResponse?.agents || [];
@@ -193,6 +197,23 @@ export default function AgentsPage() {
     }
   };
 
+  const handlePublish = (agentId: string) => {
+    const agent = agents.find(a => a.agent_id === agentId);
+    if (agent) {
+      setPublishDialogAgent(agent);
+    }
+  };
+
+  const handleMakePrivate = async (agentId: string) => {
+    try {
+      await unpublishAgentMutation.mutateAsync(agentId);
+      toast.success('Agent made private successfully');
+    } catch (error) {
+      console.error('Error making agent private:', error);
+      toast.error('Failed to make agent private');
+    }
+  };
+
   if (error) {
     return (
       <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full">
@@ -283,6 +304,8 @@ export default function AgentsPage() {
                 onChat={(agentId) => router.push(`/dashboard?agent_id=${agentId}`)}
                 onCustomize={handleEditAgent}
                 onDelete={handleDeleteAgent}
+                onPublish={handlePublish}
+                onMakePrivate={handleMakePrivate}
                 isLoading={deleteAgentMutation.isPending && deleteAgentMutation.variables === agent.agent_id}
                 enableTilt={true}
               />
@@ -308,6 +331,17 @@ export default function AgentsPage() {
           }}
           onAgentUpdated={loadAgents}
         />
+
+        {publishDialogAgent && (
+          <PublishAgentDialog
+            agent={publishDialogAgent}
+            isOpen={!!publishDialogAgent}
+            onClose={() => {
+              setPublishDialogAgent(null);
+              loadAgents();
+            }}
+          />
+        )}
       </div>
     </div>
   );
