@@ -1,5 +1,6 @@
-import React, { useRef, useCallback, useMemo } from 'react';
+import React, { useRef, useCallback, useMemo, useState } from 'react';
 import { FileAudio, MoreHorizontal, Edit2, Trash2, Download, Share2, Move, MessageSquare, Calendar, Clock, Users, FolderOpen, Folder } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -47,6 +48,8 @@ interface MeetingProfileCardProps {
   enableTilt?: boolean;
   isDragging?: boolean;
   onDragStart?: (e: React.DragEvent, type: 'meeting', id: string) => void;
+  isHighlighted?: boolean;
+  onHighlightChange?: (id: string | null, type: 'meeting' | 'folder') => void;
 }
 
 interface FolderProfileCardProps {
@@ -66,6 +69,8 @@ interface FolderProfileCardProps {
   onDragLeave?: (e: React.DragEvent, folderId: string) => void;
   onDrop?: (e: React.DragEvent, folderId: string) => void;
   dragOverTarget?: string | null;
+  isHighlighted?: boolean;
+  onHighlightChange?: (id: string | null, type: 'meeting' | 'folder') => void;
 }
 
 type MeetingCardProps = MeetingProfileCardProps | FolderProfileCardProps;
@@ -139,8 +144,12 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
   enableTilt = true,
   isDragging = false,
   onDragStart,
+  isHighlighted = false,
+  onHighlightChange,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const statusColors = getStatusColor(meeting.status);
 
   // Enhanced tilt effect
@@ -170,6 +179,50 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
     if (!cardRef.current) return;
     cardRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0)';
   }, []);
+
+  // Mobile tap handlers with scroll detection
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (isMobile && e.touches.length === 1) {
+      const touch = e.touches[0];
+      touchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now()
+      };
+    }
+  }, [isMobile]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (isMobile && touchStartRef.current && onHighlightChange) {
+      const touch = e.changedTouches[0];
+      const touchStart = touchStartRef.current;
+      
+      // Calculate movement and time
+      const deltaX = Math.abs(touch.clientX - touchStart.x);
+      const deltaY = Math.abs(touch.clientY - touchStart.y);
+      const deltaTime = Date.now() - touchStart.time;
+      
+      // Only highlight if:
+      // 1. Movement is small (< 10px in any direction) - not scrolling
+      // 2. Touch duration is reasonable (< 500ms) - not a long press
+      const isValidTap = deltaX < 10 && deltaY < 10 && deltaTime < 500;
+      
+      if (isValidTap) {
+        // Prevent triggering click events
+        e.preventDefault();
+        // Toggle highlight state
+        onHighlightChange(isHighlighted ? null : meeting.meeting_id, 'meeting');
+      }
+      
+      touchStartRef.current = null;
+    }
+  }, [isMobile, onHighlightChange, isHighlighted, meeting.meeting_id]);
+
+  const handleTouchCancel = useCallback(() => {
+    if (isMobile) {
+      touchStartRef.current = null;
+    }
+  }, [isMobile]);
 
   const buildFolderTree = (folders: MeetingFolder[], parentId?: string): MeetingFolder[] => {
     return folders
@@ -221,10 +274,17 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
         'group relative w-full h-[400px] rounded-2xl overflow-hidden transition-all duration-500 ease-out cursor-pointer',
         'hover:shadow-2xl hover:shadow-black/30 hover:-translate-y-2',
         isDragging && 'opacity-50 scale-95',
+        // Mobile tap effects (same as hover)
+        isHighlighted && [
+          'shadow-2xl shadow-black/30 -translate-y-2'
+        ],
         className
       )}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
       style={{
         background: `
           linear-gradient(135deg, 
@@ -245,7 +305,10 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
     >
       {/* Animated border glow */}
       <div 
-        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 card-border-glow"
+        className={cn(
+          "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 card-border-glow",
+          isHighlighted && "opacity-100"
+        )}
         style={{
           background: `
             linear-gradient(135deg, 
@@ -261,7 +324,10 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
       
       {/* Spotlight effect */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-300 pointer-events-none"
+        className={cn(
+          "absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-300 pointer-events-none",
+          isHighlighted && "opacity-30"
+        )}
         style={{
           background: `
             radial-gradient(
@@ -275,7 +341,10 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
       
       {/* Enhanced Colored Glare Effect */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-70 transition-opacity duration-500 pointer-events-none overflow-hidden glare-sweep-colored-animation"
+        className={cn(
+          "absolute inset-0 opacity-0 group-hover:opacity-70 transition-opacity duration-500 pointer-events-none overflow-hidden glare-sweep-colored-animation",
+          isHighlighted && "opacity-70"
+        )}
         style={{
           background: `
             linear-gradient(
@@ -485,8 +554,12 @@ const FolderCard: React.FC<FolderProfileCardProps> = ({
   onDragLeave,
   onDrop,
   dragOverTarget,
+  isHighlighted = false,
+  onHighlightChange,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const folderColors = getFolderColor();
 
   // Enhanced tilt effect
@@ -516,6 +589,50 @@ const FolderCard: React.FC<FolderProfileCardProps> = ({
     if (!cardRef.current) return;
     cardRef.current.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0)';
   }, []);
+
+  // Mobile tap handlers with scroll detection
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (isMobile && e.touches.length === 1) {
+      const touch = e.touches[0];
+      touchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now()
+      };
+    }
+  }, [isMobile]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (isMobile && touchStartRef.current && onHighlightChange) {
+      const touch = e.changedTouches[0];
+      const touchStart = touchStartRef.current;
+      
+      // Calculate movement and time
+      const deltaX = Math.abs(touch.clientX - touchStart.x);
+      const deltaY = Math.abs(touch.clientY - touchStart.y);
+      const deltaTime = Date.now() - touchStart.time;
+      
+      // Only highlight if:
+      // 1. Movement is small (< 10px in any direction) - not scrolling
+      // 2. Touch duration is reasonable (< 500ms) - not a long press
+      const isValidTap = deltaX < 10 && deltaY < 10 && deltaTime < 500;
+      
+      if (isValidTap) {
+        // Prevent triggering click events
+        e.preventDefault();
+        // Toggle highlight state
+        onHighlightChange(isHighlighted ? null : folder.folder_id, 'folder');
+      }
+      
+      touchStartRef.current = null;
+    }
+  }, [isMobile, onHighlightChange, isHighlighted, folder.folder_id]);
+
+  const handleTouchCancel = useCallback(() => {
+    if (isMobile) {
+      touchStartRef.current = null;
+    }
+  }, [isMobile]);
 
   const buildFolderTree = (folders: MeetingFolder[], parentId?: string): MeetingFolder[] => {
     return folders
@@ -572,10 +689,17 @@ const FolderCard: React.FC<FolderProfileCardProps> = ({
         'hover:shadow-2xl hover:shadow-black/30 hover:-translate-y-2',
         isDragging && 'opacity-50 scale-95',
         dragOverTarget === folder.folder_id && 'bg-blue-500/20 border-blue-400',
+        // Mobile tap effects (same as hover)
+        isHighlighted && [
+          'shadow-2xl shadow-black/30 -translate-y-2'
+        ],
         className
       )}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
       style={{
         background: `
           linear-gradient(135deg, 
@@ -596,7 +720,10 @@ const FolderCard: React.FC<FolderProfileCardProps> = ({
     >
       {/* Animated border glow */}
       <div 
-        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 card-border-glow"
+        className={cn(
+          "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 card-border-glow",
+          isHighlighted && "opacity-100"
+        )}
         style={{
           background: `
             linear-gradient(135deg, 
@@ -612,7 +739,10 @@ const FolderCard: React.FC<FolderProfileCardProps> = ({
       
       {/* Spotlight effect */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-300 pointer-events-none"
+        className={cn(
+          "absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-300 pointer-events-none",
+          isHighlighted && "opacity-30"
+        )}
         style={{
           background: `
             radial-gradient(
@@ -626,7 +756,10 @@ const FolderCard: React.FC<FolderProfileCardProps> = ({
       
       {/* Enhanced Colored Glare Effect */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-70 transition-opacity duration-500 pointer-events-none overflow-hidden glare-sweep-colored-animation"
+        className={cn(
+          "absolute inset-0 opacity-0 group-hover:opacity-70 transition-opacity duration-500 pointer-events-none overflow-hidden glare-sweep-colored-animation",
+          isHighlighted && "opacity-70"
+        )}
         style={{
           background: `
             linear-gradient(

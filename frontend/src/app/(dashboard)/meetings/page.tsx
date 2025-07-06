@@ -69,6 +69,9 @@ export default function MeetingsPage() {
   // Drag and drop states
   const [draggedItem, setDraggedItem] = useState<{ type: 'meeting' | 'folder'; id: string } | null>(null);
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
+  
+  // Mobile highlight state
+  const [highlightedItem, setHighlightedItem] = useState<{ id: string; type: 'meeting' | 'folder' } | null>(null);
 
   // Load meetings and folders
   useEffect(() => {
@@ -269,6 +272,15 @@ ${meeting.transcript}`;
   // Start chat with meeting transcript
   const startChatWithMeeting = (meetingId: string) => {
     router.push(`/dashboard?attachMeeting=${meetingId}`);
+  };
+
+  // Handle mobile highlight state
+  const handleHighlightChange = (id: string | null, type: 'meeting' | 'folder') => {
+    if (id) {
+      setHighlightedItem({ id, type });
+    } else {
+      setHighlightedItem(null);
+    }
   };
 
   // Drag and drop handlers
@@ -565,6 +577,8 @@ ${meeting.transcript}`;
                 onEdit={(folderId, currentName) => setEditingItem({ type: 'folder', id: folderId, name: currentName })}
                 onDelete={handleDeleteFolder}
                 onMove={handleMoveFolder}
+                isHighlighted={highlightedItem?.id === folder.folder_id && highlightedItem?.type === 'folder'}
+                onHighlightChange={handleHighlightChange}
               />
           ))}
 
@@ -585,6 +599,8 @@ ${meeting.transcript}`;
                 onDownloadTranscript={downloadTranscript}
                 onOpenInChat={startChatWithMeeting}
                 onMove={handleMoveMeeting}
+                isHighlighted={highlightedItem?.id === meeting.meeting_id && highlightedItem?.type === 'meeting'}
+                onHighlightChange={handleHighlightChange}
               />
             </div>
           ))}
