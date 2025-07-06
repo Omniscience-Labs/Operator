@@ -150,10 +150,16 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
       const isValidTap = deltaX < 10 && deltaY < 10 && deltaTime < 500;
       
       if (isValidTap) {
-        // Prevent triggering click events
-        e.preventDefault();
-        // Toggle highlight state
-        onHighlightChange(isHighlighted ? null : agent.agent_id);
+        // Check if the touch target is a button or inside a button/dropdown
+        const target = e.target as HTMLElement;
+        const isClickableElement = target.closest('button, [role="menuitem"], [role="button"], a, input, select, textarea') !== null;
+        
+        if (!isClickableElement) {
+          // Only prevent default and toggle highlight if not touching a clickable element
+          e.preventDefault();
+          // Toggle highlight state
+          onHighlightChange(isHighlighted ? null : agent.agent_id);
+        }
       }
       
       touchStartRef.current = null;

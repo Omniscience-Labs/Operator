@@ -208,10 +208,16 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
       const isValidTap = deltaX < 10 && deltaY < 10 && deltaTime < 500;
       
       if (isValidTap) {
-        // Prevent triggering click events
-        e.preventDefault();
-        // Toggle highlight state
-        onHighlightChange(isHighlighted ? null : meeting.meeting_id, 'meeting');
+        // Check if the touch target is a button or inside a button/dropdown
+        const target = e.target as HTMLElement;
+        const isClickableElement = target.closest('button, [role="menuitem"], [role="button"], a, input, select, textarea') !== null;
+        
+        if (!isClickableElement) {
+          // Only prevent default and toggle highlight if not touching a clickable element
+          e.preventDefault();
+          // Toggle highlight state
+          onHighlightChange(isHighlighted ? null : meeting.meeting_id, 'meeting');
+        }
       }
       
       touchStartRef.current = null;
@@ -405,7 +411,10 @@ const MeetingCard: React.FC<MeetingProfileCardProps> = ({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-white/10 h-8 w-8 p-0"
+                className={cn(
+                  "opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-white/10 h-8 w-8 p-0",
+                  isHighlighted && "opacity-100"
+                )}
               >
                 <MoreHorizontal className="h-4 w-4 text-white" />
               </Button>
@@ -618,10 +627,16 @@ const FolderCard: React.FC<FolderProfileCardProps> = ({
       const isValidTap = deltaX < 10 && deltaY < 10 && deltaTime < 500;
       
       if (isValidTap) {
-        // Prevent triggering click events
-        e.preventDefault();
-        // Toggle highlight state
-        onHighlightChange(isHighlighted ? null : folder.folder_id, 'folder');
+        // Check if the touch target is a button or inside a button/dropdown
+        const target = e.target as HTMLElement;
+        const isClickableElement = target.closest('button, [role="menuitem"], [role="button"], a, input, select, textarea') !== null;
+        
+        if (!isClickableElement) {
+          // Only prevent default and toggle highlight if not touching a clickable element
+          e.preventDefault();
+          // Toggle highlight state
+          onHighlightChange(isHighlighted ? null : folder.folder_id, 'folder');
+        }
       }
       
       touchStartRef.current = null;
@@ -817,7 +832,10 @@ const FolderCard: React.FC<FolderProfileCardProps> = ({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-white/10 h-8 w-8 p-0"
+                className={cn(
+                  "opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-white/10 h-8 w-8 p-0",
+                  isHighlighted && "opacity-100"
+                )}
               >
                 <MoreHorizontal className="h-4 w-4 text-white" />
               </Button>

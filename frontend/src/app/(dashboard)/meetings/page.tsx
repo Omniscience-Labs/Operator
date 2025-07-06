@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Folder, FileAudio, MoreHorizontal, Edit2, Trash2, Download, Share2, FolderOpen, Move, MessageSquare, Loader2 } from 'lucide-react';
+import { Plus, Search, Folder, FileAudio, MoreHorizontal, Edit2, Trash2, Download, Share2, FolderOpen, Move, MessageSquare, Loader2, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -45,9 +45,14 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { MeetingProfileCard } from '@/components/ProfileCard/MeetingProfileCard';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useSidebar } from '@/components/ui/sidebar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function MeetingsPage() {
   const router = useRouter();
+  const isMobile = useIsMobile();
+  const { setOpenMobile } = useSidebar();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [folders, setFolders] = useState<MeetingFolder[]>([]);
   const [allFolders, setAllFolders] = useState<MeetingFolder[]>([]);
@@ -447,10 +452,29 @@ ${meeting.transcript}`;
   }
 
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8">
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 relative">
+      {isMobile && (
+        <div className="absolute top-6 left-2 z-20">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setOpenMobile(true)}
+              >
+                <Menu className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Open menu</TooltipContent>
+          </Tooltip>
+        </div>
+      )}
+      
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 sm:mb-8 mt-8 sm:mt-0">
           <div className="space-y-1 flex-1 min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">Meetings</h1>
             {/* Breadcrumbs */}
