@@ -3,6 +3,7 @@ import { HeroVideoSection } from '@/components/home/sections/hero-video-section'
 import { siteConfig } from '@/lib/home';
 import { ArrowRight, Github, X, AlertCircle, Sparkles } from 'lucide-react';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
+import { LampContainer } from '@/components/ui/lamp';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useScroll, motion } from 'motion/react';
@@ -154,94 +155,100 @@ export function HeroSection() {
   };
 
   // Handle form submission
-  const handleSubmit = async (e?: FormEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation(); // Stop event propagation to prevent dialog closing
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
+
+    setIsSubmitting(true);
+    setAuthError(null);
+
+    try {
+      // If not authenticated, show auth dialog
+      if (!user) {
+        localStorage.setItem(PENDING_PROMPT_KEY, inputValue.trim());
+        setAuthDialogOpen(true);
+        return;
+      }
+
+      // If authenticated, proceed with agent creation
+      const formData = new FormData();
+      formData.append('prompt', inputValue.trim());
+      formData.append('stream', 'true');
+      
+      const result = await initiateAgentMutation.mutateAsync(formData);
+
+      if (result.thread_id) {
+        setInitiatedThreadId(result.thread_id);
+        setInputValue('');
+        router.push(`/agents/${result.thread_id}`);
+      } else {
+        throw new Error('Failed to create agent');
+      }
+    } catch (error: any) {
+      console.error('Error in handleSubmit:', error);
+      
+      if (error?.name === 'BillingError') {
+        handleBillingError(error as BillingError);
+      } else {
+        const errorMessage = error?.message || 'An unexpected error occurred';
+        toast.error(errorMessage);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-
-    if (!inputValue.trim() || isSubmitting) return;
-
-    // If user is not logged in, save prompt and show auth dialog
-    if (!user && !isLoading) {
-      // Save prompt to localStorage BEFORE showing the dialog
-      localStorage.setItem(PENDING_PROMPT_KEY, inputValue.trim());
-      setAuthDialogOpen(true);
-      return;
-    }
-
-    // User is logged in, create the agent
-    createAgentWithPrompt();
   };
 
   // Handle Enter key press
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      e.preventDefault(); // Prevent default form submission
-      e.stopPropagation(); // Stop event propagation
-      handleSubmit();
+      e.preventDefault();
+      handleSubmit(e as any);
     }
   };
 
   // Handle auth form submission
-  const handleSignIn = async (prevState: any, formData: FormData) => {
+  const handleSignIn = async (formData: FormData) => {
     setAuthError(null);
+    
     try {
-      // Implement sign in logic here
       const email = formData.get('email') as string;
       const password = formData.get('password') as string;
+      
+      if (!email || !password) {
+        setAuthError('Please fill in all fields');
+        return;
+      }
 
-      // Add the returnUrl to the form data for proper redirection
-      formData.append('returnUrl', '/dashboard');
-
-      // Call your authentication function here
-
-      // Return any error state
-      return { message: 'Invalid credentials' };
-    } catch (error) {
+      // Here you would implement the actual sign in logic
+      // For now, we'll just show an error that this is not implemented
+      setAuthError('Email/password sign in not implemented yet. Please use Google or Microsoft.');
+      
+    } catch (error: any) {
       console.error('Sign in error:', error);
-      setAuthError(
-        error instanceof Error ? error.message : 'An error occurred',
-      );
-      return { message: 'An error occurred during sign in' };
+      setAuthError(error.message || 'Failed to sign in');
     }
   };
 
+  // Check for pending prompt after auth
+  useEffect(() => {
+    if (user && !isLoading) {
+      const pendingPrompt = localStorage.getItem(PENDING_PROMPT_KEY);
+      if (pendingPrompt) {
+        setInputValue(pendingPrompt);
+        localStorage.removeItem(PENDING_PROMPT_KEY);
+        setAuthDialogOpen(false);
+      }
+    }
+  }, [user, isLoading]);
+
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
-      <div className="relative flex flex-col items-center w-full px-6">
-        {/* Left side flickering grid with gradient fades - more subtle */}
-        <div className="absolute left-0 top-0 h-[100svh] w-1/3 -z-10 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-background/60 to-background z-10" />
-          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
-          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
+      {/* Lamp Container as Background */}
+      <LampContainer className="absolute inset-0 -z-10">
+        <div /> {/* Empty div to satisfy children requirement */}
+      </LampContainer>
 
-          <FlickeringGrid
-            className="h-full w-full"
-            squareSize={mounted && tablet ? 1.5 : 2}
-            gridGap={mounted && tablet ? 1.5 : 2}
-            color="var(--secondary)"
-            maxOpacity={0.15}
-            flickerChance={isScrolling ? 0.005 : 0.02}
-          />
-        </div>
-
-        {/* Right side flickering grid with gradient fades - more subtle */}
-        <div className="absolute right-0 top-0 h-[100svh] w-1/3 -z-10 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-l from-transparent via-background/60 to-background z-10" />
-          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background via-background/90 to-transparent z-10" />
-          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background via-background/90 to-transparent z-10" />
-
-          <FlickeringGrid
-            className="h-full w-full"
-            squareSize={mounted && tablet ? 1.5 : 2}
-            gridGap={mounted && tablet ? 1.5 : 2}
-            color="var(--secondary)"
-            maxOpacity={0.15}
-            flickerChance={isScrolling ? 0.005 : 0.02}
-          />
-        </div>
-
+      <div className="relative flex flex-col items-center w-full px-6 z-10">
         {/* Center content */}
         <motion.div 
           className="relative z-10 max-w-4xl mx-auto h-full w-full flex flex-col gap-12 lg:gap-16 items-center justify-center py-32"
@@ -257,16 +264,16 @@ export function HeroSection() {
           >
             <Link
               href="#enterprise"
-              className="group relative inline-flex items-center gap-2 rounded-full border border-border/40 bg-background/80 backdrop-blur-sm px-4 py-2 text-sm transition-all duration-300 hover:border-secondary/40 hover:bg-secondary/5 hover:shadow-lg hover:shadow-secondary/10"
+              className="group relative inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-2 text-sm transition-all duration-300 hover:border-white/30 hover:bg-white/15 hover:shadow-lg hover:shadow-cyan-500/20"
             >
               <div className="flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 text-secondary" />
-                <span className="font-medium text-muted-foreground text-xs tracking-wider uppercase group-hover:text-primary transition-colors duration-300">
+                <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
+                <span className="font-medium text-white/90 text-xs tracking-wider uppercase group-hover:text-white transition-colors duration-300">
                   {hero.badge}
                 </span>
               </div>
-              <div className="inline-flex items-center justify-center size-4 rounded-full bg-secondary/10 group-hover:bg-secondary/20 transition-colors duration-300">
-                <ArrowRight className="h-2.5 w-2.5 text-secondary group-hover:translate-x-0.5 transition-transform duration-300" />
+              <div className="inline-flex items-center justify-center size-4 rounded-full bg-cyan-500/20 group-hover:bg-cyan-500/30 transition-colors duration-300">
+                <ArrowRight className="h-2.5 w-2.5 text-cyan-400 group-hover:translate-x-0.5 transition-transform duration-300" />
               </div>
             </Link>
           </motion.div>
@@ -278,10 +285,10 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-balance leading-[1.1] text-foreground">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-balance leading-[1.1] bg-gradient-to-br from-white to-white/80 bg-clip-text text-transparent">
               {hero.title}
             </h1>
-            <p className="text-lg md:text-xl lg:text-2xl text-center text-muted-foreground font-normal text-balance leading-relaxed max-w-2xl tracking-tight">
+            <p className="text-lg md:text-xl lg:text-2xl text-center text-white/70 font-normal text-balance leading-relaxed max-w-2xl tracking-tight">
               {hero.description}
             </p>
           </motion.div>
@@ -296,25 +303,25 @@ export function HeroSection() {
             <form className="w-full relative group" onSubmit={handleSubmit}>
               <div className="relative">
                 {/* Glow effect */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-secondary/20 via-secondary/10 to-secondary/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 via-cyan-400/10 to-cyan-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500"></div>
                 
                 {/* Input container */}
-                <div className="relative flex items-center rounded-full border border-border/50 bg-background/90 backdrop-blur-md px-6 shadow-xl transition-all duration-300 hover:border-secondary/30 focus-within:border-secondary/50 focus-within:shadow-2xl focus-within:shadow-secondary/10">
+                <div className="relative flex items-center rounded-full border border-white/20 bg-white/10 backdrop-blur-md px-6 shadow-xl transition-all duration-300 hover:border-cyan-400/30 focus-within:border-cyan-400/50 focus-within:shadow-2xl focus-within:shadow-cyan-500/20">
                   <input
                     type="text"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent focus:outline-none text-base lg:text-lg placeholder:text-muted-foreground/60 py-2"
+                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent focus:outline-none text-base lg:text-lg placeholder:text-white/50 text-white py-2"
                     disabled={isSubmitting}
                   />
                   <motion.button
                     type="submit"
                     className={`rounded-full p-3 lg:p-4 transition-all duration-300 ${
                       inputValue.trim()
-                        ? 'bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-lg hover:shadow-secondary/25 scale-100'
-                        : 'bg-muted/50 text-muted-foreground scale-95'
+                        ? 'bg-cyan-500 text-white hover:bg-cyan-400 shadow-lg hover:shadow-cyan-500/25 scale-100'
+                        : 'bg-white/20 text-white/50 scale-95'
                     }`}
                     disabled={!inputValue.trim() || isSubmitting}
                     aria-label="Submit"
@@ -322,7 +329,7 @@ export function HeroSection() {
                     whileTap={inputValue.trim() ? { scale: 0.95 } : {}}
                   >
                     {isSubmitting ? (
-                      <div className="h-5 lg:h-6 w-5 lg:w-6 border-2 border-secondary-foreground border-t-transparent rounded-full animate-spin" />
+                      <div className="h-5 lg:h-6 w-5 lg:w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <ArrowRight className="size-5 lg:size-6" />
                     )}
@@ -334,7 +341,7 @@ export function HeroSection() {
 
           {/* Subtle hint text */}
           <motion.p 
-            className="text-sm text-muted-foreground/60 font-medium"
+            className="text-sm text-white/50 font-medium"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
@@ -346,7 +353,7 @@ export function HeroSection() {
 
       {/* Video section with better spacing */}
       <motion.div 
-        className="w-full max-w-6xl mx-auto px-6 pb-20"
+        className="w-full max-w-6xl mx-auto px-6 pb-20 relative z-10"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1, duration: 1 }}
