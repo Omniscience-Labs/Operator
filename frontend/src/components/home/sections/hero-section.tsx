@@ -4,6 +4,7 @@ import { siteConfig } from '@/lib/home';
 import { ArrowRight, Github, X, AlertCircle, Sparkles } from 'lucide-react';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { LampContainer } from '@/components/ui/lamp';
+import { FlipWords } from '@/components/ui/flip-words';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useScroll, motion } from 'motion/react';
@@ -66,6 +67,10 @@ export function HeroSection() {
   // Auth dialog state
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // FlipWords arrays for value proposition
+  const moreWords = ["research", "analysis", "automation", "productivity", "insights", "results", "growth", "efficiency"];
+  const lessWords = ["effort", "time", "work", "stress", "cost", "manual work", "overhead", "resources"];
 
   useEffect(() => {
     setMounted(true);
@@ -302,15 +307,49 @@ export function HeroSection() {
             </form>
           </motion.div>
 
-          {/* Subtle hint text */}
-          <motion.p 
-            className="text-sm text-white/50 font-medium"
+          {/* Dynamic value proposition with FlipWords */}
+          <motion.div 
+            className="text-sm md:text-base lg:text-lg text-white/60 font-medium text-center max-w-2xl"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
           >
-            Try asking: "Help me analyze my team's productivity metrics"
-          </motion.p>
+            {/* Mobile: Stacked layout */}
+            <div className="flex flex-col gap-2 sm:hidden">
+              <div className="flex items-center justify-center gap-1">
+                <span>Do 80% more</span>
+                <FlipWords 
+                  words={moreWords} 
+                  duration={2500}
+                  className="text-cyan-400 font-semibold text-sm"
+                />
+              </div>
+              <div className="flex items-center justify-center gap-1">
+                <span>with 20% the</span>
+                <FlipWords 
+                  words={lessWords} 
+                  duration={3000}
+                  className="text-cyan-400 font-semibold text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Desktop: Inline layout */}
+            <div className="hidden sm:flex items-center justify-center flex-wrap gap-1">
+              <span>Do 80% more</span>
+              <FlipWords 
+                words={moreWords} 
+                duration={2500}
+                className="text-cyan-400 font-semibold"
+              />
+              <span>with 20% the</span>
+              <FlipWords 
+                words={lessWords} 
+                duration={3000}
+                className="text-cyan-400 font-semibold"
+              />
+            </div>
+          </motion.div>
         </motion.div>
       </div>
 

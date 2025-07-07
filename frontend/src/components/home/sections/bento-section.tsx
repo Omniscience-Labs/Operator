@@ -2,64 +2,170 @@
 
 import { SectionHeader } from '@/components/home/section-header';
 import { ProfileCard } from '@/components/ProfileCard';
-import { OrbitingCircles } from '@/components/home/ui/orbiting-circle';
+import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
+import { IconCloud } from '@/components/magicui/icon-cloud';
 import { OmniProcessModal } from '@/components/sidebar/omni-enterprise-modal';
-import { Shield, Lock, Brain, Database, Zap, Users, CheckCircle, ArrowRight, Cloud, Globe, Settings, FileText, BarChart3, MessageSquare, Calendar, Mail, Search } from 'lucide-react';
+import { Shield, Lock, Brain, Database, Zap, Users, CheckCircle, ArrowRight, Cloud, Globe, Settings, FileText, BarChart3, MessageSquare, Calendar, Mail, Search, Server, Cpu, Factory, Wrench, TrendingUp, ShoppingCart, DollarSign, Truck, Package, ClipboardCheck, AlertTriangle, Microscope, HardDrive, Wifi, MonitorSpeaker, Building, Briefcase, Calculator, PieChart, LineChart, Users2, Key, Layers, Boxes, Target, CreditCard, Workflow, GitBranch, Gauge, Activity, Smartphone, Tablet, Laptop, Network, Headphones, Phone, Video, Printer, Timer, MapPin, Globe2, Radio, Antenna, Archive, Edit, Receipt, XCircle, Clock, Folder, FolderOpen } from 'lucide-react';
 
 export function BentoSection() {
-  const secureAIFeatures = [
+  // Transform secure AI features to match Agent interface
+  const secureAIAgents = [
     {
-      id: 1,
-      title: 'Private AI Training',
-      subtitle: 'Your Data, Your Edge',
+      agent_id: 'private-ai-training',
+      name: 'Private AI Training',
       description: 'Train AI models exclusively on your proprietary data. Keep intellectual property secure while building competitive advantages that stay within your organization.',
-      avatar: '/api/placeholder/400/400?text=🔒',
-      miniAvatar: '/api/placeholder/100/100?text=🔒',
-      handle: 'privateai',
-      status: 'Enterprise Ready',
-      behindGradient: 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(220,60%,95%,var(--card-opacity)) 4%,hsla(220,40%,90%,calc(var(--card-opacity)*0.6)) 10%,hsla(220,20%,85%,calc(var(--card-opacity)*0.3)) 50%,hsla(220,0%,80%,0) 100%),radial-gradient(35% 52% at 55% 20%,rgba(59,130,246,0.15) 0%,rgba(59,130,246,0) 100%),radial-gradient(100% 100% at 50% 50%,rgba(59,130,246,0.08) 1%,rgba(59,130,246,0) 76%)',
-      innerGradient: 'linear-gradient(145deg,rgba(30,64,175,0.05) 0%,rgba(55,48,163,0.03) 100%)',
-      keyFeatures: ['Zero data leakage', 'Proprietary model training', 'Competitive advantage protection']
+      avatar: '🔒',
+      avatar_color: '#3B82F6',
+      tags: ['Zero data leakage', 'Proprietary training', 'Competitive advantage'],
+      is_managed: true,
+      is_public: false,
+      created_at: new Date().toISOString(),
+      agentpress_tools: {
+        'private_training': { enabled: true },
+        'data_isolation': { enabled: true },
+        'ip_protection': { enabled: true }
+      }
     },
     {
-      id: 2,
-      title: 'Zero-Trust Security',
-      subtitle: 'Military-Grade Protection',
+      agent_id: 'zero-trust-security',
+      name: 'Zero-Trust Security',
       description: 'Enterprise-grade encryption and zero-trust architecture ensure your sensitive data and AI models remain completely isolated from external threats and competitors.',
-      avatar: '/api/placeholder/400/400?text=🛡️',
-      miniAvatar: '/api/placeholder/100/100?text=🛡️',
-      handle: 'zerotrust',
-      status: 'Security Certified',
-      behindGradient: 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(140,60%,95%,var(--card-opacity)) 4%,hsla(140,40%,90%,calc(var(--card-opacity)*0.6)) 10%,hsla(140,20%,85%,calc(var(--card-opacity)*0.3)) 50%,hsla(140,0%,80%,0) 100%),radial-gradient(35% 52% at 55% 20%,rgba(16,185,129,0.15) 0%,rgba(16,185,129,0) 100%),radial-gradient(100% 100% at 50% 50%,rgba(16,185,129,0.08) 1%,rgba(16,185,129,0) 76%)',
-      innerGradient: 'linear-gradient(145deg,rgba(6,95,70,0.05) 0%,rgba(4,120,87,0.03) 100%)',
-      keyFeatures: ['End-to-end encryption', 'Zero-trust architecture', 'Audit trail monitoring']
+      avatar: '🛡️',
+      avatar_color: '#10B981',
+      tags: ['End-to-end encryption', 'Zero-trust architecture', 'Audit monitoring'],
+      is_managed: true,
+      is_public: false,
+      created_at: new Date().toISOString(),
+      agentpress_tools: {
+        'encryption': { enabled: true },
+        'zero_trust': { enabled: true },
+        'audit_trail': { enabled: true }
+      }
     },
     {
-      id: 3,
-      title: 'Competitive Moat',
-      subtitle: 'Protect Your Advantage',
+      agent_id: 'competitive-moat',
+      name: 'Competitive Moat',
       description: 'Maintain your competitive edge by ensuring proprietary insights, customer data, and business intelligence never benefit competitors or public AI models.',
-      avatar: '/api/placeholder/400/400?text=⚔️',
-      miniAvatar: '/api/placeholder/100/100?text=⚔️',
-      handle: 'competitive',
-      status: 'Market Protection',
-      behindGradient: 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(260,60%,95%,var(--card-opacity)) 4%,hsla(260,40%,90%,calc(var(--card-opacity)*0.6)) 10%,hsla(260,20%,85%,calc(var(--card-opacity)*0.3)) 50%,hsla(260,0%,80%,0) 100%),radial-gradient(35% 52% at 55% 20%,rgba(139,92,246,0.15) 0%,rgba(139,92,246,0) 100%),radial-gradient(100% 100% at 50% 50%,rgba(139,92,246,0.08) 1%,rgba(139,92,246,0) 76%)',
-      innerGradient: 'linear-gradient(145deg,rgba(91,33,182,0.05) 0%,rgba(109,40,217,0.03) 100%)',
-      keyFeatures: ['Data isolation', 'Competitor protection', 'IP safeguarding']
+      avatar: '⚔️',
+      avatar_color: '#8B5CF6',
+      tags: ['Data isolation', 'Competitor protection', 'IP safeguarding'],
+      is_managed: true,
+      is_public: false,
+      created_at: new Date().toISOString(),
+      agentpress_tools: {
+        'data_isolation': { enabled: true },
+        'competitor_protection': { enabled: true },
+        'ip_safeguarding': { enabled: true }
+      }
     },
     {
-      id: 4,
-      title: 'Enterprise Sovereignty',
-      subtitle: 'Complete Control',
-      description: 'Deploy AI infrastructure with full data sovereignty. Self-hosted solutions that learn and improve exclusively from your operations while maintaining complete ownership.',
-      avatar: '/api/placeholder/400/400?text=👑',
-      miniAvatar: '/api/placeholder/100/100?text=👑',
-      handle: 'sovereign',
-      status: 'Self-Hosted',
-      behindGradient: 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(35,60%,95%,var(--card-opacity)) 4%,hsla(35,40%,90%,calc(var(--card-opacity)*0.6)) 10%,hsla(35,20%,85%,calc(var(--card-opacity)*0.3)) 50%,hsla(35,0%,80%,0) 100%),radial-gradient(35% 52% at 55% 20%,rgba(245,158,11,0.15) 0%,rgba(245,158,11,0) 100%),radial-gradient(100% 100% at 50% 50%,rgba(245,158,11,0.08) 1%,rgba(245,158,11,0) 76%)',
-      innerGradient: 'linear-gradient(145deg,rgba(146,64,14,0.05) 0%,rgba(180,83,9,0.03) 100%)',
-      keyFeatures: ['Private cloud deployment', 'Full data ownership', 'Custom governance']
+      agent_id: 'enterprise-sovereignty',
+      name: 'Enterprise Sovereignty',
+      description: 'Deploy AI infrastructure with full data sovereignty. Private cloud solutions that learn and improve exclusively from your operations while maintaining complete ownership.',
+      avatar: '👑',
+      avatar_color: '#F59E0B',
+      tags: ['Private cloud deployment', 'Full data ownership', 'Custom governance'],
+      is_managed: true,
+      is_public: false,
+      created_at: new Date().toISOString(),
+      agentpress_tools: {
+        'private_cloud': { enabled: true },
+        'data_ownership': { enabled: true },
+        'custom_governance': { enabled: true }
+      }
     }
+  ];
+
+  // Enterprise integration icons - comprehensive set for industrial companies
+  const enterpriseIntegrationIcons = [
+    // ERP & Business Systems
+    <Building className="h-8 w-8 text-blue-500" />,
+    <Briefcase className="h-8 w-8 text-indigo-500" />,
+    <Calculator className="h-8 w-8 text-green-500" />,
+    <PieChart className="h-8 w-8 text-purple-500" />,
+    <BarChart3 className="h-8 w-8 text-orange-500" />,
+    <LineChart className="h-8 w-8 text-red-500" />,
+    <TrendingUp className="h-8 w-8 text-emerald-500" />,
+    
+    // Manufacturing & Industrial
+    <Factory className="h-8 w-8 text-gray-600" />,
+    <Cpu className="h-8 w-8 text-cyan-500" />,
+    <Wrench className="h-8 w-8 text-amber-500" />,
+    <Settings className="h-8 w-8 text-slate-500" />,
+    <Gauge className="h-8 w-8 text-blue-600" />,
+    <Activity className="h-8 w-8 text-pink-500" />,
+    <Zap className="h-8 w-8 text-yellow-500" />,
+    
+    // Supply Chain & Logistics
+    <Truck className="h-8 w-8 text-brown-500" />,
+    <Package className="h-8 w-8 text-teal-500" />,
+    <ShoppingCart className="h-8 w-8 text-violet-500" />,
+    <Boxes className="h-8 w-8 text-orange-600" />,
+    <MapPin className="h-8 w-8 text-red-600" />,
+    <Globe2 className="h-8 w-8 text-blue-700" />,
+    
+    // Financial & Accounting
+    <DollarSign className="h-8 w-8 text-green-600" />,
+    <CreditCard className="h-8 w-8 text-indigo-600" />,
+    <Receipt className="h-8 w-8 text-gray-500" />,
+    <Calculator className="h-8 w-8 text-slate-600" />,
+    
+    // Cloud & Infrastructure
+    <Cloud className="h-8 w-8 text-sky-500" />,
+    <Server className="h-8 w-8 text-gray-700" />,
+    <Database className="h-8 w-8 text-blue-800" />,
+    <HardDrive className="h-8 w-8 text-gray-800" />,
+    <Network className="h-8 w-8 text-purple-600" />,
+    <Wifi className="h-8 w-8 text-blue-400" />,
+    
+    // Communication & Collaboration
+    <MessageSquare className="h-8 w-8 text-green-500" />,
+    <Mail className="h-8 w-8 text-blue-500" />,
+    <Phone className="h-8 w-8 text-indigo-500" />,
+    <Video className="h-8 w-8 text-red-500" />,
+    <Users2 className="h-8 w-8 text-purple-500" />,
+    <Headphones className="h-8 w-8 text-orange-500" />,
+    
+    // Document & Content Management
+    <FileText className="h-8 w-8 text-gray-600" />,
+    <Folder className="h-8 w-8 text-yellow-600" />,
+    <Archive className="h-8 w-8 text-brown-600" />,
+    <Search className="h-8 w-8 text-teal-600" />,
+    <Edit className="h-8 w-8 text-violet-600" />,
+    <Printer className="h-8 w-8 text-gray-700" />,
+    
+    // Security & Compliance
+    <Shield className="h-8 w-8 text-red-500" />,
+    <Lock className="h-8 w-8 text-orange-500" />,
+    <Key className="h-8 w-8 text-yellow-500" />,
+    <AlertTriangle className="h-8 w-8 text-amber-500" />,
+    <ClipboardCheck className="h-8 w-8 text-green-500" />,
+    
+    // Quality & Testing
+    <Microscope className="h-8 w-8 text-cyan-600" />,
+    <Target className="h-8 w-8 text-red-600" />,
+    <CheckCircle className="h-8 w-8 text-emerald-600" />,
+    <XCircle className="h-8 w-8 text-red-600" />,
+    
+    // IoT & Sensors
+    <Smartphone className="h-8 w-8 text-gray-600" />,
+    <Tablet className="h-8 w-8 text-blue-600" />,
+    <Laptop className="h-8 w-8 text-indigo-600" />,
+    <MonitorSpeaker className="h-8 w-8 text-purple-600" />,
+    <Radio className="h-8 w-8 text-green-600" />,
+    <Antenna className="h-8 w-8 text-orange-600" />,
+    
+    // Time & Scheduling
+    <Calendar className="h-8 w-8 text-blue-500" />,
+    <Gauge className="h-8 w-8 text-indigo-500" />,
+    <Timer className="h-8 w-8 text-purple-500" />,
+    <Clock className="h-8 w-8 text-red-500" />,
+    
+    // Workflow & Automation
+    <Workflow className="h-8 w-8 text-teal-500" />,
+    <GitBranch className="h-8 w-8 text-orange-500" />,
+    <Layers className="h-8 w-8 text-violet-500" />,
+    <Globe className="h-8 w-8 text-blue-500" />
   ];
 
   return (
@@ -93,63 +199,18 @@ export function BentoSection() {
           </div>
         </div>
 
-        {/* Feature Cards - 2x2 Grid */}
+        {/* Feature Cards - 2x2 Grid using AgentProfileCard */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto">
-          {secureAIFeatures.map((feature) => (
-            <div key={feature.id} className="group relative">
-              <div className="relative overflow-hidden rounded-3xl bg-background/50 backdrop-blur-sm border border-border/50 p-8 lg:p-10 transition-all duration-500 hover:shadow-2xl hover:shadow-black/10 hover:border-border/70 hover:-translate-y-1">
-                {/* Subtle background gradient */}
-                <div 
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"
-                  style={{
-                    background: feature.behindGradient
-                  }}
-                />
-                
-                {/* Content */}
-                <div className="relative z-10">
-                  {/* Header */}
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="p-3 bg-secondary/10 rounded-2xl border border-secondary/20 group-hover:border-secondary/30 transition-colors duration-300">
-                      <div className="text-2xl">{feature.avatar.includes('🔒') ? '🔒' : feature.avatar.includes('🛡️') ? '🛡️' : feature.avatar.includes('⚔️') ? '⚔️' : '👑'}</div>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-2xl lg:text-3xl font-semibold text-foreground mb-2 group-hover:text-foreground transition-colors duration-300">
-                        {feature.title}
-                      </h3>
-                      <p className="text-base lg:text-lg text-secondary font-medium">
-                        {feature.subtitle}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-muted-foreground leading-relaxed mb-6 text-base lg:text-lg">
-                    {feature.description}
-                  </p>
-
-                  {/* Key Features */}
-                  <div className="space-y-3 mb-8">
-                    {feature.keyFeatures.map((keyFeature, index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <CheckCircle className="h-5 w-5 text-secondary flex-shrink-0" />
-                        <span className="text-sm lg:text-base text-muted-foreground">
-                          {keyFeature}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/10 rounded-full border border-secondary/20 group-hover:border-secondary/30 transition-colors duration-300">
-                    <div className="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-secondary">
-                      {feature.status}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {secureAIAgents.map((agent) => (
+            <AgentProfileCard
+              key={agent.agent_id}
+              agent={agent}
+              mode="library"
+              className="h-[420px]"
+              enableTilt={true}
+              onChat={() => {}}
+              onCustomize={() => {}}
+            />
           ))}
         </div>
 
@@ -164,67 +225,15 @@ export function BentoSection() {
             </p>
           </div>
 
-          {/* Orbiting Circles Visualization */}
+          {/* Icon Cloud Visualization */}
           <div className="relative flex items-center justify-center mx-auto max-w-4xl h-96 lg:h-[500px]">
-            {/* Center AI Brain */}
-            <div className="relative z-10 flex items-center justify-center w-24 h-24 lg:w-32 lg:h-32 bg-gradient-to-br from-secondary/20 to-primary/20 rounded-full border-2 border-secondary/30 backdrop-blur-sm">
-              <Brain className="h-12 w-12 lg:h-16 lg:w-16 text-secondary" />
+            <div className="relative z-10 w-full h-full flex items-center justify-center">
+              <IconCloud icons={enterpriseIntegrationIcons} />
             </div>
-
-            {/* First Ring - Core Enterprise Tools */}
-            <OrbitingCircles
-              className="size-[300px] lg:size-[400px] border-secondary/10"
-              duration={25}
-              radius={150}
-              iconSize={40}
-              speed={1}
-            >
-              <div className="flex items-center justify-center size-full bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-full border border-blue-500/30">
-                <Database className="h-5 w-5 text-blue-500" />
-              </div>
-              <div className="flex items-center justify-center size-full bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-full border border-green-500/30">
-                <Cloud className="h-5 w-5 text-green-500" />
-              </div>
-              <div className="flex items-center justify-center size-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-full border border-purple-500/30">
-                <Settings className="h-5 w-5 text-purple-500" />
-              </div>
-              <div className="flex items-center justify-center size-full bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-full border border-orange-500/30">
-                <FileText className="h-5 w-5 text-orange-500" />
-              </div>
-              <div className="flex items-center justify-center size-full bg-gradient-to-br from-pink-500/20 to-pink-600/20 rounded-full border border-pink-500/30">
-                <BarChart3 className="h-5 w-5 text-pink-500" />
-              </div>
-              <div className="flex items-center justify-center size-full bg-gradient-to-br from-indigo-500/20 to-indigo-600/20 rounded-full border border-indigo-500/30">
-                <MessageSquare className="h-5 w-5 text-indigo-500" />
-              </div>
-            </OrbitingCircles>
-
-            {/* Second Ring - Extended Integrations */}
-            <OrbitingCircles
-              className="size-[200px] lg:size-[250px] border-primary/10"
-              duration={20}
-              radius={100}
-              iconSize={32}
-              speed={-1}
-              reverse
-            >
-              <div className="flex items-center justify-center size-full bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 rounded-full border border-cyan-500/30">
-                <Calendar className="h-4 w-4 text-cyan-500" />
-              </div>
-              <div className="flex items-center justify-center size-full bg-gradient-to-br from-rose-500/20 to-rose-600/20 rounded-full border border-rose-500/30">
-                <Mail className="h-4 w-4 text-rose-500" />
-              </div>
-              <div className="flex items-center justify-center size-full bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 rounded-full border border-emerald-500/30">
-                <Search className="h-4 w-4 text-emerald-500" />
-              </div>
-              <div className="flex items-center justify-center size-full bg-gradient-to-br from-amber-500/20 to-amber-600/20 rounded-full border border-amber-500/30">
-                <Globe className="h-4 w-4 text-amber-500" />
-              </div>
-            </OrbitingCircles>
           </div>
 
           {/* Integration Features */}
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 max-w-7xl mx-auto">
             <div className="text-center p-6">
               <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
                 <Shield className="h-6 w-6 text-secondary" />
@@ -250,6 +259,24 @@ export function BentoSection() {
               <h4 className="text-lg font-semibold mb-2">Real-Time Sync</h4>
               <p className="text-muted-foreground text-sm">
                 Instant synchronization with your enterprise systems for up-to-date insights.
+              </p>
+            </div>
+            <div className="text-center p-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
+                <Users2 className="h-6 w-6 text-secondary" />
+              </div>
+              <h4 className="text-lg font-semibold mb-2">RBAC</h4>
+              <p className="text-muted-foreground text-sm">
+                Role-based access control with granular permissions and enterprise-grade user management.
+              </p>
+            </div>
+            <div className="text-center p-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
+                <Settings className="h-6 w-6 text-secondary" />
+              </div>
+              <h4 className="text-lg font-semibold mb-2">Custom Integration Development</h4>
+              <p className="text-muted-foreground text-sm">
+                Tailored integration solutions for your unique enterprise systems and workflows.
               </p>
             </div>
           </div>
@@ -278,7 +305,6 @@ export function BentoSection() {
               <button className="group inline-flex items-center gap-3 px-10 py-5 bg-secondary text-secondary-foreground rounded-2xl font-semibold text-lg transition-all duration-300 hover:bg-secondary/90 hover:shadow-xl hover:shadow-secondary/25 hover:scale-105">
                 <Shield className="h-6 w-6" />
                 <span>Schedule Your Demo</span>
-                <OmniProcessModal />
               </button>
             </div>
           </div>

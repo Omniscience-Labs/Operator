@@ -329,7 +329,7 @@ const GlobeSkeleton = () => {
   return (
     <div className="relative h-[280px] overflow-hidden">
       <div className="h-full flex flex-col items-center justify-center">
-        <div className="relative w-full h-full flex items-center justify-center">
+        <div className="relative w-4/5 h-4/5 flex items-center justify-center">
           <Globe className="w-full h-full" />
         </div>
       </div>
