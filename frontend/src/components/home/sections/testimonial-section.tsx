@@ -327,10 +327,11 @@ const CollaborationSkeleton = () => {
 
 const GlobeSkeleton = () => {
   return (
-    <div className="h-full min-h-[200px] lg:min-h-[300px] flex flex-col items-center justify-center relative bg-transparent">
-      <div className="relative">
-        <Globe className="scale-75 lg:scale-100" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent pointer-events-none"></div>
+    <div className="relative h-[280px] overflow-hidden">
+      <div className="h-full flex flex-col items-center justify-center">
+        <div className="relative w-full h-full flex items-center justify-center">
+          <Globe className="w-full h-full" />
+        </div>
       </div>
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-medium border border-border/50">
         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>

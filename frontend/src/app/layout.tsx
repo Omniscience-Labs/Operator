@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   ),
   title: 'Operator - Open Source Generalist AI Agent',
   description:
-    'The Generalist AI Agent that acts on your behalf. Operator is 100% open source and free.',
+    'The Generalist AI Agent that works on your behalf. Operator is 100% open source and free.',
   keywords: [
     'OMNI Team - Adam Cohen Hillel, Marko Kraemer, Domenico Gagliardi, and Quoc Dat Le',
   ],
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Operator - Open Source Generalist AI Agent',
     description:
-      'The Generalist AI Agent that acts on your behalf. Operator is 100% open source and free.',
+      'The Generalist AI Agent that works on your behalf. Operator is 100% open source and free.',
     url: '/',
     siteName: 'Operator by OMNI',
     locale: 'en_US',

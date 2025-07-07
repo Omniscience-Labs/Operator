@@ -52,7 +52,7 @@ export interface PricingTier {
 
 export const siteConfig = {
   name: 'Operator by OMNI',
-  description: 'The Generalist AI Agent that acts on your behalf.',
+  description: 'The Generalist AI Agent that works on your behalf.',
   cta: 'Start Free',
   url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
   keywords: ['AI Agent', 'Generalist AI', 'Open Source AI', 'Autonomous Agent'],
@@ -111,7 +111,7 @@ export const siteConfig = {
       </>
     ),
     description:
-      'Operator by OMNI – is a generalist AI Agent that acts on your behalf.',
+      'Operator by OMNI – is a generalist AI Agent that works on your behalf.',
     inputPlaceholder: 'Ask Operator to...',
   },
   bentoSection: {
@@ -818,7 +818,7 @@ export const siteConfig = {
       text: 'Get Started for free',
       href: '/auth',
     },
-    subtext: 'The generalist AI Agent that acts on your behalf',
+    subtext: 'The generalist AI Agent that works on your behalf',
   },
   footerLinks: [
     {
