@@ -80,7 +80,7 @@ const getKnowledgeBasesCount = (agent: Agent) => {
 };
 
 const truncateDescription = (description?: string, maxLength = 100) => {
-  if (!description) return 'AI Agent ready to help you with various tasks';
+  if (!description) return "🤖 *Mysterious agent with no description* - What am I? That's for me to know and you to find out!";
   if (description.length <= maxLength) return description;
   return description.substring(0, maxLength).trim() + '...';
 };

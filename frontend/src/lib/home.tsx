@@ -97,9 +97,8 @@ export const siteConfig = {
         />
       </svg>
     ),
-    badge: '100% OPEN SOURCE',
     githubUrl: 'https://github.com/omni-ai/operator',
-    title: 'Operator, the AI Employee.',
+    title: 'Operator - your infinite AI Teammate',
     description:
       'Operator by OMNI – is a generalist AI Agent that acts on your behalf.',
     inputPlaceholder: 'Ask Operator to...',
