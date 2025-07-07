@@ -105,19 +105,6 @@ export function DocxPreviewRenderer({
 
         clearTimeout(renderTimeoutId);
         console.log('DocxPreviewRenderer: Render completed successfully');
-        
-        // Debug: Check what was actually rendered
-        console.log('DocxPreviewRenderer: Container HTML structure:', containerRef.current.innerHTML.substring(0, 500));
-        console.log('DocxPreviewRenderer: Style container content:', styleContainerRef.current.innerHTML.substring(0, 200));
-        
-        // Check for header elements
-        const headers = containerRef.current.querySelectorAll('[class*="header"], [class*="Header"], .docx-header');
-        console.log('DocxPreviewRenderer: Found header elements:', headers.length, headers);
-        
-        // Check for any elements that might be headers
-        const potentialHeaders = containerRef.current.querySelectorAll('div:first-child, table:first-child');
-        console.log('DocxPreviewRenderer: Potential header elements:', potentialHeaders.length);
-        
         setDebugInfo('Document rendered successfully');
         setIsLoading(false);
 
