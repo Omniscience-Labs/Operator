@@ -99,7 +99,7 @@ export const siteConfig = {
     ),
     badge: '100% Secure',
     githubUrl: 'https://github.com/omni-ai/operator',
-    title: 'Operator - Yoqur infinite AI Teammate',
+    title: 'Operator - Your infinite AI Teammate',
     description:
       'Operator by OMNI – is a generalist AI Agent that acts on your behalf.',
     inputPlaceholder: 'Ask Operator to...',
