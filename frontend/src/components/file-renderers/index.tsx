@@ -9,6 +9,7 @@ import { ImageRenderer } from './image-renderer';
 import { BinaryRenderer } from './binary-renderer';
 import { HtmlRenderer } from './html-renderer';
 import { AudioRenderer } from './audio-renderer';
+import { DocxPreviewRenderer } from './docx-preview-renderer';
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
 import { CsvRenderer } from './csv-renderer';
 
@@ -20,7 +21,8 @@ export type FileType =
   | 'audio'
   | 'text'
   | 'binary'
-  | 'csv';
+  | 'csv'
+  | 'docx';
 
 interface FileRendererProps {
   content: string | null;
@@ -95,6 +97,7 @@ export function getFileTypeFromExtension(fileName: string): FileType {
   const pdfExtensions = ['pdf'];
   const csvExtensions = ['csv', 'tsv'];
   const textExtensions = ['txt', 'log', 'env', 'ini'];
+  const docxExtensions = ['docx'];
 
   if (markdownExtensions.includes(extension)) {
     return 'markdown';
@@ -110,6 +113,8 @@ export function getFileTypeFromExtension(fileName: string): FileType {
     return 'csv';
   } else if (textExtensions.includes(extension)) {
     return 'text';
+  } else if (docxExtensions.includes(extension)) {
+    return 'docx';
   } else {
     return 'binary';
   }
@@ -202,6 +207,8 @@ export function FileRenderer({
         <MarkdownRenderer content={content || ''} ref={markdownRef} />
       ) : fileType === 'csv' ? (
         <CsvRenderer content={content || ''} />
+      ) : fileType === 'docx' && binaryUrl ? (
+        <DocxPreviewRenderer binaryUrl={binaryUrl} fileName={fileName} />
       ) : isHtmlFile ? (
         <HtmlRenderer
           content={content || ''}
