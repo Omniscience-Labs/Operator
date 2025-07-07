@@ -36,7 +36,7 @@ export const AgentKnowledgeConfiguration = ({
     return input
       .toLowerCase() // Convert to lowercase
       .replace(/\s+/g, '-') // Replace spaces with dashes
-      .replace(/[^a-z-]/g, '') // Remove any character that's not a lowercase letter or dash
+      .replace(/[^a-z0-9\-]/g, '') // Remove any character that's not a lowercase letter or dash
       .replace(/-+/g, '-') // Replace multiple consecutive dashes with single dash
       .replace(/^-|-$/g, ''); // Remove leading/trailing dashes
   };
@@ -112,7 +112,7 @@ export const AgentKnowledgeConfiguration = ({
                 <div className="flex-1 space-y-3">
                   <div className="space-y-2">
                     <Label htmlFor={`name-${index}`} className="text-xs text-muted-foreground">
-                      Index Name <span className="text-muted-foreground/70">(lowercase letters and dashes only)</span>
+                      Name <span className="text-muted-foreground/70">(lowercase letters and dashes only)</span>
                     </Label>
                     <Input
                       id={`name-${index}`}
@@ -169,7 +169,7 @@ export const AgentKnowledgeConfiguration = ({
           <div className="space-y-3">
             <div className="space-y-2">
               <Label htmlFor="new-name" className="text-xs text-muted-foreground">
-                Index Name <span className="text-muted-foreground/70">(lowercase letters and dashes only)</span>
+                Name <span className="text-muted-foreground/70">(lowercase letters and dashes only)</span>
               </Label>
               <Input
                 id="new-name"
@@ -187,7 +187,7 @@ export const AgentKnowledgeConfiguration = ({
             </div>
             <div className="space-y-2">
               <Label htmlFor="new-index" className="text-xs text-muted-foreground">
-                Index Name
+                Index Key
               </Label>
               <Input
                 id="new-index"
