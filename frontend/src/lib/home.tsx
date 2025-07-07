@@ -96,10 +96,9 @@ export const siteConfig = {
           strokeWidth="1.25"
         />
       </svg>
-    ),
-    badge: '100% Secure',
-    githubUrl: 'https://github.com/omni-ai/operator',
-    title: 'Operator - Your Infinite AI Teammate',
+          ),
+      badge: '100% Secure',
+      title: 'Operator - Your Infinite AI Teammate',
     description:
       'Operator by OMNI – is a generalist AI Agent that acts on your behalf.',
     inputPlaceholder: 'Ask Operator to...',
