@@ -80,7 +80,7 @@ export const LampContainer = ({
         {/* Central glow positioned at 25% from left */}
         <div className="absolute inset-auto z-50 h-36 w-[28rem] -translate-y-1/2 left-[25%] -translate-x-1/2 rounded-full bg-cyan-500 opacity-50 blur-3xl"></div>
         
-        {/* Upper glow positioned at 25% from left */}
+        {/* Upper glow positioned at 25% from left - moved higher */}
         <motion.div
           initial={{ width: "8rem" }}
           whileInView={{ width: "16rem" }}
@@ -89,10 +89,10 @@ export const LampContainer = ({
             duration: 0.8,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-30 h-36 w-64 -translate-y-[6rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400 blur-2xl"
+          className="absolute inset-auto z-30 h-36 w-64 -translate-y-[10rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400 blur-2xl"
         ></motion.div>
         
-        {/* Lamp bar - positioned at 25% from left */}
+        {/* Lamp bar - positioned higher over the Operator text */}
         <motion.div
           initial={{ width: "15rem" }}
           whileInView={{ width: "30rem" }}
@@ -101,11 +101,11 @@ export const LampContainer = ({
             duration: 0.8,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-50 h-0.5 w-[30rem] -translate-y-[7rem] left-[25%] -translate-x-1/2 bg-cyan-400"
+          className="absolute inset-auto z-50 h-0.5 w-[30rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 bg-cyan-400"
         ></motion.div>
 
-        {/* Top mask */}
-        <div className="absolute inset-auto z-40 h-44 w-full -translate-y-[12.5rem] bg-background"></div>
+        {/* Top mask - moved higher */}
+        <div className="absolute inset-auto z-40 h-44 w-full -translate-y-[16rem] bg-background"></div>
       </div>
 
       <div className="relative z-50 flex -translate-y-80 flex-col items-center px-5">
