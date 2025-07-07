@@ -79,93 +79,93 @@ export function BentoSection() {
   // Enterprise integration icons - comprehensive set for industrial companies
   const enterpriseIntegrationIcons = [
     // ERP & Business Systems
-    <Building className="h-8 w-8 text-blue-500" />,
-    <Briefcase className="h-8 w-8 text-indigo-500" />,
-    <Calculator className="h-8 w-8 text-green-500" />,
-    <PieChart className="h-8 w-8 text-purple-500" />,
-    <BarChart3 className="h-8 w-8 text-orange-500" />,
-    <LineChart className="h-8 w-8 text-red-500" />,
-    <TrendingUp className="h-8 w-8 text-emerald-500" />,
+    <Building key="building" className="h-8 w-8 text-blue-500" />,
+    <Briefcase key="briefcase" className="h-8 w-8 text-indigo-500" />,
+    <Calculator key="calculator-1" className="h-8 w-8 text-green-500" />,
+    <PieChart key="piechart" className="h-8 w-8 text-purple-500" />,
+    <BarChart3 key="barchart3" className="h-8 w-8 text-orange-500" />,
+    <LineChart key="linechart" className="h-8 w-8 text-red-500" />,
+    <TrendingUp key="trendingup" className="h-8 w-8 text-emerald-500" />,
     
     // Manufacturing & Industrial
-    <Factory className="h-8 w-8 text-gray-600" />,
-    <Cpu className="h-8 w-8 text-cyan-500" />,
-    <Wrench className="h-8 w-8 text-amber-500" />,
-    <Settings className="h-8 w-8 text-slate-500" />,
-    <Gauge className="h-8 w-8 text-blue-600" />,
-    <Activity className="h-8 w-8 text-pink-500" />,
-    <Zap className="h-8 w-8 text-yellow-500" />,
+    <Factory key="factory" className="h-8 w-8 text-gray-600" />,
+    <Cpu key="cpu" className="h-8 w-8 text-cyan-500" />,
+    <Wrench key="wrench" className="h-8 w-8 text-amber-500" />,
+    <Settings key="settings" className="h-8 w-8 text-slate-500" />,
+    <Gauge key="gauge-1" className="h-8 w-8 text-blue-600" />,
+    <Activity key="activity" className="h-8 w-8 text-pink-500" />,
+    <Zap key="zap" className="h-8 w-8 text-yellow-500" />,
     
     // Supply Chain & Logistics
-    <Truck className="h-8 w-8 text-brown-500" />,
-    <Package className="h-8 w-8 text-teal-500" />,
-    <ShoppingCart className="h-8 w-8 text-violet-500" />,
-    <Boxes className="h-8 w-8 text-orange-600" />,
-    <MapPin className="h-8 w-8 text-red-600" />,
-    <Globe2 className="h-8 w-8 text-blue-700" />,
+    <Truck key="truck" className="h-8 w-8 text-brown-500" />,
+    <Package key="package" className="h-8 w-8 text-teal-500" />,
+    <ShoppingCart key="shoppingcart" className="h-8 w-8 text-violet-500" />,
+    <Boxes key="boxes" className="h-8 w-8 text-orange-600" />,
+    <MapPin key="mappin" className="h-8 w-8 text-red-600" />,
+    <Globe2 key="globe2" className="h-8 w-8 text-blue-700" />,
     
     // Financial & Accounting
-    <DollarSign className="h-8 w-8 text-green-600" />,
-    <CreditCard className="h-8 w-8 text-indigo-600" />,
-    <Receipt className="h-8 w-8 text-gray-500" />,
-    <Calculator className="h-8 w-8 text-slate-600" />,
+    <DollarSign key="dollarsign" className="h-8 w-8 text-green-600" />,
+    <CreditCard key="creditcard" className="h-8 w-8 text-indigo-600" />,
+    <Receipt key="receipt" className="h-8 w-8 text-gray-500" />,
+    <Calculator key="calculator-2" className="h-8 w-8 text-slate-600" />,
     
     // Cloud & Infrastructure
-    <Cloud className="h-8 w-8 text-sky-500" />,
-    <Server className="h-8 w-8 text-gray-700" />,
-    <Database className="h-8 w-8 text-blue-800" />,
-    <HardDrive className="h-8 w-8 text-gray-800" />,
-    <Network className="h-8 w-8 text-purple-600" />,
-    <Wifi className="h-8 w-8 text-blue-400" />,
+    <Cloud key="cloud" className="h-8 w-8 text-sky-500" />,
+    <Server key="server" className="h-8 w-8 text-gray-700" />,
+    <Database key="database" className="h-8 w-8 text-blue-800" />,
+    <HardDrive key="harddrive" className="h-8 w-8 text-gray-800" />,
+    <Network key="network" className="h-8 w-8 text-purple-600" />,
+    <Wifi key="wifi" className="h-8 w-8 text-blue-400" />,
     
     // Communication & Collaboration
-    <MessageSquare className="h-8 w-8 text-green-500" />,
-    <Mail className="h-8 w-8 text-blue-500" />,
-    <Phone className="h-8 w-8 text-indigo-500" />,
-    <Video className="h-8 w-8 text-red-500" />,
-    <Users2 className="h-8 w-8 text-purple-500" />,
-    <Headphones className="h-8 w-8 text-orange-500" />,
+    <MessageSquare key="messagesquare" className="h-8 w-8 text-green-500" />,
+    <Mail key="mail" className="h-8 w-8 text-blue-500" />,
+    <Phone key="phone" className="h-8 w-8 text-indigo-500" />,
+    <Video key="video" className="h-8 w-8 text-red-500" />,
+    <Users2 key="users2" className="h-8 w-8 text-purple-500" />,
+    <Headphones key="headphones" className="h-8 w-8 text-orange-500" />,
     
     // Document & Content Management
-    <FileText className="h-8 w-8 text-gray-600" />,
-    <Folder className="h-8 w-8 text-yellow-600" />,
-    <Archive className="h-8 w-8 text-brown-600" />,
-    <Search className="h-8 w-8 text-teal-600" />,
-    <Edit className="h-8 w-8 text-violet-600" />,
-    <Printer className="h-8 w-8 text-gray-700" />,
+    <FileText key="filetext" className="h-8 w-8 text-gray-600" />,
+    <Folder key="folder" className="h-8 w-8 text-yellow-600" />,
+    <Archive key="archive" className="h-8 w-8 text-brown-600" />,
+    <Search key="search" className="h-8 w-8 text-teal-600" />,
+    <Edit key="edit" className="h-8 w-8 text-violet-600" />,
+    <Printer key="printer" className="h-8 w-8 text-gray-700" />,
     
     // Security & Compliance
-    <Shield className="h-8 w-8 text-red-500" />,
-    <Lock className="h-8 w-8 text-orange-500" />,
-    <Key className="h-8 w-8 text-yellow-500" />,
-    <AlertTriangle className="h-8 w-8 text-amber-500" />,
-    <ClipboardCheck className="h-8 w-8 text-green-500" />,
+    <Shield key="shield" className="h-8 w-8 text-red-500" />,
+    <Lock key="lock" className="h-8 w-8 text-orange-500" />,
+    <Key key="key" className="h-8 w-8 text-yellow-500" />,
+    <AlertTriangle key="alerttriangle" className="h-8 w-8 text-amber-500" />,
+    <ClipboardCheck key="clipboardcheck" className="h-8 w-8 text-green-500" />,
     
     // Quality & Testing
-    <Microscope className="h-8 w-8 text-cyan-600" />,
-    <Target className="h-8 w-8 text-red-600" />,
-    <CheckCircle className="h-8 w-8 text-emerald-600" />,
-    <XCircle className="h-8 w-8 text-red-600" />,
+    <Microscope key="microscope" className="h-8 w-8 text-cyan-600" />,
+    <Target key="target" className="h-8 w-8 text-red-600" />,
+    <CheckCircle key="checkcircle" className="h-8 w-8 text-emerald-600" />,
+    <XCircle key="xcircle" className="h-8 w-8 text-red-600" />,
     
     // IoT & Sensors
-    <Smartphone className="h-8 w-8 text-gray-600" />,
-    <Tablet className="h-8 w-8 text-blue-600" />,
-    <Laptop className="h-8 w-8 text-indigo-600" />,
-    <MonitorSpeaker className="h-8 w-8 text-purple-600" />,
-    <Radio className="h-8 w-8 text-green-600" />,
-    <Antenna className="h-8 w-8 text-orange-600" />,
+    <Smartphone key="smartphone" className="h-8 w-8 text-gray-600" />,
+    <Tablet key="tablet" className="h-8 w-8 text-blue-600" />,
+    <Laptop key="laptop" className="h-8 w-8 text-indigo-600" />,
+    <MonitorSpeaker key="monitorspeaker" className="h-8 w-8 text-purple-600" />,
+    <Radio key="radio" className="h-8 w-8 text-green-600" />,
+    <Antenna key="antenna" className="h-8 w-8 text-orange-600" />,
     
     // Time & Scheduling
-    <Calendar className="h-8 w-8 text-blue-500" />,
-    <Gauge className="h-8 w-8 text-indigo-500" />,
-    <Timer className="h-8 w-8 text-purple-500" />,
-    <Clock className="h-8 w-8 text-red-500" />,
+    <Calendar key="calendar" className="h-8 w-8 text-blue-500" />,
+    <Gauge key="gauge-2" className="h-8 w-8 text-indigo-500" />,
+    <Timer key="timer" className="h-8 w-8 text-purple-500" />,
+    <Clock key="clock" className="h-8 w-8 text-red-500" />,
     
     // Workflow & Automation
-    <Workflow className="h-8 w-8 text-teal-500" />,
-    <GitBranch className="h-8 w-8 text-orange-500" />,
-    <Layers className="h-8 w-8 text-violet-500" />,
-    <Globe className="h-8 w-8 text-blue-500" />
+    <Workflow key="workflow" className="h-8 w-8 text-teal-500" />,
+    <GitBranch key="gitbranch" className="h-8 w-8 text-orange-500" />,
+    <Layers key="layers" className="h-8 w-8 text-violet-500" />,
+    <Globe key="globe" className="h-8 w-8 text-blue-500" />
   ];
 
   return (
