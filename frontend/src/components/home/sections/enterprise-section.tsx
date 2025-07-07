@@ -7,6 +7,10 @@ import { OmniProcessModal } from '@/components/sidebar/omni-enterprise-modal';
 export function EnterpriseSection() {
   const enterpriseFeatures = [
     {
+      title: "256-Bit Encryption",
+      description: "Bank-grade AES-256 encryption protects your data at rest and in transit with FIPS 140-2 compliant security standards.",
+    },
+    {
       title: "Role-Based Access Control (RBAC)",
       description: "Granular permissions and role management to ensure secure access across your organization.",
     },

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { SectionHeader } from '@/components/home/section-header';
-import { Globe } from '@/components/home/ui/globe';
+import { Globe } from '@/components/magicui/globe';
 import { 
   MessageSquare, 
   Zap, 
@@ -18,7 +18,14 @@ import {
   Code,
   Briefcase,
   Heart,
-  Building
+  Building,
+  PieChart,
+  LineChart,
+  Target,
+  ShoppingCart,
+  DollarSign,
+  Clock,
+  Activity
 } from 'lucide-react';
 
 export function TestimonialSection() {
@@ -166,57 +173,39 @@ const CollaborationSkeleton = () => {
   const scenarios = [
     {
       id: 1,
-      specialist: "Marketing Strategist",
-      icon: <TrendingUp className="w-4 h-4 text-white" />,
-      color: "from-purple-500 to-pink-500",
+      agentName: "Marketing AI",
       user: "I need a comprehensive marketing strategy for our new product launch targeting millennials.",
-      ai: "I'll create a multi-channel strategy: Instagram/TikTok campaigns, influencer partnerships, and data-driven content. Expected ROI: 340% with 2M+ reach in 90 days.",
-      badge: "Marketing AI"
+      ai: "I'll create a multi-channel strategy: Instagram/TikTok campaigns, influencer partnerships, and data-driven content. Expected ROI: 340% with 2M+ reach in 90 days."
     },
     {
       id: 2,
-      specialist: "Data Scientist",
-      icon: <BarChart3 className="w-4 h-4 text-white" />,
-      color: "from-blue-500 to-cyan-500",
+      agentName: "Analytics AI",
       user: "Our customer churn rate is increasing. Can you analyze the data and provide actionable insights?",
-      ai: "Analysis complete: 23% churn driven by pricing sensitivity and poor onboarding. Recommending tiered pricing model and enhanced 30-day experience journey.",
-      badge: "Analytics AI"
+      ai: "Analysis complete: 23% churn driven by pricing sensitivity and poor onboarding. Recommending tiered pricing model and enhanced 30-day experience journey."
     },
     {
       id: 3,
-      specialist: "Software Architect",
-      icon: <Code className="w-4 h-4 text-white" />,
-      color: "from-green-500 to-emerald-500",
+      agentName: "Tech AI",
       user: "We need to scale our platform to handle 10x more traffic. What's the best architecture approach?",
-      ai: "Implementing microservices with Kubernetes, Redis caching, and CDN optimization. This architecture will handle 50M+ requests/day with 99.9% uptime.",
-      badge: "Tech AI"
+      ai: "Implementing microservices with Kubernetes, Redis caching, and CDN optimization. This architecture will handle 50M+ requests/day with 99.9% uptime."
     },
     {
       id: 4,
-      specialist: "Operations Manager",
-      icon: <Building className="w-4 h-4 text-white" />,
-      color: "from-orange-500 to-red-500",
+      agentName: "Operations AI",
       user: "Our supply chain is experiencing delays. Can you optimize our procurement process?",
-      ai: "Identified 3 bottlenecks and 12 suppliers. Implementing automated procurement system will reduce lead times by 40% and costs by 15%.",
-      badge: "Operations AI"
+      ai: "Identified 3 bottlenecks and 12 suppliers. Implementing automated procurement system will reduce lead times by 40% and costs by 15%."
     },
     {
       id: 5,
-      specialist: "Financial Analyst",
-      icon: <Briefcase className="w-4 h-4 text-white" />,
-      color: "from-indigo-500 to-purple-500",
+      agentName: "Finance AI",
       user: "I need a detailed financial projection for the next 5 years including risk analysis.",
-      ai: "Generated comprehensive model: 28% revenue growth, 15% margin expansion. Key risks: market volatility (12%) and regulatory changes (8%). Mitigation strategies included.",
-      badge: "Finance AI"
+      ai: "Generated comprehensive model: 28% revenue growth, 15% margin expansion. Key risks: market volatility (12%) and regulatory changes (8%). Mitigation strategies included."
     },
     {
       id: 6,
-      specialist: "HR Specialist",
-      icon: <Heart className="w-4 h-4 text-white" />,
-      color: "from-pink-500 to-rose-500",
+      agentName: "People AI",
       user: "We're scaling rapidly and need to optimize our hiring process while maintaining culture fit.",
-      ai: "Designed AI-powered recruitment pipeline: 70% faster screening, 85% culture match accuracy. Automated scheduling reduces time-to-hire by 12 days.",
-      badge: "People AI"
+      ai: "Designed AI-powered recruitment pipeline: 70% faster screening, 85% culture match accuracy. Automated scheduling reduces time-to-hire by 12 days."
     }
   ];
 
@@ -233,7 +222,7 @@ const CollaborationSkeleton = () => {
           setShowTyping(false);
           setShowResponse(true);
         }, 1500);
-      }, 5000);
+      }, 500);
     }, 5000);
 
     // Initialize first scenario
@@ -249,21 +238,9 @@ const CollaborationSkeleton = () => {
   const scenario = scenarios[currentScenario];
 
   return (
-    <div className="relative flex flex-col gap-4 h-full min-h-[200px] lg:min-h-[320px] overflow-hidden">
-      {/* Ambient Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 via-transparent to-primary/5 rounded-xl"></div>
-      <div className="absolute top-4 right-4 flex items-center gap-2">
-        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <span className="text-xs text-muted-foreground font-medium">Live Chat</span>
-      </div>
-      <div className="absolute bottom-4 left-4 flex items-center gap-1">
-        <div className="w-1 h-1 bg-secondary/50 rounded-full animate-bounce"></div>
-        <div className="w-1 h-1 bg-secondary/50 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-        <div className="w-1 h-1 bg-secondary/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-      </div>
-
-      <div className="w-full max-w-md mx-auto bg-background/60 backdrop-blur-sm border border-border/50 rounded-xl p-4 lg:p-6 shadow-lg relative z-10">
-        <div className="space-y-4">
+    <div className="relative h-[280px] overflow-hidden">
+      <div className="w-full max-w-sm mx-auto h-full p-4 flex flex-col justify-center">
+        <div className="space-y-3">
           {/* User Message */}
           <AnimatePresence mode="wait">
             <motion.div
@@ -271,38 +248,27 @@ const CollaborationSkeleton = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.3 }}
               className="flex justify-end"
             >
-              <div className="bg-secondary text-secondary-foreground px-3 py-2 rounded-2xl rounded-tr-md max-w-[90%] text-xs lg:text-sm leading-relaxed">
+              <div className="bg-black text-white px-3 py-2 rounded-xl max-w-[85%] text-sm">
                 {scenario.user}
               </div>
             </motion.div>
           </AnimatePresence>
 
           {/* AI Response */}
-          <div className="flex items-start gap-3">
-            <motion.div
-              className={`w-8 h-8 bg-gradient-to-br ${scenario.color} rounded-full flex items-center justify-center flex-shrink-0`}
-              whileHover={{ scale: 1.1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              {scenario.icon}
-            </motion.div>
-            
+          <div className="flex items-start gap-2">
             <div className="flex-1">
-              {/* AI Badge */}
+              {/* Agent Name */}
               <motion.div
-                key={`badge-${scenario.id}`}
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
+                key={`name-${scenario.id}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                className="mb-2"
+                className="text-xs text-muted-foreground mb-1 ml-1"
               >
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary/10 text-secondary">
-                  <Brain className="w-3 h-3 mr-1" />
-                  {scenario.badge}
-                </span>
+                {scenario.agentName}
               </motion.div>
 
               {/* Typing Indicator */}
@@ -313,13 +279,13 @@ const CollaborationSkeleton = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: 0.2 }}
-                    className="bg-muted/50 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-md shadow-sm border border-border/50"
+                    className="bg-white border border-border px-3 py-2 rounded-xl"
                   >
                     <div className="flex gap-1">
                       {[0, 1, 2].map((index) => (
                         <motion.div
                           key={index}
-                          className="w-2 h-2 bg-secondary/60 rounded-full"
+                          className="w-2 h-2 bg-gray-400 rounded-full"
                           animate={{ y: [0, -4, 0] }}
                           transition={{
                             duration: 0.6,
@@ -342,10 +308,10 @@ const CollaborationSkeleton = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.4 }}
-                    className="bg-muted/50 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-md shadow-sm border border-border/50"
+                    transition={{ duration: 0.3 }}
+                    className="bg-white border border-border px-3 py-2 rounded-xl"
                   >
-                    <p className="text-xs lg:text-sm text-primary leading-relaxed">
+                    <p className="text-sm text-black">
                       {scenario.ai}
                     </p>
                   </motion.div>
@@ -353,14 +319,6 @@ const CollaborationSkeleton = () => {
               </AnimatePresence>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Infinite Capacity Indicator */}
-      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-2 p-4">
-        <div className="flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-medium border border-border/50">
-          <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full animate-pulse"></div>
-          <span className="text-muted-foreground">Infinite Capacity Available</span>
         </div>
       </div>
     </div>
@@ -383,53 +341,331 @@ const GlobeSkeleton = () => {
 };
 
 const AnalyticsSkeleton = () => {
+  const [currentAnalytic, setCurrentAnalytic] = useState(0);
+  const [showInsight, setShowInsight] = useState(false);
+
+  const analytics = [
+    {
+      id: 1,
+      title: "Revenue Growth",
+      type: "Line Chart",
+      icon: <LineChart className="w-4 h-4 text-emerald-500" />,
+      color: "emerald",
+      metric: "$2.4M",
+      change: "+47%",
+      changeType: "positive",
+      insight: "AI detected seasonal pattern: Q4 revenue jumps 73% due to holiday promotions. Recommend increasing inventory by 45% in October.",
+      chart: <RevenueLineChart />,
+      badge: "Revenue AI"
+    },
+    {
+      id: 2,
+      title: "Customer Segments",
+      type: "Pie Chart",
+      icon: <PieChart className="w-4 h-4 text-blue-500" />,
+      color: "blue",
+      metric: "5 Segments",
+      change: "+2 new",
+      changeType: "positive",
+      insight: "Enterprise clients (34%) show highest LTV. Mid-market segment growing 89% QoQ. Recommend targeting similar profiles.",
+      chart: <CustomerPieChart />,
+      badge: "Segment AI"
+    },
+    {
+      id: 3,
+      title: "Conversion Funnel",
+      type: "Funnel Chart",
+      icon: <Target className="w-4 h-4 text-purple-500" />,
+      color: "purple",
+      metric: "8.4%",
+      change: "+2.1%",
+      changeType: "positive",
+      insight: "Checkout abandonment at 67%. A/B test shows single-page checkout increases conversion by 34%. Deploy immediately.",
+      chart: <ConversionFunnelChart />,
+      badge: "Conversion AI"
+    },
+    {
+      id: 4,
+      title: "Sales Performance",
+      type: "Bar Chart",
+      icon: <BarChart3 className="w-4 h-4 text-orange-500" />,
+      color: "orange",
+      metric: "$847K",
+      change: "+23%",
+      changeType: "positive",
+      insight: "Top performer Sarah leads with $127K. Team velocity up 31%. Recommend promoting high-performers and scaling top strategies.",
+      chart: <SalesBarChart />,
+      badge: "Sales AI"
+    },
+    {
+      id: 5,
+      title: "User Activity",
+      type: "Heat Map",
+      icon: <Activity className="w-4 h-4 text-pink-500" />,
+      color: "pink",
+      metric: "89% Active",
+      change: "+12%",
+      changeType: "positive",
+      insight: "Peak usage: Tuesdays 2-4 PM. Feature adoption varies by region. European users prefer analytics, US prefers automation.",
+      chart: <ActivityHeatMap />,
+      badge: "Behavior AI"
+    },
+    {
+      id: 6,
+      title: "Market Trends",
+      type: "Trend Analysis",
+      icon: <TrendingUp className="w-4 h-4 text-indigo-500" />,
+      color: "indigo",
+      metric: "↗ Bullish",
+      change: "+156%",
+      changeType: "positive",
+      insight: "Market sentiment strongly positive. Competitor analysis shows 23% market share opportunity. Recommend aggressive expansion.",
+      chart: <MarketTrendChart />,
+      badge: "Market AI"
+    }
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowInsight(false);
+      
+      setTimeout(() => {
+        setCurrentAnalytic((prev) => (prev + 1) % analytics.length);
+        setTimeout(() => {
+          setShowInsight(true);
+        }, 800);
+      }, 400);
+    }, 6000);
+
+    // Initialize first analytic
+    setTimeout(() => {
+      setShowInsight(true);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const analytic = analytics[currentAnalytic];
+
   return (
-    <div className="relative h-full min-h-[200px] lg:min-h-[300px] bg-gradient-to-br from-secondary/5 to-transparent rounded-xl p-6 overflow-hidden">
-      <div className="h-full flex flex-col justify-center">
-        <svg className="w-full h-32 lg:h-40" viewBox="0 0 300 120">
-          <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgb(59 130 246)" stopOpacity="0.8"/>
-              <stop offset="100%" stopColor="rgb(59 130 246)" stopOpacity="0"/>
-            </linearGradient>
-          </defs>
-          
-          <path
-            d="M 20 80 Q 80 60 120 70 T 200 40 T 280 45"
-            stroke="rgb(59 130 246)"
-            strokeWidth="2"
-            fill="none"
-            className="animate-pulse"
-          />
-          
-          <path
-            d="M 20 80 Q 80 60 120 70 T 200 40 T 280 45 L 280 100 L 20 100 Z"
-            fill="url(#gradient)"
-            className="animate-pulse"
-          />
-          
-          <circle cx="120" cy="70" r="3" fill="rgb(59 130 246)" className="animate-pulse">
-            <animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="200" cy="40" r="3" fill="rgb(59 130 246)" className="animate-pulse">
-            <animate attributeName="r" values="3;5;3" dur="2s" begin="0.5s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="280" cy="45" r="3" fill="rgb(59 130 246)" className="animate-pulse">
-            <animate attributeName="r" values="3;5;3" dur="2s" begin="1s" repeatCount="indefinite"/>
-          </circle>
-        </svg>
-        
-        <div className="flex justify-between items-center mt-4">
-          <div className="text-xs text-muted-foreground">Performance</div>
-          <div className="flex items-center gap-1 text-xs">
-            <span className="font-semibold text-secondary">4,266</span>
-            <span className="text-green-600">↗ 12%</span>
+    <div className="relative h-full min-h-[200px] lg:min-h-[320px] bg-gradient-to-br from-secondary/5 to-transparent rounded-xl p-4 lg:p-6 overflow-hidden">
+      {/* Live Analytics Indicator */}
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <span className="text-xs text-muted-foreground font-medium">Live Analytics</span>
+      </div>
+
+      <div className="h-full flex flex-col justify-between">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`icon-${analytic.id}`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.3 }}
+                className="p-2 bg-secondary/10 rounded-lg"
+              >
+                {analytic.icon}
+              </motion.div>
+            </AnimatePresence>
+            <div>
+              <AnimatePresence mode="wait">
+                <motion.h4
+                  key={`title-${analytic.id}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-sm font-semibold text-primary"
+                >
+                  {analytic.title}
+                </motion.h4>
+              </AnimatePresence>
+              <div className="text-xs text-muted-foreground">{analytic.type}</div>
+            </div>
           </div>
+          <div className="text-right">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`metric-${analytic.id}`}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="text-lg font-bold text-primary"
+              >
+                {analytic.metric}
+              </motion.div>
+            </AnimatePresence>
+            <div className={`text-xs font-medium ${analytic.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
+              {analytic.change}
+            </div>
+          </div>
+        </div>
+
+        {/* Chart */}
+        <div className="flex-1 flex items-center justify-center min-h-[100px]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`chart-${analytic.id}`}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.5 }}
+              className="w-full h-full"
+            >
+              {analytic.chart}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* AI Insight */}
+        <div className="mt-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Brain className="w-3 h-3 text-secondary" />
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={`badge-${analytic.id}`}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.3 }}
+                className="text-xs font-medium text-secondary"
+              >
+                {analytic.badge}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+          <AnimatePresence mode="wait">
+            {showInsight && (
+              <motion.div
+                key={`insight-${analytic.id}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.5 }}
+                className="bg-muted/50 backdrop-blur-sm rounded-lg p-3 border border-border/50"
+              >
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {analytic.insight}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
   );
 };
+
+// Chart Components
+const RevenueLineChart = () => (
+  <svg className="w-full h-20" viewBox="0 0 240 60">
+    <defs>
+      <linearGradient id="revenueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="rgb(16 185 129)" stopOpacity="0.8"/>
+        <stop offset="100%" stopColor="rgb(16 185 129)" stopOpacity="0"/>
+      </linearGradient>
+    </defs>
+    <path
+      d="M 10 50 Q 40 35 70 25 T 130 15 T 190 20 T 230 12"
+      stroke="rgb(16 185 129)"
+      strokeWidth="2"
+      fill="none"
+    />
+    <path
+      d="M 10 50 Q 40 35 70 25 T 130 15 T 190 20 T 230 12 L 230 55 L 10 55 Z"
+      fill="url(#revenueGradient)"
+    />
+    <circle cx="230" cy="12" r="3" fill="rgb(16 185 129)">
+      <animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </svg>
+);
+
+const CustomerPieChart = () => (
+  <svg className="w-20 h-20" viewBox="0 0 42 42">
+    <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="rgb(59 130 246)" strokeWidth="3" strokeDasharray="34 66" strokeDashoffset="25"/>
+    <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="rgb(16 185 129)" strokeWidth="3" strokeDasharray="21 79" strokeDashoffset="59"/>
+    <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="rgb(168 85 247)" strokeWidth="3" strokeDasharray="15 85" strokeDashoffset="38"/>
+    <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="rgb(251 146 60)" strokeWidth="3" strokeDasharray="10 90" strokeDashoffset="23"/>
+    <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="rgb(239 68 68)" strokeWidth="3" strokeDasharray="20 80" strokeDashoffset="13"/>
+  </svg>
+);
+
+const ConversionFunnelChart = () => (
+  <svg className="w-full h-20" viewBox="0 0 200 60">
+    <polygon points="10,10 190,10 170,25 30,25" fill="rgb(168 85 247)" fillOpacity="0.8"/>
+    <polygon points="30,25 170,25 150,40 50,40" fill="rgb(168 85 247)" fillOpacity="0.6"/>
+    <polygon points="50,40 150,40 130,55 70,55" fill="rgb(168 85 247)" fillOpacity="0.4"/>
+    <text x="100" y="20" textAnchor="middle" className="text-xs fill-white">Visitors: 10,000</text>
+    <text x="100" y="35" textAnchor="middle" className="text-xs fill-white">Leads: 2,100</text>
+    <text x="100" y="50" textAnchor="middle" className="text-xs fill-white">Sales: 840</text>
+  </svg>
+);
+
+const SalesBarChart = () => (
+  <svg className="w-full h-20" viewBox="0 0 240 60">
+    <rect x="20" y="35" width="25" height="20" fill="rgb(251 146 60)" rx="2"/>
+    <rect x="55" y="25" width="25" height="30" fill="rgb(251 146 60)" rx="2"/>
+    <rect x="90" y="15" width="25" height="40" fill="rgb(251 146 60)" rx="2"/>
+    <rect x="125" y="30" width="25" height="25" fill="rgb(251 146 60)" rx="2"/>
+    <rect x="160" y="20" width="25" height="35" fill="rgb(251 146 60)" rx="2"/>
+    <rect x="195" y="10" width="25" height="45" fill="rgb(251 146 60)" rx="2"/>
+    <text x="32" y="50" textAnchor="middle" className="text-xs fill-current">Jan</text>
+    <text x="67" y="50" textAnchor="middle" className="text-xs fill-current">Feb</text>
+    <text x="102" y="50" textAnchor="middle" className="text-xs fill-current">Mar</text>
+    <text x="137" y="50" textAnchor="middle" className="text-xs fill-current">Apr</text>
+    <text x="172" y="50" textAnchor="middle" className="text-xs fill-current">May</text>
+    <text x="207" y="50" textAnchor="middle" className="text-xs fill-current">Jun</text>
+  </svg>
+);
+
+const ActivityHeatMap = () => (
+  <svg className="w-full h-16" viewBox="0 0 168 32">
+    {Array.from({ length: 7 }).map((_, week) =>
+      Array.from({ length: 24 }).map((_, hour) => (
+        <rect
+          key={`${week}-${hour}`}
+          x={hour * 7}
+          y={week * 4}
+          width="6"
+          height="3"
+          fill={`rgb(236 72 153)`}
+          fillOpacity={Math.random() * 0.8 + 0.2}
+          rx="1"
+        />
+      ))
+    )}
+  </svg>
+);
+
+const MarketTrendChart = () => (
+  <svg className="w-full h-20" viewBox="0 0 240 60">
+    <defs>
+      <linearGradient id="marketGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="rgb(99 102 241)" stopOpacity="0.8"/>
+        <stop offset="100%" stopColor="rgb(99 102 241)" stopOpacity="0"/>
+      </linearGradient>
+    </defs>
+    <path
+      d="M 10 45 Q 30 40 50 35 Q 70 30 90 28 Q 110 25 130 22 Q 150 18 170 15 Q 190 12 210 10 T 230 8"
+      stroke="rgb(99 102 241)"
+      strokeWidth="2"
+      fill="none"
+    />
+    <path
+      d="M 10 45 Q 30 40 50 35 Q 70 30 90 28 Q 110 25 130 22 Q 150 18 170 15 Q 190 12 210 10 T 230 8 L 230 55 L 10 55 Z"
+      fill="url(#marketGradient)"
+    />
+    <circle cx="230" cy="8" r="3" fill="rgb(99 102 241)">
+      <animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </svg>
+);
 
 const AutomationSkeleton = () => {
   return (
