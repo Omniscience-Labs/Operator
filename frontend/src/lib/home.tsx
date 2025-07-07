@@ -513,8 +513,8 @@ export const siteConfig = {
         isPopular: false,
       },
       {
-        name: 'Self-Hosted',
-        href: '#',
+        name: 'Enterprise',
+        href: '#enterprise',
         price: 'Free',
         period: 'forever',
         yearlyPrice: 'Free',
