@@ -261,15 +261,10 @@ export function HeroSection() {
             {hero.badge}
           </p> */}
 
-          <Link
-            href={hero.githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group border border-border/50 bg-background hover:bg-accent/20 hover:border-secondary/40 rounded-full text-sm h-8 px-3 flex items-center gap-2 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 hover:-translate-y-0.5"
-          >
+          <div className="group border border-border/50 bg-background hover:bg-accent/20 hover:border-secondary/40 rounded-full text-sm h-8 px-3 flex items-center gap-2 transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 hover:-translate-y-0.5 cursor-default">
             {hero.badgeIcon}
             <span className="font-medium text-muted-foreground text-xs tracking-wide group-hover:text-primary transition-colors duration-300">
-              View on GitHub
+              {hero.badge}
             </span>
             <span className="inline-flex items-center justify-center size-3.5 rounded-full bg-muted/30 group-hover:bg-secondary/30 transition-colors duration-300">
               <svg
@@ -289,11 +284,10 @@ export function HeroSection() {
                 />
               </svg>
             </span>
-          </Link>
+          </div>
           <div className="flex flex-col items-center justify-center gap-5">
             <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-medium tracking-tighter text-balance text-center">
-              <span className="text-secondary">Operator</span>
-              <span className="text-primary">, your AI Employee.</span>
+              {hero.title}
             </h1>
             <p className="text-base md:text-lg text-center text-muted-foreground font-medium text-balance leading-relaxed tracking-tight">
               {hero.description}

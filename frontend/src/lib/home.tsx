@@ -59,6 +59,7 @@ export const siteConfig = {
     email: 'support@omni.ai',
     twitter: 'https://x.com/omni_ai',
     discord: 'https://discord.gg/omni-ai',
+    github: 'https://github.com/omni-ai/operator',
     instagram: 'https://instagram.com/omni_ai',
   },
   nav: {
@@ -96,6 +97,8 @@ export const siteConfig = {
         />
       </svg>
     ),
+    badge: '100% Secure',
+    githubUrl: 'https://github.com/omni-ai/operator',
     title: 'Operator - your infinite AI Teammate',
     description:
       'Operator by OMNI – is a generalist AI Agent that acts on your behalf.',
@@ -821,9 +824,10 @@ export const siteConfig = {
         {
           id: 5,
           title: 'Documentation',
-          url: 'https://operator.omni.ai/docs',
+          url: 'https://github.com/omni-ai/operator',
         },
         { id: 7, title: 'Discord', url: 'https://discord.gg/Py6pCBUUPw' },
+        { id: 8, title: 'GitHub', url: 'https://github.com/omni-ai/operator' },
       ],
     },
     {
