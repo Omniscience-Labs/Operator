@@ -1,6 +1,6 @@
 import React from 'react';
-import { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { SectionHeader } from '@/components/home/section-header';
 import { Globe } from '@/components/home/ui/globe';
@@ -12,14 +12,20 @@ import {
   Shield, 
   Users,
   ArrowUpRight,
-  Sparkles
+  Sparkles,
+  Brain,
+  TrendingUp,
+  Code,
+  Briefcase,
+  Heart,
+  Building
 } from 'lucide-react';
 
 export function TestimonialSection() {
   const features = [
     {
       title: "AI-Powered Collaboration",
-      description: "Experience real-time assistance with intelligent task coordination and seamless team alignment.",
+      description: "Infinite capacity on demand. Get specialized AI agents for any business need, anytime.",
       skeleton: <CollaborationSkeleton />,
       className: "col-span-1 lg:col-span-4 border-b lg:border-r dark:border-neutral-800/50",
       icon: <MessageSquare className="h-5 w-5" />
@@ -153,30 +159,210 @@ const FeatureDescription = ({ children }: { children?: React.ReactNode }) => {
 };
 
 const CollaborationSkeleton = () => {
+  const [currentScenario, setCurrentScenario] = useState(0);
+  const [showTyping, setShowTyping] = useState(false);
+  const [showResponse, setShowResponse] = useState(false);
+
+  const scenarios = [
+    {
+      id: 1,
+      specialist: "Marketing Strategist",
+      icon: <TrendingUp className="w-4 h-4 text-white" />,
+      color: "from-purple-500 to-pink-500",
+      user: "I need a comprehensive marketing strategy for our new product launch targeting millennials.",
+      ai: "I'll create a multi-channel strategy: Instagram/TikTok campaigns, influencer partnerships, and data-driven content. Expected ROI: 340% with 2M+ reach in 90 days.",
+      badge: "Marketing AI"
+    },
+    {
+      id: 2,
+      specialist: "Data Scientist",
+      icon: <BarChart3 className="w-4 h-4 text-white" />,
+      color: "from-blue-500 to-cyan-500",
+      user: "Our customer churn rate is increasing. Can you analyze the data and provide actionable insights?",
+      ai: "Analysis complete: 23% churn driven by pricing sensitivity and poor onboarding. Recommending tiered pricing model and enhanced 30-day experience journey.",
+      badge: "Analytics AI"
+    },
+    {
+      id: 3,
+      specialist: "Software Architect",
+      icon: <Code className="w-4 h-4 text-white" />,
+      color: "from-green-500 to-emerald-500",
+      user: "We need to scale our platform to handle 10x more traffic. What's the best architecture approach?",
+      ai: "Implementing microservices with Kubernetes, Redis caching, and CDN optimization. This architecture will handle 50M+ requests/day with 99.9% uptime.",
+      badge: "Tech AI"
+    },
+    {
+      id: 4,
+      specialist: "Operations Manager",
+      icon: <Building className="w-4 h-4 text-white" />,
+      color: "from-orange-500 to-red-500",
+      user: "Our supply chain is experiencing delays. Can you optimize our procurement process?",
+      ai: "Identified 3 bottlenecks and 12 suppliers. Implementing automated procurement system will reduce lead times by 40% and costs by 15%.",
+      badge: "Operations AI"
+    },
+    {
+      id: 5,
+      specialist: "Financial Analyst",
+      icon: <Briefcase className="w-4 h-4 text-white" />,
+      color: "from-indigo-500 to-purple-500",
+      user: "I need a detailed financial projection for the next 5 years including risk analysis.",
+      ai: "Generated comprehensive model: 28% revenue growth, 15% margin expansion. Key risks: market volatility (12%) and regulatory changes (8%). Mitigation strategies included.",
+      badge: "Finance AI"
+    },
+    {
+      id: 6,
+      specialist: "HR Specialist",
+      icon: <Heart className="w-4 h-4 text-white" />,
+      color: "from-pink-500 to-rose-500",
+      user: "We're scaling rapidly and need to optimize our hiring process while maintaining culture fit.",
+      ai: "Designed AI-powered recruitment pipeline: 70% faster screening, 85% culture match accuracy. Automated scheduling reduces time-to-hire by 12 days.",
+      badge: "People AI"
+    }
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowResponse(false);
+      setShowTyping(false);
+      
+      setTimeout(() => {
+        setCurrentScenario((prev) => (prev + 1) % scenarios.length);
+        setShowTyping(true);
+        
+        setTimeout(() => {
+          setShowTyping(false);
+          setShowResponse(true);
+        }, 1500);
+      }, 5000);
+    }, 5000);
+
+    // Initialize first scenario
+    setShowTyping(true);
+    setTimeout(() => {
+      setShowTyping(false);
+      setShowResponse(true);
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const scenario = scenarios[currentScenario];
+
   return (
-    <div className="relative flex flex-col gap-4 h-full min-h-[200px] lg:min-h-[300px]">
-      <div className="w-full max-w-md mx-auto bg-background/50 backdrop-blur-sm border border-border/50 rounded-xl p-6 shadow-sm">
+    <div className="relative flex flex-col gap-4 h-full min-h-[200px] lg:min-h-[320px] overflow-hidden">
+      {/* Ambient Effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 via-transparent to-primary/5 rounded-xl"></div>
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <span className="text-xs text-muted-foreground font-medium">Live Chat</span>
+      </div>
+      <div className="absolute bottom-4 left-4 flex items-center gap-1">
+        <div className="w-1 h-1 bg-secondary/50 rounded-full animate-bounce"></div>
+        <div className="w-1 h-1 bg-secondary/50 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+        <div className="w-1 h-1 bg-secondary/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+      </div>
+
+      <div className="w-full max-w-md mx-auto bg-background/60 backdrop-blur-sm border border-border/50 rounded-xl p-4 lg:p-6 shadow-lg relative z-10">
         <div className="space-y-4">
-          <div className="flex justify-end">
-            <div className="bg-secondary text-secondary-foreground px-4 py-2 rounded-2xl rounded-tr-md max-w-[85%] text-sm">
-              Hey, I need help scheduling a team meeting that works well for everyone. Any suggestions?
-            </div>
-          </div>
+          {/* User Message */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`user-${scenario.id}`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.4 }}
+              className="flex justify-end"
+            >
+              <div className="bg-secondary text-secondary-foreground px-3 py-2 rounded-2xl rounded-tr-md max-w-[90%] text-xs lg:text-sm leading-relaxed">
+                {scenario.user}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* AI Response */}
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-secondary to-primary rounded-full flex items-center justify-center flex-shrink-0">
-              <MessageSquare className="w-4 h-4 text-white" />
-            </div>
-            <div className="bg-muted/50 backdrop-blur-sm px-4 py-2 rounded-2xl rounded-tl-md shadow-sm border border-border/50 max-w-[85%]">
-              <p className="text-sm text-primary">
-                Based on calendar patterns, I recommend Tuesday at 2pm for optimal attendance.
-              </p>
+            <motion.div
+              className={`w-8 h-8 bg-gradient-to-br ${scenario.color} rounded-full flex items-center justify-center flex-shrink-0`}
+              whileHover={{ scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+              {scenario.icon}
+            </motion.div>
+            
+            <div className="flex-1">
+              {/* AI Badge */}
+              <motion.div
+                key={`badge-${scenario.id}`}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mb-2"
+              >
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary/10 text-secondary">
+                  <Brain className="w-3 h-3 mr-1" />
+                  {scenario.badge}
+                </span>
+              </motion.div>
+
+              {/* Typing Indicator */}
+              <AnimatePresence>
+                {showTyping && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.2 }}
+                    className="bg-muted/50 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-md shadow-sm border border-border/50"
+                  >
+                    <div className="flex gap-1">
+                      {[0, 1, 2].map((index) => (
+                        <motion.div
+                          key={index}
+                          className="w-2 h-2 bg-secondary/60 rounded-full"
+                          animate={{ y: [0, -4, 0] }}
+                          transition={{
+                            duration: 0.6,
+                            repeat: Infinity,
+                            delay: index * 0.1,
+                            ease: "easeInOut",
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* AI Response */}
+              <AnimatePresence>
+                {showResponse && (
+                  <motion.div
+                    key={`response-${scenario.id}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.4 }}
+                    className="bg-muted/50 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-md shadow-sm border border-border/50"
+                  >
+                    <p className="text-xs lg:text-sm text-primary leading-relaxed">
+                      {scenario.ai}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
       </div>
-      
-      <div className="absolute bottom-4 right-4 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-      <div className="absolute top-4 left-4 w-2 h-2 bg-secondary/50 rounded-full animate-bounce"></div>
+
+      {/* Infinite Capacity Indicator */}
+      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-2 p-4">
+        <div className="flex items-center gap-2 bg-background/80 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-medium border border-border/50">
+          <div className="w-2 h-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full animate-pulse"></div>
+          <span className="text-muted-foreground">Infinite Capacity Available</span>
+        </div>
+      </div>
     </div>
   );
 };
@@ -267,7 +453,7 @@ const AutomationSkeleton = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            Deploy to production
+            Process monthly reports
           </motion.div>
           <motion.div 
             className="bg-muted/50 border border-border/50 px-4 py-2 rounded-lg text-sm font-medium"
@@ -275,7 +461,7 @@ const AutomationSkeleton = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            Run CI/CD pipeline
+            Send client updates
           </motion.div>
           <motion.div 
             className="border-2 border-dashed border-muted-foreground/20 text-muted-foreground px-4 py-2 rounded-lg text-sm text-center"

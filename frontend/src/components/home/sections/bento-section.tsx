@@ -2,7 +2,7 @@
 
 import { SectionHeader } from '@/components/home/section-header';
 import { ProfileCard } from '@/components/ProfileCard';
-import { Shield, Lock, Eye, Zap, Database, Brain, Users, Globe } from 'lucide-react';
+import { Shield, Lock, Brain, Database, Zap, Users, CheckCircle, ArrowRight } from 'lucide-react';
 
 export function BentoSection() {
   const secureAIFeatures = [
@@ -10,140 +10,175 @@ export function BentoSection() {
       id: 1,
       title: 'Private AI Training',
       subtitle: 'Your Data, Your Edge',
-      description: 'Train AI models exclusively on your proprietary data without exposing intellectual property to competitors or public models.',
+      description: 'Train AI models exclusively on your proprietary data. Keep intellectual property secure while building competitive advantages that stay within your organization.',
       avatar: '/api/placeholder/400/400?text=🔒',
       miniAvatar: '/api/placeholder/100/100?text=🔒',
       handle: 'privateai',
       status: 'Enterprise Ready',
-      behindGradient: 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(220,100%,90%,var(--card-opacity)) 4%,hsla(220,50%,80%,calc(var(--card-opacity)*0.75)) 10%,hsla(220,25%,70%,calc(var(--card-opacity)*0.5)) 50%,hsla(220,0%,60%,0) 100%),radial-gradient(35% 52% at 55% 20%,#0066ff 0%,#073aff00 100%),radial-gradient(100% 100% at 50% 50%,#4169E1 1%,#073aff00 76%),conic-gradient(from 124deg at 50% 50%,#1E90FF 0%,#4169E1 40%,#4169E1 60%,#1E90FF 100%)',
-      innerGradient: 'linear-gradient(145deg,#1E40AF 0%,#3730A3 100%)'
+      behindGradient: 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(220,60%,95%,var(--card-opacity)) 4%,hsla(220,40%,90%,calc(var(--card-opacity)*0.6)) 10%,hsla(220,20%,85%,calc(var(--card-opacity)*0.3)) 50%,hsla(220,0%,80%,0) 100%),radial-gradient(35% 52% at 55% 20%,rgba(59,130,246,0.15) 0%,rgba(59,130,246,0) 100%),radial-gradient(100% 100% at 50% 50%,rgba(59,130,246,0.08) 1%,rgba(59,130,246,0) 76%)',
+      innerGradient: 'linear-gradient(145deg,rgba(30,64,175,0.05) 0%,rgba(55,48,163,0.03) 100%)',
+      keyFeatures: ['Zero data leakage', 'Proprietary model training', 'Competitive advantage protection']
     },
     {
       id: 2,
-      title: 'Zero-Trust Architecture',
-      subtitle: 'Bulletproof Security',
-      description: 'Military-grade encryption and zero-trust protocols ensure your competitive intelligence stays yours.',
+      title: 'Zero-Trust Security',
+      subtitle: 'Military-Grade Protection',
+      description: 'Enterprise-grade encryption and zero-trust architecture ensure your sensitive data and AI models remain completely isolated from external threats and competitors.',
       avatar: '/api/placeholder/400/400?text=🛡️',
       miniAvatar: '/api/placeholder/100/100?text=🛡️',
       handle: 'zerotrust',
       status: 'SOC 2 Certified',
-      behindGradient: 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(140,100%,90%,var(--card-opacity)) 4%,hsla(140,50%,80%,calc(var(--card-opacity)*0.75)) 10%,hsla(140,25%,70%,calc(var(--card-opacity)*0.5)) 50%,hsla(140,0%,60%,0) 100%),radial-gradient(35% 52% at 55% 20%,#00ff66 0%,#073aff00 100%),radial-gradient(100% 100% at 50% 50%,#10B981 1%,#073aff00 76%),conic-gradient(from 124deg at 50% 50%,#059669 0%,#10B981 40%,#10B981 60%,#059669 100%)',
-      innerGradient: 'linear-gradient(145deg,#065F46 0%,#047857 100%)'
+      behindGradient: 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(140,60%,95%,var(--card-opacity)) 4%,hsla(140,40%,90%,calc(var(--card-opacity)*0.6)) 10%,hsla(140,20%,85%,calc(var(--card-opacity)*0.3)) 50%,hsla(140,0%,80%,0) 100%),radial-gradient(35% 52% at 55% 20%,rgba(16,185,129,0.15) 0%,rgba(16,185,129,0) 100%),radial-gradient(100% 100% at 50% 50%,rgba(16,185,129,0.08) 1%,rgba(16,185,129,0) 76%)',
+      innerGradient: 'linear-gradient(145deg,rgba(6,95,70,0.05) 0%,rgba(4,120,87,0.03) 100%)',
+      keyFeatures: ['End-to-end encryption', 'SOC 2 + HIPAA compliance', 'Audit trail monitoring']
     },
     {
       id: 3,
       title: 'Competitive Moat',
       subtitle: 'Protect Your Advantage',
-      description: 'Keep your proprietary knowledge and data insights exclusively within your organization and away from competitors.',
+      description: 'Maintain your competitive edge by ensuring proprietary insights, customer data, and business intelligence never benefit competitors or public AI models.',
       avatar: '/api/placeholder/400/400?text=⚔️',
       miniAvatar: '/api/placeholder/100/100?text=⚔️',
       handle: 'competitive',
-      status: 'Market Leader',
-      behindGradient: 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(340,100%,90%,var(--card-opacity)) 4%,hsla(340,50%,80%,calc(var(--card-opacity)*0.75)) 10%,hsla(340,25%,70%,calc(var(--card-opacity)*0.5)) 50%,hsla(340,0%,60%,0) 100%),radial-gradient(35% 52% at 55% 20%,#ff0066 0%,#073aff00 100%),radial-gradient(100% 100% at 50% 50%,#E11D48 1%,#073aff00 76%),conic-gradient(from 124deg at 50% 50%,#BE185D 0%,#E11D48 40%,#E11D48 60%,#BE185D 100%)',
-      innerGradient: 'linear-gradient(145deg,#9F1239 0%,#BE185D 100%)'
+      status: 'Market Protection',
+      behindGradient: 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(260,60%,95%,var(--card-opacity)) 4%,hsla(260,40%,90%,calc(var(--card-opacity)*0.6)) 10%,hsla(260,20%,85%,calc(var(--card-opacity)*0.3)) 50%,hsla(260,0%,80%,0) 100%),radial-gradient(35% 52% at 55% 20%,rgba(139,92,246,0.15) 0%,rgba(139,92,246,0) 100%),radial-gradient(100% 100% at 50% 50%,rgba(139,92,246,0.08) 1%,rgba(139,92,246,0) 76%)',
+      innerGradient: 'linear-gradient(145deg,rgba(91,33,182,0.05) 0%,rgba(109,40,217,0.03) 100%)',
+      keyFeatures: ['Data isolation', 'Competitor protection', 'IP safeguarding']
     },
     {
       id: 4,
       title: 'Enterprise Sovereignty',
       subtitle: 'Complete Control',
-      description: 'Deploy AI that learns and improves exclusively from your operations while maintaining full data sovereignty.',
+      description: 'Deploy AI infrastructure with full data sovereignty. Self-hosted solutions that learn and improve exclusively from your operations while maintaining complete ownership.',
       avatar: '/api/placeholder/400/400?text=👑',
       miniAvatar: '/api/placeholder/100/100?text=👑',
       handle: 'sovereign',
       status: 'Self-Hosted',
-      behindGradient: 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(45,100%,90%,var(--card-opacity)) 4%,hsla(45,50%,80%,calc(var(--card-opacity)*0.75)) 10%,hsla(45,25%,70%,calc(var(--card-opacity)*0.5)) 50%,hsla(45,0%,60%,0) 100%),radial-gradient(35% 52% at 55% 20%,#ffaa00 0%,#073aff00 100%),radial-gradient(100% 100% at 50% 50%,#F59E0B 1%,#073aff00 76%),conic-gradient(from 124deg at 50% 50%,#D97706 0%,#F59E0B 40%,#F59E0B 60%,#D97706 100%)',
-      innerGradient: 'linear-gradient(145deg,#92400E 0%,#B45309 100%)'
+      behindGradient: 'radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(35,60%,95%,var(--card-opacity)) 4%,hsla(35,40%,90%,calc(var(--card-opacity)*0.6)) 10%,hsla(35,20%,85%,calc(var(--card-opacity)*0.3)) 50%,hsla(35,0%,80%,0) 100%),radial-gradient(35% 52% at 55% 20%,rgba(245,158,11,0.15) 0%,rgba(245,158,11,0) 100%),radial-gradient(100% 100% at 50% 50%,rgba(245,158,11,0.08) 1%,rgba(245,158,11,0) 76%)',
+      innerGradient: 'linear-gradient(145deg,rgba(146,64,14,0.05) 0%,rgba(180,83,9,0.03) 100%)',
+      keyFeatures: ['On-premise deployment', 'Full data ownership', 'Custom governance']
     }
   ];
 
   return (
     <section
       id="bento"
-      className="flex flex-col items-center justify-center w-full relative py-32 bg-gradient-to-b from-background via-background to-muted/10"
+      className="flex flex-col items-center justify-center w-full relative py-24 lg:py-32"
     >
       <div className="w-full max-w-7xl mx-auto px-6">
-        <SectionHeader>
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="p-3 bg-secondary/10 rounded-full">
+        {/* Header Section */}
+        <div className="text-center mb-20">
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="p-3 bg-secondary/10 rounded-2xl border border-secondary/20">
               <Shield className="h-6 w-6 text-secondary" />
             </div>
             <span className="text-sm font-semibold text-secondary uppercase tracking-wider">
               Enterprise AI Security
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-center text-balance leading-[1.1] mb-6">
+          
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-balance leading-[1.05] mb-8">
             Built for Secure Growth
           </h2>
-          <div className="max-w-3xl mx-auto space-y-4">
-            <p className="text-xl md:text-2xl text-center text-muted-foreground font-normal text-balance leading-relaxed">
-              Your data and knowledge are your competitive edge. 
+          
+          <div className="max-w-4xl mx-auto space-y-6">
+            <p className="text-xl md:text-2xl text-muted-foreground font-normal leading-relaxed">
+              Your data and knowledge are your competitive edge.
             </p>
-            <p className="text-lg md:text-xl text-center text-muted-foreground/80 font-normal text-balance leading-relaxed">
+            <p className="text-lg md:text-xl text-muted-foreground/70 font-normal leading-relaxed max-w-3xl mx-auto">
               Supercharge your business with AI that learns exclusively from your proprietary assets—without sharing your advantage with competitors or public models.
             </p>
           </div>
-        </SectionHeader>
+        </div>
 
-        {/* Feature Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6 mt-20">
+        {/* Feature Cards - 2x2 Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto">
           {secureAIFeatures.map((feature) => (
-            <div key={feature.id} className="relative group">
-              <ProfileCard
-                avatarUrl={feature.avatar}
-                miniAvatarUrl={feature.miniAvatar}
-                name={feature.title}
-                title={feature.subtitle}
-                handle={feature.handle}
-                status={feature.status}
-                contactText="Learn More"
-                behindGradient={feature.behindGradient}
-                innerGradient={feature.innerGradient}
-                enableTilt={true}
-                showUserInfo={true}
-                onContactClick={() => {
-                  // Add contact handler logic here
-                  console.log(`Learn more about ${feature.title}`);
-                }}
-                className="h-[400px] transition-all duration-300 hover:scale-[1.02]"
-              />
-              
-              {/* Feature description overlay on hover */}
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/95 via-background/80 to-transparent p-6 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-b-[30px] pointer-events-none">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
+            <div key={feature.id} className="group relative">
+              <div className="relative overflow-hidden rounded-3xl bg-background/50 backdrop-blur-sm border border-border/50 p-8 lg:p-10 transition-all duration-500 hover:shadow-2xl hover:shadow-black/10 hover:border-border/70 hover:-translate-y-1">
+                {/* Subtle background gradient */}
+                <div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"
+                  style={{
+                    background: feature.behindGradient
+                  }}
+                />
+                
+                {/* Content */}
+                <div className="relative z-10">
+                  {/* Header */}
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="p-3 bg-secondary/10 rounded-2xl border border-secondary/20 group-hover:border-secondary/30 transition-colors duration-300">
+                      <div className="text-2xl">{feature.avatar.includes('🔒') ? '🔒' : feature.avatar.includes('🛡️') ? '🛡️' : feature.avatar.includes('⚔️') ? '⚔️' : '👑'}</div>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-2xl lg:text-3xl font-semibold text-foreground mb-2 group-hover:text-foreground transition-colors duration-300">
+                        {feature.title}
+                      </h3>
+                      <p className="text-base lg:text-lg text-secondary font-medium">
+                        {feature.subtitle}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-muted-foreground leading-relaxed mb-6 text-base lg:text-lg">
+                    {feature.description}
+                  </p>
+
+                  {/* Key Features */}
+                  <div className="space-y-3 mb-8">
+                    {feature.keyFeatures.map((keyFeature, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <CheckCircle className="h-5 w-5 text-secondary flex-shrink-0" />
+                        <span className="text-sm lg:text-base text-muted-foreground">
+                          {keyFeature}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/10 text-secondary border border-secondary/20 rounded-full text-sm font-medium">
+                    <div className="w-2 h-2 bg-secondary rounded-full"></div>
+                    {feature.status}
+                  </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
         {/* Bottom CTA Section */}
-        <div className="mt-24 text-center max-w-4xl mx-auto">
-          <div className="relative p-8 lg:p-12 rounded-3xl bg-gradient-to-br from-secondary/5 to-secondary/10 border border-secondary/20 backdrop-blur-sm">
-            <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent rounded-3xl"></div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-center gap-3 mb-6">
-                <Brain className="h-8 w-8 text-secondary" />
-                <Database className="h-8 w-8 text-secondary" />
-                <Lock className="h-8 w-8 text-secondary" />
+        <div className="mt-24 lg:mt-32">
+          <div className="relative max-w-4xl mx-auto">
+            <div className="relative p-8 lg:p-12 rounded-3xl bg-gradient-to-br from-secondary/5 to-secondary/8 border border-secondary/20 backdrop-blur-sm overflow-hidden">
+              {/* Subtle background pattern */}
+              <div className="absolute inset-0 opacity-5">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `radial-gradient(circle at 25% 25%, rgba(var(--secondary), 0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(var(--secondary), 0.1) 0%, transparent 50%)`
+                }} />
               </div>
-              <h3 className="text-2xl lg:text-3xl font-semibold text-foreground mb-4">
-                Ready to Secure Your AI Advantage?
-              </h3>
-              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Join industry leaders who trust Operator to deploy AI that amplifies their competitive edge while protecting their most valuable assets.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button className="group inline-flex items-center gap-2 px-8 py-4 bg-secondary text-secondary-foreground rounded-full font-semibold transition-all duration-300 hover:bg-secondary/90 hover:shadow-xl hover:shadow-secondary/25 hover:scale-105">
-                  <Shield className="h-5 w-5" />
+              
+              <div className="relative z-10 text-center">
+                <div className="flex items-center justify-center gap-4 mb-8">
+                  <Brain className="h-8 w-8 text-secondary" />
+                  <Database className="h-8 w-8 text-secondary" />
+                  <Lock className="h-8 w-8 text-secondary" />
+                </div>
+                
+                <h3 className="text-3xl lg:text-4xl font-semibold text-foreground mb-6">
+                  Ready to Secure Your AI Advantage?
+                </h3>
+                
+                <p className="text-lg lg:text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto">
+                  Join industry leaders who trust Operator to deploy AI that amplifies their competitive edge while protecting their most valuable assets.
+                </p>
+                
+                <button className="group inline-flex items-center gap-3 px-10 py-5 bg-secondary text-secondary-foreground rounded-2xl font-semibold text-lg transition-all duration-300 hover:bg-secondary/90 hover:shadow-xl hover:shadow-secondary/25 hover:scale-105">
+                  <Shield className="h-6 w-6" />
                   <span>Schedule Security Demo</span>
-                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </button>
-                <button className="inline-flex items-center gap-2 px-8 py-4 border border-border bg-background/50 backdrop-blur-sm text-foreground rounded-full font-semibold transition-all duration-300 hover:bg-background hover:border-secondary/30 hover:shadow-lg">
-                  <Eye className="h-5 w-5" />
-                  <span>View Security Whitepaper</span>
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                 </button>
               </div>
             </div>

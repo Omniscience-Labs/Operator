@@ -101,9 +101,9 @@ export const siteConfig = {
     badge: 'Secure Enterprise Agents',
     title: (
       <>
-        Operator - your{' '}
+        Operator - Your{' '}
         <GradientText 
-          text="infinite AI" 
+          text="Infinite AI" 
           gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
           transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
         />{' '}
