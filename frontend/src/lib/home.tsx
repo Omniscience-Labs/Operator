@@ -4,6 +4,7 @@ import { SecondBentoAnimation } from '@/components/home/second-bento-animation';
 import { ThirdBentoAnimation } from '@/components/home/third-bento-animation';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { Globe } from '@/components/home/ui/globe';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import React from 'react';
@@ -98,7 +99,17 @@ export const siteConfig = {
             </svg>
     ),
     badge: 'Secure Enterprise Agents',
-    title: 'Operator - Your Infinite AI Teammate',
+    title: (
+      <>
+        Operator - your{' '}
+        <GradientText 
+          text="infinite AI" 
+          gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+          transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+        />{' '}
+        Teammate
+      </>
+    ),
     description:
       'Operator by OMNI – is a generalist AI Agent that acts on your behalf.',
     inputPlaceholder: 'Ask Operator to...',
