@@ -36,9 +36,9 @@ export const AgentKnowledgeConfiguration = ({
     return input
       .toLowerCase() // Convert to lowercase
       .replace(/\s+/g, '-') // Replace spaces with dashes
-      .replace(/[^a-z0-9\-]/g, '') // Remove any character that's not a lowercase letter or dash
+      .replace(/[^a-z0-9-]/g, '') // Remove any character that's not a lowercase letter, number, or dash
       .replace(/-+/g, '-') // Replace multiple consecutive dashes with single dash
-      .replace(/^-|-$/g, ''); // Remove leading/trailing dashes
+      .replace(/^-+/, ''); // Remove leading dashes only
   };
 
   const handleAddKnowledgeBase = () => {
