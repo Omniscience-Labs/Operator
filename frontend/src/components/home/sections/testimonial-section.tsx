@@ -57,33 +57,36 @@ export function TestimonialSection() {
       </SectionHeader>
       
       <div className="w-full max-w-7xl mx-auto px-6 mt-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Left side - Features */}
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          {/* Left side - Features Grid */}
+          <div className="lg:col-span-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
               {features.map((feature, index) => (
-                <div key={index} className="space-y-3">
+                <div key={index} className="flex flex-col space-y-4 p-6 rounded-xl bg-background border border-border hover:shadow-sm transition-all duration-200">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <div className="p-3 bg-secondary/10 text-secondary rounded-xl">
                       {feature.icon}
                     </div>
-                    <h3 className="font-semibold text-lg">{feature.title}</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-lg text-primary leading-tight">{feature.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Right side - Chat Interface Mockup */}
-          <div className="relative">
-            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 relative overflow-hidden">
+          <div className="lg:col-span-6 relative">
+            {/* Main Chat Container */}
+            <div className="bg-gradient-to-br from-secondary/5 to-secondary/10 rounded-2xl p-6 relative overflow-hidden border border-border">
               {/* Chat Interface */}
-              <div className="space-y-4 mb-8">
+              <div className="space-y-4 mb-6">
                 <div className="flex justify-end">
-                  <div className="bg-blue-600 text-white px-4 py-3 rounded-2xl rounded-tr-sm max-w-xs">
+                  <div className="bg-secondary text-secondary-foreground px-4 py-3 rounded-2xl rounded-tr-md max-w-sm">
                     <p className="text-sm">
                       Hey, I need help scheduling a team meeting that works well for everyone. Any suggestions for finding an optimal time slot?
                     </p>
@@ -91,43 +94,43 @@ export function TestimonialSection() {
                 </div>
                 
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <div className="w-8 h-8 bg-gradient-to-br from-secondary to-primary rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-secondary-foreground" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                     </svg>
                   </div>
-                  <div className="bg-white px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm max-w-xs">
-                    <p className="text-sm text-gray-700">
+                  <div className="bg-background px-4 py-3 rounded-2xl rounded-tl-md shadow-sm border border-border max-w-sm">
+                    <p className="text-sm text-primary">
                       Based on your calendar patterns and preferences, I recommend scheduling the team meeting for Tuesday at 2pm. This time slot has historically had the highest attendance rates for your team.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Floating Elements */}
-              <div className="absolute top-4 right-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Floating Decorative Elements */}
+              <div className="absolute top-4 right-4 w-10 h-10 bg-background rounded-full shadow-md border border-border flex items-center justify-center">
+                <svg className="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
               
-              <div className="absolute bottom-4 left-4 w-10 h-10 bg-purple-100 rounded-full"></div>
-              <div className="absolute top-1/2 right-8 w-6 h-6 bg-blue-100 rounded-full"></div>
+              <div className="absolute bottom-4 left-4 w-8 h-8 bg-accent/60 rounded-full"></div>
+              <div className="absolute top-1/2 right-6 w-5 h-5 bg-secondary/30 rounded-full"></div>
             </div>
 
             {/* Calendar Widget */}
-            <div className="absolute -bottom-4 -right-4 bg-white rounded-lg shadow-lg p-4 border">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-gray-600">Schedule</span>
-                <div className="text-xs text-gray-400">Tue-Sat</div>
+            <div className="absolute -bottom-6 -right-6 bg-background rounded-xl shadow-lg border border-border p-4 w-48">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-primary">Schedule</span>
+                <div className="text-xs text-muted-foreground">Tue-Sat</div>
               </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span>12:00 AM</span>
-                  <div className="bg-blue-600 text-white px-2 py-1 rounded text-xs">Bento grid</div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground">12:00 AM</span>
+                  <div className="bg-secondary text-secondary-foreground px-2 py-1 rounded text-xs font-medium">Bento grid</div>
                 </div>
-                <div className="bg-blue-50 px-2 py-1 rounded text-xs text-blue-600">Landing Page</div>
-                <div className="border-2 border-dashed border-blue-200 px-2 py-1 rounded text-xs text-blue-400">Add Task</div>
+                <div className="bg-secondary/10 text-secondary px-2 py-1 rounded text-xs font-medium">Landing Page</div>
+                <div className="border-2 border-dashed border-secondary/30 text-secondary/70 px-2 py-1 rounded text-xs text-center">Add Task</div>
               </div>
             </div>
           </div>
@@ -135,20 +138,20 @@ export function TestimonialSection() {
       </div>
 
       {/* Testimonial */}
-      <div className="w-full max-w-4xl mx-auto px-6 mt-20">
+      <div className="w-full max-w-4xl mx-auto px-6 mt-24">
         <blockquote className="text-center">
-          <p className="text-xl md:text-2xl font-medium text-gray-900 mb-8">
+          <p className="text-xl md:text-2xl font-medium text-primary mb-8 leading-relaxed">
             "Operator has transformed our daily operations. Tasks that once consumed hours now complete in moments, freeing our team to focus on creativity and strategic growth."
           </p>
           <div className="flex items-center justify-center gap-4">
             <img
               src="https://randomuser.me/api/portraits/men/91.jpg"
               alt="Alex Johnson"
-              className="w-12 h-12 rounded-full"
+              className="w-12 h-12 rounded-full object-cover"
             />
             <div className="text-left">
-              <div className="font-semibold text-gray-900">Alex Johnson</div>
-              <div className="text-sm text-gray-600">CTO, Innovatech</div>
+              <div className="font-semibold text-primary">Alex Johnson</div>
+              <div className="text-sm text-muted-foreground">CTO, Innovatech</div>
             </div>
           </div>
         </blockquote>

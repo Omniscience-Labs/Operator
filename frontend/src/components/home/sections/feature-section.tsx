@@ -45,12 +45,12 @@ export function FeatureSection() {
           <div className="space-y-8">
             {steps.map((step, index) => (
               <div key={index} className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">
+                <div className="flex-shrink-0 w-8 h-8 bg-secondary text-secondary-foreground rounded-full flex items-center justify-center font-semibold text-sm">
                   {step.icon}
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{step.description}</p>
+                  <h3 className="text-lg font-semibold text-primary">{step.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -58,7 +58,7 @@ export function FeatureSection() {
 
           {/* Right side - Hero Image */}
           <div className="relative">
-            <div className="relative w-full h-96 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden">
+            <div className="relative w-full h-96 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden border border-border">
               <img
                 src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2400&q=80"
                 alt="AI Agent in action"
@@ -68,8 +68,8 @@ export function FeatureSection() {
               
               {/* Overlay figure */}
               <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
-                  <svg className="w-8 h-8 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center shadow-lg border border-border">
+                  <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
