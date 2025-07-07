@@ -5,9 +5,21 @@ import { ProfileCard } from '@/components/ProfileCard';
 import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
 import { IconCloud } from '@/components/magicui/icon-cloud';
 import { OmniProcessModal } from '@/components/sidebar/omni-enterprise-modal';
+import { GoogleGeminiEffect } from '@/components/ui/google-gemini-effect';
 import { Shield, Lock, Brain, Database, Zap, Users, CheckCircle, ArrowRight, Cloud, Globe, Settings, FileText, BarChart3, MessageSquare, Calendar, Mail, Search, Server, Cpu, Factory, Wrench, TrendingUp, ShoppingCart, DollarSign, Truck, Package, ClipboardCheck, AlertTriangle, Microscope, HardDrive, Wifi, MonitorSpeaker, Building, Briefcase, Calculator, PieChart, LineChart, Users2, Key, Layers, Boxes, Target, CreditCard, Workflow, GitBranch, Gauge, Activity, Smartphone, Tablet, Laptop, Network, Headphones, Phone, Video, Printer, Timer, MapPin, Globe2, Radio, Antenna, Archive, Edit, Receipt, XCircle, Clock, Folder, FolderOpen } from 'lucide-react';
+import { useScroll, useTransform } from 'framer-motion';
 
 export function BentoSection() {
+  // Scroll-based animations for GoogleGeminiEffect
+  const { scrollYProgress } = useScroll();
+  const pathLengths = [
+    useTransform(scrollYProgress, [0, 0.2], [0, 1]),
+    useTransform(scrollYProgress, [0.1, 0.3], [0, 1]),
+    useTransform(scrollYProgress, [0.2, 0.4], [0, 1]),
+    useTransform(scrollYProgress, [0.3, 0.5], [0, 1]),
+    useTransform(scrollYProgress, [0.4, 0.6], [0, 1]),
+  ];
+
   // Transform secure AI features to match Agent interface
   const secureAIAgents = [
     {
@@ -59,93 +71,93 @@ export function BentoSection() {
   // Enterprise integration icons - comprehensive set for industrial companies
   const enterpriseIntegrationIcons = [
     // ERP & Business Systems
-    <Building key="building" className="h-12 w-12 text-blue-500" />,
-    <Briefcase key="briefcase" className="h-12 w-12 text-indigo-500" />,
-    <Calculator key="calculator-1" className="h-12 w-12 text-green-500" />,
-    <PieChart key="piechart" className="h-12 w-12 text-purple-500" />,
-    <BarChart3 key="barchart3" className="h-12 w-12 text-orange-500" />,
-    <LineChart key="linechart" className="h-12 w-12 text-red-500" />,
-    <TrendingUp key="trendingup" className="h-12 w-12 text-emerald-500" />,
+    <Building key="building" className="h-20 w-20 text-blue-500 dark:text-blue-400" />,
+    <Briefcase key="briefcase" className="h-20 w-20 text-indigo-500 dark:text-indigo-400" />,
+    <Calculator key="calculator-1" className="h-20 w-20 text-green-500 dark:text-green-400" />,
+    <PieChart key="piechart" className="h-20 w-20 text-purple-500 dark:text-purple-400" />,
+    <BarChart3 key="barchart3" className="h-20 w-20 text-orange-500 dark:text-orange-400" />,
+    <LineChart key="linechart" className="h-20 w-20 text-red-500 dark:text-red-400" />,
+    <TrendingUp key="trendingup" className="h-20 w-20 text-emerald-500 dark:text-emerald-400" />,
     
     // Manufacturing & Industrial
-    <Factory key="factory" className="h-12 w-12 text-gray-600" />,
-    <Cpu key="cpu" className="h-12 w-12 text-cyan-500" />,
-    <Wrench key="wrench" className="h-12 w-12 text-amber-500" />,
-    <Settings key="settings" className="h-12 w-12 text-slate-500" />,
-    <Gauge key="gauge-1" className="h-12 w-12 text-blue-600" />,
-    <Activity key="activity" className="h-12 w-12 text-pink-500" />,
-    <Zap key="zap" className="h-12 w-12 text-yellow-500" />,
+    <Factory key="factory" className="h-20 w-20 text-gray-600 dark:text-gray-400" />,
+    <Cpu key="cpu" className="h-20 w-20 text-cyan-500 dark:text-cyan-400" />,
+    <Wrench key="wrench" className="h-20 w-20 text-amber-500 dark:text-amber-400" />,
+    <Settings key="settings" className="h-20 w-20 text-slate-500 dark:text-slate-400" />,
+    <Gauge key="gauge-1" className="h-20 w-20 text-blue-600 dark:text-blue-400" />,
+    <Activity key="activity" className="h-20 w-20 text-pink-500 dark:text-pink-400" />,
+    <Zap key="zap" className="h-20 w-20 text-yellow-500 dark:text-yellow-400" />,
     
     // Supply Chain & Logistics
-    <Truck key="truck" className="h-12 w-12 text-brown-500" />,
-    <Package key="package" className="h-12 w-12 text-teal-500" />,
-    <ShoppingCart key="shoppingcart" className="h-12 w-12 text-violet-500" />,
-    <Boxes key="boxes" className="h-12 w-12 text-orange-600" />,
-    <MapPin key="mappin" className="h-12 w-12 text-red-600" />,
-    <Globe2 key="globe2" className="h-12 w-12 text-blue-700" />,
+    <Truck key="truck" className="h-20 w-20 text-amber-600 dark:text-amber-400" />,
+    <Package key="package" className="h-20 w-20 text-teal-500 dark:text-teal-400" />,
+    <ShoppingCart key="shoppingcart" className="h-20 w-20 text-violet-500 dark:text-violet-400" />,
+    <Boxes key="boxes" className="h-20 w-20 text-orange-600 dark:text-orange-400" />,
+    <MapPin key="mappin" className="h-20 w-20 text-red-600 dark:text-red-400" />,
+    <Globe2 key="globe2" className="h-20 w-20 text-blue-700 dark:text-blue-400" />,
     
     // Financial & Accounting
-    <DollarSign key="dollarsign" className="h-12 w-12 text-green-600" />,
-    <CreditCard key="creditcard" className="h-12 w-12 text-indigo-600" />,
-    <Receipt key="receipt" className="h-12 w-12 text-gray-500" />,
-    <Calculator key="calculator-2" className="h-12 w-12 text-slate-600" />,
+    <DollarSign key="dollarsign" className="h-20 w-20 text-green-600 dark:text-green-400" />,
+    <CreditCard key="creditcard" className="h-20 w-20 text-indigo-600 dark:text-indigo-400" />,
+    <Receipt key="receipt" className="h-20 w-20 text-gray-500 dark:text-gray-400" />,
+    <Calculator key="calculator-2" className="h-20 w-20 text-slate-600 dark:text-slate-400" />,
     
     // Cloud & Infrastructure
-    <Cloud key="cloud" className="h-12 w-12 text-sky-500" />,
-    <Server key="server" className="h-12 w-12 text-gray-700" />,
-    <Database key="database" className="h-12 w-12 text-blue-800" />,
-    <HardDrive key="harddrive" className="h-12 w-12 text-gray-800" />,
-    <Network key="network" className="h-12 w-12 text-purple-600" />,
-    <Wifi key="wifi" className="h-12 w-12 text-blue-400" />,
+    <Cloud key="cloud" className="h-20 w-20 text-sky-500 dark:text-sky-400" />,
+    <Server key="server" className="h-20 w-20 text-gray-700 dark:text-gray-400" />,
+    <Database key="database" className="h-20 w-20 text-blue-800 dark:text-blue-400" />,
+    <HardDrive key="harddrive" className="h-20 w-20 text-gray-800 dark:text-gray-400" />,
+    <Network key="network" className="h-20 w-20 text-purple-600 dark:text-purple-400" />,
+    <Wifi key="wifi" className="h-20 w-20 text-blue-400 dark:text-blue-300" />,
     
     // Communication & Collaboration
-    <MessageSquare key="messagesquare" className="h-12 w-12 text-green-500" />,
-    <Mail key="mail" className="h-12 w-12 text-blue-500" />,
-    <Phone key="phone" className="h-12 w-12 text-indigo-500" />,
-    <Video key="video" className="h-12 w-12 text-red-500" />,
-    <Users2 key="users2" className="h-12 w-12 text-purple-500" />,
-    <Headphones key="headphones" className="h-12 w-12 text-orange-500" />,
+    <MessageSquare key="messagesquare" className="h-20 w-20 text-green-500 dark:text-green-400" />,
+    <Mail key="mail" className="h-20 w-20 text-blue-500 dark:text-blue-400" />,
+    <Phone key="phone" className="h-20 w-20 text-indigo-500 dark:text-indigo-400" />,
+    <Video key="video" className="h-20 w-20 text-red-500 dark:text-red-400" />,
+    <Users2 key="users2" className="h-20 w-20 text-purple-500 dark:text-purple-400" />,
+    <Headphones key="headphones" className="h-20 w-20 text-orange-500 dark:text-orange-400" />,
     
     // Document & Content Management
-    <FileText key="filetext" className="h-12 w-12 text-gray-600" />,
-    <Folder key="folder" className="h-12 w-12 text-yellow-600" />,
-    <Archive key="archive" className="h-12 w-12 text-brown-600" />,
-    <Search key="search" className="h-12 w-12 text-teal-600" />,
-    <Edit key="edit" className="h-12 w-12 text-violet-600" />,
-    <Printer key="printer" className="h-12 w-12 text-gray-700" />,
+    <FileText key="filetext" className="h-20 w-20 text-gray-600 dark:text-gray-400" />,
+    <Folder key="folder" className="h-20 w-20 text-yellow-600 dark:text-yellow-400" />,
+    <Archive key="archive" className="h-20 w-20 text-amber-600 dark:text-amber-400" />,
+    <Search key="search" className="h-20 w-20 text-teal-600 dark:text-teal-400" />,
+    <Edit key="edit" className="h-20 w-20 text-violet-600 dark:text-violet-400" />,
+    <Printer key="printer" className="h-20 w-20 text-gray-700 dark:text-gray-400" />,
     
     // Security & Compliance
-    <Shield key="shield" className="h-12 w-12 text-red-500" />,
-    <Lock key="lock" className="h-12 w-12 text-orange-500" />,
-    <Key key="key" className="h-12 w-12 text-yellow-500" />,
-    <AlertTriangle key="alerttriangle" className="h-12 w-12 text-amber-500" />,
-    <ClipboardCheck key="clipboardcheck" className="h-12 w-12 text-green-500" />,
+    <Shield key="shield" className="h-20 w-20 text-red-500 dark:text-red-400" />,
+    <Lock key="lock" className="h-20 w-20 text-orange-500 dark:text-orange-400" />,
+    <Key key="key" className="h-20 w-20 text-yellow-500 dark:text-yellow-400" />,
+    <AlertTriangle key="alerttriangle" className="h-20 w-20 text-amber-500 dark:text-amber-400" />,
+    <ClipboardCheck key="clipboardcheck" className="h-20 w-20 text-green-500 dark:text-green-400" />,
     
     // Quality & Testing
-    <Microscope key="microscope" className="h-12 w-12 text-cyan-600" />,
-    <Target key="target" className="h-12 w-12 text-red-600" />,
-    <CheckCircle key="checkcircle" className="h-12 w-12 text-emerald-600" />,
-    <XCircle key="xcircle" className="h-12 w-12 text-red-600" />,
+    <Microscope key="microscope" className="h-20 w-20 text-cyan-600 dark:text-cyan-400" />,
+    <Target key="target" className="h-20 w-20 text-red-600 dark:text-red-400" />,
+    <CheckCircle key="checkcircle" className="h-20 w-20 text-emerald-600 dark:text-emerald-400" />,
+    <XCircle key="xcircle" className="h-20 w-20 text-red-600 dark:text-red-400" />,
     
     // IoT & Sensors
-    <Smartphone key="smartphone" className="h-12 w-12 text-gray-600" />,
-    <Tablet key="tablet" className="h-12 w-12 text-blue-600" />,
-    <Laptop key="laptop" className="h-12 w-12 text-indigo-600" />,
-    <MonitorSpeaker key="monitorspeaker" className="h-12 w-12 text-purple-600" />,
-    <Radio key="radio" className="h-12 w-12 text-green-600" />,
-    <Antenna key="antenna" className="h-12 w-12 text-orange-600" />,
+    <Smartphone key="smartphone" className="h-20 w-20 text-gray-600 dark:text-gray-400" />,
+    <Tablet key="tablet" className="h-20 w-20 text-blue-600 dark:text-blue-400" />,
+    <Laptop key="laptop" className="h-20 w-20 text-indigo-600 dark:text-indigo-400" />,
+    <MonitorSpeaker key="monitorspeaker" className="h-20 w-20 text-purple-600 dark:text-purple-400" />,
+    <Radio key="radio" className="h-20 w-20 text-green-600 dark:text-green-400" />,
+    <Antenna key="antenna" className="h-20 w-20 text-orange-600 dark:text-orange-400" />,
     
     // Time & Scheduling
-    <Calendar key="calendar" className="h-12 w-12 text-blue-500" />,
-    <Gauge key="gauge-2" className="h-12 w-12 text-indigo-500" />,
-    <Timer key="timer" className="h-12 w-12 text-purple-500" />,
-    <Clock key="clock" className="h-12 w-12 text-red-500" />,
+    <Calendar key="calendar" className="h-20 w-20 text-blue-500 dark:text-blue-400" />,
+    <Gauge key="gauge-2" className="h-20 w-20 text-indigo-500 dark:text-indigo-400" />,
+    <Timer key="timer" className="h-20 w-20 text-purple-500 dark:text-purple-400" />,
+    <Clock key="clock" className="h-20 w-20 text-red-500 dark:text-red-400" />,
     
     // Workflow & Automation
-    <Workflow key="workflow" className="h-12 w-12 text-teal-500" />,
-    <GitBranch key="gitbranch" className="h-12 w-12 text-orange-500" />,
-    <Layers key="layers" className="h-12 w-12 text-violet-500" />,
-    <Globe key="globe" className="h-12 w-12 text-blue-500" />
+    <Workflow key="workflow" className="h-20 w-20 text-teal-500 dark:text-teal-400" />,
+    <GitBranch key="gitbranch" className="h-20 w-20 text-orange-500 dark:text-orange-400" />,
+    <Layers key="layers" className="h-20 w-20 text-violet-500 dark:text-violet-400" />,
+    <Globe key="globe" className="h-20 w-20 text-blue-500 dark:text-blue-400" />
   ];
 
   return (
@@ -184,8 +196,12 @@ export function BentoSection() {
           {secureAIAgents.map((agent) => (
             <AgentProfileCard
               key={agent.agent_id}
-              agent={agent}
-              mode="library"
+              agent={{
+                ...agent,
+                is_owned: false, // This will hide the action buttons
+                download_count: undefined // Hide download count for marketplace mode
+              }}
+              mode="marketplace"
               className="h-[420px]"
               enableTilt={true}
             />
@@ -204,13 +220,23 @@ export function BentoSection() {
           </div>
 
           {/* Integration Features Layout with Central Icon Cloud */}
-          <div className="relative max-w-7xl mx-auto mb-32">
+          <div className="relative max-w-7xl mx-auto mb-48">
             {/* Central Icon Cloud */}
-            <div className="relative flex items-center justify-center mx-auto w-[600px] h-[600px] lg:w-[700px] lg:h-[700px]">
-              <div className="relative z-10 w-full h-full flex items-center justify-center scale-125 lg:scale-150">
+            <div className="relative flex items-center justify-center mx-auto w-[600px] h-[500px] lg:w-[700px] lg:h-[600px] mt-8">
+              <div className="relative z-10 w-full h-full flex items-center justify-center scale-110 lg:scale-125">
                 <IconCloud icons={enterpriseIntegrationIcons} />
               </div>
-            </div>
+              
+              {/* Google Gemini Effect running through the icon cloud */}
+              <div className="absolute inset-0 z-0">
+                <GoogleGeminiEffect 
+                  pathLengths={pathLengths}
+                  title=""
+                  description=""
+                  className="static opacity-60"
+                />
+              </div>
+          </div>
 
             {/* Integration Features Positioned Around the Cloud */}
             {/* Top Left */}

@@ -77,21 +77,6 @@ export const LampContainer = ({
         <div className="absolute top-1/2 h-48 w-full translate-y-12 scale-x-150 bg-background blur-2xl"></div>
         <div className="absolute top-1/2 z-50 h-48 w-full bg-transparent opacity-10 backdrop-blur-md"></div>
         
-        {/* Central glow positioned at 25% from left */}
-        <div className="absolute inset-auto z-50 h-36 w-[28rem] -translate-y-1/2 left-[25%] -translate-x-1/2 rounded-full bg-cyan-500 opacity-50 blur-3xl"></div>
-        
-        {/* Upper glow positioned at 25% from left - moved higher */}
-        <motion.div
-          initial={{ width: "8rem" }}
-          whileInView={{ width: "16rem" }}
-          transition={{
-            delay: 0.3,
-            duration: 0.8,
-            ease: "easeInOut",
-          }}
-          className="absolute inset-auto z-30 h-36 w-64 -translate-y-[10rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400 blur-2xl"
-        ></motion.div>
-        
         {/* Lamp bar - positioned higher over the Operator text */}
         <motion.div
           initial={{ width: "15rem" }}
@@ -101,8 +86,23 @@ export const LampContainer = ({
             duration: 0.8,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-50 h-0.5 w-[30rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 bg-cyan-400"
+          className="absolute inset-auto z-50 h-0.5 w-[30rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 bg-cyan-400 pointer-events-none select-none outline-none"
         ></motion.div>
+
+        {/* Upper glow - positioned to emanate from the bar with reduced strength */}
+        <motion.div
+          initial={{ width: "8rem" }}
+          whileInView={{ width: "16rem" }}
+          transition={{
+            delay: 0.3,
+            duration: 0.8,
+            ease: "easeInOut",
+          }}
+          className="absolute inset-auto z-30 h-32 w-64 -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400 opacity-60 blur-2xl"
+        ></motion.div>
+        
+        {/* Central glow positioned at the bar level with reduced strength */}
+        <div className="absolute inset-auto z-40 h-24 w-[28rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-500 opacity-30 blur-3xl"></div>
 
         {/* Top mask - moved higher */}
         <div className="absolute inset-auto z-40 h-44 w-full -translate-y-[16rem] bg-background"></div>

@@ -327,9 +327,9 @@ const CollaborationSkeleton = () => {
 
 const GlobeSkeleton = () => {
   return (
-    <div className="relative h-[280px] overflow-hidden">
+    <div className="relative h-[320px] p-4">
       <div className="h-full flex flex-col items-center justify-center">
-        <div className="relative w-4/5 h-4/5 flex items-center justify-center">
+        <div className="relative w-full h-full max-w-[240px] max-h-[240px] flex items-center justify-center">
           <Globe className="w-full h-full" />
         </div>
       </div>

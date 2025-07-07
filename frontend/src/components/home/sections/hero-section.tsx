@@ -233,16 +233,16 @@ export function HeroSection() {
           >
             <Link
               href="#enterprise"
-              className="group relative inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/15 backdrop-blur-sm px-4 py-2 text-sm transition-all duration-300 hover:border-white/40 hover:bg-white/20 hover:shadow-lg hover:shadow-cyan-500/20"
+              className="group relative inline-flex items-center gap-2 rounded-full border border-border/50 bg-background/20 backdrop-blur-sm px-4 py-2 text-sm transition-all duration-300 hover:border-border/70 hover:bg-background/30 hover:shadow-lg hover:shadow-primary/20"
             >
               <div className="flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
-                <span className="font-medium text-white text-xs tracking-wider uppercase group-hover:text-white transition-colors duration-300">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                <span className="font-medium text-foreground text-xs tracking-wider uppercase group-hover:text-foreground/90 transition-colors duration-300">
                   {hero.badge}
                 </span>
               </div>
-              <div className="inline-flex items-center justify-center size-4 rounded-full bg-cyan-500/30 group-hover:bg-cyan-500/40 transition-colors duration-300">
-                <ArrowRight className="h-2.5 w-2.5 text-cyan-400 group-hover:translate-x-0.5 transition-transform duration-300" />
+              <div className="inline-flex items-center justify-center size-4 rounded-full bg-primary/20 group-hover:bg-primary/30 transition-colors duration-300">
+                <ArrowRight className="h-2.5 w-2.5 text-primary group-hover:translate-x-0.5 transition-transform duration-300" />
               </div>
             </Link>
           </motion.div>
@@ -254,10 +254,10 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-balance leading-[1.1] bg-gradient-to-br from-white to-white/90 bg-clip-text text-transparent drop-shadow-lg">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-balance leading-[1.1] bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent drop-shadow-lg">
               {hero.title}
             </h1>
-            <p className="text-lg md:text-xl lg:text-2xl text-center text-white/80 font-normal text-balance leading-relaxed max-w-2xl tracking-tight drop-shadow-md">
+            <p className="text-lg md:text-xl lg:text-2xl text-center text-muted-foreground font-normal text-balance leading-relaxed max-w-2xl tracking-tight drop-shadow-md">
               {hero.description}
             </p>
           </motion.div>
@@ -272,25 +272,25 @@ export function HeroSection() {
             <form className="w-full relative group" onSubmit={handleSubmit}>
               <div className="relative">
                 {/* Enhanced glow effect */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/30 via-cyan-400/20 to-cyan-500/30 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500"></div>
                 
                 {/* Input container with better contrast */}
-                <div className="relative flex items-center rounded-full border border-white/30 bg-white/20 backdrop-blur-md px-6 shadow-2xl transition-all duration-300 hover:border-cyan-400/50 focus-within:border-cyan-400/70 focus-within:shadow-2xl focus-within:shadow-cyan-500/30 focus-within:bg-white/25">
+                <div className="relative flex items-center rounded-full border border-border/50 bg-background/30 backdrop-blur-md px-6 shadow-2xl transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70 focus-within:shadow-2xl focus-within:shadow-primary/20 focus-within:bg-background/40">
                   <input
                     type="text"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent focus:outline-none text-base lg:text-lg placeholder:text-white/60 text-white py-2 font-medium"
+                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent focus:outline-none text-base lg:text-lg placeholder:text-muted-foreground/70 text-foreground py-2 font-medium"
                     disabled={isSubmitting}
                   />
                   <motion.button
                     type="submit"
                     className={`rounded-full p-3 lg:p-4 transition-all duration-300 ${
                       inputValue.trim()
-                        ? 'bg-cyan-500 text-white hover:bg-cyan-400 shadow-lg hover:shadow-cyan-500/40 scale-100'
-                        : 'bg-white/30 text-white/70 scale-95'
+                        ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-primary/40 scale-100'
+                        : 'bg-muted/50 text-muted-foreground scale-95'
                     }`}
                     disabled={!inputValue.trim() || isSubmitting}
                     aria-label="Submit"
@@ -298,7 +298,7 @@ export function HeroSection() {
                     whileTap={inputValue.trim() ? { scale: 0.95 } : {}}
                   >
                     {isSubmitting ? (
-                      <div className="h-5 lg:h-6 w-5 lg:w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="h-5 lg:h-6 w-5 lg:w-6 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <ArrowRight className="size-5 lg:size-6" />
                     )}
@@ -310,44 +310,44 @@ export function HeroSection() {
 
           {/* Dynamic value proposition with FlipWords */}
           <motion.div 
-            className="text-sm md:text-base lg:text-lg text-white/90 font-medium text-center max-w-2xl relative z-40"
+            className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-muted-foreground font-medium text-center max-w-4xl relative z-40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
           >
             {/* Mobile: Stacked layout */}
-            <div className="flex flex-col gap-2 sm:hidden">
-              <div className="flex items-center justify-center gap-1">
-                <span className="drop-shadow-md">Do 80% more</span>
+            <div className="flex flex-col gap-3 sm:hidden">
+              <div className="flex items-center justify-center gap-2">
+                <span className="drop-shadow-md">80% more</span>
                 <FlipWords 
                   words={moreWords} 
                   duration={3000}
-                  className="text-cyan-300 dark:text-cyan-400 font-bold text-sm drop-shadow-lg"
+                  className="text-primary font-bold text-lg drop-shadow-lg"
                 />
               </div>
-              <div className="flex items-center justify-center gap-1">
+              <div className="flex items-center justify-center gap-2">
                 <span className="drop-shadow-md">with 20% the</span>
                 <FlipWords 
                   words={lessWords} 
                   duration={4500}
-                  className="text-cyan-300 dark:text-cyan-400 font-bold text-sm drop-shadow-lg"
+                  className="text-primary font-bold text-lg drop-shadow-lg"
                 />
               </div>
             </div>
 
             {/* Desktop: Inline layout */}
-            <div className="hidden sm:flex items-center justify-center flex-wrap gap-1">
-              <span className="drop-shadow-md">Do 80% more</span>
+            <div className="hidden sm:flex items-center justify-center flex-wrap gap-2">
+              <span className="drop-shadow-md">80% more</span>
               <FlipWords 
                 words={moreWords} 
                 duration={3000}
-                className="text-cyan-300 dark:text-cyan-400 font-bold drop-shadow-lg"
+                className="text-primary font-bold drop-shadow-lg"
               />
               <span className="drop-shadow-md">with 20% the</span>
               <FlipWords 
                 words={lessWords} 
                 duration={4500}
-                className="text-cyan-300 dark:text-cyan-400 font-bold drop-shadow-lg"
+                className="text-primary font-bold drop-shadow-lg"
               />
             </div>
           </motion.div>
