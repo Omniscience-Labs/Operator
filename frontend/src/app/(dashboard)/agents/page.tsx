@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { Plus, AlertCircle, Loader2, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { UpdateAgentDialog } from './_components/update-agent-dialog';
+
 import { PublishAgentDialog } from './_components/publish-agent-dialog';
 import { ShareAgentDialog } from './_components/share-agent-dialog';
 import { useAgents, useUpdateAgent, useDeleteAgent, useRemoveAgentFromLibrary, useOptimisticAgentUpdate, useCreateAgent } from '@/hooks/react-query/agents/use-agents';
@@ -40,8 +40,7 @@ export default function AgentsPage() {
   const router = useRouter();
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
+
   const [publishDialogAgent, setPublishDialogAgent] = useState<any>(null);
   const [shareDialogAgent, setShareDialogAgent] = useState<any>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -177,8 +176,7 @@ export default function AgentsPage() {
       toast.error('This is a managed agent. Contact the creator of the agent for modifications.');
       return;
     }
-    setEditingAgentId(agentId);
-    setEditDialogOpen(true);
+    router.push(`/agents/new/${agentId}`);
   };
 
   const handleCreateNewAgent = async () => {
@@ -363,15 +361,7 @@ export default function AgentsPage() {
           />
         )}
 
-        <UpdateAgentDialog
-          agentId={editingAgentId}
-          isOpen={editDialogOpen}
-          onOpenChange={(open) => {
-            setEditDialogOpen(open);
-            if (!open) setEditingAgentId(null);
-          }}
-          onAgentUpdated={loadAgents}
-        />
+
 
         {publishDialogAgent && (
           <PublishAgentDialog
