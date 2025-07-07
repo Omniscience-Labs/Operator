@@ -97,6 +97,7 @@ export const siteConfig = {
         />
       </svg>
     ),
+    badge: '100% Secure',
     githubUrl: 'https://github.com/omni-ai/operator',
     title: 'Operator - your infinite AI Teammate',
     description:
