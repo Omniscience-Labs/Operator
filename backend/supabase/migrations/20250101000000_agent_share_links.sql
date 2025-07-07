@@ -20,20 +20,22 @@ CREATE TABLE IF NOT EXISTS agent_shares (
 );
 
 -- Create indexes for agent_shares
-CREATE INDEX idx_agent_shares_agent_id ON agent_shares(agent_id);
-CREATE INDEX idx_agent_shares_creator_account_id ON agent_shares(creator_account_id);
-CREATE INDEX idx_agent_shares_token ON agent_shares(token);
-CREATE INDEX idx_agent_shares_expires_at ON agent_shares(expires_at);
+CREATE INDEX IF NOT EXISTS idx_agent_shares_agent_id ON agent_shares(agent_id);
+CREATE INDEX IF NOT EXISTS idx_agent_shares_creator_account_id ON agent_shares(creator_account_id);
+CREATE INDEX IF NOT EXISTS idx_agent_shares_token ON agent_shares(token);
+CREATE INDEX IF NOT EXISTS idx_agent_shares_expires_at ON agent_shares(expires_at);
 
 -- Enable RLS on agent_shares
 ALTER TABLE agent_shares ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies for agent_shares
 -- Allow creators to see their own shares
+DROP POLICY IF EXISTS "Users can view their own agent shares" ON agent_shares;
 CREATE POLICY "Users can view their own agent shares" ON agent_shares
     FOR SELECT USING (creator_account_id = auth.uid());
 
 -- Allow creators to create shares for their own agents
+DROP POLICY IF EXISTS "Users can create shares for their own agents" ON agent_shares;
 CREATE POLICY "Users can create shares for their own agents" ON agent_shares
     FOR INSERT WITH CHECK (
         creator_account_id = auth.uid() AND
@@ -45,10 +47,12 @@ CREATE POLICY "Users can create shares for their own agents" ON agent_shares
     );
 
 -- Allow creators to update their own shares
+DROP POLICY IF EXISTS "Users can update their own agent shares" ON agent_shares;
 CREATE POLICY "Users can update their own agent shares" ON agent_shares
     FOR UPDATE USING (creator_account_id = auth.uid());
 
 -- Allow creators to delete their own shares
+DROP POLICY IF EXISTS "Users can delete their own agent shares" ON agent_shares;
 CREATE POLICY "Users can delete their own agent shares" ON agent_shares
     FOR DELETE USING (creator_account_id = auth.uid());
 
@@ -159,6 +163,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_agent_shares_updated_at ON agent_shares;
 CREATE TRIGGER trigger_update_agent_shares_updated_at
     BEFORE UPDATE ON agent_shares
     FOR EACH ROW
