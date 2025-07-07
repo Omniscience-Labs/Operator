@@ -6,8 +6,7 @@ import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
 import { IconCloud } from '@/components/magicui/icon-cloud';
 import { OmniProcessModal } from '@/components/sidebar/omni-enterprise-modal';
 import { GoogleGeminiEffect } from '@/components/ui/google-gemini-effect';
-import CardSwap, { Card } from '@/components/CardSwap/CardSwap';
-import { Shield, Lock, Brain, Database, Zap, Users, CheckCircle, ArrowRight, Cloud, Globe, Settings, FileText, BarChart3, MessageSquare, Calendar, Mail, Search, Server, Cpu, Factory, Wrench, TrendingUp, ShoppingCart, DollarSign, Truck, Package, ClipboardCheck, AlertTriangle, Microscope, HardDrive, Wifi, MonitorSpeaker, Building, Briefcase, Calculator, PieChart, LineChart, Users2, Key, Layers, Boxes, Target, CreditCard, Workflow, GitBranch, Gauge, Activity, Smartphone, Tablet, Laptop, Network, Headphones, Phone, Video, Printer, Timer, MapPin, Globe2, Radio, Antenna, Archive, Edit, Receipt, XCircle, Clock, Folder, FolderOpen } from 'lucide-react';
+import { Shield, Lock, Brain, Database, Zap, Users2, Settings } from 'lucide-react';
 import { useScroll, useTransform } from 'framer-motion';
 
 export function BentoSection() {
@@ -69,104 +68,64 @@ export function BentoSection() {
     }
   ];
 
-  // Enterprise integration icons - comprehensive set for industrial companies
-  const enterpriseIntegrationIcons = [
+  // Enterprise integration icon slugs for IconCloud
+  const enterpriseIntegrationSlugs = [
     // ERP & Business Systems
-    <Building key="building" className="h-20 w-20 text-blue-500 dark:text-blue-400" />,
-    <Briefcase key="briefcase" className="h-20 w-20 text-indigo-500 dark:text-indigo-400" />,
-    <Calculator key="calculator-1" className="h-20 w-20 text-green-500 dark:text-green-400" />,
-    <PieChart key="piechart" className="h-20 w-20 text-purple-500 dark:text-purple-400" />,
-    <BarChart3 key="barchart3" className="h-20 w-20 text-orange-500 dark:text-orange-400" />,
-    <LineChart key="linechart" className="h-20 w-20 text-red-500 dark:text-red-400" />,
-    <TrendingUp key="trendingup" className="h-20 w-20 text-emerald-500 dark:text-emerald-400" />,
+    "sap", "oracle", "microsoft", "salesforce", "workday", "servicenow", "atlassian", "tableau",
     
     // Manufacturing & Industrial
-    <Factory key="factory" className="h-20 w-20 text-gray-600 dark:text-gray-400" />,
-    <Cpu key="cpu" className="h-20 w-20 text-cyan-500 dark:text-cyan-400" />,
-    <Wrench key="wrench" className="h-20 w-20 text-amber-500 dark:text-amber-400" />,
-    <Settings key="settings" className="h-20 w-20 text-slate-500 dark:text-slate-400" />,
-    <Gauge key="gauge-1" className="h-20 w-20 text-blue-600 dark:text-blue-400" />,
-    <Activity key="activity" className="h-20 w-20 text-pink-500 dark:text-pink-400" />,
-    <Zap key="zap" className="h-20 w-20 text-yellow-500 dark:text-yellow-400" />,
+    "siemens", "schneiderelectric", "abb", "honeywell", "emerson", "ge",
     
     // Supply Chain & Logistics
-    <Truck key="truck" className="h-20 w-20 text-amber-600 dark:text-amber-400" />,
-    <Package key="package" className="h-20 w-20 text-teal-500 dark:text-teal-400" />,
-    <ShoppingCart key="shoppingcart" className="h-20 w-20 text-violet-500 dark:text-violet-400" />,
-    <Boxes key="boxes" className="h-20 w-20 text-orange-600 dark:text-orange-400" />,
-    <MapPin key="mappin" className="h-20 w-20 text-red-600 dark:text-red-400" />,
-    <Globe2 key="globe2" className="h-20 w-20 text-blue-700 dark:text-blue-400" />,
+    "fedex", "ups", "dhl", "caterpillar", "johndeere", "cummins",
     
     // Financial & Accounting
-    <DollarSign key="dollarsign" className="h-20 w-20 text-green-600 dark:text-green-400" />,
-    <CreditCard key="creditcard" className="h-20 w-20 text-indigo-600 dark:text-indigo-400" />,
-    <Receipt key="receipt" className="h-20 w-20 text-gray-500 dark:text-gray-400" />,
-    <Calculator key="calculator-2" className="h-20 w-20 text-slate-600 dark:text-slate-400" />,
+    "stripe", "paypal", "visa", "mastercard", "americanexpress", "jpmorgan",
     
     // Cloud & Infrastructure
-    <Cloud key="cloud" className="h-20 w-20 text-sky-500 dark:text-sky-400" />,
-    <Server key="server" className="h-20 w-20 text-gray-700 dark:text-gray-400" />,
-    <Database key="database" className="h-20 w-20 text-blue-800 dark:text-blue-400" />,
-    <HardDrive key="harddrive" className="h-20 w-20 text-gray-800 dark:text-gray-400" />,
-    <Network key="network" className="h-20 w-20 text-purple-600 dark:text-purple-400" />,
-    <Wifi key="wifi" className="h-20 w-20 text-blue-400 dark:text-blue-300" />,
+    "amazonaws", "microsoftazure", "googlecloud", "oracle", "ibm", "vmware", "redhat", "docker", "kubernetes",
     
     // Communication & Collaboration
-    <MessageSquare key="messagesquare" className="h-20 w-20 text-green-500 dark:text-green-400" />,
-    <Mail key="mail" className="h-20 w-20 text-blue-500 dark:text-blue-400" />,
-    <Phone key="phone" className="h-20 w-20 text-indigo-500 dark:text-indigo-400" />,
-    <Video key="video" className="h-20 w-20 text-red-500 dark:text-red-400" />,
-    <Users2 key="users2" className="h-20 w-20 text-purple-500 dark:text-purple-400" />,
-    <Headphones key="headphones" className="h-20 w-20 text-orange-500 dark:text-orange-400" />,
+    "microsoft", "slack", "zoom", "discord", "telegram", "whatsapp",
     
     // Document & Content Management
-    <FileText key="filetext" className="h-20 w-20 text-gray-600 dark:text-gray-400" />,
-    <Folder key="folder" className="h-20 w-20 text-yellow-600 dark:text-yellow-400" />,
-    <Archive key="archive" className="h-20 w-20 text-amber-600 dark:text-amber-400" />,
-    <Search key="search" className="h-20 w-20 text-teal-600 dark:text-teal-400" />,
-    <Edit key="edit" className="h-20 w-20 text-violet-600 dark:text-violet-400" />,
-    <Printer key="printer" className="h-20 w-20 text-gray-700 dark:text-gray-400" />,
+    "adobe", "dropbox", "box", "googledrive", "onedrive", "notion", "confluence",
     
     // Security & Compliance
-    <Shield key="shield" className="h-20 w-20 text-red-500 dark:text-red-400" />,
-    <Lock key="lock" className="h-20 w-20 text-orange-500 dark:text-orange-400" />,
-    <Key key="key" className="h-20 w-20 text-yellow-500 dark:text-yellow-400" />,
-    <AlertTriangle key="alerttriangle" className="h-20 w-20 text-amber-500 dark:text-amber-400" />,
-    <ClipboardCheck key="clipboardcheck" className="h-20 w-20 text-green-500 dark:text-green-400" />,
+    "okta", "auth0", "crowdstrike", "paloaltonetworks", "checkpoint", "fortinet", "zscaler",
     
     // Quality & Testing
-    <Microscope key="microscope" className="h-20 w-20 text-cyan-600 dark:text-cyan-400" />,
-    <Target key="target" className="h-20 w-20 text-red-600 dark:text-red-400" />,
-    <CheckCircle key="checkcircle" className="h-20 w-20 text-emerald-600 dark:text-emerald-400" />,
-    <XCircle key="xcircle" className="h-20 w-20 text-red-600 dark:text-red-400" />,
+    "jenkins", "gitlab", "github", "sonarqube", "cypress", "selenium",
     
     // IoT & Sensors
-    <Smartphone key="smartphone" className="h-20 w-20 text-gray-600 dark:text-gray-400" />,
-    <Tablet key="tablet" className="h-20 w-20 text-blue-600 dark:text-blue-400" />,
-    <Laptop key="laptop" className="h-20 w-20 text-indigo-600 dark:text-indigo-400" />,
-    <MonitorSpeaker key="monitorspeaker" className="h-20 w-20 text-purple-600 dark:text-purple-400" />,
-    <Radio key="radio" className="h-20 w-20 text-green-600 dark:text-green-400" />,
-    <Antenna key="antenna" className="h-20 w-20 text-orange-600 dark:text-orange-400" />,
+    "nvidia", "intel", "qualcomm", "arm", "broadcom",
     
     // Time & Scheduling
-    <Calendar key="calendar" className="h-20 w-20 text-blue-500 dark:text-blue-400" />,
-    <Gauge key="gauge-2" className="h-20 w-20 text-indigo-500 dark:text-indigo-400" />,
-    <Timer key="timer" className="h-20 w-20 text-purple-500 dark:text-purple-400" />,
-    <Clock key="clock" className="h-20 w-20 text-red-500 dark:text-red-400" />,
+    "calendly", "outlook", "googlecalendar", "hubspot", "zendesk", "freshworks",
     
     // Workflow & Automation
-    <Workflow key="workflow" className="h-20 w-20 text-teal-500 dark:text-teal-400" />,
-    <GitBranch key="gitbranch" className="h-20 w-20 text-orange-500 dark:text-orange-400" />,
-    <Layers key="layers" className="h-20 w-20 text-violet-500 dark:text-violet-400" />,
-    <Globe key="globe" className="h-20 w-20 text-blue-500 dark:text-blue-400" />
+    "zapier", "uipath", "workato"
   ];
+
+  // Convert slugs to image URLs
+  const enterpriseIntegrationImages = enterpriseIntegrationSlugs.map(
+    (slug) => `https://cdn.simpleicons.org/${slug}/${slug}`
+  );
 
   return (
     <section
       id="bento"
-      className="flex flex-col items-center justify-center w-full relative py-24 lg:py-32"
+      className="flex flex-col items-center justify-center w-full relative py-24 lg:py-32 overflow-hidden"
     >
-      <div className="w-full max-w-7xl mx-auto px-6">
+      {/* Google Gemini Effect spanning entire page */}
+      <div className="absolute inset-0 z-0 w-full h-full">
+        <GoogleGeminiEffect 
+          pathLengths={pathLengths}
+          className="opacity-30"
+        />
+      </div>
+      
+      <div className="w-full max-w-7xl mx-auto px-6 relative z-10">
         {/* Header Section */}
         <div className="text-center mb-20">
           <div className="flex items-center justify-center gap-3 mb-8">
@@ -192,86 +151,23 @@ export function BentoSection() {
           </div>
         </div>
 
-        {/* Feature Cards - CardSwap Component */}
-        <div className="flex justify-center items-center w-full max-w-6xl mx-auto min-h-[600px]">
-          <CardSwap
-            width={520}
-            height={460}
-            cardDistance={45}
-            verticalDistance={50}
-            delay={4500}
-            pauseOnHover={true}
-            skewAmount={4}
-            easing="elastic"
-            onCardClick={(idx) => {
-              // Optional: handle card click events
-              console.log(`Clicked card ${idx}: ${secureAIAgents[idx].name}`);
-            }}
-          >
-            {secureAIAgents.map((agent, index) => (
-              <Card key={agent.agent_id} className="bg-gradient-to-br from-background to-secondary/5 border border-border/50 backdrop-blur-sm cursor-pointer hover:shadow-2xl transition-all duration-300">
-                <div className="p-8 h-full flex flex-col justify-between">
-                  {/* Header */}
-                  <div className="flex items-center gap-4 mb-6">
-                    <div 
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-bold border-2 shadow-lg"
-                      style={{ 
-                        backgroundColor: agent.avatar_color + '20',
-                        borderColor: agent.avatar_color + '40',
-                        color: agent.avatar_color 
-                      }}
-                    >
-                      {agent.avatar}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-foreground tracking-tight">
-                        {agent.name}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="w-2 h-2 rounded-full bg-secondary"></div>
-                        <span className="text-sm text-muted-foreground font-medium">
-                          Enterprise Security
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <div className="flex-1 mb-6">
-                    <p className="text-muted-foreground text-sm leading-relaxed line-clamp-6">
-                      {agent.description}
-                    </p>
-                  </div>
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {agent.tags.map((tag, tagIndex) => (
-                      <span
-                        key={tagIndex}
-                        className="px-3 py-1 bg-secondary/10 text-secondary text-xs font-medium rounded-full border border-secondary/20"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Action Area */}
-                  <div className="flex items-center justify-between pt-4 border-t border-border/30">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-secondary" />
-                      <span className="text-xs text-muted-foreground font-medium">
-                        Enterprise Ready
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-secondary hover:text-secondary/80 transition-colors">
-                      <span className="text-xs font-medium">Learn More</span>
-                      <ArrowRight className="h-3 w-3" />
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </CardSwap>
+        {/* Feature Cards - 2x2 Grid using AgentProfileCard */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto">
+          {secureAIAgents.map((agent) => (
+            <AgentProfileCard
+              key={agent.agent_id}
+              agent={{
+                ...agent,
+                is_owned: true, // Show as owned to hide marketplace features
+                download_count: 0, // Set to 0 to hide download count
+                is_public: false, // Hide public features
+                is_managed: true // Hide marketplace features
+              }}
+              mode="library"
+              className="h-[420px]"
+              enableTilt={true}
+            />
+          ))}
         </div>
 
         {/* Enterprise Connections Section */}
@@ -290,15 +186,7 @@ export function BentoSection() {
             {/* Central Icon Cloud */}
             <div className="relative flex items-center justify-center mx-auto w-[600px] h-[500px] lg:w-[700px] lg:h-[600px] mt-8">
               <div className="relative z-10 w-full h-full flex items-center justify-center scale-110 lg:scale-125">
-                <IconCloud icons={enterpriseIntegrationIcons} />
-              </div>
-              
-              {/* Google Gemini Effect running through the icon cloud */}
-              <div className="absolute inset-0 z-0">
-                <GoogleGeminiEffect 
-                  pathLengths={pathLengths}
-                  className="static opacity-60"
-                />
+                <IconCloud images={enterpriseIntegrationImages} />
               </div>
           </div>
 

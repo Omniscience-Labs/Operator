@@ -38,6 +38,22 @@ export function EnterpriseSection() {
       title: "Enterprise Analytics",
       description: "Advanced analytics and reporting tools to monitor usage, performance, and ROI across your organization.",
     },
+    {
+      title: "Enterprise Credit Plans",
+      description: "Flexible credit-based pricing plans designed for enterprise usage patterns with volume discounts and custom billing.",
+    },
+    {
+      title: "Data Residency & Compliance",
+      description: "Ensure data sovereignty with region-specific deployments and compliance with GDPR, HIPAA, SOC 2, and other regulatory standards.",
+    },
+    {
+      title: "Priority API Access",
+      description: "Dedicated API endpoints with guaranteed uptime, priority processing, and higher rate limits for enterprise workloads.",
+    },
+    {
+      title: "24/7 Enterprise Support",
+      description: "Round-the-clock dedicated support with guaranteed response times and direct access to senior engineers.",
+    },
   ];
 
   return (
@@ -48,10 +64,10 @@ export function EnterpriseSection() {
       <div className="w-full max-w-7xl mx-auto px-6">
         <SectionHeader>
           <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-center text-balance pb-1">
-            Enterprise-Grade AI Platform
+            Managed Enterprise Deployments
           </h2>
           <p className="text-muted-foreground text-center text-balance font-medium">
-            Deploy Operator at scale with advanced security, custom integrations, and dedicated support.
+            Omni offers fully managed Enterprise deployments with advanced security, custom enterprise tooling, and flexible enterprise credit plans.
           </p>
         </SectionHeader>
 

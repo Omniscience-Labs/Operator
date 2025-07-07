@@ -89,20 +89,56 @@ export const LampContainer = ({
           className="absolute inset-auto z-50 h-0.5 w-[30rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 bg-cyan-400 pointer-events-none select-none outline-none"
         ></motion.div>
 
-        {/* Upper glow - positioned to emanate from the bar with reduced strength */}
+        {/* Enhanced multi-layer glow system for better integration */}
+        {/* Base glow - largest and most diffuse */}
         <motion.div
-          initial={{ width: "8rem" }}
-          whileInView={{ width: "16rem" }}
+          initial={{ width: "12rem", opacity: 0.4 }}
+          whileInView={{ width: "24rem", opacity: 0.6 }}
+          transition={{
+            delay: 0.3,
+            duration: 1.2,
+            ease: "easeInOut",
+          }}
+          className="absolute inset-auto z-20 h-40 w-96 -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400 blur-3xl pointer-events-none"
+        ></motion.div>
+
+        {/* Mid glow - medium blur for transition */}
+        <motion.div
+          initial={{ width: "8rem", opacity: 0.5 }}
+          whileInView={{ width: "16rem", opacity: 0.8 }}
+          transition={{
+            delay: 0.3,
+            duration: 1.0,
+            ease: "easeInOut",
+          }}
+          className="absolute inset-auto z-30 h-32 w-64 -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400 blur-2xl pointer-events-none"
+        ></motion.div>
+
+        {/* Core glow - tight and bright */}
+        <motion.div
+          initial={{ width: "6rem", opacity: 0.6 }}
+          whileInView={{ width: "12rem", opacity: 0.9 }}
           transition={{
             delay: 0.3,
             duration: 0.8,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-30 h-32 w-64 -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400 opacity-60 blur-2xl"
+          className="absolute inset-auto z-40 h-20 w-48 -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-300 blur-xl pointer-events-none"
+        ></motion.div>
+
+        {/* Inner highlight - very tight and intense */}
+        <motion.div
+          initial={{ width: "4rem", opacity: 0.7 }}
+          whileInView={{ width: "8rem", opacity: 1.0 }}
+          transition={{
+            delay: 0.3,
+            duration: 0.6,
+            ease: "easeInOut",
+          }}
+          className="absolute inset-auto z-45 h-12 w-32 -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-200 blur-lg pointer-events-none"
         ></motion.div>
         
-        {/* Central glow positioned at the bar level with reduced strength */}
-        <div className="absolute inset-auto z-40 h-24 w-[28rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-500 opacity-30 blur-3xl"></div>
+
 
         {/* Top mask - moved higher */}
         <div className="absolute inset-auto z-40 h-44 w-full -translate-y-[16rem] bg-background"></div>

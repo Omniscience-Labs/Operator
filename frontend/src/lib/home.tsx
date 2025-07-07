@@ -546,12 +546,12 @@ export const siteConfig = {
       },
           {
       name: 'Enterprise',
-      href: 'cal://enterprise',
+      href: '#enterprise',
       price: 'Custom',
       period: '',
       yearlyPrice: 'Custom',
       features: [
-        'Everything in Self-Hosted',
+        'Everything in Enterprise',
         'RBAC & SSO Integration',
         'Custom agents & tools',
         'Dedicated training & support',
