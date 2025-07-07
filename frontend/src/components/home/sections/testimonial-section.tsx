@@ -448,66 +448,66 @@ const AnalyticsSkeleton = () => {
   const analytic = analytics[currentAnalytic];
 
   return (
-    <div className="relative h-full min-h-[200px] lg:min-h-[320px] bg-gradient-to-br from-secondary/5 to-transparent rounded-xl p-4 lg:p-6 overflow-hidden">
+    <div className="relative h-[280px] bg-gradient-to-br from-secondary/5 to-transparent rounded-xl p-4 overflow-hidden">
       {/* Live Analytics Indicator */}
-      <div className="absolute top-4 right-4 flex items-center gap-2">
-        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <span className="text-xs text-muted-foreground font-medium">Live Analytics</span>
+      <div className="absolute top-3 right-3 flex items-center gap-1">
+        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+        <span className="text-xs text-muted-foreground">Live</span>
       </div>
 
-      <div className="h-full flex flex-col justify-between">
+      <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-3">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`icon-${analytic.id}`}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.3 }}
+              className="p-1.5 bg-secondary/10 rounded-lg"
+            >
+              {analytic.icon}
+            </motion.div>
+          </AnimatePresence>
+          <div className="flex-1">
             <AnimatePresence mode="wait">
-              <motion.div
-                key={`icon-${analytic.id}`}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
+              <motion.h4
+                key={`title-${analytic.id}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
-                className="p-2 bg-secondary/10 rounded-lg"
+                className="text-sm font-semibold text-primary"
               >
-                {analytic.icon}
-              </motion.div>
+                {analytic.title}
+              </motion.h4>
             </AnimatePresence>
-            <div>
-              <AnimatePresence mode="wait">
-                <motion.h4
-                  key={`title-${analytic.id}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-sm font-semibold text-primary"
-                >
-                  {analytic.title}
-                </motion.h4>
-              </AnimatePresence>
-              <div className="text-xs text-muted-foreground">{analytic.type}</div>
-            </div>
+            <div className="text-xs text-muted-foreground">{analytic.type}</div>
           </div>
-          <div className="text-right">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`metric-${analytic.id}`}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="text-lg font-bold text-primary"
-              >
-                {analytic.metric}
-              </motion.div>
-            </AnimatePresence>
-            <div className={`text-xs font-medium ${analytic.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
-              {analytic.change}
-            </div>
+        </div>
+
+        {/* Metrics Row */}
+        <div className="flex items-center justify-between mb-3">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`metric-${analytic.id}`}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+              className="text-lg font-bold text-primary"
+            >
+              {analytic.metric}
+            </motion.div>
+          </AnimatePresence>
+          <div className={`text-xs font-medium px-2 py-1 rounded ${analytic.changeType === 'positive' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            {analytic.change}
           </div>
         </div>
 
         {/* Chart */}
-        <div className="flex-1 flex items-center justify-center min-h-[100px]">
+        <div className="flex-1 flex items-center justify-center min-h-[80px] mb-3">
           <AnimatePresence mode="wait">
             <motion.div
               key={`chart-${analytic.id}`}
@@ -523,7 +523,7 @@ const AnalyticsSkeleton = () => {
         </div>
 
         {/* AI Insight */}
-        <div className="mt-4">
+        <div className="mt-auto">
           <div className="flex items-center gap-2 mb-2">
             <Brain className="w-3 h-3 text-secondary" />
             <AnimatePresence mode="wait">
@@ -547,7 +547,7 @@ const AnalyticsSkeleton = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.5 }}
-                className="bg-muted/50 backdrop-blur-sm rounded-lg p-3 border border-border/50"
+                className="bg-muted/50 backdrop-blur-sm rounded-lg p-2 border border-border/50"
               >
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   {analytic.insight}

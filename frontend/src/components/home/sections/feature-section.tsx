@@ -30,6 +30,8 @@ export function FeatureSection() {
       id="features"
       className="flex flex-col items-center justify-center gap-5 w-full relative py-20"
     >
+      {/* Commented out Simple. Seamless. Smart. section */}
+      {/* 
       <SectionHeader>
         <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-center text-balance">
           Simple. Seamless. Smart.
@@ -42,6 +44,7 @@ export function FeatureSection() {
       <div className="w-full max-w-7xl mx-auto px-6 mt-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Left side - Steps */}
+          {/*
           <div className="space-y-8">
             {steps.map((step, index) => (
               <div key={index} className="flex items-start gap-4">
@@ -57,6 +60,7 @@ export function FeatureSection() {
           </div>
 
           {/* Right side - Hero Image */}
+          {/*
           <div className="relative">
             <div className="relative w-full h-96 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden border border-border">
               <img
@@ -67,6 +71,7 @@ export function FeatureSection() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               
               {/* Overlay figure */}
+              {/*
               <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
                 <div className="w-16 h-16 bg-background rounded-full flex items-center justify-center shadow-lg border border-border">
                   <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,6 +83,7 @@ export function FeatureSection() {
           </div>
         </div>
       </div>
+      */}
     </section>
   );
 }
