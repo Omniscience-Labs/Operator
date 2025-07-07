@@ -120,41 +120,6 @@ export function HeroSection() {
     }
   }, [threadQuery.data, initiatedThreadId, router]);
 
-  const createAgentWithPrompt = async () => {
-    if (!inputValue.trim() || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append('prompt', inputValue.trim());
-      formData.append('model_name', 'Omni 4'); 
-      formData.append('enable_thinking', 'false');
-      formData.append('reasoning_effort', 'low');
-      formData.append('stream', 'true');
-      formData.append('enable_context_manager', 'false');
-
-      const result = await initiateAgentMutation.mutateAsync(formData);
-
-      setInitiatedThreadId(result.thread_id);
-      setInputValue('');
-    } catch (error: any) {
-      if (error instanceof BillingError) {
-        console.log('Billing error:');
-      } else {
-        const isConnectionError =
-          error instanceof TypeError &&
-          error.message.includes('Failed to fetch');
-        if (!isLocalMode() || isConnectionError) {
-          toast.error(
-            error.message || 'Failed to create agent. Please try again.',
-          );
-        }
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Handle form submission
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
@@ -198,7 +163,6 @@ export function HeroSection() {
     }
   };
 
-  // Handle Enter key press
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -206,7 +170,6 @@ export function HeroSection() {
     }
   };
 
-  // Handle auth form submission
   const handleSignIn = async (formData: FormData) => {
     setAuthError(null);
     
