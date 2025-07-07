@@ -559,7 +559,7 @@ export const siteConfig = {
         'Single tenant deployment',
       ],
       description: 'For large organizations needing enterprise features',
-      buttonText: 'Contact Sales',
+      buttonText: 'Schedule Demo',
       buttonColor: 'bg-primary text-primary-foreground',
       isPopular: false,
     },

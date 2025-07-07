@@ -2,7 +2,7 @@ import React from 'react';
 import { useId } from 'react';
 import { SectionHeader } from '@/components/home/section-header';
 import { siteConfig } from '@/lib/home';
-import Link from 'next/link';
+import { OmniProcessModal } from '@/components/sidebar/omni-enterprise-modal';
 
 export function EnterpriseSection() {
   const enterpriseFeatures = [
@@ -81,31 +81,12 @@ export function EnterpriseSection() {
             </p>
           </div>
           
-          {/* Enhanced Contact Sales CTA */}
+          {/* Enhanced Schedule Demo CTA */}
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-secondary to-primary rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
-            <Link
-              href="mailto:enterprise@omni.ai"
-              className="relative group inline-flex h-14 items-center justify-center gap-3 text-base font-semibold tracking-wide rounded-xl text-primary-foreground dark:text-black px-12 shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] bg-primary dark:bg-white hover:bg-primary/90 dark:hover:bg-white/90 transition-all duration-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:scale-105"
-            >
-              <span>Contact Sales</span>
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="text-primary-foreground dark:text-black group-hover:translate-x-1 transition-transform duration-200"
-              >
-                <path
-                  d="M7 17L17 7M17 7H8M17 7V16"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
+            <div className="relative group inline-flex h-14 items-center justify-center gap-3 text-base font-semibold tracking-wide rounded-xl text-primary-foreground dark:text-black px-12 shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] bg-primary dark:bg-white hover:bg-primary/90 dark:hover:bg-white/90 transition-all duration-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:scale-105">
+              <OmniProcessModal />
+            </div>
           </div>
         </div>
       </div>
