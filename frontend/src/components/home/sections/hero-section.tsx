@@ -269,7 +269,7 @@ export function HeroSection() {
           >
             {hero.badgeIcon}
             <span className="font-medium text-muted-foreground text-xs tracking-wide group-hover:text-primary transition-colors duration-300">
-              {hero.badge}
+              View on GitHub
             </span>
             <span className="inline-flex items-center justify-center size-3.5 rounded-full bg-muted/30 group-hover:bg-secondary/30 transition-colors duration-300">
               <svg
