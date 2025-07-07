@@ -162,6 +162,13 @@ export function DocxPreviewRenderer({
       {/* Style container for docx-preview CSS */}
       <div ref={styleContainerRef} />
       
+      {/* Disclaimer - only show when document is loaded */}
+      {!isLoading && (
+        <div className="text-xs text-gray-500 dark:text-gray-400 mb-3 px-2 italic">
+          Note: Headers and footers may not display correctly in preview mode but will be properly positioned when downloaded.
+        </div>
+      )}
+      
       {/* Main content container */}
       <div 
         ref={containerRef}
