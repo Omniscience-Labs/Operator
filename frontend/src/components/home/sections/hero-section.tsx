@@ -269,25 +269,25 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
           >
-            <form className="w-full relative group" onSubmit={handleSubmit}>
-              <div className="relative">
+            <form className="w-full relative group outline-none" onSubmit={handleSubmit}>
+              <div className="relative outline-none">
                 {/* Enhanced glow effect */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 
                 {/* Input container with better contrast */}
-                <div className="relative flex items-center rounded-full border border-border/50 bg-background/30 backdrop-blur-md px-6 shadow-2xl transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70 focus-within:shadow-2xl focus-within:shadow-primary/20 focus-within:bg-background/40">
+                <div className="relative flex items-center rounded-full border border-border/50 bg-background/30 backdrop-blur-md px-6 shadow-2xl transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70 focus-within:shadow-2xl focus-within:shadow-primary/20 focus-within:bg-background/40 outline-none focus:outline-none">
                   <input
                     type="text"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent focus:outline-none text-base lg:text-lg placeholder:text-muted-foreground/70 text-foreground py-2 font-medium"
+                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent focus:outline-none outline-none text-base lg:text-lg placeholder:text-muted-foreground/70 text-foreground py-2 font-medium"
                     disabled={isSubmitting}
                   />
                   <motion.button
                     type="submit"
-                    className={`rounded-full p-3 lg:p-4 transition-all duration-300 ${
+                    className={`rounded-full p-3 lg:p-4 transition-all duration-300 outline-none focus:outline-none ${
                       inputValue.trim()
                         ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-primary/40 scale-100'
                         : 'bg-muted/50 text-muted-foreground scale-95'

@@ -6,18 +6,19 @@ import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
 import { IconCloud } from '@/components/magicui/icon-cloud';
 import { OmniProcessModal } from '@/components/sidebar/omni-enterprise-modal';
 import { GoogleGeminiEffect } from '@/components/ui/google-gemini-effect';
+import CardSwap, { Card } from '@/components/CardSwap/CardSwap';
 import { Shield, Lock, Brain, Database, Zap, Users, CheckCircle, ArrowRight, Cloud, Globe, Settings, FileText, BarChart3, MessageSquare, Calendar, Mail, Search, Server, Cpu, Factory, Wrench, TrendingUp, ShoppingCart, DollarSign, Truck, Package, ClipboardCheck, AlertTriangle, Microscope, HardDrive, Wifi, MonitorSpeaker, Building, Briefcase, Calculator, PieChart, LineChart, Users2, Key, Layers, Boxes, Target, CreditCard, Workflow, GitBranch, Gauge, Activity, Smartphone, Tablet, Laptop, Network, Headphones, Phone, Video, Printer, Timer, MapPin, Globe2, Radio, Antenna, Archive, Edit, Receipt, XCircle, Clock, Folder, FolderOpen } from 'lucide-react';
 import { useScroll, useTransform } from 'framer-motion';
 
 export function BentoSection() {
-  // Scroll-based animations for GoogleGeminiEffect
+  // Scroll-based animations for GoogleGeminiEffect - complete by middle
   const { scrollYProgress } = useScroll();
   const pathLengths = [
-    useTransform(scrollYProgress, [0, 0.2], [0, 1]),
-    useTransform(scrollYProgress, [0.1, 0.3], [0, 1]),
-    useTransform(scrollYProgress, [0.2, 0.4], [0, 1]),
-    useTransform(scrollYProgress, [0.3, 0.5], [0, 1]),
-    useTransform(scrollYProgress, [0.4, 0.6], [0, 1]),
+    useTransform(scrollYProgress, [0, 0.1], [0, 1]),
+    useTransform(scrollYProgress, [0.02, 0.12], [0, 1]),
+    useTransform(scrollYProgress, [0.04, 0.14], [0, 1]),
+    useTransform(scrollYProgress, [0.06, 0.16], [0, 1]),
+    useTransform(scrollYProgress, [0.08, 0.18], [0, 1]),
   ];
 
   // Transform secure AI features to match Agent interface
@@ -191,21 +192,86 @@ export function BentoSection() {
           </div>
         </div>
 
-        {/* Feature Cards - 2x2 Grid using AgentProfileCard */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto">
-          {secureAIAgents.map((agent) => (
-            <AgentProfileCard
-              key={agent.agent_id}
-              agent={{
-                ...agent,
-                is_owned: false, // This will hide the action buttons
-                download_count: undefined // Hide download count for marketplace mode
-              }}
-              mode="marketplace"
-              className="h-[420px]"
-              enableTilt={true}
-            />
-          ))}
+        {/* Feature Cards - CardSwap Component */}
+        <div className="flex justify-center items-center w-full max-w-6xl mx-auto min-h-[600px]">
+          <CardSwap
+            width={520}
+            height={460}
+            cardDistance={45}
+            verticalDistance={50}
+            delay={4500}
+            pauseOnHover={true}
+            skewAmount={4}
+            easing="elastic"
+            onCardClick={(idx) => {
+              // Optional: handle card click events
+              console.log(`Clicked card ${idx}: ${secureAIAgents[idx].name}`);
+            }}
+          >
+            {secureAIAgents.map((agent, index) => (
+              <Card key={agent.agent_id} className="bg-gradient-to-br from-background to-secondary/5 border border-border/50 backdrop-blur-sm cursor-pointer hover:shadow-2xl transition-all duration-300">
+                <div className="p-8 h-full flex flex-col justify-between">
+                  {/* Header */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <div 
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-bold border-2 shadow-lg"
+                      style={{ 
+                        backgroundColor: agent.avatar_color + '20',
+                        borderColor: agent.avatar_color + '40',
+                        color: agent.avatar_color 
+                      }}
+                    >
+                      {agent.avatar}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-foreground tracking-tight">
+                        {agent.name}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="w-2 h-2 rounded-full bg-secondary"></div>
+                        <span className="text-sm text-muted-foreground font-medium">
+                          Enterprise Security
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="flex-1 mb-6">
+                    <p className="text-muted-foreground text-sm leading-relaxed line-clamp-6">
+                      {agent.description}
+                    </p>
+                  </div>
+
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {agent.tags.map((tag, tagIndex) => (
+                      <span
+                        key={tagIndex}
+                        className="px-3 py-1 bg-secondary/10 text-secondary text-xs font-medium rounded-full border border-secondary/20"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Action Area */}
+                  <div className="flex items-center justify-between pt-4 border-t border-border/30">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-secondary" />
+                      <span className="text-xs text-muted-foreground font-medium">
+                        Enterprise Ready
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-secondary hover:text-secondary/80 transition-colors">
+                      <span className="text-xs font-medium">Learn More</span>
+                      <ArrowRight className="h-3 w-3" />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </CardSwap>
         </div>
 
         {/* Enterprise Connections Section */}
@@ -231,8 +297,6 @@ export function BentoSection() {
               <div className="absolute inset-0 z-0">
                 <GoogleGeminiEffect 
                   pathLengths={pathLengths}
-                  title=""
-                  description=""
                   className="static opacity-60"
                 />
               </div>
