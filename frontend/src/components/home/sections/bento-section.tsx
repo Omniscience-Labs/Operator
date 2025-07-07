@@ -23,8 +23,8 @@ export function BentoSection() {
       title: 'Scalable for Teams',
       description: 'Grow with your team. Track tasks across multiple workspaces and all team members.',
       icon: (
-        <div className="w-32 h-32 rounded-full flex items-center justify-center relative overflow-hidden">
-          <Globe className="scale-75" />
+        <div className="w-48 h-48 rounded-full flex items-center justify-center relative overflow-hidden">
+          <Globe className="scale-100" />
         </div>
       )
     }
