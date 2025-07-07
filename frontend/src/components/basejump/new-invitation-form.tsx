@@ -63,6 +63,7 @@ export default function NewInvitationForm({ accountId }: Props) {
               {fullInvitationUrl(state.token!)}
             </div>
             <Button 
+              type="button"
               variant="outline" 
               size="icon" 
               onClick={copyInvitationUrl}
