@@ -57,20 +57,18 @@ export function TestimonialSection() {
       </SectionHeader>
       
       <div className="w-full max-w-7xl mx-auto px-6 mt-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           {/* Left side - Features Grid */}
-          <div className="lg:col-span-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          <div className="w-full">
+            <div className="grid grid-cols-2 gap-4">
               {features.map((feature, index) => (
-                <div key={index} className="flex flex-col space-y-4 p-6 rounded-xl bg-background border border-border hover:shadow-sm transition-all duration-200">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-secondary/10 text-secondary rounded-xl">
-                      {feature.icon}
-                    </div>
+                <div key={index} className="flex flex-col text-center p-4 rounded-xl bg-background border border-border hover:shadow-sm transition-all duration-200">
+                  <div className="flex items-center justify-center w-10 h-10 bg-secondary/10 text-secondary rounded-lg mx-auto mb-3">
+                    {feature.icon}
                   </div>
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-lg text-primary leading-tight">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <h3 className="font-semibold text-sm text-primary leading-tight">{feature.title}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -80,7 +78,7 @@ export function TestimonialSection() {
           </div>
 
           {/* Right side - Chat Interface Mockup */}
-          <div className="lg:col-span-6 relative">
+          <div className="w-full relative">
             {/* Main Chat Container */}
             <div className="bg-gradient-to-br from-secondary/5 to-secondary/10 rounded-2xl p-6 relative overflow-hidden border border-border">
               {/* Chat Interface */}
