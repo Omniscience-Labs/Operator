@@ -51,7 +51,7 @@ export interface PricingTier {
 }
 
 export const siteConfig = {
-  name: 'Operator by OMNI',
+  name: 'Omni',
   description: 'The Generalist AI Agent that works on your behalf.',
   cta: 'Start Free',
   url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
