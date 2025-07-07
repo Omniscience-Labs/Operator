@@ -40,9 +40,9 @@ export function EnterpriseSection() {
   return (
     <section
       id="enterprise"
-      className="flex flex-col items-center justify-center w-full relative pb-18"
+      className="flex flex-col items-center justify-center w-full relative py-20"
     >
-      <div className="w-full max-w-6xl mx-auto px-6">
+      <div className="w-full max-w-7xl mx-auto px-6">
         <SectionHeader>
           <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-center text-balance pb-1">
             Enterprise-Grade AI Platform
@@ -52,84 +52,92 @@ export function EnterpriseSection() {
           </p>
         </SectionHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-12">
-          <div className="rounded-xl bg-[#F3F4F6] dark:bg-[#F9FAFB]/[0.02] border border-border p-6">
-            <div className="flex flex-col gap-6">
-              <div className="flex items-center gap-2 text-primary font-medium">
-                <Building2 className="h-5 w-5" />
-                <span>Enterprise Deployment</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 pt-16">
+          {/* Left Panel - Deployment Info */}
+          <div className="space-y-8">
+            <div className="rounded-2xl bg-gradient-to-br from-secondary/5 to-secondary/10 border border-border p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-secondary/10 rounded-xl">
+                  <Building2 className="h-6 w-6 text-secondary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold tracking-tight">
+                    Enterprise Deployment
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Single Tenant Managed Infrastructure
+                  </p>
+                </div>
               </div>
-              <div className="relative">
-                <h3 className="text-2xl font-semibold tracking-tight">
-                  Single Tenant Managed Infrastructure
-                </h3>
-                <p className="text-muted-foreground mt-2">
-                  Dedicated cloud infrastructure with enterprise-grade security, compliance, and performance guarantees.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary/10 border-secondary/20 text-secondary">
-                  SOC 2 Compliant
+              
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                Dedicated cloud infrastructure with enterprise-grade security, compliance readiness, and performance guarantees tailored to your organization's needs.
+              </p>
+              
+              <div className="flex flex-wrap gap-2 mb-8">
+                <span className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium bg-secondary/10 border-secondary/20 text-secondary">
+                  Dedicated Resources
                 </span>
-                <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary/10 border-secondary/20 text-secondary">
-                  GDPR Ready
+                <span className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium bg-secondary/10 border-secondary/20 text-secondary">
+                  High Availability
                 </span>
-                <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-secondary/10 border-secondary/20 text-secondary">
-                  99.9% SLA
+                <span className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium bg-secondary/10 border-secondary/20 text-secondary">
+                  24/7 Monitoring
                 </span>
               </div>
+              
               <Link
                 href="mailto:enterprise@omni.ai"
-                className="group inline-flex h-10 items-center justify-center gap-2 text-sm font-medium tracking-wide rounded-full text-primary-foreground dark:text-black px-6 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] bg-primary dark:bg-white hover:bg-primary/90 dark:hover:bg-white/90 transition-all duration-200 w-fit"
+                className="group inline-flex h-11 items-center justify-center gap-2 text-sm font-medium tracking-wide rounded-xl text-primary-foreground dark:text-black px-6 shadow-[0_1px_3px_rgba(16,24,40,0.1),0_1px_2px_rgba(16,24,40,0.06)] bg-primary dark:bg-white hover:bg-primary/90 dark:hover:bg-white/90 transition-all duration-200 w-full"
               >
                 <span>Contact Sales</span>
-                <span className="inline-flex items-center justify-center size-5 rounded-full bg-white/20 dark:bg-black/10 group-hover:bg-white/30 dark:group-hover:bg-black/20 transition-colors duration-200">
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="text-primary-foreground dark:text-black"
-                  >
-                    <path
-                      d="M7 17L17 7M17 7H8M17 7V16"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="text-primary-foreground dark:text-black group-hover:translate-x-1 transition-transform duration-200"
+                >
+                  <path
+                    d="M7 17L17 7M17 7H8M17 7V16"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </Link>
             </div>
           </div>
 
-          <div className="rounded-xl bg-[#F3F4F6] dark:bg-[#F9FAFB]/[0.02] border border-border p-6">
-            <div className="flex flex-col gap-6">
-              <h3 className="text-xl md:text-2xl font-medium tracking-tight">
+          {/* Right Panel - Features Grid */}
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-2xl font-semibold tracking-tight mb-4">
                 Enterprise Features
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground mb-8">
                 Advanced capabilities designed for large organizations with complex requirements and security needs.
               </p>
-              <div className="grid grid-cols-1 gap-4">
-                {features.map((feature, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="rounded-full bg-secondary/10 p-2 mt-0.5">
-                      <div className="text-secondary">
-                        {feature.icon}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-medium">{feature.title}</h4>
-                      <p className="text-muted-foreground text-sm">
-                        {feature.description}
-                      </p>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-6">
+              {features.map((feature, index) => (
+                <div key={index} className="flex items-start gap-4 p-4 rounded-xl border border-border hover:bg-secondary/5 transition-colors duration-200">
+                  <div className="rounded-lg bg-secondary/10 p-2.5 mt-1">
+                    <div className="text-secondary">
+                      {feature.icon}
                     </div>
                   </div>
-                ))}
-              </div>
+                  <div className="space-y-1">
+                    <h4 className="font-semibold text-primary">{feature.title}</h4>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
