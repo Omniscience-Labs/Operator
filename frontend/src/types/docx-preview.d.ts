@@ -10,6 +10,12 @@ declare module 'docx-preview' {
     experimental?: boolean;
     useBase64URL?: boolean;
     debug?: boolean;
+    renderHeaders?: boolean;
+    renderFooters?: boolean;
+    renderFootnotes?: boolean;
+    renderEndnotes?: boolean;
+    renderComments?: boolean;
+    trimXmlDeclaration?: boolean;
   }
 
   export function renderAsync(

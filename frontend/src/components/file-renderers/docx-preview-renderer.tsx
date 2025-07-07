@@ -91,7 +91,14 @@ export function DocxPreviewRenderer({
           ignoreLastRenderedPageBreak: true,
           experimental: false,
           useBase64URL: false,
-          debug: true // Enable debug mode
+          debug: true, // Enable debug mode
+          // Enable header/footer rendering
+          renderHeaders: true,
+          renderFooters: true,
+          renderFootnotes: true,
+          renderEndnotes: true,
+          renderComments: false, // Usually not needed for preview
+          trimXmlDeclaration: true
         };
 
         await renderAsync(arrayBuffer, containerRef.current, styleContainerRef.current, options);

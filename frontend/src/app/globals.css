@@ -725,6 +725,61 @@
   margin-bottom: 0.25rem;
 }
 
+/* Header and Footer Styles */
+.docx-preview .docx-header {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.docx-preview .docx-footer {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+  margin-top: 1.5rem;
+}
+
+.docx-preview .docx-header table,
+.docx-preview .docx-footer table {
+  width: 100%;
+  border: none !important;
+  margin: 0;
+}
+
+.docx-preview .docx-header td,
+.docx-preview .docx-footer td {
+  border: none !important;
+  padding: 0.25rem;
+  vertical-align: top;
+}
+
+.docx-preview .docx-header img,
+.docx-preview .docx-footer img {
+  max-height: 60px;
+  width: auto;
+}
+
+/* Page break styles */
+.docx-preview .docx-page-break {
+  page-break-before: always;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px dashed #cbd5e1;
+}
+
+/* Footnotes and endnotes */
+.docx-preview .docx-footnotes,
+.docx-preview .docx-endnotes {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  font-size: 0.9em;
+}
+
+.docx-preview .docx-footnote,
+.docx-preview .docx-endnote {
+  margin-bottom: 0.5rem;
+}
+
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .docx-preview {
@@ -738,5 +793,22 @@
   
   .docx-preview th {
     background-color: #334155;
+  }
+
+  .docx-preview .docx-header {
+    border-bottom-color: #475569;
+  }
+
+  .docx-preview .docx-footer {
+    border-top-color: #475569;
+  }
+
+  .docx-preview .docx-page-break {
+    border-top-color: #64748b;
+  }
+
+  .docx-preview .docx-footnotes,
+  .docx-preview .docx-endnotes {
+    border-top-color: #475569;
   }
 }
