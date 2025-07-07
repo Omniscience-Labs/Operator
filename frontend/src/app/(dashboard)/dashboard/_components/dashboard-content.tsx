@@ -73,6 +73,9 @@ export function DashboardContent() {
   const [showExamples, setShowExamples] = useState(false);
   const [greetingComplete, setGreetingComplete] = useState(false);
   
+  // State to store pending meeting file until ChatInput is rendered
+  const [pendingMeetingFile, setPendingMeetingFile] = useState<File | null>(null);
+  
   // Background selection
   const [backgroundType, setBackgroundType] = useState<'waves' | 'hexagon' | 'vanta' | 'novatrix'>('waves');
   const { billingError, handleBillingError, clearBillingError } =
@@ -264,10 +267,8 @@ ${meeting.transcript || '(No transcript available)'}`;
               type: 'text/plain',
             });
 
-            // Add file to chat input
-            if (chatInputRef.current) {
-              chatInputRef.current.addExternalFile(file);
-            }
+            // Set pending meeting file
+            setPendingMeetingFile(file);
 
             // Set initial prompt
             setInputValue(
@@ -285,6 +286,14 @@ ${meeting.transcript || '(No transcript available)'}`;
       });
     }
   }, [searchParams, router]);
+
+  // Add pending meeting file to ChatInput once it's rendered
+  useEffect(() => {
+    if (pendingMeetingFile && chatInputRef.current) {
+      chatInputRef.current.addExternalFile(pendingMeetingFile);
+      setPendingMeetingFile(null); // Clear the pending file
+    }
+  }, [pendingMeetingFile, showChatInput]); // Depend on showChatInput to ensure ChatInput is rendered
 
   useEffect(() => {
     if (threadQuery.data && initiatedThreadId) {
