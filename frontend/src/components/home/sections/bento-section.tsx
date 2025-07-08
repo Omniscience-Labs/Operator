@@ -6,6 +6,7 @@ import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
 import { InfoCard } from '@/components/InfoCard';
 import { IconCloud } from '@/components/magicui/icon-cloud';
 import { AnimatedBeam } from '@/components/magicui/animated-beam';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 import { OmniProcessModal } from '@/components/sidebar/omni-enterprise-modal';
 import { Shield, Lock, Brain, Database, Zap, Users2, Settings } from 'lucide-react';
 import { useRef, forwardRef } from 'react';
@@ -183,7 +184,7 @@ export function BentoSection() {
               <Shield className="h-6 w-6 text-secondary" />
             </div>
             <span className="text-sm font-semibold text-secondary uppercase tracking-wider">
-              Enterprise AI Security
+              Enterprise <GradientText text="AI" /> Security
             </span>
           </div>
           
@@ -196,7 +197,7 @@ export function BentoSection() {
               Your data and knowledge are your competitive edge.
             </p>
             <p className="text-lg md:text-xl text-muted-foreground/70 font-normal leading-relaxed max-w-3xl mx-auto">
-              Supercharge your business with AI that learns exclusively from your proprietary assets—without sharing your advantage with competitors or public models.
+              Supercharge your business with <GradientText text="AI" /> that learns exclusively from your proprietary assets—without sharing your advantage with competitors or public models.
             </p>
           </div>
         </div>
@@ -222,24 +223,24 @@ export function BentoSection() {
         <div className="mt-24 lg:mt-32">
           <div className="text-center mb-16">
             <h3 className="text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight text-balance leading-[1.05] mb-6">
-              Connect Securely to Enterprise Data and Tools
+              Connect Your <GradientText text="AI Agents" /> Securely to Enterprise Data and Tools
             </h3>
             <p className="text-lg md:text-xl text-muted-foreground font-normal leading-relaxed max-w-3xl mx-auto">
               Seamlessly integrate with your existing enterprise infrastructure while maintaining zero-trust security protocols.
             </p>
           </div>
 
-                     {/* Mobile Layout - Stacked vertically */}
-           <div className="block lg:hidden">
+            {/* Mobile Layout - Stacked vertically */}
+            <div className="block lg:hidden">
              <div className="space-y-6 px-4">
                {/* Central Icon Cloud for mobile */}
                <div className="flex justify-center mb-8">
                  <div className="w-[280px] h-[280px] bg-gradient-to-br from-secondary/5 to-primary/5 rounded-full border border-border/30 shadow-lg backdrop-blur-sm flex items-center justify-center">
                    <div className="w-[240px] h-[240px]">
-                     <IconCloud images={enterpriseIntegrationImages} />
-                   </div>
-                 </div>
-               </div>
+                  <IconCloud images={enterpriseIntegrationImages} />
+                </div>
+              </div>
+                </div>
 
                {/* Feature Pills */}
                <div className="flex justify-center">
@@ -248,37 +249,37 @@ export function BentoSection() {
                    title="Zero-Trust Authentication"
                    description="Secure API connections with enterprise-grade authentication and authorization protocols."
                  />
-               </div>
+                  </div>
                <div className="flex justify-center">
                  <FeaturePill
                    icon={<Lock className="h-5 w-5 text-secondary" />}
                    title="End-to-End Encryption"
                    description="All data transfers are encrypted with AES-256 standards, ensuring complete privacy."
                  />
-               </div>
+                </div>
                <div className="flex justify-center">
                  <FeaturePill
                    icon={<Zap className="h-5 w-5 text-secondary" />}
                    title="Real-Time Sync"
                    description="Instant synchronization with your enterprise systems for up-to-date insights."
                  />
-               </div>
+                  </div>
                <div className="flex justify-center">
                  <FeaturePill
                    icon={<Users2 className="h-5 w-5 text-secondary" />}
                    title="RBAC"
                    description="Role-based access control with granular permissions and enterprise-grade user management."
                  />
-               </div>
+                </div>
                <div className="flex justify-center">
                  <FeaturePill
                    icon={<Settings className="h-5 w-5 text-secondary" />}
                    title="Custom Integration Development"
                    description="Tailored integration solutions for your unique enterprise systems and workflows."
                  />
-               </div>
-             </div>
-           </div>
+                  </div>
+                </div>
+              </div>
 
                      {/* Desktop Layout with AnimatedBeam */}
            <div className="hidden lg:block">
@@ -289,14 +290,14 @@ export function BentoSection() {
                {/* Central Icon Cloud in Container */}
                <div 
                  ref={centerRef}
-                 className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] z-10"
+                 className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] z-10 bg-gradient-to-br from-secondary/5 to-primary/5 rounded-full border border-border/30 shadow-lg backdrop-blur-sm overflow-hidden"
                >
-                 <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-br from-secondary/5 to-primary/5 rounded-full border border-border/30 shadow-lg backdrop-blur-sm">
-                   <div className="w-[240px] h-[240px]">
+                 <div className="absolute inset-0 flex items-center justify-center">
+                   <div className="w-[280px] h-[280px] flex items-center justify-center">
                      <IconCloud images={enterpriseIntegrationImages} />
-                   </div>
-                 </div>
-               </div>
+                </div>
+              </div>
+            </div>
 
                               {/* Feature Pills positioned around the center */}
                <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
@@ -308,9 +309,9 @@ export function BentoSection() {
                    floatDelay={0}
                    enableFloat={true}
                  />
-               </div>
+                </div>
 
-               <div className="absolute top-1/2 left-0 transform -translate-y-1/2">
+               <div className="absolute top-1/2 left-4 transform -translate-y-1/2">
                  <FeaturePill
                    ref={feature2Ref}
                    icon={<Lock className="h-5 w-5 text-secondary" />}
@@ -319,9 +320,9 @@ export function BentoSection() {
                    floatDelay={1.2}
                    enableFloat={true}
                  />
-               </div>
+                </div>
 
-               <div className="absolute top-1/2 right-0 transform -translate-y-1/2">
+               <div className="absolute top-1/2 right-4 transform -translate-y-1/2">
                  <FeaturePill
                    ref={feature3Ref}
                    icon={<Zap className="h-5 w-5 text-secondary" />}
@@ -330,7 +331,7 @@ export function BentoSection() {
                    floatDelay={2.4}
                    enableFloat={true}
                  />
-               </div>
+                </div>
 
                <div className="absolute bottom-16 left-1/4 transform -translate-x-1/2">
                  <FeaturePill
@@ -341,7 +342,7 @@ export function BentoSection() {
                    floatDelay={3.6}
                    enableFloat={true}
                  />
-               </div>
+                </div>
 
                <div className="absolute bottom-16 right-1/4 transform translate-x-1/2">
                  <FeaturePill
@@ -352,9 +353,10 @@ export function BentoSection() {
                    floatDelay={4.8}
                    enableFloat={true}
                  />
-               </div>
+                </div>
 
-               {/* AnimatedBeam connections - edge to edge */}
+               {/* AnimatedBeam connections - exact edge to edge */}
+               {/* Top pill to center circle */}
                <AnimatedBeam
                  containerRef={containerRef}
                  fromRef={feature1Ref}
@@ -362,9 +364,10 @@ export function BentoSection() {
                  curvature={-50}
                  duration={3}
                  delay={0.5}
-                 startYOffset={25}
+                 startYOffset={37}
                  endYOffset={-140}
                />
+               {/* Left pill to center circle */}
                <AnimatedBeam
                  containerRef={containerRef}
                  fromRef={feature2Ref}
@@ -372,9 +375,10 @@ export function BentoSection() {
                  curvature={0}
                  duration={2.5}
                  delay={1}
-                 startXOffset={190}
+                 startXOffset={169}
                  endXOffset={-140}
                />
+               {/* Right pill to center circle */}
                <AnimatedBeam
                  containerRef={containerRef}
                  fromRef={feature3Ref}
@@ -383,29 +387,35 @@ export function BentoSection() {
                  duration={2.5}
                  delay={1.5}
                  reverse
-                 startXOffset={-190}
+                 startXOffset={-169}
                  endXOffset={140}
                />
+               {/* Bottom-left pill to center circle */}
                <AnimatedBeam
                  containerRef={containerRef}
                  fromRef={feature4Ref}
                  toRef={centerRef}
-                 curvature={50}
+                 curvature={80}
                  duration={3}
                  delay={0.3}
-                 startYOffset={-25}
-                 endYOffset={140}
+                 startXOffset={130}
+                 startYOffset={-37}
+                 endXOffset={-85}
+                 endYOffset={95}
                />
+               {/* Bottom-right pill to center circle */}
                <AnimatedBeam
                  containerRef={containerRef}
                  fromRef={feature5Ref}
                  toRef={centerRef}
-                 curvature={-50}
+                 curvature={-80}
                  duration={3}
                  delay={0.8}
                  reverse
-                 startYOffset={-25}
-                 endYOffset={140}
+                 startXOffset={-130}
+                 startYOffset={-37}
+                 endXOffset={85}
+                 endYOffset={95}
                />
             </div>
           </div>
@@ -424,11 +434,11 @@ export function BentoSection() {
               </div>
               
               <h3 className="text-3xl lg:text-4xl font-semibold text-foreground mb-6">
-                Ready to Secure Your AI Advantage?
+                Ready to Secure Your <GradientText text="AI" /> Advantage?
               </h3>
               
               <p className="text-lg lg:text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto">
-                Join industry leaders who trust Omni to deploy AI that amplifies their competitive edge while protecting their most valuable assets.
+                Join industry leaders who trust Omni to deploy <GradientText text="AI" /> that amplifies their competitive edge while protecting their most valuable assets.
               </p>
               
               {/* Enhanced Schedule Demo CTA */}

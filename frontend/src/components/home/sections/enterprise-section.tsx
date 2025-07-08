@@ -2,6 +2,7 @@ import React from 'react';
 import { useId } from 'react';
 import { SectionHeader } from '@/components/home/section-header';
 import { siteConfig } from '@/lib/home';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 import { OmniProcessModal } from '@/components/sidebar/omni-enterprise-modal';
 
 export function EnterpriseSection() {
@@ -80,11 +81,21 @@ export function EnterpriseSection() {
               >
                 <Grid size={20} />
                 <p className="text-base font-bold text-neutral-800 dark:text-white relative z-20">
-                  {feature.title}
+                  {feature.title === "Custom AI Agents" ? (
+                    <>Custom <GradientText text="AI" /> Agents</>
+                  ) : (
+                    feature.title
+                  )}
                 </p>
-                <p className="text-neutral-600 dark:text-neutral-400 mt-4 text-base font-normal relative z-20">
-                  {feature.description}
-                </p>
+                                  <p className="text-neutral-600 dark:text-neutral-400 mt-4 text-base font-normal relative z-20">
+                    {feature.title === "Enterprise Training Programs" ? (
+                      <>Comprehensive training programs and workshops to maximize your team's productivity and <GradientText text="AI" /> adoption across your organization.</>
+                    ) : feature.title === "Custom AI Agents" ? (
+                      <>Deploy specialized <GradientText text="AI" /> agents tailored to your specific business processes and workflows.</>
+                    ) : (
+                      feature.description
+                    )}
+                  </p>
               </div>
             ))}
           </div>
@@ -97,7 +108,7 @@ export function EnterpriseSection() {
               Supercharge your competitive advantage without giving it away
             </h3>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Deploy AI agents that work exclusively for you. Keep your data, processes, and insights secure while scaling your capabilities beyond what any competitor can achieve.
+              Deploy <GradientText text="AI" /> agents that work exclusively for you. Keep your data, processes, and insights secure while scaling your capabilities beyond what any competitor can achieve.
             </p>
           </div>
           

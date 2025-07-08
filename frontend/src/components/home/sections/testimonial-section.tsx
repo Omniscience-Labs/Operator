@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { SectionHeader } from '@/components/home/section-header';
 import { Globe } from '@/components/magicui/globe';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 import { 
   MessageSquare, 
   Zap, 
@@ -76,10 +77,10 @@ export function TestimonialSection() {
             </span>
           </div>
           <h2 className="text-3xl lg:text-5xl lg:leading-tight max-w-4xl mx-auto text-center tracking-tight font-medium text-black dark:text-white">
-            Empower Your Workflow with AI
+            Empower Your Workflow with <GradientText text="AI" />
           </h2>
           <p className="text-base lg:text-lg max-w-2xl my-6 mx-auto text-muted-foreground text-center font-normal">
-            Ask your AI Agent for real-time collaboration, seamless integrations, and actionable insights to streamline your operations.
+            Ask your <GradientText text="AI" /> Agent for real-time collaboration, seamless integrations, and actionable insights to streamline your operations.
           </p>
         </SectionHeader>
 
@@ -95,8 +96,20 @@ export function TestimonialSection() {
                   </div>
                   <ArrowUpRight className="h-4 w-4 text-muted-foreground ml-auto opacity-60" />
                 </div>
-                <FeatureTitle>{feature.title}</FeatureTitle>
-                <FeatureDescription>{feature.description}</FeatureDescription>
+                <FeatureTitle>
+                  {feature.title === "AI-Powered Collaboration" ? (
+                    <><GradientText text="AI-Powered" /> Collaboration</>
+                  ) : (
+                    feature.title
+                  )}
+                </FeatureTitle>
+                <FeatureDescription>
+                  {feature.title === "AI-Powered Collaboration" ? (
+                    <>Infinite capacity on demand. Get specialized <GradientText text="AI" /> agents for any business need, anytime.</>
+                  ) : (
+                    feature.description
+                  )}
+                </FeatureDescription>
                 <div className="h-full w-full flex-1 mt-6">{feature.skeleton}</div>
               </FeatureCard>
             ))}
@@ -270,7 +283,7 @@ const CollaborationSkeleton = () => {
                 transition={{ duration: 0.3 }}
                 className="text-xs text-muted-foreground mb-1 ml-1"
               >
-                {scenario.agentName}
+                {scenario.agentName.replace(' AI', '')} <GradientText text="AI" />
               </motion.div>
 
               {/* Typing Indicator */}
@@ -538,7 +551,7 @@ const AnalyticsSkeleton = () => {
                 transition={{ duration: 0.3 }}
                 className="text-xs font-medium text-secondary"
               >
-                {analytic.badge}
+                {analytic.badge.replace(' AI', '')} <GradientText text="AI" />
               </motion.span>
             </AnimatePresence>
           </div>
@@ -553,7 +566,12 @@ const AnalyticsSkeleton = () => {
                 className="bg-muted/50 backdrop-blur-sm rounded-lg p-2 border border-border/50"
               >
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  {analytic.insight}
+                  {analytic.insight.split('AI').map((part, index) => (
+                    <React.Fragment key={index}>
+                      {part}
+                      {index < analytic.insight.split('AI').length - 1 && <GradientText text="AI" />}
+                    </React.Fragment>
+                  ))}
                 </p>
               </motion.div>
             )}
