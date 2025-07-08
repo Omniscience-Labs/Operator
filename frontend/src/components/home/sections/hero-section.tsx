@@ -212,6 +212,32 @@ export function HeroSection() {
 
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
+      {/* Critical CSS to prevent border flash */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        /* Critical CSS to prevent gray border flash on page load */
+        #hero .hero-input-container {
+          border: 1px solid rgba(34, 211, 238, 0.3) !important;
+          border-width: 1px !important;
+          border-style: solid !important;
+        }
+        #hero .hero-input-container:hover {
+          border-color: rgba(34, 211, 238, 0.5) !important;
+        }
+        #hero .hero-input-container:focus-within {
+          border-color: rgba(34, 211, 238, 0.7) !important;
+        }
+        #hero .hero-input-container * {
+          border: none !important;
+          outline: none !important;
+        }
+        #hero .hero-input-container input {
+          border: 0 !important;
+          outline: none !important;
+          -webkit-appearance: none !important;
+          -moz-appearance: none !important;
+          appearance: none !important;
+        }
+      ` }} />
       {/* Lamp Container as Background */}
       <LampContainer className="absolute inset-0 -z-10">
         <div /> {/* Empty div to satisfy children requirement */}
@@ -289,7 +315,7 @@ export function HeroSection() {
                 
                 {/* Input container with beautiful theme-aware design */}
                 <div 
-                  className="hero-input-container relative flex items-center rounded-full px-6 transition-all duration-300 border border-cyan-500/30 bg-background/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:border-cyan-500/50 hover:bg-background/15 focus-within:border-cyan-500/70 focus-within:bg-background/20"
+                  className="hero-input-container relative flex items-center rounded-full px-6 transition-all duration-300 !border !border-cyan-500/30 !bg-background/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:!border-cyan-500/50 hover:!bg-background/15 focus-within:!border-cyan-500/70 focus-within:!bg-background/20"
                 >
                   <input
                     type="text"
