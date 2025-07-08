@@ -76,7 +76,18 @@ export function HeroSection() {
   useEffect(() => {
     setMounted(true);
     
+    // Detect Safari browser
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isSafari) {
+      document.documentElement.classList.add('is-safari');
+    }
+    
     // Inject critical CSS immediately to prevent gray border flash
+    // Safari requires extensive border overrides due to:
+    // 1. Different handling of CSS custom properties in shadow DOM
+    // 2. Border inheritance issues with Tailwind classes
+    // 3. WebKit-specific rendering of border styles
+    // 4. Issues with border: 0 vs border: none specificity
     const style = document.createElement('style');
     style.textContent = `
       /* Emergency CSS to prevent gray borders */
@@ -121,9 +132,97 @@ export function HeroSection() {
         border-color: transparent !important;
       }
       
+      /* Safari-specific fixes */
+      @supports (-webkit-appearance: none) {
+        #hero,
+        #hero * {
+          border: 0 !important;
+          border-color: transparent !important;
+          -webkit-border-before: none !important;
+          -webkit-border-after: none !important;
+          -webkit-border-start: none !important;
+          -webkit-border-end: none !important;
+        }
+        
+        #hero input,
+        #hero input[type="text"],
+        #hero .hero-input {
+          border: 0 !important;
+          border-color: transparent !important;
+          -webkit-appearance: none !important;
+          -webkit-border-before: none !important;
+          -webkit-border-after: none !important;
+          -webkit-border-start: none !important;
+          -webkit-border-end: none !important;
+          background-clip: padding-box !important;
+          -webkit-background-clip: padding-box !important;
+        }
+        
+        /* Force Safari to respect transparent borders */
+        #hero [class*="border"],
+        #hero [class*="border-"] {
+          border-image: none !important;
+          border-style: solid !important;
+          border-color: transparent !important;
+          border-width: 0 !important;
+        }
+      }
+      
+      /* Additional Safari mobile fixes */
+      @supports (-webkit-touch-callout: none) {
+        #hero input {
+          -webkit-user-select: text !important;
+          -webkit-touch-callout: default !important;
+          border: 0 !important;
+          outline: 0 !important;
+        }
+      }
+      
+      /* Safari-specific data attribute targeting */
+      @supports (-webkit-appearance: none) {
+        #hero [data-safari-fix="true"] {
+          border: 1px solid rgba(34, 211, 238, 0.3) !important;
+          border-width: 1px !important;
+          border-style: solid !important;
+          border-color: rgba(34, 211, 238, 0.3) !important;
+        }
+        
+        #hero [data-safari-fix="true"] * {
+          border: none !important;
+          border-style: none !important;
+          border-width: 0 !important;
+          border-color: transparent !important;
+        }
+      }
+      
       /* Hero input container with cyan glow border */
       #hero .hero-input-container {
         border: 1px solid rgba(34, 211, 238, 0.3) !important;
+      }
+      
+      /* Safari browser class targeting */
+      .is-safari #hero,
+      .is-safari #hero * {
+        border: none !important;
+        border-style: none !important;
+        border-width: 0 !important;
+        border-color: transparent !important;
+        border-image: none !important;
+      }
+      
+      .is-safari #hero .hero-input-container {
+        border: 1px solid rgba(34, 211, 238, 0.3) !important;
+        border-width: 1px !important;
+        border-style: solid !important;
+        border-color: rgba(34, 211, 238, 0.3) !important;
+      }
+      
+      .is-safari #hero input {
+        border: none !important;
+        border-style: none !important;
+        border-width: 0 !important;
+        border-color: transparent !important;
+        -webkit-appearance: none !important;
       }
     `;
     style.id = 'hero-critical-css';
@@ -150,6 +249,8 @@ export function HeroSection() {
       if (styleEl) {
         styleEl.remove();
       }
+      // Remove Safari class
+      document.documentElement.classList.remove('is-safari');
     };
   }, []);
 
@@ -337,12 +438,46 @@ export function HeroSection() {
             box-shadow: none !important;
           }
           
+          /* Safari-specific fixes */
+          @supports (-webkit-appearance: none) {
+            #hero,
+            #hero * {
+              border: none !important;
+              border-style: none !important;
+              border-width: 0 !important;
+              border-color: transparent !important;
+              -webkit-border-before: none !important;
+              -webkit-border-after: none !important;
+              -webkit-border-start: none !important;
+              -webkit-border-end: none !important;
+            }
+            
+            #hero input {
+              -webkit-appearance: none !important;
+              border: none !important;
+              border-style: none !important;
+              border-width: 0 !important;
+              border-color: transparent !important;
+              -webkit-tap-highlight-color: transparent !important;
+            }
+          }
+          
           #hero .hero-input-container {
             border: 1px solid rgba(34, 211, 238, 0.3) !important;
             border-radius: 9999px !important;
             background-color: rgba(255, 255, 255, 0.1) !important;
             backdrop-filter: blur(12px) !important;
             -webkit-backdrop-filter: blur(12px) !important;
+          }
+          
+          /* Safari input container override */
+          @supports (-webkit-appearance: none) {
+            #hero .hero-input-container {
+              border: 1px solid rgba(34, 211, 238, 0.3) !important;
+              border-width: 1px !important;
+              border-style: solid !important;
+              border-color: rgba(34, 211, 238, 0.3) !important;
+            }
           }
           
           @media (prefers-color-scheme: dark) {
@@ -362,6 +497,16 @@ export function HeroSection() {
           --input: transparent !important;
           --ring: transparent !important;
           --border-border: transparent !important;
+        }
+        
+        /* Safari-specific variable fixes */
+        @supports (-webkit-appearance: none) {
+          #hero {
+            --border: transparent !important;
+            --input: transparent !important;
+            --ring: transparent !important;
+            --border-border: transparent !important;
+          }
         }
         
         /* Target all hero elements by data attribute to ensure specificity */
@@ -423,6 +568,50 @@ export function HeroSection() {
         #hero [data-framer-component-type] {
           border: 0 !important;
           border-color: transparent !important;
+        }
+        
+        /* Safari-specific fixes for all elements */
+        @supports (-webkit-appearance: none) {
+          #hero,
+          #hero *,
+          #hero *::before,
+          #hero *::after {
+            border: none !important;
+            border-style: none !important;
+            border-width: 0 !important;
+            border-color: transparent !important;
+            border-image: none !important;
+            -webkit-border-before: none !important;
+            -webkit-border-after: none !important;
+            -webkit-border-start: none !important;
+            -webkit-border-end: none !important;
+            outline: none !important;
+            outline-style: none !important;
+            outline-width: 0 !important;
+          }
+          
+          /* Safari input specific */
+          #hero input,
+          #hero .hero-input,
+          #hero input[type="text"] {
+            -webkit-appearance: none !important;
+            border: none !important;
+            border-style: none !important;
+            border-width: 0 !important;
+            border-color: transparent !important;
+            background-clip: padding-box !important;
+            -webkit-background-clip: padding-box !important;
+            -webkit-tap-highlight-color: transparent !important;
+          }
+          
+          /* Safari border class override */
+          #hero [class*="border"],
+          #hero .border-input {
+            border: none !important;
+            border-style: none !important;
+            border-width: 0 !important;
+            border-color: transparent !important;
+          }
         }
         
         /* Motion wrapper specific styles */
@@ -513,6 +702,20 @@ export function HeroSection() {
           height: auto !important;
           min-height: 4rem !important; /* h-16 */
           overflow: hidden !important;
+        }
+        
+        /* Safari-specific input container fix - must come after general Safari fixes */
+        @supports (-webkit-appearance: none) {
+          #hero .hero-input-container {
+            border: 1px solid rgba(34, 211, 238, 0.3) !important;
+            border-width: 1px !important;
+            border-style: solid !important;
+            border-color: rgba(34, 211, 238, 0.3) !important;
+            -webkit-border-before: initial !important;
+            -webkit-border-after: initial !important;
+            -webkit-border-start: initial !important;
+            -webkit-border-end: initial !important;
+          }
         }
         @media (prefers-color-scheme: dark) {
           #hero .hero-input-container {
@@ -667,13 +870,27 @@ export function HeroSection() {
               onSubmit={handleSubmit}
               id="hero-form"
               data-hero-element="form"
+              data-safari-fix="form"
               style={{
-                border: '0',
+                border: 'none',
+                borderStyle: 'none',
+                borderWidth: '0',
                 borderColor: 'transparent',
                 outline: 'none'
               }}
             >
-              <div className="relative" data-hero-element="container" style={{ border: '0', borderColor: 'transparent' }}>
+              <div 
+                className="relative" 
+                data-hero-element="container" 
+                data-safari-fix="container"
+                style={{ 
+                  border: 'none',
+                  borderStyle: 'none',
+                  borderWidth: '0',
+                  borderColor: 'transparent',
+                  outline: 'none'
+                }}
+              >
                 {/* Enhanced glow effect */}
                 <div 
                   className="hero-glow-effect absolute -inset-1 bg-gradient-to-r from-cyan-500/20 via-cyan-400/10 to-cyan-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none" 
@@ -685,6 +902,7 @@ export function HeroSection() {
                 <div 
                   className="hero-input-container relative flex items-center rounded-full px-6 transition-all duration-300"
                   data-hero-element="input-container"
+                  data-safari-fix="true"
                   style={{
                     border: '1px solid rgba(34, 211, 238, 0.3)',
                     borderRadius: '9999px',
@@ -710,13 +928,26 @@ export function HeroSection() {
                     placeholder={hero.inputPlaceholder}
                     className="hero-input flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg text-foreground placeholder:text-muted-foreground placeholder:opacity-70 focus:placeholder:opacity-40 py-2 font-medium transition-all duration-200 appearance-none"
                     style={{
-                      border: '0 !important',
-                      borderColor: 'transparent !important',
-                      outline: 'none !important',
-                      boxShadow: 'none !important',
+                      border: 'none',
+                      borderStyle: 'none',
+                      borderWidth: '0',
+                      borderColor: 'transparent',
+                      borderImage: 'none',
+                      outline: 'none',
+                      outlineStyle: 'none',
+                      outlineWidth: '0',
+                      boxShadow: 'none',
                       background: 'transparent',
+                      backgroundColor: 'transparent',
                       WebkitAppearance: 'none',
-                      MozAppearance: 'none'
+                      MozAppearance: 'none',
+                      WebkitTapHighlightColor: 'transparent',
+                      ...{
+                        ['-webkit-border-before' as any]: 'none',
+                        ['-webkit-border-after' as any]: 'none',
+                        ['-webkit-border-start' as any]: 'none',
+                        ['-webkit-border-end' as any]: 'none',
+                      }
                     }}
                     disabled={isSubmitting}
                     autoComplete="off"
