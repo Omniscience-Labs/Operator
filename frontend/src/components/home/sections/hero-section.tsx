@@ -212,10 +212,18 @@ export function HeroSection() {
 
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
-      <style jsx>{`
-        /* DEBUGGING: Minimal CSS - only target our test input */
-        .debug-input-test * {
-          box-sizing: border-box;
+      <style jsx global>{`
+        /* CRITICAL: Override the global * { @apply border-border outline-ring/50; } rule */
+        #hero .debug-input-test,
+        #hero .debug-input-test *,
+        #hero .debug-input-test input,
+        #hero .debug-input-test div,
+        #hero .debug-input-test button {
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+          -webkit-box-shadow: none !important;
+          -moz-box-shadow: none !important;
         }
       `}</style>
       {/* Lamp Container as Background */}
@@ -291,7 +299,7 @@ export function HeroSection() {
               display: 'flex',
               alignItems: 'center',
               background: 'none',
-              border: '1px solid cyan',
+              border: '1px solid rgba(34, 211, 238, 0.4)',
               borderRadius: '50px',
               padding: '0 24px'
             }}>
