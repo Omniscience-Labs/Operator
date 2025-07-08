@@ -71,7 +71,7 @@ export function EnterpriseSection() {
           </p>
         </SectionHeader>
 
-        <div className="py-20 lg:py-40">
+        <div className="py-12 lg:py-20">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10 md:gap-2 max-w-7xl mx-auto">
             {enterpriseFeatures.map((feature) => (
               <div
