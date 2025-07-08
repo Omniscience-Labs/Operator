@@ -790,11 +790,7 @@ export function HeroSection() {
         #hero .hero-input-container + div {
           pointer-events: none !important;
         }
-      ` }} />
-      {/* Lamp Container as Background */}
-      <LampContainer className="absolute inset-0 -z-10">
-        <div /> {/* Empty div to satisfy children requirement */}
-      </LampContainer>
+      `}} />
 
       <div className="relative flex flex-col items-center w-full px-6 z-20">
         {/* Center content */}
@@ -816,7 +812,7 @@ export function HeroSection() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, duration: 0.6 }}
-              className="relative z-40 mb-4"
+              className="relative z-50 mb-4"
             >
               <Link
                 href="#enterprise"
@@ -836,11 +832,59 @@ export function HeroSection() {
                 </div>
               </Link>
             </motion.div>
+
+            {/* Lamp Container positioned between badge and title */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 1.2 }}
+              className="relative z-10 w-full max-w-4xl mx-auto"
+            >
+              <LampContainer className="relative w-full h-32 sm:h-40 md:h-48 lg:h-56 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {/* Animated gradient line with glow effect */}
+                  <div className="relative w-full h-[2px]">
+                    {/* Main gradient line */}
+                    <motion.div
+                      className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full"
+                      style={{
+                        backgroundImage: 'linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)',
+                      }}
+                      initial={{ backgroundPosition: '0% 0%' }}
+                      animate={{ backgroundPosition: '500% 100%' }}
+                      transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                    />
+                    
+                    {/* Glow effect */}
+                    <motion.div
+                      className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full blur-[8px] mix-blend-plus-lighter"
+                      style={{
+                        backgroundImage: 'linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)',
+                      }}
+                      initial={{ backgroundPosition: '0% 0%' }}
+                      animate={{ backgroundPosition: '500% 100%' }}
+                      transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                    />
+                  </div>
+                </div>
+              </LampContainer>
+            </motion.div>
             
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-balance leading-[1.1] bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent drop-shadow-lg px-4">
+            <motion.h1 
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-balance leading-[1.1] bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent drop-shadow-lg px-4 relative z-40"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+            >
               {hero.title}
-            </h1>
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-center text-muted-foreground font-normal text-balance leading-relaxed max-w-2xl tracking-tight drop-shadow-md px-4">
+            </motion.h1>
+            
+            <motion.p 
+              className="text-base sm:text-lg md:text-xl lg:text-2xl text-center text-muted-foreground font-normal text-balance leading-relaxed max-w-2xl tracking-tight drop-shadow-md px-4 relative z-40"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.8 }}
+            >
               Operator by OMNI – is a generalist{' '}
               <GradientText 
                 text="AI Agent" 
@@ -848,7 +892,7 @@ export function HeroSection() {
                 transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
               />{' '}
               that works on your behalf.
-            </p>
+            </motion.p>
           </motion.div>
 
           {/* Enhanced input with modern styling */}
@@ -862,7 +906,7 @@ export function HeroSection() {
             }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
+            transition={{ delay: 0.9, duration: 0.8 }}
             layout="position"
           >
             <form 
