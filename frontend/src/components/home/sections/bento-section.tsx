@@ -330,9 +330,12 @@ export function BentoSection() {
                 Join industry leaders who trust Operator to deploy AI that amplifies their competitive edge while protecting their most valuable assets.
               </p>
               
-              <div className="group inline-flex items-center gap-3 px-10 py-5 bg-secondary text-secondary-foreground rounded-2xl font-semibold text-lg transition-all duration-300 hover:bg-secondary/90 hover:shadow-xl hover:shadow-secondary/25 hover:scale-105">
-                <Shield className="h-6 w-6" />
-                <OmniProcessModal />
+              {/* Enhanced Schedule Demo CTA */}
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-secondary to-primary rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
+                <div className="relative group inline-flex h-14 items-center justify-center gap-3 text-base font-semibold tracking-wide rounded-xl text-primary-foreground dark:text-black px-12 shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] bg-primary dark:bg-white hover:bg-primary/90 dark:hover:bg-white/90 transition-all duration-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:scale-105">
+                  <OmniProcessModal />
+                </div>
               </div>
             </div>
           </div>
