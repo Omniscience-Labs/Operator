@@ -216,14 +216,37 @@ export function HeroSection() {
         /* CRITICAL: Override the global * { @apply border-border outline-ring/50; } rule */
         #hero .debug-input-test,
         #hero .debug-input-test *,
-        #hero .debug-input-test input,
-        #hero .debug-input-test div,
-        #hero .debug-input-test button {
+        #hero .debug-input-test *:before,
+        #hero .debug-input-test *:after {
           border: none !important;
           outline: none !important;
           box-shadow: none !important;
           -webkit-box-shadow: none !important;
           -moz-box-shadow: none !important;
+          background-image: none !important;
+        }
+        
+        /* Allow our container to keep its cyan border */
+        #hero .debug-input-test .input-container {
+          border: 1px solid rgba(34, 211, 238, 0.4) !important;
+          background: transparent !important;
+        }
+        
+        /* Debug: Show what elements exist with bright backgrounds */
+        #hero .debug-input-test > * {
+          background: rgba(255, 0, 0, 0.1) !important;
+        }
+        
+        #hero .debug-input-test .input-container {
+          background: rgba(0, 255, 0, 0.1) !important;
+        }
+        
+        #hero .debug-input-test input {
+          background: rgba(0, 0, 255, 0.1) !important;
+        }
+        
+        #hero .debug-input-test button {
+          background: rgba(255, 255, 0, 0.1) !important;
         }
       `}</style>
       {/* Lamp Container as Background */}
@@ -293,16 +316,17 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
           >
-            <div style={{
-              width: '100%',
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              background: 'none',
-              border: '1px solid rgba(34, 211, 238, 0.4)',
-              borderRadius: '50px',
-              padding: '0 24px'
-            }}>
+            <div 
+              className="input-container"
+              style={{
+                width: '100%',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                background: 'none',
+                borderRadius: '50px',
+                padding: '0 24px'
+              }}>
               <input
                 type="text"
                 value={inputValue}
@@ -334,11 +358,15 @@ export function HeroSection() {
                   width: '48px',
                   height: '48px',
                   borderRadius: '50%',
-                  background: inputValue.trim() ? 'cyan' : 'gray',
+                  background: inputValue.trim() ? 'rgba(34, 211, 238, 0.8)' : 'rgba(34, 211, 238, 0.3)',
+                  border: 'none',
+                  outline: 'none',
+                  boxShadow: 'none',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  color: 'white'
                 }}
                 disabled={!inputValue.trim() || isSubmitting}
               >
