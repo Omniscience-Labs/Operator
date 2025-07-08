@@ -19,8 +19,10 @@ const FeaturePill = forwardRef<
     title: string; 
     description: string; 
     className?: string;
+    floatDelay?: number;
+    enableFloat?: boolean;
   }
->(({ icon, title, description, className }, ref) => {
+>(({ icon, title, description, className, floatDelay = 0, enableFloat = false }, ref) => {
   return (
     <div
       ref={ref}
@@ -29,8 +31,13 @@ const FeaturePill = forwardRef<
         "flex items-center gap-4 min-w-[360px] max-w-[380px]",
         "hover:shadow-xl transition-all duration-300 hover:scale-105",
         "backdrop-blur-sm bg-white/80 dark:bg-gray-900/80",
+        enableFloat && "animate-float",
         className
       )}
+      style={enableFloat ? {
+        animationDelay: `${floatDelay}s`,
+        animationDuration: `${6 + Math.random() * 2}s`
+      } : {}}
     >
       <div className="flex-shrink-0 w-10 h-10 bg-secondary/10 rounded-full flex items-center justify-center border border-secondary/20">
         {icon}
@@ -291,13 +298,15 @@ export function BentoSection() {
                  </div>
                </div>
 
-               {/* Feature Pills positioned around the center */}
+                              {/* Feature Pills positioned around the center */}
                <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
                  <FeaturePill
                    ref={feature1Ref}
                    icon={<Shield className="h-5 w-5 text-secondary" />}
                    title="Zero-Trust Authentication"
                    description="Secure API connections with enterprise-grade authentication and authorization protocols."
+                   floatDelay={0}
+                   enableFloat={true}
                  />
                </div>
 
@@ -307,6 +316,8 @@ export function BentoSection() {
                    icon={<Lock className="h-5 w-5 text-secondary" />}
                    title="End-to-End Encryption"
                    description="All data transfers are encrypted with AES-256 standards, ensuring complete privacy."
+                   floatDelay={1.2}
+                   enableFloat={true}
                  />
                </div>
 
@@ -316,6 +327,8 @@ export function BentoSection() {
                    icon={<Zap className="h-5 w-5 text-secondary" />}
                    title="Real-Time Sync"
                    description="Instant synchronization with your enterprise systems for up-to-date insights."
+                   floatDelay={2.4}
+                   enableFloat={true}
                  />
                </div>
 
@@ -325,6 +338,8 @@ export function BentoSection() {
                    icon={<Users2 className="h-5 w-5 text-secondary" />}
                    title="RBAC"
                    description="Role-based access control with granular permissions and enterprise-grade user management."
+                   floatDelay={3.6}
+                   enableFloat={true}
                  />
                </div>
 
@@ -334,52 +349,64 @@ export function BentoSection() {
                    icon={<Settings className="h-5 w-5 text-secondary" />}
                    title="Custom Integration Development"
                    description="Tailored integration solutions for your unique enterprise systems and workflows."
+                   floatDelay={4.8}
+                   enableFloat={true}
                  />
                </div>
 
-              {/* AnimatedBeam connections */}
-              <AnimatedBeam
-                containerRef={containerRef}
-                fromRef={feature1Ref}
-                toRef={centerRef}
-                curvature={-50}
-                duration={3}
-                delay={0.5}
-              />
-              <AnimatedBeam
-                containerRef={containerRef}
-                fromRef={feature2Ref}
-                toRef={centerRef}
-                curvature={0}
-                duration={2.5}
-                delay={1}
-              />
-              <AnimatedBeam
-                containerRef={containerRef}
-                fromRef={feature3Ref}
-                toRef={centerRef}
-                curvature={0}
-                duration={2.5}
-                delay={1.5}
-                reverse
-              />
-              <AnimatedBeam
-                containerRef={containerRef}
-                fromRef={feature4Ref}
-                toRef={centerRef}
-                curvature={50}
-                duration={3}
-                delay={0.3}
-              />
-              <AnimatedBeam
-                containerRef={containerRef}
-                fromRef={feature5Ref}
-                toRef={centerRef}
-                curvature={-50}
-                duration={3}
-                delay={0.8}
-                reverse
-              />
+               {/* AnimatedBeam connections - edge to edge */}
+               <AnimatedBeam
+                 containerRef={containerRef}
+                 fromRef={feature1Ref}
+                 toRef={centerRef}
+                 curvature={-50}
+                 duration={3}
+                 delay={0.5}
+                 startYOffset={25}
+                 endYOffset={-140}
+               />
+               <AnimatedBeam
+                 containerRef={containerRef}
+                 fromRef={feature2Ref}
+                 toRef={centerRef}
+                 curvature={0}
+                 duration={2.5}
+                 delay={1}
+                 startXOffset={190}
+                 endXOffset={-140}
+               />
+               <AnimatedBeam
+                 containerRef={containerRef}
+                 fromRef={feature3Ref}
+                 toRef={centerRef}
+                 curvature={0}
+                 duration={2.5}
+                 delay={1.5}
+                 reverse
+                 startXOffset={-190}
+                 endXOffset={140}
+               />
+               <AnimatedBeam
+                 containerRef={containerRef}
+                 fromRef={feature4Ref}
+                 toRef={centerRef}
+                 curvature={50}
+                 duration={3}
+                 delay={0.3}
+                 startYOffset={-25}
+                 endYOffset={140}
+               />
+               <AnimatedBeam
+                 containerRef={containerRef}
+                 fromRef={feature5Ref}
+                 toRef={centerRef}
+                 curvature={-50}
+                 duration={3}
+                 delay={0.8}
+                 reverse
+                 startYOffset={-25}
+                 endYOffset={140}
+               />
             </div>
           </div>
         </div>
