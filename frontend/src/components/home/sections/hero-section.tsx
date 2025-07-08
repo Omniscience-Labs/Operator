@@ -91,6 +91,37 @@ export function HeroSection() {
         border-color: transparent !important;
         outline: none !important;
       }
+      
+      /* Specifically override global border color CSS variables in hero section */
+      #hero {
+        --border: transparent !important;
+        --input: transparent !important;
+        --ring: transparent !important;
+        --border-border: transparent !important;
+      }
+      
+      /* Force transparent borders on all potential border elements */
+      #hero .border,
+      #hero .border-t,
+      #hero .border-r,
+      #hero .border-b,
+      #hero .border-l,
+      #hero .border-x,
+      #hero .border-y,
+      #hero .border-input,
+      #hero [class*="border-"],
+      #hero [class*="border "],
+      #hero [class*=" border"] {
+        border-color: transparent !important;
+      }
+      
+      /* Ensure motion divs have no borders */
+      #hero div[style*="transform"] {
+        border: 0 !important;
+        border-color: transparent !important;
+      }
+      
+      /* Hero input container with cyan glow border */
       #hero .hero-input-container {
         border: 1px solid rgba(34, 211, 238, 0.3) !important;
       }
@@ -266,8 +297,10 @@ export function HeroSection() {
             --border: transparent !important;
             --input: transparent !important;
             --ring: transparent !important;
+            --border-border: transparent !important;
           }
           
+          /* Reset all element borders in hero section */
           #hero,
           #hero *,
           #hero *::before,
@@ -275,6 +308,7 @@ export function HeroSection() {
             border: 0 !important;
             border-color: transparent !important;
             outline: none !important;
+            box-shadow: none !important;
           }
           
           /* Prevent any Tailwind border classes from applying */
@@ -284,8 +318,23 @@ export function HeroSection() {
           #hero .border-b,
           #hero .border-l,
           #hero .border-x,
-          #hero .border-y {
+          #hero .border-y,
+          #hero .border-input,
+          #hero [class*="border-"],
+          #hero [class*="border "],
+          #hero [class*=" border"] {
             border-color: transparent !important;
+          }
+          
+          /* Override input specific styles */
+          #hero input,
+          #hero input:focus,
+          #hero input:hover,
+          #hero input:active {
+            border: 0 !important;
+            border-color: transparent !important;
+            outline: none !important;
+            box-shadow: none !important;
           }
           
           #hero .hero-input-container {
@@ -306,6 +355,15 @@ export function HeroSection() {
       {/* Critical CSS to prevent border flash */}
       <style dangerouslySetInnerHTML={{ __html: `
         /* Critical CSS to prevent gray border flash and shape issues on page load */
+        
+        /* Override CSS variables in hero section scope */
+        #hero {
+          --border: transparent !important;
+          --input: transparent !important;
+          --ring: transparent !important;
+          --border-border: transparent !important;
+        }
+        
         /* Target all hero elements by data attribute to ensure specificity */
         [data-hero-element] {
           border: 0 !important;
@@ -331,6 +389,39 @@ export function HeroSection() {
         
         /* Target ALL elements to prevent gray borders */
         #hero * {
+          border-color: transparent !important;
+        }
+        
+        /* Specifically target border utility classes */
+        #hero .border,
+        #hero .border-t,
+        #hero .border-r,
+        #hero .border-b,
+        #hero .border-l,
+        #hero .border-x,
+        #hero .border-y,
+        #hero .border-input,
+        #hero [class*="border-"],
+        #hero [class*="border "],
+        #hero [class*=" border"] {
+          border-color: transparent !important;
+        }
+        
+        /* Override Input component border styles */
+        #hero input,
+        #hero input[type="text"],
+        #hero input[type="email"],
+        #hero input[type="password"] {
+          border: 0 !important;
+          border-color: transparent !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+        
+        /* Ensure motion divs have no borders */
+        #hero div[style*="transform"],
+        #hero [data-framer-component-type] {
+          border: 0 !important;
           border-color: transparent !important;
         }
         
@@ -464,6 +555,23 @@ export function HeroSection() {
           background: transparent !important;
           width: 100% !important;
           flex: 1 !important;
+        }
+        #hero .hero-input {
+          border: 0 !important;
+          border-color: transparent !important;
+          outline: none !important;
+          box-shadow: none !important;
+          -webkit-appearance: none !important;
+          -moz-appearance: none !important;
+          appearance: none !important;
+        }
+        #hero .hero-input:focus,
+        #hero .hero-input:hover,
+        #hero .hero-input:active {
+          border: 0 !important;
+          border-color: transparent !important;
+          outline: none !important;
+          box-shadow: none !important;
         }
         #hero .hero-input-container button {
           border-radius: 9999px !important;
@@ -600,10 +708,12 @@ export function HeroSection() {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg text-foreground placeholder:text-muted-foreground placeholder:opacity-70 focus:placeholder:opacity-40 py-2 font-medium transition-all duration-200 border-0 outline-none focus:outline-none focus:ring-0 appearance-none [-webkit-appearance:none] [-moz-appearance:none]"
+                    className="hero-input flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg text-foreground placeholder:text-muted-foreground placeholder:opacity-70 focus:placeholder:opacity-40 py-2 font-medium transition-all duration-200 appearance-none"
                     style={{
-                      border: '0',
-                      outline: 'none',
+                      border: '0 !important',
+                      borderColor: 'transparent !important',
+                      outline: 'none !important',
+                      boxShadow: 'none !important',
                       background: 'transparent',
                       WebkitAppearance: 'none',
                       MozAppearance: 'none'
