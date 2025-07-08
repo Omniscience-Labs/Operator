@@ -75,6 +75,13 @@ export function HeroSection() {
 
   useEffect(() => {
     setMounted(true);
+    // Add 'loaded' class after a short delay to re-enable transitions
+    const heroSection = document.getElementById('hero');
+    if (heroSection) {
+      setTimeout(() => {
+        heroSection.classList.add('loaded');
+      }, 100);
+    }
   }, []);
 
   // Detect when scrolling is active to reduce animation complexity
@@ -215,6 +222,79 @@ export function HeroSection() {
       {/* Critical CSS to prevent border flash */}
       <style dangerouslySetInnerHTML={{ __html: `
         /* Critical CSS to prevent gray border flash and shape issues on page load */
+        /* Target ALL elements to prevent gray borders */
+        #hero * {
+          border-color: transparent !important;
+        }
+        
+        /* Motion wrapper specific styles */
+        #hero .flex.items-center.w-full {
+          border: none !important;
+        }
+        
+        /* Hero input wrapper motion div */
+        #hero .hero-input-wrapper {
+          border: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+        
+        /* Form and all its children */
+        #hero-form,
+        #hero-form * {
+          border-color: transparent !important;
+        }
+        
+        /* The relative wrapper div */
+        #hero-form > div.relative {
+          border: none !important;
+          background: transparent !important;
+        }
+        
+        /* Glow effect div */
+        #hero .hero-glow-effect {
+          border: none !important;
+          opacity: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+        
+        /* Loaded state for glow effect */
+        #hero.loaded .hero-glow-effect {
+          background: linear-gradient(to right, rgba(34, 211, 238, 0.2), rgba(34, 211, 238, 0.1), rgba(34, 211, 238, 0.2)) !important;
+          opacity: 0 !important;
+          transition: opacity 500ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        #hero.loaded .group:hover .hero-glow-effect,
+        #hero.loaded .group:focus-within .hero-glow-effect {
+          opacity: 1 !important;
+        }
+        
+        /* Prevent border animations during load */
+        #hero *,
+        #hero *::before,
+        #hero *::after {
+          transition: none !important;
+          animation: none !important;
+        }
+        
+        /* Re-enable transitions after load */
+        #hero.loaded .hero-input-container,
+        #hero.loaded .hero-glow-effect,
+        #hero.loaded button,
+        #hero.loaded input {
+          transition-property: border-color, background-color, opacity, transform, box-shadow !important;
+          transition-duration: 300ms !important;
+          transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        /* Ensure no borders on motion divs */
+        #hero [data-framer-component-type] {
+          border: none !important;
+        }
+        
+        /* Main input container */
         #hero .hero-input-container {
           border: 1px solid rgba(34, 211, 238, 0.3) !important;
           border-width: 1px !important;
@@ -355,7 +435,7 @@ export function HeroSection() {
 
           {/* Enhanced input with modern styling */}
           <motion.div 
-            className="flex items-center w-full max-w-2xl relative z-40"
+            className="hero-input-wrapper flex items-center w-full max-w-2xl relative z-40"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
@@ -368,7 +448,7 @@ export function HeroSection() {
             >
               <div className="relative">
                 {/* Enhanced glow effect */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 via-cyan-400/10 to-cyan-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none"></div>
+                <div className="hero-glow-effect absolute -inset-1 bg-gradient-to-r from-cyan-500/20 via-cyan-400/10 to-cyan-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 
                 {/* Input container with beautiful theme-aware design */}
                 <div 
