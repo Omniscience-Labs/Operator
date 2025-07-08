@@ -1802,12 +1802,12 @@ async def get_agents(
         # Format the response
         agent_list = []
         for agent in agents_data:
-                            agent_list.append(AgentResponse(
-                agent_id=agent['agent_id'],
-                account_id=agent['account_id'],
-                name=agent['name'],
+            agent_list.append(AgentResponse(
+                agent_id=agent.get('agent_id', ''),  # Use .get() with default
+                account_id=agent.get('account_id', filter_account_id),  # Use filter_account_id as fallback
+                name=agent.get('name', ''),  # Use .get() with default
                 description=agent.get('description'),
-                system_prompt=agent['system_prompt'],
+                system_prompt=agent.get('system_prompt', ''),  # Use .get() with default
                 configured_mcps=agent.get('configured_mcps', []),
                 custom_mcps=agent.get('custom_mcps', []),
                 agentpress_tools=agent.get('agentpress_tools', {}),
@@ -1821,8 +1821,8 @@ async def get_agents(
                 sharing_preferences=agent.get('sharing_preferences', {}),
                 avatar=agent.get('avatar'),
                 avatar_color=agent.get('avatar_color'),
-                created_at=agent['created_at'],
-                updated_at=agent['updated_at'],
+                created_at=agent.get('created_at', ''),  # Use .get() with default
+                updated_at=agent.get('updated_at', ''),  # Use .get() with default
                 is_managed=agent.get('_is_managed', False),
                 is_owned=agent.get('_is_owned', True)
             ))
