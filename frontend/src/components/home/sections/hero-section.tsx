@@ -213,11 +213,10 @@ export function HeroSection() {
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
       <style jsx global>{`
-        /* CRITICAL: Override the global * { @apply border-border outline-ring/50; } rule */
-        #hero .debug-input-test,
-        #hero .debug-input-test *,
-        #hero .debug-input-test *:before,
-        #hero .debug-input-test *:after {
+        /* ULTRA-AGGRESSIVE: Override ALL possible grey sources */
+        #hero *,
+        #hero *:before, 
+        #hero *:after {
           border: none !important;
           outline: none !important;
           box-shadow: none !important;
@@ -226,27 +225,40 @@ export function HeroSection() {
           background-image: none !important;
         }
         
+        /* Target the motion div and all parent containers */
+        #hero .debug-input-test,
+        #hero .debug-input-test *,
+        #hero div[class*="motion"],
+        #hero [class*="motion"] * {
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+        
         /* Allow our container to keep its cyan border */
         #hero .debug-input-test .input-container {
           border: 1px solid rgba(34, 211, 238, 0.4) !important;
           background: transparent !important;
         }
         
-        /* Debug: Show what elements exist with bright backgrounds */
-        #hero .debug-input-test > * {
-          background: rgba(255, 0, 0, 0.1) !important;
+        /* Debug: MORE OPAQUE backgrounds to see what's happening */
+        #hero .debug-input-test {
+          background: rgba(255, 0, 255, 0.3) !important; /* Magenta for main container */
         }
         
         #hero .debug-input-test .input-container {
-          background: rgba(0, 255, 0, 0.1) !important;
+          background: rgba(0, 255, 0, 0.3) !important; /* Green for input container */
         }
         
         #hero .debug-input-test input {
-          background: rgba(0, 0, 255, 0.1) !important;
+          background: rgba(0, 0, 255, 0.3) !important; /* Blue for input */
         }
         
         #hero .debug-input-test button {
-          background: rgba(255, 255, 0, 0.1) !important;
+          background: rgba(255, 255, 0, 0.3) !important; /* Yellow for button */
         }
       `}</style>
       {/* Lamp Container as Background */}

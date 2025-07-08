@@ -304,7 +304,7 @@ export const siteConfig = {
           <img
             src="/company-logos/mssc.png"
             alt="MSSC"
-            className="h-14 w-auto object-contain"
+            className="h-16 w-auto object-contain"
           />
         ),
       },
@@ -326,7 +326,7 @@ export const siteConfig = {
           <img
             src="/company-logos/psi.png"
             alt="PSI"
-            className="h-14 w-auto object-contain"
+            className="h-18 w-auto object-contain"
           />
         ),
       },
