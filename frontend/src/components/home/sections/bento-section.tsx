@@ -21,51 +21,63 @@ export function BentoSection() {
     useTransform(scrollYProgress, [0.08, 0.18], [0, 1]),
   ];
 
-  // Transform secure AI features to match Agent interface
+  // Transform secure AI features to match InfoCard interface
   const secureAIAgents = [
     {
       agent_id: 'private-ai-training',
       name: 'Private AI Training',
-      description: 'Build your competitive advantage with AI models trained exclusively on your proprietary data. Our advanced training infrastructure ensures your intellectual property remains secure while creating powerful, domain-specific AI capabilities. Unlike public models that learn from everyone\'s data, your private AI training environment guarantees that your valuable insights, customer data, and business processes stay within your organization. This approach not only protects your competitive edge but also enables you to develop highly specialized AI capabilities that are uniquely tailored to your industry, workflows, and business objectives. Your data becomes your moat, not your liability.',
+      description: 'Train AI models exclusively on your proprietary data. Create specialized capabilities tailored to your industry while ensuring your competitive insights never leave your organization.',
       avatar: '🔒',
       avatar_color: '#3B82F6',
-      tags: ['Zero data leakage', 'Proprietary training', 'Competitive advantage'],
-      is_managed: false,
-      is_public: false,
-      agentpress_tools: {}
+      tags: ['Zero Data Leakage', 'Proprietary Training', 'Competitive Edge'],
+      keyPoints: [
+        'Models trained exclusively on your data',
+        'Intellectual property remains secure',
+        'Domain-specific AI capabilities',
+        'Your data becomes your competitive moat'
+      ]
     },
     {
       agent_id: 'zero-trust-security',
       name: 'Zero-Trust Security',
-      description: 'Implement military-grade security with our comprehensive zero-trust architecture that treats every interaction as potentially compromised. Our enterprise-grade encryption protocols use AES-256 standards combined with advanced key management systems to ensure your sensitive data and AI models remain completely isolated from external threats, competitors, and unauthorized access. Every data transfer, API call, and model inference is encrypted end-to-end, while our continuous monitoring systems provide real-time threat detection and automated response capabilities. This multi-layered security approach includes network segmentation, identity verification, and behavioral analysis to create an impenetrable fortress around your AI infrastructure.',
+      description: 'Military-grade security with zero-trust architecture. Every interaction is encrypted with AES-256 standards and continuous threat monitoring.',
       avatar: '🛡️',
       avatar_color: '#10B981',
-      tags: ['End-to-end encryption', 'Zero-trust architecture', 'Audit monitoring'],
-      is_managed: false,
-      is_public: false,
-      agentpress_tools: {}
+      tags: ['AES-256 Encryption', 'Zero-Trust Architecture', 'Real-time Monitoring'],
+      keyPoints: [
+        'End-to-end encryption for all data transfers',
+        'Network segmentation & identity verification',
+        'Real-time threat detection & response',
+        'Behavioral analysis & automated security'
+      ]
     },
     {
       agent_id: 'competitive-moat',
       name: 'Competitive Moat',
-      description: 'Safeguard your market position by ensuring your proprietary insights, customer intelligence, and strategic business data never benefit competitors or contribute to public AI models. Our competitive moat protection creates an isolated AI ecosystem where your valuable information assets remain exclusively yours. This includes advanced data lineage tracking, strict access controls, and ironclad data sovereignty guarantees. Your customer behavior patterns, market insights, operational efficiencies, and strategic intelligence stay within your organization, preventing competitors from gaining any advantage from your AI initiatives. This approach transforms your data from a potential liability into a protected strategic asset that continuously strengthens your market position.',
+      description: 'Protect your market position with isolated AI ecosystems. Your insights, customer intelligence, and strategic data stay exclusively yours.',
       avatar: '⚔️',
       avatar_color: '#8B5CF6',
-      tags: ['Data isolation', 'Competitor protection', 'IP safeguarding'],
-      is_managed: false,
-      is_public: false,
-      agentpress_tools: {}
+      tags: ['Data Isolation', 'Competitor Protection', 'IP Safeguarding'],
+      keyPoints: [
+        'Proprietary insights never benefit competitors',
+        'Advanced data lineage tracking',
+        'Ironclad data sovereignty guarantees',
+        'Strategic intelligence remains internal'
+      ]
     },
     {
       agent_id: 'enterprise-sovereignty',
       name: 'Enterprise Sovereignty',
-      description: 'Achieve complete control over your AI infrastructure with full data sovereignty and private cloud deployment options. Our enterprise sovereignty solution ensures that your AI systems learn and improve exclusively from your operations while maintaining absolute ownership and control over every aspect of your AI ecosystem. This includes dedicated private cloud infrastructure, custom governance frameworks, and complete administrative control over data policies, access permissions, and operational procedures. Your AI deployment remains entirely under your jurisdiction, with no external dependencies or shared resources that could compromise your autonomy. This approach guarantees that your AI capabilities evolve according to your specific requirements and remain permanently aligned with your organizational goals and compliance requirements.',
+      description: 'Complete control over your AI infrastructure with full data sovereignty and private cloud deployment. No external dependencies.',
       avatar: '👑',
       avatar_color: '#F59E0B',
-      tags: ['Private cloud deployment', 'Full data ownership', 'Custom governance'],
-      is_managed: false,
-      is_public: false,
-      agentpress_tools: {}
+      tags: ['Private Cloud', 'Full Data Ownership', 'Custom Governance'],
+      keyPoints: [
+        'Dedicated private cloud infrastructure',
+        'Complete administrative control',
+        'Custom governance frameworks',
+        'Zero external dependencies'
+      ]
     }
   ];
 
@@ -154,6 +166,7 @@ export function BentoSection() {
               avatar={agent.avatar}
               avatar_color={agent.avatar_color}
               tags={agent.tags}
+              keyPoints={agent.keyPoints}
               className="h-[420px]"
               enableTilt={true}
             />
@@ -161,15 +174,13 @@ export function BentoSection() {
         </div>
 
         {/* Enterprise Connections Section */}
-        <div className="mt-24 lg:mt-32 relative overflow-hidden">
-          {/* Google Gemini Effect centered in this section */}
-          <div className="absolute inset-0 z-0 w-full h-full flex items-center justify-center">
-            <div className="w-full max-w-[1200px] h-full">
-              <GoogleGeminiEffect 
-                pathLengths={pathLengths}
-                className="opacity-40"
-              />
-            </div>
+        <div className="mt-24 lg:mt-32 relative">
+          {/* Google Gemini Effect spanning full page width */}
+          <div className="absolute inset-x-0 top-0 bottom-0 z-0 w-screen h-full -mx-6 lg:-mx-8">
+            <GoogleGeminiEffect 
+              pathLengths={pathLengths}
+              className="opacity-50"
+            />
           </div>
 
           <div className="text-center mb-16 relative z-10">
@@ -184,8 +195,8 @@ export function BentoSection() {
           {/* Integration Features Layout with Central Icon Cloud */}
           <div className="relative max-w-7xl mx-auto mb-48 z-10">
             {/* Central Icon Cloud */}
-            <div className="relative flex items-center justify-center mx-auto w-[700px] h-[600px] lg:w-[800px] lg:h-[700px] -mt-4">
-              <div className="relative z-10 w-full h-full flex items-center justify-center scale-125 lg:scale-150">
+            <div className="relative flex items-center justify-center mx-auto w-[800px] h-[700px] lg:w-[900px] lg:h-[800px] -mt-12">
+              <div className="relative z-10 w-full h-full flex items-center justify-center scale-140 lg:scale-160">
                 <IconCloud images={enterpriseIntegrationImages} />
               </div>
           </div>

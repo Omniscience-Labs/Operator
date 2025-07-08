@@ -20,13 +20,13 @@ export const GoogleGeminiEffect = ({
       <svg
         width="100%"
         height="100%"
-        viewBox="0 0 1200 600"
+        viewBox="0 0 1400 600"
         xmlns="http://www.w3.org/2000/svg"
         className="absolute inset-0 w-full h-full"
-        preserveAspectRatio="xMidYMid meet"
+        preserveAspectRatio="none"
       >
         <motion.path
-          d="M0 398C120 398 180 400 240 388C300 378 360 373 420 340C480 318 540 317 600 314C660 312 720 302 780 302C840 302 900 308 960 313C1020 315 1080 316 1140 314C1200 309"
+          d="M0 150C200 160 400 180 600 250C700 280 800 320 1000 360C1200 380 1400 420"
           stroke="#FFB7C5"
           strokeWidth="2"
           fill="none"
@@ -39,7 +39,7 @@ export const GoogleGeminiEffect = ({
           transition={transition}
         />
         <motion.path
-          d="M0 352C120 352 180 352 240 344C300 338 360 326 420 321C480 314 540 316 600 309C660 307 720 306 780 307C840 310 900 314 960 314C1020 314 1080 298 1140 298C1200 298"
+          d="M0 200C200 210 400 230 600 280C700 300 800 320 1000 340C1200 350 1400 380"
           stroke="#FFDDB7"
           strokeWidth="2"
           fill="none"
@@ -52,7 +52,7 @@ export const GoogleGeminiEffect = ({
           transition={transition}
         />
         <motion.path
-          d="M0 308C120 308 180 308 240 308C300 309 360 309 420 309C480 308 540 304 600 307C660 307 720 307 780 308C840 310 900 313 960 312C1020 309 1080 299 1140 299C1200 299"
+          d="M0 300C200 300 400 300 600 300C700 300 800 300 1000 300C1200 300 1400 300"
           stroke="#B1C5FF"
           strokeWidth="2"
           fill="none"
@@ -65,7 +65,7 @@ export const GoogleGeminiEffect = ({
           transition={transition}
         />
         <motion.path
-          d="M0 263C120 263 180 263 240 274C300 278 360 290 420 296C480 301 540 302 600 304C660 307 720 310 780 311C840 313 900 301 960 301C1020 301 1080 318 1140 317C1200 317"
+          d="M0 400C200 390 400 370 600 320C700 300 800 280 1000 260C1200 250 1400 220"
           stroke="#4FABFF"
           strokeWidth="2"
           fill="none"
@@ -78,7 +78,7 @@ export const GoogleGeminiEffect = ({
           transition={transition}
         />
         <motion.path
-          d="M0 218C120 217 180 217 240 227C300 235 360 274 420 280C480 287 540 294 600 301C660 302 720 302 780 303C840 307 900 312 960 313C1020 313 1080 299 1140 299C1200 299"
+          d="M0 450C200 440 400 420 600 350C700 320 800 280 1000 240C1200 220 1400 180"
           stroke="#076EFF"
           strokeWidth="2"
           fill="none"

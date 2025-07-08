@@ -127,7 +127,7 @@ export function Navbar() {
                   color="currentColor"
                   className="flex-shrink-0"
                 />
-                <span className="font-semibold text-lg">OPERATOR</span>
+                <span className="font-semibold text-lg">Omni</span>
               </div>
             </Link>
 
@@ -208,7 +208,7 @@ export function Navbar() {
                         className="flex-shrink-0"
                       />
                       <span className="font-medium text-primary text-sm">
-                        OPERATOR
+                        Omni
                       </span>
                     </div>
                   </Link>

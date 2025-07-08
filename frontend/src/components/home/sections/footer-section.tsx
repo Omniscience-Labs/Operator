@@ -118,26 +118,71 @@ export function FooterSection() {
           </div>
         </div>
       </div>
-      <Link
-        href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block w-full h-48 md:h-64 relative mt-24 z-0 cursor-pointer"
-      >
+      <div className="mt-24 py-16 px-6 relative">
         <div className="absolute inset-0 bg-gradient-to-t from-transparent to-background z-10 from-40%" />
-        <div className="absolute inset-0 mx-6">
-          <FlickeringGrid
-            text={tablet ? 'Agents Agents Agents' : 'Agents Agents Agents'}
-            fontSize={tablet ? 70 : 90}
-            className="h-full w-full"
-            squareSize={2}
-            gridGap={tablet ? 2 : 3}
-            color="#6B7280"
-            maxOpacity={0.3}
-            flickerChance={0.1}
-          />
+        <div className="relative z-20 max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2">
+              BECOME OMNI
+            </h2>
+            <div className="inline-flex items-center gap-2 text-white/80">
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                <div className="w-4 h-4 bg-white rounded-full"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-3xl font-bold text-white">Omni</h3>
+                <p className="text-white/60 text-lg">/ˈäm.nī/</p>
+                <p className="text-white/40 text-sm italic">prefix</p>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                All; of all things. Empower industries with comprehensive AI solutions for manufacturing, 
+                logistics, and supply chain, enhancing operations across the entire industrial ecosystem.
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-3xl font-bold text-white">Omnipotent</h3>
+                <p className="text-white/60 text-lg">/ˌäm'nīpəd(ə)nt/</p>
+                <p className="text-white/40 text-sm italic">adjective</p>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                Having unlimited power and authority. Provide unparalleled control over industrial processes, 
+                from manufacturing to logistics, boosting efficiency and productivity for businesses of all sizes.
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-3xl font-bold text-white">Omnipresent</h3>
+                <p className="text-white/60 text-lg">/ˌämnī'prez(ə)nt/</p>
+                <p className="text-white/40 text-sm italic">adjective</p>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                Present everywhere simultaneously. Enable monitoring and management of operations across 
+                multiple facilities, supply chains, and customer touchpoints, enhancing visibility and responsiveness.
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-3xl font-bold text-white">Omniscient</h3>
+                <p className="text-white/60 text-lg">/ˌäm'nīSHənt/</p>
+                <p className="text-white/40 text-sm italic">adjective</p>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                Having complete knowledge and understanding. Equip businesses with deep insights and predictive 
+                analytics across entire industrial operations, improving decision-making and strategic planning.
+              </p>
+            </div>
+          </div>
         </div>
-      </Link>
+      </div>
     </footer>
   );
 }

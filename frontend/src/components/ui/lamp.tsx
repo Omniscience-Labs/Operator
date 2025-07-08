@@ -89,28 +89,52 @@ export const LampContainer = ({
           className="absolute inset-auto z-50 h-0.5 w-[30rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 bg-cyan-400 pointer-events-none select-none outline-none"
         ></motion.div>
 
-        {/* Subtle background glow that melts into the background */}
+        {/* Core glow - brightest and most focused */}
+        <motion.div
+          initial={{ width: "15rem", opacity: 0 }}
+          whileInView={{ width: "25rem", opacity: 0.4 }}
+          transition={{
+            delay: 0.3,
+            duration: 1.2,
+            ease: "easeInOut",
+          }}
+          className="absolute inset-auto z-30 h-32 w-[25rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400/30 blur-xl pointer-events-none"
+        ></motion.div>
+
+        {/* Mid glow - medium spread */}
         <motion.div
           initial={{ width: "20rem", opacity: 0 }}
-          whileInView={{ width: "40rem", opacity: 0.15 }}
+          whileInView={{ width: "40rem", opacity: 0.25 }}
           transition={{
             delay: 0.3,
             duration: 1.5,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-20 h-64 w-[40rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl pointer-events-none"
+          className="absolute inset-auto z-20 h-48 w-[40rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400/20 blur-2xl pointer-events-none"
         ></motion.div>
 
-        {/* Even more diffuse outer glow */}
+        {/* Outer glow - most diffuse */}
         <motion.div
           initial={{ width: "30rem", opacity: 0 }}
-          whileInView={{ width: "60rem", opacity: 0.08 }}
+          whileInView={{ width: "60rem", opacity: 0.15 }}
           transition={{
             delay: 0.4,
             duration: 2.0,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-10 h-80 w-[60rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400/5 blur-3xl pointer-events-none"
+          className="absolute inset-auto z-10 h-64 w-[60rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl pointer-events-none"
+        ></motion.div>
+
+        {/* Atmospheric glow - very large and subtle */}
+        <motion.div
+          initial={{ width: "40rem", opacity: 0 }}
+          whileInView={{ width: "80rem", opacity: 0.08 }}
+          transition={{
+            delay: 0.5,
+            duration: 2.5,
+            ease: "easeInOut",
+          }}
+          className="absolute inset-auto z-5 h-96 w-[80rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full bg-cyan-400/5 blur-3xl pointer-events-none"
         ></motion.div>
         
 

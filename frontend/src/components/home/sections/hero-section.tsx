@@ -2,6 +2,7 @@
 import { HeroVideoSection } from '@/components/home/sections/hero-video-section';
 import { siteConfig } from '@/lib/home';
 import { ArrowRight, Github, X, AlertCircle, Sparkles } from 'lucide-react';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { LampContainer } from '@/components/ui/lamp';
 import { FlipWords } from '@/components/ui/flip-words';
@@ -219,7 +220,7 @@ export function HeroSection() {
       <div className="relative flex flex-col items-center w-full px-6 z-20">
         {/* Center content */}
         <motion.div 
-          className="relative z-30 max-w-4xl mx-auto h-full w-full flex flex-col gap-12 lg:gap-16 items-center justify-center py-32"
+          className="relative z-30 max-w-4xl mx-auto h-full w-full flex flex-col gap-8 lg:gap-12 items-center justify-center py-20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -237,9 +238,12 @@ export function HeroSection() {
             >
               <div className="flex items-center gap-2">
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <span className="font-medium text-foreground text-xs tracking-wider uppercase group-hover:text-foreground/90 transition-colors duration-300">
-                  {hero.badge}
-                </span>
+                <GradientText 
+                  text={hero.badge}
+                  gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                  transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                  className="font-medium text-xs tracking-wider uppercase group-hover:opacity-90 transition-opacity duration-300"
+                />
               </div>
               <div className="inline-flex items-center justify-center size-4 rounded-full bg-primary/20 group-hover:bg-primary/30 transition-colors duration-300">
                 <ArrowRight className="h-2.5 w-2.5 text-primary group-hover:translate-x-0.5 transition-transform duration-300" />
@@ -258,7 +262,13 @@ export function HeroSection() {
               {hero.title}
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl text-center text-muted-foreground font-normal text-balance leading-relaxed max-w-2xl tracking-tight drop-shadow-md">
-              {hero.description}
+              Operator by OMNI – is a generalist{' '}
+              <GradientText 
+                text="AI Agent" 
+                gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+              />{' '}
+              that works on your behalf.
             </p>
           </motion.div>
 
@@ -275,26 +285,28 @@ export function HeroSection() {
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 
                 {/* Input container with better contrast */}
-                <div className="relative flex items-center rounded-full border border-border/50 bg-background/30 backdrop-blur-md px-6 shadow-2xl transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70 focus-within:shadow-2xl focus-within:shadow-primary/20 focus-within:bg-background/40 outline-none focus:outline-none ring-0 focus:ring-0">
+                <div className="relative flex items-center rounded-full border border-border/50 bg-background/30 backdrop-blur-md px-6 shadow-2xl transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70 focus-within:shadow-2xl focus-within:shadow-primary/20 focus-within:bg-background/40 outline-none focus:outline-none ring-0 focus:ring-0 [&:focus]:outline-none [&:focus-within]:outline-none [&:focus]:ring-0 [&:focus-within]:ring-0" style={{ outline: 'none !important', boxShadow: 'none' }}>
                   <input
                     type="text"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent focus:outline-none outline-none ring-0 focus:ring-0 border-0 focus:border-0 text-base lg:text-lg placeholder:text-muted-foreground/70 text-foreground py-2 font-medium"
+                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent focus:outline-none outline-none ring-0 focus:ring-0 border-0 focus:border-0 text-base lg:text-lg placeholder:text-muted-foreground/70 text-foreground py-2 font-medium [&:focus]:outline-none [&:focus]:ring-0 [&:focus]:border-0"
+                    style={{ outline: 'none !important', boxShadow: 'none !important', border: 'none !important' }}
                     disabled={isSubmitting}
                   />
                   <motion.button
                     type="submit"
-                    className={`rounded-full p-3 lg:p-4 transition-all duration-300 outline-none focus:outline-none ${
+                    className={`rounded-full p-3 lg:p-4 transition-all duration-300 outline-none focus:outline-none ring-0 focus:ring-0 [&:focus]:outline-none [&:focus]:ring-0 ${
                       inputValue.trim()
                         ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-primary/40 scale-100'
                         : 'bg-muted/50 text-muted-foreground scale-95'
                     }`}
+                    style={{ outline: 'none !important', boxShadow: inputValue.trim() ? undefined : 'none !important' }}
                     disabled={!inputValue.trim() || isSubmitting}
                     aria-label="Submit"
-                    whileHover={inputValue.trim() ? { scale: 1.05 } : {}}
+                                        whileHover={inputValue.trim() ? { scale: 1.05 } : {}}
                     whileTap={inputValue.trim() ? { scale: 0.95 } : {}}
                   >
                     {isSubmitting ? (
@@ -356,7 +368,7 @@ export function HeroSection() {
 
       {/* Video section with better spacing */}
       <motion.div 
-        className="w-full max-w-6xl mx-auto px-6 pb-20 relative z-30"
+        className="w-full max-w-6xl mx-auto px-6 pb-10 relative z-30"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1, duration: 1 }}

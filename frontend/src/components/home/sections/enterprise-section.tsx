@@ -27,8 +27,8 @@ export function EnterpriseSection() {
       description: "Build and deploy custom tools that integrate seamlessly with your existing tech stack.",
     },
     {
-      title: "Training & Support",
-      description: "Dedicated training programs and priority support to maximize your team's productivity.",
+      title: "Enterprise Training Programs",
+      description: "Comprehensive training programs and workshops to maximize your team's productivity and AI adoption across your organization.",
     },
     {
       title: "Single Tenant Deployment",
@@ -47,8 +47,8 @@ export function EnterpriseSection() {
       description: "Ensure data sovereignty with region-specific deployments and compliance with GDPR, HIPAA, SOC 2, and other regulatory standards.",
     },
     {
-      title: "Priority API Access",
-      description: "Dedicated API endpoints with guaranteed uptime, priority processing, and higher rate limits for enterprise workloads.",
+      title: "Virtual Private Cloud, Hybrid Cloud, and On-Premise",
+      description: "Deploy Omni in your own cloud, on-premise, or a hybrid of the two. We support all major cloud providers and on-premise hardware.",
     },
     {
       title: "24/7 Enterprise Support",
