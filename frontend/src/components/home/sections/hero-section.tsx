@@ -75,6 +75,36 @@ export function HeroSection() {
 
   useEffect(() => {
     setMounted(true);
+    
+    // Inject critical CSS immediately to prevent gray border flash
+    const style = document.createElement('style');
+    style.textContent = `
+      /* Emergency CSS to prevent gray borders */
+      #hero,
+      #hero *,
+      #hero *::before,
+      #hero *::after,
+      [data-hero-element],
+      [data-hero-element]::before,
+      [data-hero-element]::after {
+        border: 0 !important;
+        border-color: transparent !important;
+        outline: none !important;
+      }
+      #hero .hero-input-container {
+        border: 1px solid rgba(34, 211, 238, 0.3) !important;
+      }
+    `;
+    style.id = 'hero-critical-css';
+    
+    // Insert at the very beginning of head
+    const firstChild = document.head.firstChild;
+    if (firstChild) {
+      document.head.insertBefore(style, firstChild);
+    } else {
+      document.head.appendChild(style);
+    }
+    
     // Add 'loaded' class after a short delay to re-enable transitions
     const heroSection = document.getElementById('hero');
     if (heroSection) {
@@ -82,6 +112,14 @@ export function HeroSection() {
         heroSection.classList.add('loaded');
       }, 100);
     }
+    
+    // Cleanup on unmount
+    return () => {
+      const styleEl = document.getElementById('hero-critical-css');
+      if (styleEl) {
+        styleEl.remove();
+      }
+    };
   }, []);
 
   // Detect when scrolling is active to reduce animation complexity
@@ -219,9 +257,78 @@ export function HeroSection() {
 
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
+      {/* Immediate inline styles to prevent FOUC */}
+      <link 
+        rel="stylesheet" 
+        href={`data:text/css,${encodeURIComponent(`
+          /* Override CSS variables for hero section */
+          #hero {
+            --border: transparent !important;
+            --input: transparent !important;
+            --ring: transparent !important;
+          }
+          
+          #hero,
+          #hero *,
+          #hero *::before,
+          #hero *::after {
+            border: 0 !important;
+            border-color: transparent !important;
+            outline: none !important;
+          }
+          
+          /* Prevent any Tailwind border classes from applying */
+          #hero .border,
+          #hero .border-t,
+          #hero .border-r,
+          #hero .border-b,
+          #hero .border-l,
+          #hero .border-x,
+          #hero .border-y {
+            border-color: transparent !important;
+          }
+          
+          #hero .hero-input-container {
+            border: 1px solid rgba(34, 211, 238, 0.3) !important;
+            border-radius: 9999px !important;
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+          }
+          
+          @media (prefers-color-scheme: dark) {
+            #hero .hero-input-container {
+              background-color: rgba(0, 0, 0, 0.1) !important;
+            }
+          }
+        `)}`}
+      />
       {/* Critical CSS to prevent border flash */}
       <style dangerouslySetInnerHTML={{ __html: `
         /* Critical CSS to prevent gray border flash and shape issues on page load */
+        /* Target all hero elements by data attribute to ensure specificity */
+        [data-hero-element] {
+          border: 0 !important;
+          border-color: transparent !important;
+          outline: none !important;
+        }
+        
+        [data-hero-element]::before,
+        [data-hero-element]::after {
+          border: 0 !important;
+          border-color: transparent !important;
+        }
+        
+        /* Reset all borders in hero section first */
+        #hero,
+        #hero *,
+        #hero *::before,
+        #hero *::after {
+          border: 0 !important;
+          border-color: transparent !important;
+          outline: none !important;
+        }
+        
         /* Target ALL elements to prevent gray borders */
         #hero * {
           border-color: transparent !important;
@@ -436,6 +543,12 @@ export function HeroSection() {
           {/* Enhanced input with modern styling */}
           <motion.div 
             className="hero-input-wrapper flex items-center w-full max-w-2xl relative z-40"
+            data-hero-element="wrapper"
+            style={{
+              border: '0',
+              borderColor: 'transparent',
+              outline: 'none'
+            }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
@@ -445,14 +558,41 @@ export function HeroSection() {
               className="w-full relative group" 
               onSubmit={handleSubmit}
               id="hero-form"
+              data-hero-element="form"
+              style={{
+                border: '0',
+                borderColor: 'transparent',
+                outline: 'none'
+              }}
             >
-              <div className="relative">
+              <div className="relative" data-hero-element="container" style={{ border: '0', borderColor: 'transparent' }}>
                 {/* Enhanced glow effect */}
-                <div className="hero-glow-effect absolute -inset-1 bg-gradient-to-r from-cyan-500/20 via-cyan-400/10 to-cyan-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none"></div>
+                <div 
+                  className="hero-glow-effect absolute -inset-1 bg-gradient-to-r from-cyan-500/20 via-cyan-400/10 to-cyan-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none" 
+                  data-hero-element="glow"
+                  style={{ border: '0', borderColor: 'transparent', outline: 'none' }}
+                ></div>
                 
                 {/* Input container with beautiful theme-aware design */}
                 <div 
-                  className="hero-input-container relative flex items-center rounded-full px-6 transition-all duration-300 !border !border-cyan-500/30 !bg-background/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:!border-cyan-500/50 hover:!bg-background/15 focus-within:!border-cyan-500/70 focus-within:!bg-background/20"
+                  className="hero-input-container relative flex items-center rounded-full px-6 transition-all duration-300"
+                  data-hero-element="input-container"
+                  style={{
+                    border: '1px solid rgba(34, 211, 238, 0.3)',
+                    borderRadius: '9999px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                    paddingLeft: '1.5rem',
+                    paddingRight: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    position: 'relative',
+                    width: '100%',
+                    minHeight: '4rem',
+                    overflow: 'hidden'
+                  }}
                 >
                   <input
                     type="text"
@@ -461,6 +601,13 @@ export function HeroSection() {
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
                     className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg text-foreground placeholder:text-muted-foreground placeholder:opacity-70 focus:placeholder:opacity-40 py-2 font-medium transition-all duration-200 border-0 outline-none focus:outline-none focus:ring-0 appearance-none [-webkit-appearance:none] [-moz-appearance:none]"
+                    style={{
+                      border: '0',
+                      outline: 'none',
+                      background: 'transparent',
+                      WebkitAppearance: 'none',
+                      MozAppearance: 'none'
+                    }}
                     disabled={isSubmitting}
                     autoComplete="off"
                     spellCheck="false"
