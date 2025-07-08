@@ -5,7 +5,7 @@ import { NavMenu } from '@/components/home/nav-menu';
 import { ThemeToggle } from '@/components/home/theme-toggle';
 import { siteConfig } from '@/lib/home';
 import { cn } from '@/lib/utils';
-import { Menu, X, Github } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { AnimatePresence, motion, useScroll } from 'motion/react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -134,17 +134,7 @@ export function Navbar() {
             <NavMenu />
 
             <div className="flex flex-row items-center gap-1 md:gap-3 shrink-0">
-              <div className="flex items-center space-x-3">
-                <Link
-                  href="https://github.com/omni-ai/operator"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hidden md:flex items-center justify-center h-8 px-3 text-sm font-normal tracking-wide rounded-full text-primary hover:text-primary/80 transition-colors"
-                  aria-label="GitHub"
-                >
-                  <Github className="size-[18px]" />
-                </Link>
-                {user ? (
+              {user ? (
                   <Link
                     className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
                     href="/dashboard"

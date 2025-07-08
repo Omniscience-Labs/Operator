@@ -5,6 +5,7 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { siteConfig } from '@/lib/home';
 import { ChevronRightIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
+import { motion } from 'motion/react';
 
 import { ThreeSpinner } from '@/components/ui/three-spinner';
 
@@ -118,68 +119,94 @@ export function FooterSection() {
           </div>
         </div>
       </div>
-      <div className="mt-24 py-16 px-6 relative">
+      <div className="mt-24 relative">
         <div className="absolute inset-0 bg-gradient-to-t from-transparent to-background z-10 from-40%" />
-        <div className="relative z-20 max-w-6xl mx-auto">
+        <div className="absolute inset-0 mx-6">
+          <FlickeringGrid
+            text={tablet ? 'BECOME OMNI' : 'BECOME OMNI'}
+            fontSize={tablet ? 50 : 70}
+            className="h-full w-full"
+            squareSize={2}
+            gridGap={tablet ? 2 : 3}
+            color="#6B7280"
+            maxOpacity={0.2}
+            flickerChance={0.08}
+          />
+        </div>
+        <div className="relative z-20 max-w-6xl mx-auto py-16 px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2">
+            <motion.h2 
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
               BECOME OMNI
-            </h2>
-            <div className="inline-flex items-center gap-2 text-white/80">
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                <div className="w-4 h-4 bg-white rounded-full"></div>
+            </motion.h2>
+            <motion.div 
+              className="inline-flex items-center gap-2 text-white/80"
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+                <div className="w-4 h-4 bg-white rounded-full animate-pulse"></div>
               </div>
-            </div>
+            </motion.div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="text-3xl font-bold text-white">Omni</h3>
-                <p className="text-white/60 text-lg">/ˈäm.nī/</p>
-                <p className="text-white/40 text-sm italic">prefix</p>
-              </div>
-              <p className="text-white/80 leading-relaxed">
-                All; of all things. Empower industries with comprehensive AI solutions for manufacturing, 
-                logistics, and supply chain, enhancing operations across the entire industrial ecosystem.
-              </p>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="text-3xl font-bold text-white">Omnipotent</h3>
-                <p className="text-white/60 text-lg">/ˌäm'nīpəd(ə)nt/</p>
-                <p className="text-white/40 text-sm italic">adjective</p>
-              </div>
-              <p className="text-white/80 leading-relaxed">
-                Having unlimited power and authority. Provide unparalleled control over industrial processes, 
-                from manufacturing to logistics, boosting efficiency and productivity for businesses of all sizes.
-              </p>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="text-3xl font-bold text-white">Omnipresent</h3>
-                <p className="text-white/60 text-lg">/ˌämnī'prez(ə)nt/</p>
-                <p className="text-white/40 text-sm italic">adjective</p>
-              </div>
-              <p className="text-white/80 leading-relaxed">
-                Present everywhere simultaneously. Enable monitoring and management of operations across 
-                multiple facilities, supply chains, and customer touchpoints, enhancing visibility and responsiveness.
-              </p>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="text-3xl font-bold text-white">Omniscient</h3>
-                <p className="text-white/60 text-lg">/ˌäm'nīSHənt/</p>
-                <p className="text-white/40 text-sm italic">adjective</p>
-              </div>
-              <p className="text-white/80 leading-relaxed">
-                Having complete knowledge and understanding. Equip businesses with deep insights and predictive 
-                analytics across entire industrial operations, improving decision-making and strategic planning.
-              </p>
-            </div>
+            {[
+              {
+                title: "Omni",
+                pronunciation: "/ˈäm.nī/",
+                type: "prefix",
+                description: "All; of all things. Empower industries with comprehensive AI solutions for manufacturing, logistics, and supply chain, enhancing operations across the entire industrial ecosystem.",
+                delay: 0.3
+              },
+              {
+                title: "Omnipotent", 
+                pronunciation: "/ˌäm'nīpəd(ə)nt/",
+                type: "adjective",
+                description: "Having unlimited power and authority. Provide unparalleled control over industrial processes, from manufacturing to logistics, boosting efficiency and productivity for businesses of all sizes.",
+                delay: 0.4
+              },
+              {
+                title: "Omnipresent",
+                pronunciation: "/ˌämnī'prez(ə)nt/", 
+                type: "adjective",
+                description: "Present everywhere simultaneously. Enable monitoring and management of operations across multiple facilities, supply chains, and customer touchpoints, enhancing visibility and responsiveness.",
+                delay: 0.5
+              },
+              {
+                title: "Omniscient",
+                pronunciation: "/ˌäm'nīSHənt/",
+                type: "adjective", 
+                description: "Having complete knowledge and understanding. Equip businesses with deep insights and predictive analytics across entire industrial operations, improving decision-making and strategic planning.",
+                delay: 0.6
+              }
+            ].map((item, index) => (
+              <motion.div 
+                key={item.title}
+                className="space-y-4 p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: item.delay }}
+                viewport={{ once: true }}
+                whileHover={{ y: -5 }}
+              >
+                <div className="space-y-2">
+                  <h3 className="text-3xl font-bold text-white drop-shadow-md">{item.title}</h3>
+                  <p className="text-white/60 text-lg font-mono">{item.pronunciation}</p>
+                  <p className="text-white/40 text-sm italic">{item.type}</p>
+                </div>
+                <p className="text-white/80 leading-relaxed">
+                  {item.description}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </div>
