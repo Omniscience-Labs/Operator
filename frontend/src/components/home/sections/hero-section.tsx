@@ -1024,6 +1024,7 @@ export function HeroSection() {
         {/* Video section positioned below the main content with better mobile spacing */}
         <motion.div 
           className="w-full max-w-6xl mx-auto mt-8 md:mt-12 lg:mt-16 mb-8 md:mb-16 relative z-30"
+          style={{ display: 'none' }} // Temporarily hide the video section
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1, duration: 1 }}
