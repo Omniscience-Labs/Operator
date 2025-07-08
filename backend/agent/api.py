@@ -10,6 +10,8 @@ import jwt
 from pydantic import BaseModel
 import tempfile
 import os
+from uuid import UUID
+from pydantic import BaseModel, Field, validator
 
 from agentpress.thread_manager import ThreadManager
 from services.supabase import DBConnection
@@ -2167,10 +2169,17 @@ class MarketplaceAgentsResponse(BaseModel):
 class PublishAgentRequest(BaseModel):
     tags: Optional[List[str]] = []
     visibility: Optional[str] = "public"  # "public", "teams", or "private"
-    team_ids: Optional[List[str]] = []  # Team account IDs to share with
+    team_ids: Optional[List[UUID]] = []  # Team account IDs to share with (must be valid UUIDs)
     include_knowledge_bases: Optional[bool] = True  # Whether to include knowledge bases when sharing
     include_custom_mcp_tools: Optional[bool] = True  # Whether to include custom MCP tools when sharing
     managed_agent: Optional[bool] = False  # Whether this is a managed agent (users get live reference instead of copy)
+    
+    @validator('team_ids')
+    def validate_team_ids(cls, v):
+        if v is None:
+            return []
+        # Pydantic will automatically validate UUIDs, but we can add additional validation if needed
+        return v
 
 @router.get("/marketplace/agents", response_model=MarketplaceAgentsResponse)
 async def get_marketplace_agents(
@@ -2306,7 +2315,7 @@ async def publish_agent_to_marketplace(
             'p_agent_id': agent_id,
             'p_visibility': publish_data.visibility,
             'p_user_id': user_id,
-            'p_team_ids': publish_data.team_ids if publish_data.visibility == "teams" else None
+            'p_team_ids': [str(team_id) for team_id in publish_data.team_ids] if publish_data.visibility == "teams" and publish_data.team_ids else None
         }).execute()
         
         # Update tags if provided
