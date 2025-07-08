@@ -25,8 +25,8 @@ const FeaturePill = forwardRef<
     <div
       ref={ref}
       className={cn(
-        "bg-white dark:bg-gray-900 rounded-full px-6 py-4 shadow-lg border border-gray-200 dark:border-gray-700",
-        "flex items-center gap-4 min-w-[280px] max-w-[320px]",
+        "bg-white dark:bg-gray-900 rounded-full px-6 py-5 shadow-lg border border-gray-200 dark:border-gray-700",
+        "flex items-center gap-4 min-w-[360px] max-w-[380px]",
         "hover:shadow-xl transition-all duration-300 hover:scale-105",
         "backdrop-blur-sm bg-white/80 dark:bg-gray-900/80",
         className
@@ -36,10 +36,10 @@ const FeaturePill = forwardRef<
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 truncate">
+        <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
           {title}
         </h4>
-        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
           {description}
         </p>
       </div>
@@ -222,108 +222,120 @@ export function BentoSection() {
             </p>
           </div>
 
-          {/* Mobile Layout - Stacked vertically */}
-          <div className="block lg:hidden">
-            <div className="space-y-6 px-4">
-              <div className="flex justify-center">
-                <FeaturePill
-                  icon={<Shield className="h-5 w-5 text-secondary" />}
-                  title="Zero-Trust Authentication"
-                  description="Secure API connections with enterprise-grade authentication and authorization protocols."
-                />
-              </div>
-              <div className="flex justify-center">
-                <FeaturePill
-                  icon={<Lock className="h-5 w-5 text-secondary" />}
-                  title="End-to-End Encryption"
-                  description="All data transfers are encrypted with AES-256 standards, ensuring complete privacy."
-                />
-              </div>
-              <div className="flex justify-center">
-                <FeaturePill
-                  icon={<Zap className="h-5 w-5 text-secondary" />}
-                  title="Real-Time Sync"
-                  description="Instant synchronization with your enterprise systems for up-to-date insights."
-                />
-              </div>
-              <div className="flex justify-center">
-                <FeaturePill
-                  icon={<Users2 className="h-5 w-5 text-secondary" />}
-                  title="RBAC"
-                  description="Role-based access control with granular permissions and enterprise-grade user management."
-                />
-              </div>
-              <div className="flex justify-center">
-                <FeaturePill
-                  icon={<Settings className="h-5 w-5 text-secondary" />}
-                  title="Custom Integration Development"
-                  description="Tailored integration solutions for your unique enterprise systems and workflows."
-                />
-              </div>
-            </div>
-          </div>
+                     {/* Mobile Layout - Stacked vertically */}
+           <div className="block lg:hidden">
+             <div className="space-y-6 px-4">
+               {/* Central Icon Cloud for mobile */}
+               <div className="flex justify-center mb-8">
+                 <div className="w-[280px] h-[280px] bg-gradient-to-br from-secondary/5 to-primary/5 rounded-full border border-border/30 shadow-lg backdrop-blur-sm flex items-center justify-center">
+                   <div className="w-[240px] h-[240px]">
+                     <IconCloud images={enterpriseIntegrationImages} />
+                   </div>
+                 </div>
+               </div>
 
-          {/* Desktop Layout with AnimatedBeam */}
-          <div className="hidden lg:block">
-            <div 
-              ref={containerRef}
-              className="relative w-full max-w-5xl mx-auto h-[600px] overflow-hidden"
-            >
-              {/* Central Icon Cloud */}
-              <div 
-                ref={centerRef}
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] z-10"
-              >
-                <div className="relative w-full h-full flex items-center justify-center">
-                  <IconCloud images={enterpriseIntegrationImages} />
-                </div>
-              </div>
+               {/* Feature Pills */}
+               <div className="flex justify-center">
+                 <FeaturePill
+                   icon={<Shield className="h-5 w-5 text-secondary" />}
+                   title="Zero-Trust Authentication"
+                   description="Secure API connections with enterprise-grade authentication and authorization protocols."
+                 />
+               </div>
+               <div className="flex justify-center">
+                 <FeaturePill
+                   icon={<Lock className="h-5 w-5 text-secondary" />}
+                   title="End-to-End Encryption"
+                   description="All data transfers are encrypted with AES-256 standards, ensuring complete privacy."
+                 />
+               </div>
+               <div className="flex justify-center">
+                 <FeaturePill
+                   icon={<Zap className="h-5 w-5 text-secondary" />}
+                   title="Real-Time Sync"
+                   description="Instant synchronization with your enterprise systems for up-to-date insights."
+                 />
+               </div>
+               <div className="flex justify-center">
+                 <FeaturePill
+                   icon={<Users2 className="h-5 w-5 text-secondary" />}
+                   title="RBAC"
+                   description="Role-based access control with granular permissions and enterprise-grade user management."
+                 />
+               </div>
+               <div className="flex justify-center">
+                 <FeaturePill
+                   icon={<Settings className="h-5 w-5 text-secondary" />}
+                   title="Custom Integration Development"
+                   description="Tailored integration solutions for your unique enterprise systems and workflows."
+                 />
+               </div>
+             </div>
+           </div>
 
-              {/* Feature Pills positioned around the center */}
-              <div className="absolute top-16 left-1/2 transform -translate-x-1/2">
-                <FeaturePill
-                  ref={feature1Ref}
-                  icon={<Shield className="h-5 w-5 text-secondary" />}
-                  title="Zero-Trust Authentication"
-                  description="Secure API connections with enterprise-grade authentication and authorization protocols."
-                />
-              </div>
+                     {/* Desktop Layout with AnimatedBeam */}
+           <div className="hidden lg:block">
+             <div 
+               ref={containerRef}
+               className="relative w-full max-w-6xl mx-auto h-[700px] overflow-hidden"
+             >
+               {/* Central Icon Cloud in Container */}
+               <div 
+                 ref={centerRef}
+                 className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] z-10"
+               >
+                 <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-br from-secondary/5 to-primary/5 rounded-full border border-border/30 shadow-lg backdrop-blur-sm">
+                   <div className="w-[240px] h-[240px]">
+                     <IconCloud images={enterpriseIntegrationImages} />
+                   </div>
+                 </div>
+               </div>
 
-              <div className="absolute top-1/2 left-8 transform -translate-y-1/2">
-                <FeaturePill
-                  ref={feature2Ref}
-                  icon={<Lock className="h-5 w-5 text-secondary" />}
-                  title="End-to-End Encryption"
-                  description="All data transfers are encrypted with AES-256 standards, ensuring complete privacy."
-                />
-              </div>
+               {/* Feature Pills positioned around the center */}
+               <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
+                 <FeaturePill
+                   ref={feature1Ref}
+                   icon={<Shield className="h-5 w-5 text-secondary" />}
+                   title="Zero-Trust Authentication"
+                   description="Secure API connections with enterprise-grade authentication and authorization protocols."
+                 />
+               </div>
 
-              <div className="absolute top-1/2 right-8 transform -translate-y-1/2">
-                <FeaturePill
-                  ref={feature3Ref}
-                  icon={<Zap className="h-5 w-5 text-secondary" />}
-                  title="Real-Time Sync"
-                  description="Instant synchronization with your enterprise systems for up-to-date insights."
-                />
-              </div>
+               <div className="absolute top-1/2 left-0 transform -translate-y-1/2">
+                 <FeaturePill
+                   ref={feature2Ref}
+                   icon={<Lock className="h-5 w-5 text-secondary" />}
+                   title="End-to-End Encryption"
+                   description="All data transfers are encrypted with AES-256 standards, ensuring complete privacy."
+                 />
+               </div>
 
-              <div className="absolute bottom-32 left-1/4 transform -translate-x-1/2">
-                <FeaturePill
-                  ref={feature4Ref}
-                  icon={<Users2 className="h-5 w-5 text-secondary" />}
-                  title="RBAC"
-                  description="Role-based access control with granular permissions and enterprise-grade user management."
-                />
-              </div>
+               <div className="absolute top-1/2 right-0 transform -translate-y-1/2">
+                 <FeaturePill
+                   ref={feature3Ref}
+                   icon={<Zap className="h-5 w-5 text-secondary" />}
+                   title="Real-Time Sync"
+                   description="Instant synchronization with your enterprise systems for up-to-date insights."
+                 />
+               </div>
 
-              <div className="absolute bottom-32 right-1/4 transform translate-x-1/2">
-                <FeaturePill
-                  ref={feature5Ref}
-                  icon={<Settings className="h-5 w-5 text-secondary" />}
-                  title="Custom Integration Development"
-                  description="Tailored integration solutions for your unique enterprise systems and workflows."
-                />
-              </div>
+               <div className="absolute bottom-16 left-1/4 transform -translate-x-1/2">
+                 <FeaturePill
+                   ref={feature4Ref}
+                   icon={<Users2 className="h-5 w-5 text-secondary" />}
+                   title="RBAC"
+                   description="Role-based access control with granular permissions and enterprise-grade user management."
+                 />
+               </div>
+
+               <div className="absolute bottom-16 right-1/4 transform translate-x-1/2">
+                 <FeaturePill
+                   ref={feature5Ref}
+                   icon={<Settings className="h-5 w-5 text-secondary" />}
+                   title="Custom Integration Development"
+                   description="Tailored integration solutions for your unique enterprise systems and workflows."
+                 />
+               </div>
 
               {/* AnimatedBeam connections */}
               <AnimatedBeam
