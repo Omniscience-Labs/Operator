@@ -1605,6 +1605,13 @@ class ResponseProcessor:
                 logger.info("Adding parsing_details to tool result metadata")
                 self.trace.event(name="adding_parsing_details_to_tool_result_metadata", level="DEFAULT", status_message=(f"Adding parsing_details to tool result metadata"), metadata={"parsing_details": parsing_details})
             # ---
+            # --- ADD: Extract and save credit info to metadata ---
+            if hasattr(result, '__dict__') and '_credit_info' in result.__dict__:
+                credit_info = result.__dict__['_credit_info']
+                metadata["_credit_info"] = credit_info
+                logger.info(f"Adding credit info to tool result metadata: {credit_info}")
+                self.trace.event(name="adding_credit_info_to_tool_result_metadata", level="DEFAULT", status_message=(f"Adding credit info to tool result metadata: {credit_info}"))
+            # --- END ADD ---
             
             # Check if this is a native function call (has id field)
             if "id" in tool_call:

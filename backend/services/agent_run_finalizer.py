@@ -17,6 +17,40 @@ class AgentRunFinalizer:
         self.credit_tracker = CreditTracker()
         self.db = DBConnection()
     
+    async def _debug_tool_result_structure(self, tool_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Debug utility to inspect tool result structure for credit info troubleshooting.
+        
+        Args:
+            tool_result: Tool result dictionary to inspect
+            
+        Returns:
+            Dictionary with debug information about the tool result structure
+        """
+        debug_info = {
+            'has_direct_credit_info': '_credit_info' in tool_result,
+            'has_metadata': 'metadata' in tool_result,
+            'has_metadata_credit_info': False,
+            'tool_result_keys': list(tool_result.keys()),
+            'metadata_keys': [],
+            'credit_info_found': False,
+            'credit_info_location': None
+        }
+        
+        if debug_info['has_metadata']:
+            debug_info['metadata_keys'] = list(tool_result['metadata'].keys())
+            debug_info['has_metadata_credit_info'] = '_credit_info' in tool_result['metadata']
+        
+        # Check where credit info is located
+        if debug_info['has_direct_credit_info']:
+            debug_info['credit_info_found'] = True
+            debug_info['credit_info_location'] = 'direct'
+        elif debug_info['has_metadata_credit_info']:
+            debug_info['credit_info_found'] = True
+            debug_info['credit_info_location'] = 'metadata'
+        
+        return debug_info
+    
     async def finalize_agent_run(
         self,
         agent_run_id: str,
@@ -60,9 +94,21 @@ class AgentRunFinalizer:
             data_provider_calls = 0
             
             if tool_results:
+                logger.info(f"Processing {len(tool_results)} tool results for credit tracking")
                 for tool_result in tool_results:
+                    # Debug tool result structure if needed
+                    debug_info = await self._debug_tool_result_structure(tool_result)
+                    logger.debug(f"Tool result debug info: {debug_info}")
+                    
+                    # Check both the direct object and metadata for credit info
                     credit_info = tool_result.get('_credit_info')
+                    
+                    # If not found directly, check the metadata
+                    if not credit_info and 'metadata' in tool_result:
+                        credit_info = tool_result['metadata'].get('_credit_info')
+                    
                     if credit_info:
+                        logger.info(f"Found credit info for tool: {credit_info.get('tool_name')} = {credit_info.get('credits')} credits")
                         await self.credit_tracker.save_tool_credit_usage(
                             agent_run_id=agent_run_id,
                             tool_name=credit_info['tool_name'],
@@ -75,6 +121,10 @@ class AgentRunFinalizer:
                         # Count data provider calls (those with data_provider_name)
                         if credit_info.get('data_provider_name'):
                             data_provider_calls += 1
+                    else:
+                        logger.warning(f"No credit info found for tool result. Debug info: {debug_info}")
+            else:
+                logger.info("No tool results to process for credit tracking")
             
             # Update agent run totals
             await self.credit_tracker.update_agent_run_totals(
