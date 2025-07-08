@@ -326,7 +326,7 @@ export const siteConfig = {
           <img
             src="/company-logos/psi.png"
             alt="PSI"
-            className="h-24 w-auto object-contain"
+            className="h-28 w-auto object-contain"
           />
         ),
       },

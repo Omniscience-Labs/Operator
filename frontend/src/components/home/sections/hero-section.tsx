@@ -213,16 +213,6 @@ export function HeroSection() {
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
       <style jsx global>{`
-        /* TARGETED: Only override specific problematic lamp background elements */
-        #hero .bg-background.blur-2xl {
-          background: transparent !important;
-        }
-        
-        /* Only target the lamp's solid background divs that create grey boxes, not the glow effects */
-        #hero [class*="bg-background"][class*="mask-image"] {
-          background: transparent !important;
-        }
-        
         /* Clean input styling with proper theme support */
         #hero .hero-input-container input {
           outline: none !important;
