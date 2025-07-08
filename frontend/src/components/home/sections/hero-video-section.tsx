@@ -2,8 +2,8 @@ import { HeroVideoDialog } from '@/components/home/ui/hero-video-dialog';
 
 export function HeroVideoSection() {
   return (
-    <div className="relative px-6 mt-10">
-      <div className="relative w-full max-w-3xl mx-auto shadow-xl rounded-2xl overflow-hidden">
+    <div className="relative px-4 sm:px-6 md:px-8">
+      <div className="relative w-full max-w-4xl mx-auto shadow-2xl rounded-2xl md:rounded-3xl overflow-hidden">
         <HeroVideoDialog
           className="block dark:hidden"
           animationStyle="from-center"

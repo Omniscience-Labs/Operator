@@ -18,6 +18,7 @@ export interface Agent {
   updated_at?: string;
   configured_mcps?: Array<{ name: string }>;
   agentpress_tools?: Record<string, any>;
+  knowledge_bases?: Array<{ index_name: string; description: string }>;
 }
 
 export interface MutationState {

@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { usePathname, useRouter } from "next/navigation"
+import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
 
 import {
   DropdownMenu,
@@ -48,6 +49,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ThreadWithProject } from '@/hooks/react-query/sidebar/use-sidebar';
 import { processThreadsWithProjects, useDeleteMultipleThreads, useDeleteThread, useProjects, useThreads } from '@/hooks/react-query/sidebar/use-sidebar';
 import { projectKeys, threadKeys } from '@/hooks/react-query/sidebar/keys';
+
 
 export function NavAgents() {
   const { isMobile, state } = useSidebar()
@@ -352,7 +354,7 @@ export function NavAgents() {
   return (
     <SidebarGroup>
       <div className="flex justify-between items-center">
-        <SidebarGroupLabel>Tasks</SidebarGroupLabel>
+        <SidebarGroupLabel className="text-base font-semibold">Tasks</SidebarGroupLabel>
         {state !== 'collapsed' ? (
           <div className="flex items-center space-x-1">
             {selectedThreads.size > 0 ? (
@@ -384,20 +386,14 @@ export function NavAgents() {
                 </Button>
               </>
             ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Link
-                      href="/dashboard"
-                      className="text-muted-foreground hover:text-foreground h-7 w-7 flex items-center justify-center rounded-md"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span className="sr-only">New Task</span>
-                    </Link>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>New Task</TooltipContent>
-              </Tooltip>
+              <LiquidButton
+                size="sm"
+                className="h-8 px-3 bg-gray-100 dark:bg-gray-800 text-black dark:text-white hover:text-white dark:hover:text-black border-none shadow-sm hover:shadow-md transition-shadow [--liquid-button-color:black] dark:[--liquid-button-color:white] mb-2"
+                onClick={() => window.location.href = '/dashboard'}
+              >
+                <Plus className="h-4 w-4" />
+                <span className="ml-1 text-sm font-medium">New Task</span>
+              </LiquidButton>
             )}
           </div>
         ) : null}
@@ -405,19 +401,19 @@ export function NavAgents() {
 
       <SidebarMenu className="overflow-y-auto max-h-[calc(100vh-200px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         {state === 'collapsed' && (
-          <SidebarMenuItem>
+          <SidebarMenuItem className="flex justify-center">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div>
-                  <SidebarMenuButton asChild>
-                    <Link href="/dashboard" className="flex items-center">
-                      <Plus className="h-4 w-4" />
-                      <span>New Agent</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </div>
+                <LiquidButton
+                  size="sm"
+                  className="h-9 w-9 min-w-[2.25rem] bg-gray-100 dark:bg-gray-800 text-black dark:text-white hover:text-white dark:hover:text-black border-none shadow-sm hover:shadow-md transition-shadow flex items-center justify-center [--liquid-button-color:black] dark:[--liquid-button-color:white] mb-2"
+                  onClick={() => window.location.href = '/dashboard'}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="sr-only">New Task</span>
+                </LiquidButton>
               </TooltipTrigger>
-              <TooltipContent>New Agent</TooltipContent>
+              <TooltipContent>New Task</TooltipContent>
             </Tooltip>
           </SidebarMenuItem>
         )}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { Input } from '@/components/ui/input';
 import GoogleSignIn from '@/components/GoogleSignIn';
+import MicrosoftSignIn from '@/components/MicrosoftSignIn';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useState, useEffect, useRef, Suspense } from 'react';
@@ -387,9 +388,10 @@ function LoginContent() {
                 </div>
               )}
 
-              {/* Google Sign In */}
-              <div className="w-full">
+              {/* Social Sign In Options */}
+              <div className="w-full space-y-3">
                 <GoogleSignIn returnUrl={returnUrl || undefined} />
+                <MicrosoftSignIn returnUrl={returnUrl || undefined} />
               </div>
 
               {/* Divider */}

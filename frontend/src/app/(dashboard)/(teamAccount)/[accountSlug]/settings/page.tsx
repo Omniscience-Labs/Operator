@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/client';
 
 type AccountParams = {
   accountSlug: string;
@@ -33,7 +33,7 @@ export default function TeamSettingsPage({
   React.useEffect(() => {
     async function loadData() {
       try {
-        const supabaseClient = await createClient();
+        const supabaseClient = createClient();
         const { data } = await supabaseClient.rpc('get_account_by_slug', {
           slug: accountSlug,
         });

@@ -40,6 +40,7 @@ export function getToolTitle(toolName: string): string {
     'create-file': 'Create File',
     'full-file-rewrite': 'Rewrite File',
     'delete-file': 'Delete File',
+    'read-file': 'Read File',
     'create-workbook': 'Create Workbook',
     'write-data': 'Write Data',
     'read-data': 'Read Data',
@@ -59,9 +60,18 @@ export function getToolTitle(toolName: string): string {
     'get-data-provider-endpoints': 'Data Endpoints',
     'deploy': 'Deploy',
 
+    // Knowledge base tools
+    'list-available-knowledge-bases': 'Available Knowledge Bases',
+
     'generic-tool': 'Tool',
     'default': 'Tool',
   };
+
+  // Handle dynamic knowledge search tools
+  if (normalizedName.startsWith('search_') || normalizedName.startsWith('search-')) {
+    const searchTerm = normalizedName.replace(/^search[-_]/, '').replace(/[-_]/g, ' ');
+    return `Search ${searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1)}`;
+  }
 
   // Return the mapped title or a formatted version of the name
   if (toolTitles[normalizedName]) {

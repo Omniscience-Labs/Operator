@@ -16,6 +16,7 @@ export const MCPConfigurationNew: React.FC<MCPConfigurationProps> = ({
   const [showCustomDialog, setShowCustomDialog] = useState(false);
   const [configuringServer, setConfiguringServer] = useState<any>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingCustomMCP, setEditingCustomMCP] = useState<MCPConfigurationType | null>(null);
 
   const handleAddMCP = (server: any) => {
     setConfiguringServer(server);
@@ -27,8 +28,14 @@ export const MCPConfigurationNew: React.FC<MCPConfigurationProps> = ({
     const mcp = configuredMCPs[index];
     // Check if it's a custom MCP
     if (mcp.isCustom) {
-      // For custom MCPs, we'll need to handle editing differently
-      // For now, just remove and re-add
+      console.log('Setting up edit for custom MCP:', mcp);
+      setEditingCustomMCP(mcp);
+      setEditingIndex(index);
+      // Use setTimeout to ensure state updates have completed before opening dialog
+      setTimeout(() => {
+        console.log('Opening custom dialog with edited MCP:', mcp);
+        setShowCustomDialog(true);
+      }, 0);
       return;
     }
     setConfiguringServer({
@@ -67,15 +74,32 @@ export const MCPConfigurationNew: React.FC<MCPConfigurationProps> = ({
     console.log('Saving custom MCP config:', customConfig);
     const mcpConfig: MCPConfigurationType = {
       name: customConfig.name,
-      qualifiedName: `custom_${customConfig.type}_${Date.now()}`,
+      qualifiedName: editingCustomMCP?.qualifiedName || `custom_${customConfig.type}_${Date.now()}`,
       config: customConfig.config,
       enabledTools: customConfig.enabledTools,
       isCustom: true,
       customType: customConfig.type as 'http' | 'sse'
     };
     console.log('Transformed MCP config:', mcpConfig);
-    onConfigurationChange([...configuredMCPs, mcpConfig]);
-    console.log('Updated MCPs list:', [...configuredMCPs, mcpConfig]);
+    
+    let newMCPs: MCPConfigurationType[];
+    if (editingIndex !== null && editingCustomMCP) {
+      // Edit mode - replace existing MCP
+      newMCPs = [...configuredMCPs];
+      newMCPs[editingIndex] = mcpConfig;
+      console.log('Updated existing MCP at index:', editingIndex);
+    } else {
+      // Add mode - append new MCP
+      newMCPs = [...configuredMCPs, mcpConfig];
+      console.log('Added new MCP');
+    }
+    
+    onConfigurationChange(newMCPs);
+    console.log('Updated MCPs list:', newMCPs);
+    
+    // Reset editing state
+    setEditingCustomMCP(null);
+    setEditingIndex(null);
   };
 
   return (
@@ -160,8 +184,23 @@ export const MCPConfigurationNew: React.FC<MCPConfigurationProps> = ({
       />
       <CustomMCPDialog
         open={showCustomDialog}
-        onOpenChange={setShowCustomDialog}
+        onOpenChange={(open) => {
+          setShowCustomDialog(open);
+          if (!open) {
+            setEditingCustomMCP(null);
+            setEditingIndex(null);
+          }
+        }}
         onSave={handleSaveCustomMCP}
+        existingConfig={editingCustomMCP ? (() => {
+          console.log('Passing existingConfig to dialog:', editingCustomMCP);
+          return {
+            name: editingCustomMCP.name,
+            customType: editingCustomMCP.customType || (editingCustomMCP.qualifiedName?.includes('_sse_') ? 'sse' : 'http'),
+            config: editingCustomMCP.config,
+            enabledTools: editingCustomMCP.enabledTools || []
+          };
+        })() : undefined}
       />
       {configuringServer && (
         <Dialog open={!!configuringServer} onOpenChange={() => setConfiguringServer(null)}>

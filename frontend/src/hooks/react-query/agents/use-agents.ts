@@ -2,7 +2,7 @@ import { createMutationHook, createQueryHook } from '@/hooks/use-query';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { agentKeys } from './keys';
-import { Agent, AgentUpdateRequest, AgentsParams, createAgent, deleteAgent, getAgent, getAgents, getThreadAgent, updateAgent, AgentBuilderChatRequest, AgentBuilderStreamData, startAgentBuilderChat, getAgentBuilderChatHistory } from './utils';
+import { Agent, AgentUpdateRequest, AgentsParams, createAgent, deleteAgent, getAgent, getAgents, getThreadAgent, updateAgent, removeAgentFromLibrary, AgentBuilderChatRequest, AgentBuilderStreamData, startAgentBuilderChat, getAgentBuilderChatHistory } from './utils';
 import { useRef, useCallback } from 'react';
 
 export const useAgents = (params: AgentsParams = {}) => {
@@ -69,6 +69,21 @@ export const useDeleteAgent = () => {
         queryClient.removeQueries({ queryKey: agentKeys.detail(agentId) });
         queryClient.invalidateQueries({ queryKey: agentKeys.lists() });
         toast.success('Agent deleted successfully');
+      },
+    }
+  )();
+};
+
+export const useRemoveAgentFromLibrary = () => {
+  const queryClient = useQueryClient();
+  
+  return createMutationHook(
+    removeAgentFromLibrary,
+    {
+      onSuccess: (_, agentId) => {
+        queryClient.removeQueries({ queryKey: agentKeys.detail(agentId) });
+        queryClient.invalidateQueries({ queryKey: agentKeys.lists() });
+        toast.success('Agent removed from library successfully');
       },
     }
   )();

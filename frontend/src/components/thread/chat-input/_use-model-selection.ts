@@ -35,7 +35,7 @@ export const MODELS = {
     priority: 100, 
     recommended: true,
     lowQuality: false,
-    description: 'Omni Agent 03 - Advanced AI assistant with cutting-edge capabilities'
+    description: 'Omni 4 - Advanced AI assistant with cutting-edge capabilities'
   },
   
   // 'claude-sonnet-3.7': { 
@@ -271,14 +271,14 @@ export const useModelSelection = () => {
       models = [
         { 
           id: DEFAULT_FREE_MODEL_ID, 
-          label: 'Omni Agent 03', 
+          label: 'Omni 4', 
           requiresSubscription: false,
           description: MODELS[DEFAULT_FREE_MODEL_ID]?.description || MODEL_TIERS.free.baseDescription,
           priority: MODELS[DEFAULT_FREE_MODEL_ID]?.priority || 50
         },
         { 
           id: DEFAULT_PREMIUM_MODEL_ID, 
-          label: 'Omni Agent 03', 
+          label: 'Omni 4', 
           requiresSubscription: false, 
           description: MODELS[DEFAULT_PREMIUM_MODEL_ID]?.description || MODEL_TIERS.premium.baseDescription,
           priority: MODELS[DEFAULT_PREMIUM_MODEL_ID]?.priority || 100
@@ -294,7 +294,7 @@ export const useModelSelection = () => {
         let cleanLabel;
         if (shortName === 'claude-sonnet-4') {
           // Use our custom name for Claude Sonnet 4
-          cleanLabel = 'Omni Agent 03';
+          cleanLabel = 'Omni 4';
         } else {
           // OLD LOGIC: Use API display name and format it
           // const displayName = model.display_name || shortName;

@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Bot, Menu, Store } from 'lucide-react';
+import { Bot, Menu, Store, FileAudio } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 import { NavAgents } from '@/components/sidebar/nav-agents';
 import { NavUserWithTeams } from '@/components/sidebar/nav-user-with-teams';
@@ -32,6 +33,7 @@ import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { useFeatureFlags } from '@/lib/feature-flags';
+import { useCurrentAccount } from '@/hooks/use-current-account';
 
 export function SidebarLeft({
   ...props
@@ -49,9 +51,14 @@ export function SidebarLeft({
   });
 
   const pathname = usePathname();
-  const { flags, loading: flagsLoading } = useFeatureFlags(['custom_agents', 'agent_marketplace']);
+  const currentAccount = useCurrentAccount();
+  const { flags, loading: flagsLoading } = useFeatureFlags(['custom_agents', 'agent_marketplace', 'enterprise_demo']);
   const customAgentsEnabled = flags.custom_agents;
   const marketplaceEnabled = flags.agent_marketplace;
+  const enterpriseDemoEnabled = flags.enterprise_demo;
+  
+  // Hide agents for team accounts
+  const showAgentPlayground = customAgentsEnabled && !currentAccount?.is_team_context;
 
   // Fetch user data
   useEffect(() => {
@@ -99,24 +106,101 @@ export function SidebarLeft({
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r-0 bg-background/95 backdrop-blur-sm [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+      className="border-r-0 relative overflow-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
       {...props}
     >
-      <SidebarHeader className="px-2 py-2">
-        <div className="flex h-[40px] items-center px-1 relative">
+      {/* Liquid Glass Background Layers */}
+      <div className="absolute inset-0 z-0">
+        {/* Base Glass Layer */}
+        <motion.div 
+          className="absolute inset-0 bg-gradient-to-br from-background/85 via-background/70 to-background/85 backdrop-blur-xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+        />
+        
+        {/* Enhanced Inner Glow */}
+        <motion.div 
+          className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/10"
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        {/* Text Readability Layer */}
+        <div className="absolute inset-0 bg-background/5" />
+        
+        {/* Subtle Border Gradient */}
+        <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-border/60 to-transparent" />
+        
+        {/* Floating Particles Effect */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-white/20 rounded-full"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+              animate={{
+                y: [-20, -40, -20],
+                x: [-5, 5, -5],
+                opacity: [0, 0.6, 0],
+              }}
+              transition={{
+                duration: 6 + i * 2,
+                repeat: Infinity,
+                delay: i * 0.8,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      <SidebarHeader className="px-2 py-2 relative z-10">
+        <motion.div 
+          className="flex h-[40px] items-center px-1 relative"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
           <Link href="/dashboard">
-            <OmniLogo />
+            <motion.div
+              className="flex items-center"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+            >
+              <OmniLogo />
+              {state !== 'collapsed' && (
+                <motion.div 
+                  className="ml-2 mt-1.5 whitespace-nowrap"
+                  initial={{ opacity: 0, x: -20, scale: 0.8 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -20, scale: 0.8 }}
+                  transition={{ 
+                    duration: 0.3, 
+                    delay: 0.1,
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 25
+                  }}
+                >
+                  <span className="font-semibold text-foreground text-lg">Omni</span>
+                </motion.div>
+              )}
+            </motion.div>
           </Link>
-          {state !== 'collapsed' && (
-            <div className="ml-2 transition-all duration-200 ease-in-out whitespace-nowrap">
-              {/* <span className="font-semibold"> OPERATOR</span> */}
-            </div>
-          )}
           <div className="ml-auto flex items-center gap-2">
             {state !== 'collapsed' && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <SidebarTrigger className="h-8 w-8" />
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <SidebarTrigger className="h-8 w-8 hover:bg-white/10 dark:hover:bg-black/10 transition-colors duration-200" />
+                  </motion.div>
                 </TooltipTrigger>
                 <TooltipContent>Toggle sidebar (CMD+B)</TooltipContent>
               </Tooltip>
@@ -124,73 +208,161 @@ export function SidebarLeft({
             {isMobile && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
+                  <motion.button
                     onClick={() => setOpenMobile(true)}
-                    className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent"
+                    className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-white/10 dark:hover:bg-black/10 transition-colors duration-200"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
                     <Menu className="h-4 w-4" />
-                  </button>
+                  </motion.button>
                 </TooltipTrigger>
                 <TooltipContent>Open menu</TooltipContent>
               </Tooltip>
             )}
           </div>
-        </div>
+        </motion.div>
       </SidebarHeader>
-      <SidebarContent className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-        {!flagsLoading && (customAgentsEnabled || marketplaceEnabled) && (
-          <SidebarGroup>
-            {customAgentsEnabled && (
-              <Link href="/agents">
-                <SidebarMenuButton className={cn({
-                  'bg-primary/10 font-medium': pathname === '/agents',
-                })}>
-                  <Bot className="h-4 w-4 mr-2" />
-                  <span className="flex items-center justify-between w-full">
-                    Agent Playground
-                    <Badge variant="new">
-                      New
-                    </Badge>
-                  </span>
-                </SidebarMenuButton>
-              </Link>
-            )}
-            {marketplaceEnabled && (
-              <Link href="/marketplace">
-                <SidebarMenuButton className={cn({
-                  'bg-primary/10 font-medium': pathname === '/marketplace',
-                })}>
-                  <Store className="h-4 w-4 mr-2" />
-                  <span className="flex items-center justify-between w-full">
-                    Marketplace
-                    <Badge variant="new">
-                      New
-                    </Badge>
-                  </span>
-                </SidebarMenuButton>
-              </Link>
-            )}
-          </SidebarGroup>
+      <SidebarContent className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] relative z-10">
+        {!flagsLoading && (showAgentPlayground || marketplaceEnabled) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <SidebarGroup>
+              {showAgentPlayground && (
+                <Link href="/agents">
+                  <motion.div
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <SidebarMenuButton className={cn(
+                      'hover:bg-white/15 dark:hover:bg-black/15 transition-all duration-200',
+                      {
+                        'bg-white/20 dark:bg-black/20 font-medium shadow-sm': pathname === '/agents',
+                      }
+                    )}>
+                      <Bot className="h-4 w-4 mr-2" />
+                      <span className="flex items-center justify-between w-full">
+                        Agents
+                        <Badge variant="new">
+                          New
+                        </Badge>
+                      </span>
+                    </SidebarMenuButton>
+                  </motion.div>
+                </Link>
+              )}
+              {marketplaceEnabled && (
+                <Link href="/marketplace">
+                  <motion.div
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <SidebarMenuButton className={cn(
+                      'hover:bg-white/15 dark:hover:bg-black/15 transition-all duration-200',
+                      {
+                        'bg-white/20 dark:bg-black/20 font-medium shadow-sm': pathname === '/marketplace',
+                      }
+                    )}>
+                      <Store className="h-4 w-4 mr-2" />
+                      <span className="flex items-center justify-between w-full">
+                        Marketplace
+                        <Badge variant="new">
+                          New
+                        </Badge>
+                      </span>
+                    </SidebarMenuButton>
+                  </motion.div>
+                </Link>
+              )}
+            </SidebarGroup>
+          </motion.div>
         )}
-        <NavAgents />
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+        >
+          <SidebarGroup>
+            <Link href="/meetings">
+              <motion.div
+                whileHover={{ scale: 1.02, x: 4 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+              >
+                <SidebarMenuButton className={cn(
+                  'hover:bg-white/15 dark:hover:bg-black/15 transition-all duration-200',
+                  {
+                    'bg-white/20 dark:bg-black/20 font-medium shadow-sm': pathname === '/meetings' || pathname.startsWith('/meetings/'),
+                  }
+                )}>
+                  <FileAudio className="h-4 w-4 mr-2" />
+                  <span className="flex items-center justify-between w-full">
+                    Meetings
+                    <Badge variant="new">
+                      New
+                    </Badge>
+                  </span>
+                </SidebarMenuButton>
+              </motion.div>
+            </Link>
+          </SidebarGroup>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+        >
+          <NavAgents />
+        </motion.div>
       </SidebarContent>
-      {state !== 'collapsed' && (
-        <div className="px-3 py-2">
-          <CTACard />
-        </div>
+      {state !== 'collapsed' && enterpriseDemoEnabled && (
+        <motion.div 
+          className="px-3 py-2 relative z-10"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+        >
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.3 }}
+          >
+            <CTACard />
+          </motion.div>
+        </motion.div>
       )}
-      <SidebarFooter>
+      <SidebarFooter className="relative z-10">
         {state === 'collapsed' && (
-          <div className="mt-2 flex justify-center">
+          <motion.div 
+            className="mt-2 flex justify-center"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.8 }}
+          >
             <Tooltip>
               <TooltipTrigger asChild>
-                <SidebarTrigger className="h-8 w-8" />
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <SidebarTrigger className="h-8 w-8 hover:bg-white/10 dark:hover:bg-black/10 transition-colors duration-200" />
+                </motion.div>
               </TooltipTrigger>
               <TooltipContent>Expand sidebar (CMD+B)</TooltipContent>
             </Tooltip>
-          </div>
+          </motion.div>
         )}
-        <NavUserWithTeams user={user} />
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.9 }}
+        >
+          <NavUserWithTeams user={user} />
+        </motion.div>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

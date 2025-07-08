@@ -9,20 +9,27 @@ import {
 } from '@/lib/api';
 import { toast } from 'sonner';
 import { projectKeys } from './keys';
+import { useCurrentAccount } from '@/hooks/use-current-account';
 
-export const useCreateProject = createMutationHook(
-  (data: { name: string; description: string; accountId?: string }) => 
-    createProject(data, data.accountId),
-  {
-    onSuccess: () => {
-      toast.success('Project created successfully');
+export const useCreateProject = () => {
+  const currentAccount = useCurrentAccount();
+  
+  return createMutationHook(
+    (data: { name: string; description: string }) => {
+      const accountId = currentAccount?.account_id;
+      return createProject(data, accountId);
     },
-    errorContext: {
-      operation: 'create project',
-      resource: 'project'
+    {
+      onSuccess: () => {
+        toast.success('Project created successfully');
+      },
+      errorContext: {
+        operation: 'create project',
+        resource: 'project'
+      }
     }
-  }
-);
+  )();
+};
 
 export const useUpdateProject = createMutationHook(
   ({ projectId, data }: { projectId: string; data: Partial<Project> }) => 

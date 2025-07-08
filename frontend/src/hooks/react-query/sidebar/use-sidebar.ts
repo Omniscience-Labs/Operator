@@ -6,30 +6,43 @@ import { createQueryHook } from '@/hooks/use-query';
 import { threadKeys } from "./keys";
 import { projectKeys } from "./keys";
 import { deleteThread } from "../threads/utils";
+import { useCurrentAccount } from "@/hooks/use-current-account";
 
-export const useProjects = createQueryHook(
-  projectKeys.lists(),
-  async () => {
-    const data = await getProjects();
-    return data as Project[];
-  },
-  {
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  }
-);
+export const useProjects = () => {
+  const currentAccount = useCurrentAccount();
+  
+  return createQueryHook(
+    projectKeys.lists(),
+    async () => {
+      const accountId = currentAccount?.account_id;
+      const data = await getProjects(accountId);
+      return data as Project[];
+    },
+    {
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      enabled: !!currentAccount?.account_id,
+    }
+  )();
+};
 
-export const useThreads = createQueryHook(
-  threadKeys.lists(),
-  async () => {
-    const data = await getThreads();
-    return data as Thread[];
-  },
-  {
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  }
-);
+export const useThreads = () => {
+  const currentAccount = useCurrentAccount();
+  
+  return createQueryHook(
+    threadKeys.lists(),
+    async () => {
+      const accountId = currentAccount?.account_id;
+      const data = await getThreads(undefined, accountId);
+      return data as Thread[];
+    },
+    {
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      enabled: !!currentAccount?.account_id,
+    }
+  )();
+};
 
 interface DeleteThreadVariables {
   threadId: string;

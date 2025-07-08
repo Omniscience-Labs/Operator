@@ -9,7 +9,7 @@ import {
 } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
 import { GetAccountMembersResponse } from '@usebasejump/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   DialogHeader,
   Dialog,
@@ -33,10 +33,12 @@ export default function TeamMemberOptions({
 }: Props) {
   const [updateTeamRole, toggleUpdateTeamRole] = useState(false);
   const [removeTeamMember, toggleRemoveTeamMember] = useState(false);
+  const previousRoleRef = useRef(teamMember.account_role);
 
   useEffect(() => {
-    if (updateTeamRole) {
+    if (updateTeamRole && previousRoleRef.current !== teamMember.account_role) {
       toggleUpdateTeamRole(false);
+      previousRoleRef.current = teamMember.account_role;
     }
   }, [teamMember.account_role, updateTeamRole]);
 

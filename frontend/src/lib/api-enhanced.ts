@@ -21,7 +21,7 @@ import {
 export * from './api';
 
 export const projectsApi = {
-  async getAll(): Promise<Project[]> {
+  async getAll(accountId?: string): Promise<Project[]> {
     const result = await supabaseClient.execute(
       async () => {
         const supabase = createClient();
@@ -35,10 +35,13 @@ export const projectsApi = {
           return { data: [], error: null };
         }
 
+        // Use provided accountId or fall back to user's personal account ID
+        const effectiveAccountId = accountId || userData.user.id;
+
         const { data, error } = await supabase
           .from('projects')
           .select('*')
-          .eq('account_id', userData.user.id);
+          .eq('account_id', effectiveAccountId);
 
         if (error) {
           if (error.code === '42501' && error.message.includes('has_role_on_account')) {
@@ -232,7 +235,7 @@ export const projectsApi = {
 };
 
 export const threadsApi = {
-  async getAll(projectId?: string): Promise<Thread[]> {
+  async getAll(projectId?: string, accountId?: string): Promise<Thread[]> {
     const result = await supabaseClient.execute(
       async () => {
         const supabase = createClient();
@@ -241,7 +244,10 @@ export const threadsApi = {
         if (userError) return { data: null, error: userError };
         if (!userData.user) return { data: [], error: null };
 
-        let query = supabase.from('threads').select('*').eq('account_id', userData.user.id);
+        // Use provided accountId or fall back to user's personal account ID
+        const effectiveAccountId = accountId || userData.user.id;
+
+        let query = supabase.from('threads').select('*').eq('account_id', effectiveAccountId);
         
         if (projectId) {
           query = query.eq('project_id', projectId);
@@ -284,7 +290,7 @@ export const threadsApi = {
     return result.data || null;
   },
 
-  async create(projectId: string): Promise<Thread | null> {
+  async create(projectId: string, accountId?: string): Promise<Thread | null> {
     const result = await supabaseClient.execute(
       async () => {
         const supabase = createClient();
@@ -294,11 +300,14 @@ export const threadsApi = {
           return { data: null, error: new Error('You must be logged in to create a thread') };
         }
 
+        // Use provided accountId or fall back to user's personal account ID
+        const effectiveAccountId = accountId || user.id;
+
         const { data, error } = await supabase
           .from('threads')
           .insert({
             project_id: projectId,
-            account_id: user.id,
+            account_id: effectiveAccountId,
           })
           .select()
           .single();

@@ -8,30 +8,17 @@ import { useRouter } from 'next/navigation';
 import { getAgentAvatar } from '../_utils/get-agent-style';
 import { usePublishAgent, useUnpublishAgent } from '@/hooks/react-query/marketplace/use-marketplace';
 import { toast } from 'sonner';
-
-interface Agent {
-  agent_id: string;
-  name: string;
-  description?: string;
-  is_default: boolean;
-  is_public?: boolean;
-  marketplace_published_at?: string;
-  download_count?: number;
-  tags?: string[];
-  created_at: string;
-  updated_at?: string;
-  configured_mcps?: Array<{ name: string }>;
-  agentpress_tools?: Record<string, any>;
-  avatar?: string;
-  avatar_color?: string;
-}
+import { PublishAgentDialog } from './publish-agent-dialog';
+import { Agent } from '@/hooks/react-query/agents/utils';
 
 interface AgentsGridProps {
   agents: Agent[];
   onEditAgent: (agentId: string) => void;
   onDeleteAgent: (agentId: string) => void;
-  onToggleDefault: (agentId: string, currentDefault: boolean) => void;
-  deleteAgentMutation: { isPending: boolean };
+  onRemoveFromLibrary: (agentId: string) => void;
+  onToggleDefault: (agentId: string, isDefault: boolean) => void;
+  deleteAgentMutation: any;
+  removeFromLibraryMutation: any;
 }
 
 const AgentModal = ({ agent, isOpen, onClose, onCustomize, onChat, onPublish, onUnpublish, isPublishing, isUnpublishing }) => {
@@ -87,14 +74,26 @@ const AgentModal = ({ agent, isOpen, onClose, onCustomize, onChat, onPublish, on
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button
-                onClick={() => onCustomize(agent.agent_id)}
-                variant="outline"
-                className="flex-1 gap-2"
-              >
-                <Wrench className="h-4 w-4" />
-                Customize
-              </Button>
+              {agent.is_managed ? (
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2 opacity-50 cursor-not-allowed"
+                  disabled
+                  title="This is a managed agent. You always see the latest version from the creator. Contact the creator for modifications."
+                >
+                  <Wrench className="h-4 w-4" />
+                  Contact Creator
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => onCustomize(agent.agent_id)}
+                  variant="outline"
+                  className="flex-1 gap-2"
+                >
+                  <Wrench className="h-4 w-4" />
+                  Customize
+                </Button>
+              )}
               <Button
                 onClick={() => onChat(agent.agent_id)}
                 className="flex-1 gap-2 bg-primary hover:bg-primary/90"
@@ -166,13 +165,15 @@ export const AgentsGrid = ({
   agents, 
   onEditAgent, 
   onDeleteAgent, 
+  onRemoveFromLibrary,
   onToggleDefault,
-  deleteAgentMutation 
+  deleteAgentMutation,
+  removeFromLibraryMutation
 }: AgentsGridProps) => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [publishDialogAgent, setPublishDialogAgent] = useState<Agent | null>(null);
   const router = useRouter();
   
-  const publishAgentMutation = usePublishAgent();
   const unpublishAgentMutation = useUnpublishAgent();
 
   const handleAgentClick = (agent: Agent) => {
@@ -189,13 +190,11 @@ export const AgentsGrid = ({
     setSelectedAgent(null);
   };
 
-  const handlePublish = async (agentId: string) => {
-    try {
-      await publishAgentMutation.mutateAsync({ agentId, tags: [] });
-      toast.success('Agent published to marketplace successfully!');
+  const handlePublish = (agentId: string) => {
+    const agent = agents.find(a => a.agent_id === agentId);
+    if (agent) {
+      setPublishDialogAgent(agent);
       setSelectedAgent(null);
-    } catch (error: any) {
-      toast.error('Failed to publish agent to marketplace');
     }
   };
 
@@ -253,6 +252,11 @@ export const AgentsGrid = ({
                   <h3 className="text-foreground font-medium text-lg line-clamp-1 flex-1">
                     {agent.name}
                   </h3>
+                  {agent.is_managed && (
+                    <Badge variant="secondary" className="text-xs shrink-0">
+                      Managed
+                    </Badge>
+                  )}
                   {agent.is_public && (
                     <Badge variant="outline" className="text-xs shrink-0">
                       <Globe className="h-3 w-3" />
@@ -286,13 +290,24 @@ export const AgentsGrid = ({
                         </AlertDialogTrigger>
                         <AlertDialogContent className="max-w-md">
                           <AlertDialogHeader>
-                            <AlertDialogTitle className="text-xl">Delete Agent</AlertDialogTitle>
+                            <AlertDialogTitle className="text-xl">
+                              {agent.is_managed ? 'Remove from Library' : 'Delete Agent'}
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
+                              {agent.is_managed ? (
+                                <>
+                                  Are you sure you want to remove &quot;{agent.name}&quot; from your library? 
+                                  This will not delete the original agent, just remove your access to it.
+                                </>
+                              ) : (
+                                <>
                               Are you sure you want to delete &quot;{agent.name}&quot;? This action cannot be undone.
                               {agent.is_public && (
                                 <span className="block mt-2 text-amber-600 dark:text-amber-400">
                                   Note: This agent is currently published to the marketplace and will be removed from there as well.
                                 </span>
+                                  )}
+                                </>
                               )}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
@@ -303,12 +318,19 @@ export const AgentsGrid = ({
                             <AlertDialogAction
                               onClick={(e) => {
                                 e.stopPropagation();
+                                if (agent.is_managed) {
+                                  onRemoveFromLibrary(agent.agent_id);
+                                } else {
                                 onDeleteAgent(agent.agent_id);
+                                }
                               }}
-                              disabled={deleteAgentMutation.isPending}
+                              disabled={agent.is_managed ? removeFromLibraryMutation.isPending : deleteAgentMutation.isPending}
                               className="bg-destructive hover:bg-destructive/90 text-white"
                             >
-                              {deleteAgentMutation.isPending ? 'Deleting...' : 'Delete'}
+                              {(agent.is_managed ? removeFromLibraryMutation.isPending : deleteAgentMutation.isPending) ? 
+                                (agent.is_managed ? 'Removing...' : 'Deleting...') : 
+                                (agent.is_managed ? 'Remove' : 'Delete')
+                              }
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -331,8 +353,20 @@ export const AgentsGrid = ({
           onChat={handleChat}
           onPublish={handlePublish}
           onUnpublish={handleUnpublish}
-          isPublishing={publishAgentMutation.isPending}
+          isPublishing={false}
           isUnpublishing={unpublishAgentMutation.isPending}
+        />
+      )}
+      
+      {publishDialogAgent && (
+        <PublishAgentDialog
+          agent={publishDialogAgent}
+          isOpen={!!publishDialogAgent}
+          onClose={() => setPublishDialogAgent(null)}
+          onSuccess={() => {
+            setPublishDialogAgent(null);
+            // TODO: Refresh agents list
+          }}
         />
       )}
     </>

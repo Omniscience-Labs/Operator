@@ -5,7 +5,7 @@ import { NavMenu } from '@/components/home/nav-menu';
 import { ThemeToggle } from '@/components/home/theme-toggle';
 import { siteConfig } from '@/lib/home';
 import { cn } from '@/lib/utils';
-import { Menu, X, Github } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { AnimatePresence, motion, useScroll } from 'motion/react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -28,7 +28,7 @@ const drawerVariants = {
     y: 0,
     rotate: 0,
     transition: {
-      type: 'spring',
+      type: 'spring' as const,
       damping: 15,
       stiffness: 200,
       staggerChildren: 0.03,
@@ -127,39 +127,28 @@ export function Navbar() {
                   color="currentColor"
                   className="flex-shrink-0"
                 />
-                <span className="font-semibold text-lg">OPERATOR</span>
+                <span className="font-semibold text-lg">Omni</span>
               </div>
             </Link>
 
             <NavMenu />
 
             <div className="flex flex-row items-center gap-1 md:gap-3 shrink-0">
-              <div className="flex items-center space-x-3">
+              {user ? (
                 <Link
-                  href="https://github.com/omni-ai/operator"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hidden md:flex items-center justify-center h-8 px-3 text-sm font-normal tracking-wide rounded-full text-primary hover:text-primary/80 transition-colors"
-                  aria-label="GitHub"
+                  className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
+                  href="/dashboard"
                 >
-                  <Github className="size-[18px]" />
+                  Dashboard
                 </Link>
-                {user ? (
-                  <Link
-                    className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
-                    href="/dashboard"
-                  >
-                    Dashboard
-                  </Link>
-                ) : (
-                  <Link
-                    className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
-                    href="/auth"
-                  >
-                    Get started
-                  </Link>
-                )}
-              </div>
+              ) : (
+                <Link
+                  className="bg-secondary h-8 hidden md:flex items-center justify-center text-sm font-normal tracking-wide rounded-full text-primary-foreground dark:text-secondary-foreground w-fit px-4 shadow-[inset_0_1px_2px_rgba(255,255,255,0.25),0_3px_3px_-1.5px_rgba(16,24,40,0.06),0_1px_1px_rgba(16,24,40,0.08)] border border-white/[0.12]"
+                  href="/auth"
+                >
+                  Get started
+                </Link>
+              )}
               <ThemeToggle />
               <button
                 className="md:hidden border border-border size-8 rounded-md cursor-pointer flex items-center justify-center"
@@ -208,7 +197,7 @@ export function Navbar() {
                         className="flex-shrink-0"
                       />
                       <span className="font-medium text-primary text-sm">
-                        OPERATOR
+                        Omni
                       </span>
                     </div>
                   </Link>

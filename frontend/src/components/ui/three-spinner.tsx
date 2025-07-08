@@ -176,10 +176,10 @@ export function ThreeSpinner({
     let currentSpeed = 0;
     let targetSpeed = 0.12; // Initial high speed
     let acceleration = 0.002;
-    let deceleration = 0.0008;
+    const deceleration = 0.0008;
     let isAccelerating = true;
     let cycleTime = 0;
-    let spinDirection = { x: 1, y: 1, z: 0.3 }; // Primary spin axes
+    const spinDirection = { x: 1, y: 1, z: 0.3 }; // Primary spin axes
     
     const animate = () => {
       cycleTime += 0.016; // ~60fps

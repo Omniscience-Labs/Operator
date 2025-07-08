@@ -1,41 +1,339 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reset Your Password - Operator</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset your password - Operator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background: oklch(98.46% 0.002 247.84);
+            --foreground: oklch(0.145 0 0);
+            --card: oklch(1 0 0);
+            --primary: oklch(0.205 0 0);
+            --primary-foreground: oklch(0.985 0 0);
+            --secondary: oklch(54.65% 0.246 262.87);
+            --muted: oklch(0.97 0 0);
+            --muted-foreground: oklch(0.556 0 0);
+            --border: oklch(0.922 0 0);
+            --destructive: oklch(0.577 0.245 27.325);
+            --warning: oklch(0.828 0.189 84.429);
+        }
+        
+        body {
+            font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--foreground);
+            margin: 0;
+            padding: 0;
+            background-color: var(--background);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: var(--card);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+        
+        .header {
+            padding: 48px 40px 32px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--background) 0%, var(--muted) 100%);
+        }
+        
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            background: var(--primary);
+            border-radius: 16px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        
+        .logo svg {
+            width: 32px;
+            height: 18px;
+            fill: var(--primary-foreground);
+        }
+        
+        .brand {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--foreground);
+            margin: 0;
+            letter-spacing: -0.025em;
+        }
+        
+        .content {
+            padding: 0 40px 48px;
+        }
+        
+        .greeting {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--foreground);
+            margin: 0 0 24px;
+            text-align: center;
+            letter-spacing: -0.025em;
+        }
+        
+        .message {
+            font-size: 16px;
+            color: var(--muted-foreground);
+            margin: 0 0 32px;
+            text-align: center;
+            line-height: 1.7;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .reset-button {
+            display: inline-block;
+            background: var(--destructive);
+            color: var(--primary-foreground);
+            padding: 16px 32px;
+            text-decoration: none;
+            border-radius: 9999px;
+            font-weight: 500;
+            font-size: 16px;
+            letter-spacing: 0.025em;
+            transition: all 0.2s ease;
+            border: 1px solid var(--destructive);
+            min-width: 200px;
+        }
+        
+        .reset-button:hover {
+            background: oklch(0.477 0.205 27.325);
+            border-color: oklch(0.477 0.205 27.325);
+            transform: translateY(-1px);
+        }
+        
+        .fallback {
+            margin: 32px 0;
+            padding: 24px;
+            background: var(--muted);
+            border-radius: 12px;
+            border-left: 4px solid var(--destructive);
+        }
+        
+        .fallback h3 {
+            margin: 0 0 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+        
+        .fallback p {
+            margin: 0 0 16px;
+            font-size: 14px;
+            color: var(--muted-foreground);
+            line-height: 1.6;
+        }
+        
+        .fallback-link {
+            word-break: break-all;
+            color: var(--destructive);
+            text-decoration: none;
+            font-size: 14px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: var(--background);
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        
+        .security-notice {
+            margin: 32px 0 0;
+            padding: 20px;
+            background: linear-gradient(135deg, oklch(0.969 0.023 84.429) 0%, var(--background) 100%);
+            border-radius: 12px;
+            border: 1px solid var(--warning);
+        }
+        
+        .security-notice h3 {
+            margin: 0 0 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--foreground);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .security-notice p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--muted-foreground);
+            line-height: 1.6;
+        }
+        
+        .warning-box {
+            margin: 32px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, oklch(0.969 0.023 84.429) 0%, var(--background) 100%);
+            border-radius: 12px;
+            border: 1px solid var(--warning);
+        }
+        
+        .warning-box h3 {
+            margin: 0 0 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--foreground);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .warning-box p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--muted-foreground);
+            line-height: 1.6;
+        }
+        
+        .footer {
+            padding: 32px 40px;
+            text-align: center;
+            background: var(--muted);
+            border-top: 1px solid var(--border);
+        }
+        
+        .footer p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--muted-foreground);
+            line-height: 1.6;
+        }
+        
+        .footer a {
+            color: var(--secondary);
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: oklch(0.185 0.005 285.823);
+                --foreground: oklch(0.985 0 0);
+                --card: oklch(0.145 0 0);
+                --primary: oklch(0.985 0 0);
+                --primary-foreground: oklch(0.205 0 0);
+                --secondary: oklch(54.65% 0.246 262.87);
+                --muted: oklch(0.269 0 0);
+                --muted-foreground: oklch(0.708 0 0);
+                --border: oklch(0.269 0 0);
+                --destructive: oklch(0.396 0.141 25.723);
+                --warning: oklch(0.627 0.265 303.9);
+            }
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 640px) {
+            .container {
+                margin: 20px;
+                border-radius: 12px;
+            }
+            
+            .header, .content, .footer {
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+            
+            .brand {
+                font-size: 24px;
+            }
+            
+            .greeting {
+                font-size: 20px;
+            }
+            
+            .reset-button {
+                padding: 14px 28px;
+                font-size: 15px;
+                min-width: 180px;
+            }
+        }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5; color: #1f2937;">
-  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-top: 40px;">
-    <tr>
-      <td style="padding: 40px 30px; text-align: center; background-color: #f8f9fa; border-bottom: 1px solid #e5e7eb;">
-        <div style="margin-top: 8px; font-size: 24px; font-weight: 600; letter-spacing: -0.025em;">
-          <span style="color: #333;">OMNI</span><span style="color: #155dfc;"> / </span><span style="color: #333;">Operator</span>
-        </div>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 40px 30px;">
-        <h1 style="font-size: 28px; font-weight: 500; color: #111827; margin-top: 0; margin-bottom: 24px; text-align: center; letter-spacing: -0.025em;">
-          Reset Your Password
-        </h1>
-        
-        <p style="font-size: 16px; line-height: 24px; color: #6b7280; margin-bottom: 32px; text-align: center;">
-          We received a request to reset your password for your Operator account. Click the button below to create a new password.
-        </p>
-        
-        <div style="text-align: center; margin-bottom: 32px;">
-          <a href="{{ .ConfirmationURL }}" style="display: inline-block; background-color: #155dfc; color: white; font-weight: 600; font-size: 15px; line-height: 20px; padding: 12px 28px; border-radius: 9999px; text-decoration: none; box-shadow: 0 4px 6px rgba(21, 93, 252, 0.2); transition: all 0.2s;">
-            Reset Password
-          </a>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <svg width="42" height="24" viewBox="0 0 42 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clipPath="url(#clip0_322_9172)">
+                        <path d="M22.3546 0.96832C22.9097 0.390834 23.6636 0.0664062 24.4487 0.0664062C27.9806 0.0664062 31.3091 0.066408 34.587 0.0664146C41.1797 0.0664284 44.481 8.35854 39.8193 13.2082L29.6649 23.7718C29.1987 24.2568 28.4016 23.9133 28.4016 23.2274V13.9234L29.5751 12.7025C30.5075 11.7326 29.8472 10.0742 28.5286 10.0742H13.6016L22.3546 0.96832Z" fill="current"/>
+                        <path d="M19.6469 23.0305C19.0919 23.608 18.338 23.9324 17.5529 23.9324C14.021 23.9324 10.6925 23.9324 7.41462 23.9324C0.821896 23.9324 -2.47942 15.6403 2.18232 10.7906L12.3367 0.227022C12.8029 -0.257945 13.6 0.0855283 13.6 0.771372L13.6 10.0754L12.4265 11.2963C11.4941 12.2662 12.1544 13.9246 13.473 13.9246L28.4001 13.9246L19.6469 23.0305Z" fill="current"/>
+                    </g>
+                    <defs>
+                        <clipPath id="clip0_322_9172">
+                            <rect width="42" height="24" fill="white"/>
+                        </clipPath>
+                    </defs>
+                </svg>
+            </div>
+            <h1 class="brand">Operator</h1>
         </div>
         
-        <p style="font-size: 14px; line-height: 20px; color: #6b7280; margin-bottom: 0; text-align: center;">
-          If you didn't request a password reset, you can safely ignore this email. This link will expire in 1 hour.
-        </p>
-      </td>
-    </tr>
-    <!-- Footer section same as your existing template -->
-  </table>
+        <div class="content">
+            <h2 class="greeting">Reset Your Password</h2>
+            
+            <p class="message">
+                We received a request to reset your password for your Operator account. Click the button below to create a new password.
+            </p>
+            
+            <div class="button-container">
+                <a href="{{ .ConfirmationURL }}" class="reset-button">
+                    Reset Password
+                </a>
+            </div>
+            
+            <div class="warning-box">
+                <h3>
+                    ⚠️ Important Security Information
+                </h3>
+                <p>
+                    If you didn't request this password reset, please ignore this email and your password will remain unchanged. Someone may have entered your email address by mistake.
+                </p>
+            </div>
+            
+            <div class="fallback">
+                <h3>Button not working?</h3>
+                <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+                <a href="{{ .ConfirmationURL }}" class="fallback-link">{{ .ConfirmationURL }}</a>
+            </div>
+            
+            <div class="security-notice">
+                <h3>
+                    🔒 Security Notice
+                </h3>
+                <p>
+                    This password reset link will expire in 1 hour for your security. After resetting your password, you'll be logged out of all devices and will need to sign in again.
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>
+                This email was sent by <strong>Operator</strong><br>
+                If you have any questions, feel free to <a href="mailto:support@operator.dev">contact our support team</a>.
+            </p>
+        </div>
+    </div>
 </body>
 </html>

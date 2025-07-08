@@ -29,9 +29,25 @@ export function OmniProcessModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default" size="sm" className="w-full text-xs">
-          Learn More
-        </Button>
+        <button className="flex items-center gap-3">
+          <span>Schedule Demo</span>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="text-primary-foreground dark:text-black group-hover:translate-x-1 transition-transform duration-200"
+          >
+            <path
+              d="M7 17L17 7M17 7H8M17 7V16"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </DialogTrigger>
       <DialogContent className="p-0 gap-0 border-none max-w-[70vw] rounded-xl overflow-hidden">
         <DialogTitle className="sr-only">

@@ -12,6 +12,7 @@ class EmailService:
         self.api_key = os.getenv('RESEND_API_KEY')
         self.sender_email = os.getenv('RESEND_SENDER_EMAIL', 'confirm@onboarding.becomeomni.com')
         self.sender_name = os.getenv('RESEND_SENDER_NAME', 'OMNI Team')
+        self.sender_return = os.getenv('RESEND_SENDER_NAME', 'onboarding')
         
         logger.debug(f"EmailService configuration - Sender: {self.sender_name} <{self.sender_email}>")
         
@@ -70,6 +71,7 @@ class EmailService:
                 "subject": subject,
                 "html": html_content,
                 "text": text_content,
+                "custom_return_path": self.sender_return,
                 "tags": [
                     {
                         "name": "category",
@@ -167,7 +169,7 @@ class EmailService:
 <body>
   <div class="container">
     <div class="logo-container">
-      <img src="https://i.postimg.cc/WdNtRx5Z/kortix-suna-logo.png" alt="Kortix Suna Logo" class="logo">
+      <img src="" alt=" Omni Operator Logo" class="logo">
     </div>
     <h1>Welcome to OMNI!</h1>
 

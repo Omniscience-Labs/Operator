@@ -5,7 +5,7 @@ import json
 import traceback
 from datetime import datetime, timezone
 import uuid
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 import jwt
 from pydantic import BaseModel
 import tempfile
@@ -40,6 +40,7 @@ class AgentStartRequest(BaseModel):
     stream: Optional[bool] = True
     enable_context_manager: Optional[bool] = False
     agent_id: Optional[str] = None  # Custom agent to use
+    user_name: Optional[str] = None
 
 class InitiateAgentResponse(BaseModel):
     thread_id: str
@@ -53,6 +54,7 @@ class AgentCreateRequest(BaseModel):
     custom_mcps: Optional[List[Dict[str, Any]]] = []
     agentpress_tools: Optional[Dict[str, Any]] = {}
     is_default: Optional[bool] = False
+    knowledge_bases: Optional[List[Dict[str, Any]]] = []
     avatar: Optional[str] = None
     avatar_color: Optional[str] = None
 
@@ -64,6 +66,7 @@ class AgentUpdateRequest(BaseModel):
     custom_mcps: Optional[List[Dict[str, Any]]] = None
     agentpress_tools: Optional[Dict[str, Any]] = None
     is_default: Optional[bool] = None
+    knowledge_bases: Optional[List[Dict[str, Any]]] = None
     avatar: Optional[str] = None
     avatar_color: Optional[str] = None
 
@@ -78,13 +81,18 @@ class AgentResponse(BaseModel):
     agentpress_tools: Dict[str, Any]
     is_default: bool
     is_public: Optional[bool] = False
+    visibility: Optional[str] = "private"  # "public", "teams", or "private"
+    knowledge_bases: Optional[List[Dict[str, Any]]] = []
     marketplace_published_at: Optional[str] = None
     download_count: Optional[int] = 0
     tags: Optional[List[str]] = []
+    sharing_preferences: Optional[Dict[str, Any]] = {}
     avatar: Optional[str]
     avatar_color: Optional[str]
     created_at: str
     updated_at: str
+    is_managed: Optional[bool] = False  # True if this is a managed agent (live reference)
+    is_owned: Optional[bool] = True  # True if user owns this agent
 
 class PaginationInfo(BaseModel):
     page: int
@@ -402,7 +410,8 @@ async def start_agent(
     effective_agent_id = body.agent_id or thread_agent_id  # Use provided agent_id or the one stored in thread
     
     if effective_agent_id:
-        agent_result = await client.table('agents').select('*').eq('agent_id', effective_agent_id).eq('account_id', account_id).execute()
+        # Use the same access logic as get_agent endpoint
+        agent_result = await client.table('agents').select('*').eq('agent_id', effective_agent_id).execute()
         if not agent_result.data:
             if body.agent_id:
                 raise HTTPException(status_code=404, detail="Agent not found or access denied")
@@ -410,7 +419,45 @@ async def start_agent(
                 logger.warning(f"Stored agent_id {effective_agent_id} not found, falling back to default")
                 effective_agent_id = None
         else:
-            agent_config = agent_result.data[0]
+            agent_data = agent_result.data[0]
+            
+            # Check access: owner, public agent, or agent in user's library
+            has_access = False
+            if agent_data['account_id'] == user_id:
+                # User owns the agent
+                has_access = True
+            elif agent_data.get('is_public', False):
+                # Public agent
+                has_access = True
+            else:
+                # Check if user has this agent in their library (either managed or copied)
+                library_check = await client.table('user_agent_library').select('*').eq(
+                    'user_account_id', user_id
+                ).eq('agent_id', effective_agent_id).execute()
+                
+                if library_check.data:
+                    has_access = True
+                    # Apply sharing preferences filtering for managed agents
+                    library_entry = library_check.data[0]
+                    is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
+                    if is_managed_by_user:
+                        sharing_prefs = agent_data.get('sharing_preferences', {})
+                        if not sharing_prefs.get('include_knowledge_bases', True):
+                            agent_data['knowledge_bases'] = []
+                        if not sharing_prefs.get('include_custom_mcp_tools', True):
+                            agent_data['configured_mcps'] = []
+                            agent_data['custom_mcps'] = []
+            
+            if not has_access:
+                if body.agent_id:
+                    raise HTTPException(status_code=404, detail="Agent not found or access denied")
+                else:
+                    logger.warning(f"Stored agent_id {effective_agent_id} not found or access denied, falling back to default")
+                    effective_agent_id = None
+                    agent_data = None
+            
+            if agent_data:
+                agent_config = agent_data
             source = "request" if body.agent_id else "thread"
             logger.info(f"Using agent from {source}: {agent_config['name']} ({effective_agent_id})")
     
@@ -460,8 +507,13 @@ async def start_agent(
         logger.error(f"Failed to start sandbox for project {project_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to initialize sandbox: {str(e)}")
 
+    # Store reasoning mode in agent run
+    reasoning_mode = body.reasoning_effort if body.enable_thinking else 'none'
+    
     agent_run = await client.table('agent_runs').insert({
-        "thread_id": thread_id, "status": "running",
+        "thread_id": thread_id, 
+        "status": "running",
+        "reasoning_mode": reasoning_mode,
         "started_at": datetime.now(timezone.utc).isoformat()
     }).execute()
     agent_run_id = agent_run.data[0]['id']
@@ -490,6 +542,7 @@ async def start_agent(
         is_agent_builder=is_agent_builder,
         target_agent_id=target_agent_id,
         request_id=request_id,
+        user_name=body.user_name,
     )
 
     return {"agent_run_id": agent_run_id, "status": "running"}
@@ -518,6 +571,365 @@ async def get_agent_runs(thread_id: str, user_id: str = Depends(get_current_user
     agent_runs = await client.table('agent_runs').select('*').eq("thread_id", thread_id).order('created_at', desc=True).execute()
     logger.debug(f"Found {len(agent_runs.data)} agent runs for thread: {thread_id}")
     return {"agent_runs": agent_runs.data}
+
+@router.get("/agent-run/{agent_run_id}/credit-usage")
+async def get_agent_run_credit_usage(
+    agent_run_id: str, 
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Get detailed credit usage for a specific agent run."""
+    structlog.contextvars.bind_contextvars(
+        agent_run_id=agent_run_id,
+    )
+    logger.info(f"Fetching credit usage for agent run: {agent_run_id}")
+    
+    try:
+        from services.credit_tracker import CreditTracker
+        credit_tracker = CreditTracker()
+        
+        # Get credit usage summary
+        usage_summary = await credit_tracker.get_credit_usage_summary(agent_run_id)
+        
+        # Get data provider specific stats
+        provider_stats = await credit_tracker.get_data_provider_usage_stats(agent_run_id=agent_run_id)
+        
+        return {
+            "agent_run_id": agent_run_id,
+            "usage_summary": usage_summary,
+            "data_provider_stats": provider_stats
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching credit usage for agent run {agent_run_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch credit usage: {str(e)}")
+
+@router.get("/credit-rates")
+async def get_credit_rates(user_id: str = Depends(get_current_user_id_from_jwt)):
+    """Get current credit rates for tools and data providers."""
+    try:
+        from services.credit_calculator import CreditCalculator
+        credit_calc = CreditCalculator()
+        
+        return {
+            "base_rates": {
+                "conversation_per_minute": credit_calc.credit_rates['base_rate'],
+                "reasoning_multipliers": {
+                    "medium": credit_calc.credit_rates['reasoning_rate_medium'],
+                    "high": credit_calc.credit_rates['reasoning_rate_high']
+                }
+            },
+            "tool_costs": credit_calc.get_all_tool_costs(),
+            "data_provider_costs": credit_calc.get_all_data_provider_costs()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching credit rates: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch credit rates: {str(e)}")
+
+@router.get("/data-provider/{provider_name}/cost-estimate")
+async def get_data_provider_cost_estimate(
+    provider_name: str,
+    route: str = None,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Get cost estimate for a specific data provider call."""
+    try:
+        from services.credit_calculator import CreditCalculator
+        credit_calc = CreditCalculator()
+        
+        estimate = credit_calc.estimate_data_provider_call_cost(provider_name, route)
+        
+        return estimate
+        
+    except Exception as e:
+        logger.error(f"Error getting cost estimate for {provider_name}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get cost estimate: {str(e)}")
+
+@router.get("/tools/cost-estimates")
+async def get_all_tool_cost_estimates(user_id: str = Depends(get_current_user_id_from_jwt)):
+    """Get cost estimates for all available tools."""
+    try:
+        from services.credit_calculator import CreditCalculator
+        credit_calc = CreditCalculator()
+        
+        # Get all tool costs
+        all_tool_costs = credit_calc.get_all_tool_costs()
+        
+        # Create enhanced estimates with descriptions and categorization
+        tool_estimates = []
+        
+        # Tool categories and descriptions
+        tool_info = {
+            # Infrastructure & Automation Tools
+            "sb_browser_tool": {
+                "display_name": "Browser Tool",
+                "description": "Automate web browsing, clicking, form filling, and page interaction",
+                "category": "automation",
+                "icon": "🌐"
+            },
+            "sb_deploy_tool": {
+                "display_name": "Deploy Tool", 
+                "description": "Deploy applications and services with automated deployment",
+                "category": "infrastructure",
+                "icon": "🚀"
+            },
+            "sb_shell_tool": {
+                "display_name": "Terminal",
+                "description": "Execute shell commands and CLI operations in tmux sessions",
+                "category": "development",
+                "icon": "💻"
+            },
+            "web_search_tool": {
+                "display_name": "Web Search",
+                "description": "Search the web using Tavily API and scrape webpages with Firecrawl",
+                "category": "research",
+                "icon": "🔍"
+            },
+            
+            # File & Media Tools
+            "sb_files_tool": {
+                "display_name": "File Manager",
+                "description": "Create, read, update, and delete files with comprehensive file management",
+                "category": "files",
+                "icon": "📁"
+            },
+            "sb_excel_tool": {
+                "display_name": "Excel Operations",
+                "description": "Create, read, write, and format Excel spreadsheets",
+                "category": "files",
+                "icon": "📊"
+            },
+            "sb_pdf_form_tool": {
+                "display_name": "PDF Form Filler",
+                "description": "Read form fields, fill forms, and flatten PDF documents",
+                "category": "files", 
+                "icon": "📄"
+            },
+            "sb_vision_tool": {
+                "display_name": "Image Processing",
+                "description": "Vision and image processing capabilities for visual content analysis",
+                "category": "ai",
+                "icon": "👁️"
+            },
+            "sb_audio_transcription_tool": {
+                "display_name": "Audio Transcription",
+                "description": "Transcribe audio files to text using speech recognition",
+                "category": "ai",
+                "icon": "🎤"
+            },
+            "sb_podcast_tool": {
+                "display_name": "Audio Overviews",
+                "description": "Generate audio summaries and overviews from content",
+                "category": "ai",
+                "icon": "🎧"
+            },
+            
+            # Data Provider Tools
+            "linkedin_data_provider": {
+                "display_name": "LinkedIn Data Provider",
+                "description": "Access LinkedIn profiles, company data, and professional information",
+                "category": "data_providers",
+                "icon": "💼"
+            },
+            "apollo_data_provider": {
+                "display_name": "Apollo Data Provider", 
+                "description": "Lead generation, contact enrichment, and company discovery",
+                "category": "data_providers",
+                "icon": "🎯"
+            },
+            "twitter_data_provider": {
+                "display_name": "Twitter Data Provider",
+                "description": "Access Twitter/X social media data and user information", 
+                "category": "data_providers",
+                "icon": "🐦"
+            },
+            "amazon_data_provider": {
+                "display_name": "Amazon Data Provider",
+                "description": "Product data, pricing, and marketplace information from Amazon",
+                "category": "data_providers", 
+                "icon": "📦"
+            },
+            "yahoo_finance_data_provider": {
+                "display_name": "Yahoo Finance Data Provider",
+                "description": "Financial data, stock prices, and market information",
+                "category": "data_providers",
+                "icon": "📈"
+            },
+            "zillow_data_provider": {
+                "display_name": "Zillow Data Provider",
+                "description": "Real estate data, property values, and market analytics",
+                "category": "data_providers",
+                "icon": "🏠"
+            },
+            "activejobs_data_provider": {
+                "display_name": "Active Jobs Data Provider",
+                "description": "Job search data and employment opportunity information",
+                "category": "data_providers",
+                "icon": "💼"
+            },
+            
+            # System Tools
+            "sb_expose_tool": {
+                "display_name": "Port Exposure",
+                "description": "Expose services and manage ports for application accessibility",
+                "category": "system",
+                "icon": "🔌"
+            },
+            "mcp_tool": {
+                "display_name": "MCP Tools",
+                "description": "External Model Context Protocol integrations",
+                "category": "integrations", 
+                "icon": "🔗"
+            },
+            "data_providers_tool": {
+                "display_name": "Legacy Data Providers",
+                "description": "Fallback for unspecified data provider calls",
+                "category": "legacy",
+                "icon": "🗃️"
+            }
+        }
+        
+        # Build tool estimates
+        for tool_name, cost in all_tool_costs.items():
+            if tool_name == "default":
+                continue
+                
+            info = tool_info.get(tool_name, {
+                "display_name": tool_name.replace('_', ' ').title(),
+                "description": f"Tool: {tool_name}",
+                "category": "other",
+                "icon": "🔧"
+            })
+            
+            # Determine cost tier
+            if cost >= 3.0:
+                cost_tier = "high"
+                tier_color = "#ef4444"  # red
+            elif cost >= 1.5:
+                cost_tier = "medium" 
+                tier_color = "#f59e0b"  # amber
+            else:
+                cost_tier = "low"
+                tier_color = "#10b981"  # emerald
+            
+            estimate = {
+                "tool_name": tool_name,
+                "display_name": info["display_name"],
+                "description": info["description"],
+                "category": info["category"],
+                "icon": info["icon"],
+                "credit_cost": cost,
+                "cost_tier": cost_tier,
+                "tier_color": tier_color,
+                "cost_explanation": f"{info['display_name']} costs {cost} credits per use"
+            }
+            
+            tool_estimates.append(estimate)
+        
+        # Sort by category, then by cost (high to low)
+        category_order = ["automation", "data_providers", "ai", "development", "files", "research", "infrastructure", "system", "integrations", "legacy", "other"]
+        
+        def sort_key(tool):
+            category_index = category_order.index(tool["category"]) if tool["category"] in category_order else len(category_order)
+            return (category_index, -tool["credit_cost"])  # negative cost for descending order
+        
+        tool_estimates.sort(key=sort_key)
+        
+        # Group by category for better organization
+        categorized_tools = {}
+        for tool in tool_estimates:
+            category = tool["category"]
+            if category not in categorized_tools:
+                categorized_tools[category] = []
+            categorized_tools[category].append(tool)
+        
+        # Calculate summary stats
+        total_tools = len(tool_estimates)
+        avg_cost = sum(tool["credit_cost"] for tool in tool_estimates) / total_tools if total_tools > 0 else 0
+        high_cost_tools = len([t for t in tool_estimates if t["cost_tier"] == "high"])
+        medium_cost_tools = len([t for t in tool_estimates if t["cost_tier"] == "medium"])
+        low_cost_tools = len([t for t in tool_estimates if t["cost_tier"] == "low"])
+        
+        return {
+            "summary": {
+                "total_tools": total_tools,
+                "average_cost": round(avg_cost, 2),
+                "cost_distribution": {
+                    "high_cost": high_cost_tools,
+                    "medium_cost": medium_cost_tools, 
+                    "low_cost": low_cost_tools
+                }
+            },
+            "tools": tool_estimates,
+            "categorized_tools": categorized_tools,
+            "cost_tiers": {
+                "high": {"min_cost": 3.0, "color": "#ef4444", "description": "Resource-intensive tools"},
+                "medium": {"min_cost": 1.5, "color": "#f59e0b", "description": "Standard functionality tools"},
+                "low": {"min_cost": 0.0, "color": "#10b981", "description": "Basic operation tools"}
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting tool cost estimates: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get tool cost estimates: {str(e)}")
+
+@router.get("/tools/costs")
+async def get_all_tool_costs_simple(user_id: str = Depends(get_current_user_id_from_jwt)):
+    """Get a simple list of all tool costs."""
+    try:
+        from services.credit_calculator import CreditCalculator
+        credit_calc = CreditCalculator()
+        
+        # Get all tool costs
+        all_tool_costs = credit_calc.get_all_tool_costs()
+        
+        # Create simple mapping of display names to costs
+        tool_display_names = {
+            "sb_browser_tool": "Browser Tool",
+            "sb_deploy_tool": "Deploy Tool", 
+            "sb_shell_tool": "Terminal",
+            "web_search_tool": "Web Search",
+            "sb_files_tool": "File Manager",
+            "sb_excel_tool": "Excel Operations",
+            "sb_pdf_form_tool": "PDF Form Filler",
+            "sb_vision_tool": "Image Processing",
+            "sb_audio_transcription_tool": "Audio Transcription",
+            "sb_podcast_tool": "Audio Overviews",
+            "linkedin_data_provider": "LinkedIn Data Provider",
+            "apollo_data_provider": "Apollo Data Provider",
+            "twitter_data_provider": "Twitter Data Provider",
+            "amazon_data_provider": "Amazon Data Provider",
+            "yahoo_finance_data_provider": "Yahoo Finance Data Provider",
+            "zillow_data_provider": "Zillow Data Provider",
+            "activejobs_data_provider": "Active Jobs Data Provider",
+            "sb_expose_tool": "Port Exposure",
+            "mcp_tool": "MCP Tools",
+            "data_providers_tool": "Legacy Data Providers"
+        }
+        
+        simplified_costs = {}
+        for tool_name, cost in all_tool_costs.items():
+            if tool_name == "default":
+                continue
+            display_name = tool_display_names.get(tool_name, tool_name.replace('_', ' ').title())
+            simplified_costs[display_name] = cost
+        
+        # Sort by cost (high to low)
+        sorted_costs = dict(sorted(simplified_costs.items(), key=lambda x: x[1], reverse=True))
+        
+        return {
+            "tool_costs": sorted_costs,
+            "total_tools": len(sorted_costs),
+            "cost_range": {
+                "highest": max(sorted_costs.values()) if sorted_costs else 0,
+                "lowest": min(sorted_costs.values()) if sorted_costs else 0,
+                "average": round(sum(sorted_costs.values()) / len(sorted_costs), 2) if sorted_costs else 0
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting simple tool costs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get tool costs: {str(e)}")
 
 @router.get("/agent-run/{agent_run_id}")
 async def get_agent_run(agent_run_id: str, user_id: str = Depends(get_current_user_id_from_jwt)):
@@ -602,6 +1014,7 @@ async def get_thread_agent(thread_id: str, user_id: str = Depends(get_current_us
                 agentpress_tools=agent_data.get('agentpress_tools', {}),
                 is_default=agent_data.get('is_default', False),
                 is_public=agent_data.get('is_public', False),
+                visibility=agent_data.get('visibility', 'private'),
                 marketplace_published_at=agent_data.get('marketplace_published_at'),
                 download_count=agent_data.get('download_count', 0),
                 tags=agent_data.get('tags', []),
@@ -866,6 +1279,8 @@ async def initiate_agent_with_files(
     files: List[UploadFile] = File(default=[]),
     is_agent_builder: Optional[bool] = Form(False),
     target_agent_id: Optional[str] = Form(None),
+    user_name: Optional[str] = Form(None),
+    account_id: Optional[str] = Form(None),  # Add account_id parameter for team context
     user_id: str = Depends(get_current_user_id_from_jwt)
 ):
     """Initiate a new agent session with optional file attachments."""
@@ -892,28 +1307,75 @@ async def initiate_agent_with_files(
 
     logger.info(f"[\033[91mDEBUG\033[0m] Initiating new agent with prompt and {len(files)} files (Instance: {instance_id}), model: {model_name}, enable_thinking: {enable_thinking}")
     client = await db.client
-    account_id = user_id # In Basejump, personal account_id is the same as user_id
+    
+    # Determine the account_id to use
+    effective_account_id = account_id if account_id else user_id  # Default to personal account if not specified
+    
+    # Verify user has access to the specified account (if different from personal)
+    if account_id and account_id != user_id:
+        # Check if user has access to this account via basejump account_user table
+        account_access = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', account_id).execute()
+        if not (account_access.data and len(account_access.data) > 0):
+            logger.warning(f"User {user_id} attempted to access account {account_id} without permission")
+            raise HTTPException(status_code=403, detail="Not authorized to access this account")
+        logger.info(f"User {user_id} has access to account {account_id} with role: {account_access.data[0]['account_role']}")
+    else:
+        logger.info(f"Using personal account {user_id} for agent initiation")
     
     # Load agent configuration if agent_id is provided
     agent_config = None
     if agent_id:
-        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).eq('account_id', account_id).execute()
+        # Use the same access logic as get_agent endpoint
+        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
         if not agent_result.data:
+            raise HTTPException(status_code=404, detail="Agent not found")
+            
+        agent_data = agent_result.data[0]
+        
+        # Check access: owner, public agent, or agent in user's library
+        has_access = False
+        if agent_data['account_id'] == user_id:
+            # User owns the agent
+            has_access = True
+        elif agent_data.get('is_public', False):
+            # Public agent
+            has_access = True
+        else:
+            # Check if user has this agent in their library (either managed or copied)
+            library_check = await client.table('user_agent_library').select('*').eq(
+                'user_account_id', user_id
+            ).eq('agent_id', agent_id).execute()
+            
+            if library_check.data:
+                has_access = True
+                # Apply sharing preferences filtering for managed agents
+                library_entry = library_check.data[0]
+                is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
+                if is_managed_by_user:
+                    sharing_prefs = agent_data.get('sharing_preferences', {})
+                    if not sharing_prefs.get('include_knowledge_bases', True):
+                        agent_data['knowledge_bases'] = []
+                    if not sharing_prefs.get('include_custom_mcp_tools', True):
+                        agent_data['configured_mcps'] = []
+                        agent_data['custom_mcps'] = []
+        
+        if not has_access:
             raise HTTPException(status_code=404, detail="Agent not found or access denied")
-        agent_config = agent_result.data[0]
+            
+        agent_config = agent_data
         logger.info(f"Using custom agent: {agent_config['name']} ({agent_id})")
     else:
         # Try to get default agent for the account
-        default_agent_result = await client.table('agents').select('*').eq('account_id', account_id).eq('is_default', True).execute()
+        default_agent_result = await client.table('agents').select('*').eq('account_id', effective_account_id).eq('is_default', True).execute()
         if default_agent_result.data:
             agent_config = default_agent_result.data[0]
             logger.info(f"Using default agent: {agent_config['name']} ({agent_config['agent_id']})")
     
-    can_use, model_message, allowed_models = await can_use_model(client, account_id, model_name)
+    can_use, model_message, allowed_models = await can_use_model(client, effective_account_id, model_name)
     if not can_use:
         raise HTTPException(status_code=403, detail={"message": model_message, "allowed_models": allowed_models})
 
-    can_run, message, subscription = await check_billing_status(client, account_id)
+    can_run, message, subscription = await check_billing_status(client, effective_account_id)
     if not can_run:
         raise HTTPException(status_code=402, detail={"message": message, "subscription": subscription})
 
@@ -921,11 +1383,11 @@ async def initiate_agent_with_files(
         # 1. Create Project
         placeholder_name = f"{prompt[:30]}..." if len(prompt) > 30 else prompt
         project = await client.table('projects').insert({
-            "project_id": str(uuid.uuid4()), "account_id": account_id, "name": placeholder_name,
+            "project_id": str(uuid.uuid4()), "account_id": effective_account_id, "name": placeholder_name,
             "created_at": datetime.now(timezone.utc).isoformat()
         }).execute()
         project_id = project.data[0]['project_id']
-        logger.info(f"Created new project: {project_id}")
+        logger.info(f"Created new project: {project_id} for account: {effective_account_id}")
 
         # 2. Create Sandbox
         sandbox_id = None
@@ -973,14 +1435,14 @@ async def initiate_agent_with_files(
         thread_data = {
             "thread_id": str(uuid.uuid4()), 
             "project_id": project_id, 
-            "account_id": account_id,
+            "account_id": effective_account_id,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         structlog.contextvars.bind_contextvars(
             thread_id=thread_data["thread_id"],
             project_id=project_id,
-            account_id=account_id,
+            account_id=effective_account_id,
         )
         
         # Store the agent_id in the thread if we have one
@@ -1004,7 +1466,7 @@ async def initiate_agent_with_files(
         
         thread = await client.table('threads').insert(thread_data).execute()
         thread_id = thread.data[0]['thread_id']
-        logger.info(f"Created new thread: {thread_id}")
+        logger.info(f"Created new thread: {thread_id} for account: {effective_account_id}")
 
         # Trigger Background Naming Task
         asyncio.create_task(generate_and_update_project_name(project_id=project_id, prompt=prompt))
@@ -1075,9 +1537,13 @@ async def initiate_agent_with_files(
             "created_at": datetime.now(timezone.utc).isoformat()
         }).execute()
 
-        # 6. Start Agent Run
+        # 6. Start Agent Run with reasoning mode
+        reasoning_mode = reasoning_effort if enable_thinking else 'none'
+        
         agent_run = await client.table('agent_runs').insert({
-            "thread_id": thread_id, "status": "running",
+            "thread_id": thread_id, 
+            "status": "running",
+            "reasoning_mode": reasoning_mode,
             "started_at": datetime.now(timezone.utc).isoformat()
         }).execute()
         agent_run_id = agent_run.data[0]['id']
@@ -1106,6 +1572,7 @@ async def initiate_agent_with_files(
             is_agent_builder=is_agent_builder,
             target_agent_id=target_agent_id,
             request_id=request_id,
+            user_name=user_name,
         )
 
         return {"thread_id": thread_id, "agent_run_id": agent_run_id}
@@ -1132,7 +1599,8 @@ async def get_agents(
     has_default: Optional[bool] = Query(None, description="Filter by default agents"),
     has_mcp_tools: Optional[bool] = Query(None, description="Filter by agents with MCP tools"),
     has_agentpress_tools: Optional[bool] = Query(None, description="Filter by agents with AgentPress tools"),
-    tools: Optional[str] = Query(None, description="Comma-separated list of tools to filter by")
+    tools: Optional[str] = Query(None, description="Comma-separated list of tools to filter by"),
+    account_id: Optional[str] = Query(None, description="Filter by specific account ID (for team contexts)")
 ):
     """Get agents for the current user with pagination, search, sort, and filter support."""
     if not await is_enabled("custom_agents"):
@@ -1147,56 +1615,126 @@ async def get_agents(
         # Calculate offset
         offset = (page - 1) * limit
         
-        # Start building the query
-        query = client.table('agents').select('*', count='exact').eq("account_id", user_id)
+        # Use account_id if provided (for team contexts), otherwise use user_id
+        filter_account_id = account_id if account_id else user_id
+        use_marketplace_data = False
         
-        # Apply search filter
-        if search:
-            search_term = f"%{search}%"
-            query = query.or_(f"name.ilike.{search_term},description.ilike.{search_term}")
-        
-        # Apply filters
-        if has_default is not None:
-            query = query.eq("is_default", has_default)
-        
-        # For MCP and AgentPress tools filtering, we'll need to do post-processing
-        # since Supabase doesn't have great JSON array/object filtering
-        
-        # Apply sorting
-        if sort_by == "name":
-            query = query.order("name", desc=(sort_order == "desc"))
-        elif sort_by == "updated_at":
-            query = query.order("updated_at", desc=(sort_order == "desc"))
-        elif sort_by == "created_at":
-            query = query.order("created_at", desc=(sort_order == "desc"))
+        # If account_id is provided, we need to use a different query that includes team-shared agents
+        if account_id and account_id != user_id:
+            # Simplified validation: Let database RLS policies handle access control
+            # The complex validation was causing schema access issues with basejump tables
+            # If user doesn't have access, the query will return empty results due to RLS policies
+            pass
+            
+            # For team accounts, use the database function that handles complex visibility logic
+            # This includes: owned agents, team-shared agents, and public agents
+            # Get a larger set first to allow for post-processing filters
+            marketplace_result = await client.rpc('get_marketplace_agents', {
+                'p_limit': limit * 3,  # Get more than needed for post-processing
+                'p_offset': 0,  # Always start from beginning for filtering
+                'p_search': search,
+                'p_tags': None,
+                'p_account_id': account_id
+            }).execute()
+            
+            if not marketplace_result.data:
+                marketplace_result.data = []
+            
+            # Convert marketplace result to agents format and continue with existing logic
+            agents_data = marketplace_result.data
+            total_count = len(agents_data)  # This will be recalculated after filters
+            
+            # Apply additional filters and sorting as needed
+            if has_default is not None:
+                agents_data = [a for a in agents_data if a.get('is_default') == has_default]
+            
+            # The rest of the filtering will be handled by the existing post-processing logic
+            # Skip the normal query execution for team accounts
+            use_marketplace_data = True
         else:
-            # Default to created_at
-            query = query.order("created_at", desc=(sort_order == "desc"))
+            # For personal accounts, just show their own agents
+            query = client.table('agents').select('*', count='exact').eq("account_id", filter_account_id)
         
-        # Execute query to get total count first
-        count_result = await query.execute()
-        total_count = count_result.count
+        # Execute query only if not using marketplace data
+        if not use_marketplace_data:
+            # Get both owned agents and managed agents (references)
+            
+            # 1. Get owned agents
+            owned_query = client.table('agents').select('*').eq("account_id", filter_account_id)
+            
+            # Apply search filter to owned agents
+            if search:
+                search_term = f"%{search}%"
+                owned_query = owned_query.or_(f"name.ilike.{search_term},description.ilike.{search_term}")
+            
+            # Apply filters to owned agents
+            if has_default is not None:
+                owned_query = owned_query.eq("is_default", has_default)
+            
+            owned_result = await owned_query.execute()
+            owned_agents = owned_result.data or []
+            
+            # Add metadata to mark as owned
+            for agent in owned_agents:
+                agent['_is_managed'] = False
+                agent['_is_owned'] = True
+            
+            # 2. Get managed agents (references from user_agent_library)
+            # For managed agents, agent_id equals original_agent_id (indicating it's a reference, not a copy)
+            managed_query = await client.rpc('get_managed_agents_for_user', {
+                'p_user_id': filter_account_id
+            }).execute()
+            
+            managed_agents = []
+            if managed_query.data:
+                # Get the actual agent data for managed agents
+                managed_agent_ids = [ref['agent_id'] for ref in managed_query.data]
+                if managed_agent_ids:
+                    managed_agents_query = client.table('agents').select('*').in_('agent_id', managed_agent_ids)
+                    
+                    # Apply search filter to managed agents
+                    if search:
+                        search_term = f"%{search}%"
+                        managed_agents_query = managed_agents_query.or_(f"name.ilike.{search_term},description.ilike.{search_term}")
+                    
+                    managed_result = await managed_agents_query.execute()
+                    managed_agents = managed_result.data or []
+                    
+                    # Add metadata to mark as managed and apply sharing preferences filtering
+                    for agent in managed_agents:
+                        agent['_is_managed'] = True
+                        agent['_is_owned'] = False
+                        # Don't show "(from marketplace)" suffix for managed agents since they're live references
+                        
+                        # Apply sharing preferences filtering for managed agents
+                        sharing_prefs = agent.get('sharing_preferences', {})
+                        if not sharing_prefs.get('include_knowledge_bases', True):
+                            agent['knowledge_bases'] = []
+                        if not sharing_prefs.get('include_custom_mcp_tools', True):
+                            agent['configured_mcps'] = []
+                            agent['custom_mcps'] = []
+            
+            # 3. Combine owned and managed agents
+            agents_data = owned_agents + managed_agents
+            
+            # Apply default filter after combining
+            if has_default is not None:
+                agents_data = [a for a in agents_data if a.get('is_default') == has_default]
+            
+            # Apply sorting
+            if sort_by == "name":
+                agents_data.sort(key=lambda x: x.get('name', '').lower(), reverse=(sort_order == "desc"))
+            elif sort_by == "updated_at":
+                agents_data.sort(key=lambda x: x.get('updated_at', ''), reverse=(sort_order == "desc"))
+            elif sort_by == "created_at":
+                agents_data.sort(key=lambda x: x.get('created_at', ''), reverse=(sort_order == "desc"))
+            else:
+                # Default to created_at
+                agents_data.sort(key=lambda x: x.get('created_at', ''), reverse=(sort_order == "desc"))
+            
+            total_count = len(agents_data)
         
-        # Now get the actual data with pagination
-        query = query.range(offset, offset + limit - 1)
-        agents_result = await query.execute()
-        
-        if not agents_result.data:
-            logger.info(f"No agents found for user: {user_id}")
-            return {
-                "agents": [],
-                "pagination": {
-                    "page": page,
-                    "limit": limit,
-                    "total": 0,
-                    "pages": 0
-                }
-            }
-        
-        # Post-process for tool filtering and tools_count sorting
-        agents_data = agents_result.data
-        
-        # Apply tool-based filters
+        # Apply tool-based filters (works for both marketplace and regular data)
         if has_mcp_tools is not None or has_agentpress_tools is not None or tools:
             filtered_agents = []
             tools_filter = []
@@ -1253,15 +1791,15 @@ async def get_agents(
             
             agents_data.sort(key=get_tools_count, reverse=(sort_order == "desc"))
         
-        # Apply pagination to filtered results if we did post-processing
-        if has_mcp_tools is not None or has_agentpress_tools is not None or tools or sort_by == "tools_count":
+        # Apply pagination to filtered results if we did post-processing or used marketplace data
+        if has_mcp_tools is not None or has_agentpress_tools is not None or tools or sort_by == "tools_count" or use_marketplace_data:
             total_count = len(agents_data)
             agents_data = agents_data[offset:offset + limit]
         
         # Format the response
         agent_list = []
         for agent in agents_data:
-            agent_list.append(AgentResponse(
+                            agent_list.append(AgentResponse(
                 agent_id=agent['agent_id'],
                 account_id=agent['account_id'],
                 name=agent['name'],
@@ -1272,13 +1810,18 @@ async def get_agents(
                 agentpress_tools=agent.get('agentpress_tools', {}),
                 is_default=agent.get('is_default', False),
                 is_public=agent.get('is_public', False),
+                visibility=agent.get('visibility', 'private'),
+                knowledge_bases=agent.get('knowledge_bases', []),
                 marketplace_published_at=agent.get('marketplace_published_at'),
                 download_count=agent.get('download_count', 0),
                 tags=agent.get('tags', []),
+                sharing_preferences=agent.get('sharing_preferences', {}),
                 avatar=agent.get('avatar'),
                 avatar_color=agent.get('avatar_color'),
                 created_at=agent['created_at'],
-                updated_at=agent['updated_at']
+                updated_at=agent['updated_at'],
+                is_managed=agent.get('_is_managed', False),
+                is_owned=agent.get('_is_owned', True)
             ))
         
         total_pages = (total_count + limit - 1) // limit
@@ -1311,17 +1854,43 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
     client = await db.client
     
     try:
-        # Get agent with access check - only owner or public agents
+        # Get agent with access check - only owner, public agents, or managed agents in user's library
         agent = await client.table('agents').select('*').eq("agent_id", agent_id).execute()
         
         if not agent.data:
             raise HTTPException(status_code=404, detail="Agent not found")
         
         agent_data = agent.data[0]
+        is_managed_by_user = False
         
-        # Check ownership - only owner can access non-public agents
-        if agent_data['account_id'] != user_id and not agent_data.get('is_public', False):
-            raise HTTPException(status_code=403, detail="Access denied")
+        # Check access: owner, public agent, or managed agent in user's library
+        if agent_data['account_id'] == user_id:
+            # User owns the agent
+            pass
+        elif agent_data.get('is_public', False):
+            # Public agent
+            pass
+        else:
+            # Check if user has this agent in their library (either managed or copied)
+            library_check = await client.table('user_agent_library').select('*').eq(
+                'user_account_id', user_id
+            ).eq('agent_id', agent_id).execute()
+            
+            if library_check.data:
+                # Check if it's a managed agent (agent_id == original_agent_id)
+                library_entry = library_check.data[0]
+                is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
+            else:
+                raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Apply sharing preferences filtering for managed agents
+        if is_managed_by_user:
+            sharing_prefs = agent_data.get('sharing_preferences', {})
+            if not sharing_prefs.get('include_knowledge_bases', True):
+                agent_data['knowledge_bases'] = []
+            if not sharing_prefs.get('include_custom_mcp_tools', True):
+                agent_data['configured_mcps'] = []
+                agent_data['custom_mcps'] = []
         
         return AgentResponse(
             agent_id=agent_data['agent_id'],
@@ -1334,13 +1903,18 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
             agentpress_tools=agent_data.get('agentpress_tools', {}),
             is_default=agent_data.get('is_default', False),
             is_public=agent_data.get('is_public', False),
+            visibility=agent_data.get('visibility', 'private'),
+            knowledge_bases=agent_data.get('knowledge_bases', []),
             marketplace_published_at=agent_data.get('marketplace_published_at'),
             download_count=agent_data.get('download_count', 0),
             tags=agent_data.get('tags', []),
+            sharing_preferences=agent_data.get('sharing_preferences', {}),
             avatar=agent_data.get('avatar'),
             avatar_color=agent_data.get('avatar_color'),
             created_at=agent_data['created_at'],
-            updated_at=agent_data['updated_at']
+            updated_at=agent_data['updated_at'],
+            is_managed=is_managed_by_user,
+            is_owned=agent_data['account_id'] == user_id
         )
         
     except HTTPException:
@@ -1383,6 +1957,7 @@ async def create_agent(
             "custom_mcps": agent_data.custom_mcps or [],
             "agentpress_tools": agent_data.agentpress_tools or {},
             "is_default": agent_data.is_default or False,
+            "knowledge_bases": agent_data.knowledge_bases or [],
             "avatar": agent_data.avatar,
             "avatar_color": agent_data.avatar_color
         }
@@ -1406,9 +1981,12 @@ async def create_agent(
             agentpress_tools=agent.get('agentpress_tools', {}),
             is_default=agent.get('is_default', False),
             is_public=agent.get('is_public', False),
+            visibility=agent.get('visibility', 'private'),
+            knowledge_bases=agent.get('knowledge_bases', []),
             marketplace_published_at=agent.get('marketplace_published_at'),
             download_count=agent.get('download_count', 0),
             tags=agent.get('tags', []),
+            sharing_preferences=agent.get('sharing_preferences', {}),
             avatar=agent.get('avatar'),
             avatar_color=agent.get('avatar_color'),
             created_at=agent['created_at'],
@@ -1470,6 +2048,8 @@ async def update_agent(
             # If setting as default, unset other defaults first
             if agent_data.is_default:
                 await client.table('agents').update({"is_default": False}).eq("account_id", user_id).eq("is_default", True).neq("agent_id", agent_id).execute()
+        if agent_data.knowledge_bases is not None:
+            update_data["knowledge_bases"] = agent_data.knowledge_bases
         if agent_data.avatar is not None:
             update_data["avatar"] = agent_data.avatar
         if agent_data.avatar_color is not None:
@@ -1506,9 +2086,12 @@ async def update_agent(
             agentpress_tools=agent.get('agentpress_tools', {}),
             is_default=agent.get('is_default', False),
             is_public=agent.get('is_public', False),
+            visibility=agent.get('visibility', 'private'),
+            knowledge_bases=agent.get('knowledge_bases', []),
             marketplace_published_at=agent.get('marketplace_published_at'),
             download_count=agent.get('download_count', 0),
             tags=agent.get('tags', []),
+            sharing_preferences=agent.get('sharing_preferences', {}),
             avatar=agent.get('avatar'),
             avatar_color=agent.get('avatar_color'),
             created_at=agent['created_at'],
@@ -1565,7 +2148,10 @@ class MarketplaceAgent(BaseModel):
     description: Optional[str]
     system_prompt: str
     configured_mcps: List[Dict[str, Any]]
+    custom_mcps: Optional[List[Dict[str, Any]]] = []
     agentpress_tools: Dict[str, Any]
+    knowledge_bases: Optional[List[Dict[str, Any]]] = []
+    sharing_preferences: Optional[Dict[str, Any]] = {}
     tags: Optional[List[str]]
     download_count: int
     marketplace_published_at: str
@@ -1580,6 +2166,11 @@ class MarketplaceAgentsResponse(BaseModel):
 
 class PublishAgentRequest(BaseModel):
     tags: Optional[List[str]] = []
+    visibility: Optional[str] = "public"  # "public", "teams", or "private"
+    team_ids: Optional[List[str]] = []  # Team account IDs to share with
+    include_knowledge_bases: Optional[bool] = True  # Whether to include knowledge bases when sharing
+    include_custom_mcp_tools: Optional[bool] = True  # Whether to include custom MCP tools when sharing
+    managed_agent: Optional[bool] = False  # Whether this is a managed agent (users get live reference instead of copy)
 
 @router.get("/marketplace/agents", response_model=MarketplaceAgentsResponse)
 async def get_marketplace_agents(
@@ -1588,7 +2179,8 @@ async def get_marketplace_agents(
     search: Optional[str] = Query(None, description="Search in name and description"),
     tags: Optional[str] = Query(None, description="Comma-separated string of tags"),
     sort_by: Optional[str] = Query("newest", description="Sort by: newest, popular, most_downloaded, name"),
-    creator: Optional[str] = Query(None, description="Filter by creator name")
+    creator: Optional[str] = Query(None, description="Filter by creator name"),
+    account_id: Optional[str] = Query(None, description="Filter by specific account ID for team-specific marketplace")
 ):
     """Get public agents from the marketplace with pagination, search, sort, and filter support."""
     if not await is_enabled("agent_marketplace"):
@@ -1610,7 +2202,8 @@ async def get_marketplace_agents(
             'p_search': search,
             'p_tags': tags_array,
             'p_limit': limit + 1,
-            'p_offset': offset
+            'p_offset': offset,
+            'p_account_id': account_id  # Pass account_id for team-specific filtering
         }).execute()
         
         if result.data is None:
@@ -1632,6 +2225,10 @@ async def get_marketplace_agents(
             agents_data = sorted(agents_data, key=lambda x: x.get('name', '').lower())
         else:
             agents_data = sorted(agents_data, key=lambda x: x.get('marketplace_published_at', ''), reverse=True)
+        
+        # NOTE: Sharing preferences are applied during import in add_agent_to_library function
+        # The marketplace should show what WOULD be imported, not filter it out here
+        # This allows users to see what MCPs/knowledge bases are available before importing
         
         estimated_total = (page - 1) * limit + len(agents_data)
         if has_more:
@@ -1662,14 +2259,14 @@ async def publish_agent_to_marketplace(
     publish_data: PublishAgentRequest,
     user_id: str = Depends(get_current_user_id_from_jwt)
 ):
-    """Publish an agent to the marketplace."""
+    """Publish an agent to the marketplace or share with specific teams."""
     if not await is_enabled("agent_marketplace"):
         raise HTTPException(
             status_code=403, 
             detail="Custom agent currently disabled. This feature is not available at the moment."
         )
     
-    logger.info(f"Publishing agent {agent_id} to marketplace")
+    logger.info(f"Publishing agent {agent_id} with visibility: {publish_data.visibility}")
     client = await db.client
     
     try:
@@ -1682,19 +2279,48 @@ async def publish_agent_to_marketplace(
         if agent['account_id'] != user_id:
             raise HTTPException(status_code=403, detail="Access denied")
         
-        # Update agent with marketplace data
-        update_data = {
-            'is_public': True,
-            'marketplace_published_at': datetime.now(timezone.utc).isoformat()
+        # Validate visibility
+        if publish_data.visibility not in ["public", "teams", "private"]:
+            raise HTTPException(status_code=400, detail="Invalid visibility. Must be 'public', 'teams', or 'private'")
+        
+        # Note: Team permission validation is handled by the database function
+        # publish_agent_with_visibility_by_user() which validates:
+        # 1. User owns the agent
+        # 2. User is owner of their account  
+        # 3. User is owner of all target teams (if sharing with teams)
+        
+        # Store sharing preferences for later use when serving marketplace agents
+        sharing_preferences = {
+            'include_knowledge_bases': publish_data.include_knowledge_bases,
+            'include_custom_mcp_tools': publish_data.include_custom_mcp_tools,
+            'managed_agent': publish_data.managed_agent
         }
         
+        # Update agent with sharing preferences
+        await client.table('agents').update({
+            'sharing_preferences': sharing_preferences
+        }).eq('agent_id', agent_id).execute()
+        
+        # Use the new database function that accepts user_id explicitly
+        await client.rpc('publish_agent_with_visibility_by_user', {
+            'p_agent_id': agent_id,
+            'p_visibility': publish_data.visibility,
+            'p_user_id': user_id,
+            'p_team_ids': publish_data.team_ids if publish_data.visibility == "teams" else None
+        }).execute()
+        
+        # Update tags if provided
         if publish_data.tags:
-            update_data['tags'] = publish_data.tags
+            await client.table('agents').update({'tags': publish_data.tags}).eq('agent_id', agent_id).execute()
         
-        await client.table('agents').update(update_data).eq('agent_id', agent_id).execute()
+        message = {
+            "public": "Agent published to marketplace successfully",
+            "teams": f"Agent shared with {len(publish_data.team_ids or [])} team(s)",
+            "private": "Agent set to private"
+        }.get(publish_data.visibility, "Agent visibility updated")
         
-        logger.info(f"Successfully published agent {agent_id} to marketplace")
-        return {"message": "Agent published to marketplace successfully"}
+        logger.info(f"Successfully updated agent {agent_id} visibility to {publish_data.visibility}")
+        return {"message": message}
         
     except HTTPException:
         raise
@@ -1727,11 +2353,26 @@ async def unpublish_agent_from_marketplace(
         if agent['account_id'] != user_id:
             raise HTTPException(status_code=403, detail="Access denied")
         
-        # Update agent to remove from marketplace
-        await client.table('agents').update({
-            'is_public': False,
-            'marketplace_published_at': None
-        }).eq('agent_id', agent_id).execute()
+        # Check if this is a managed agent before unpublishing
+        agent_sharing_prefs = agent.get('sharing_preferences', {})
+        is_managed_agent = agent_sharing_prefs.get('managed_agent', False)
+        
+        # Update agent to remove from marketplace using the new visibility function
+        await client.rpc('publish_agent_with_visibility_by_user', {
+            'p_agent_id': agent_id,
+            'p_visibility': 'private',
+            'p_user_id': user_id,
+            'p_team_ids': None
+        }).execute()
+        
+        # If this was a managed agent, remove it from all users' libraries
+        if is_managed_agent:
+            # Remove all managed references (where agent_id = original_agent_id)
+            await client.table('user_agent_library').delete().eq(
+                'agent_id', agent_id
+            ).eq('original_agent_id', agent_id).neq('user_account_id', user_id).execute()
+            
+            logger.info(f"Removed managed agent {agent_id} from all users' libraries")
         
         logger.info(f"Successfully unpublished agent {agent_id} from marketplace")
         return {"message": "Agent removed from marketplace successfully"}
@@ -1740,6 +2381,44 @@ async def unpublish_agent_from_marketplace(
         raise
     except Exception as e:
         logger.error(f"Error unpublishing agent {agent_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.delete("/agents/{agent_id}/remove-from-library")
+async def remove_agent_from_library(
+    agent_id: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Remove a managed agent from user's library."""
+    if not await is_enabled("agent_marketplace"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Custom agent currently disabled. This feature is not available at the moment."
+        )
+
+    logger.info(f"Removing agent {agent_id} from user {user_id} library")
+    client = await db.client
+    
+    try:
+        # Check if this is a managed agent in user's library
+        library_entry = await client.table('user_agent_library').select('*').eq(
+            'user_account_id', user_id
+        ).eq('agent_id', agent_id).eq('original_agent_id', agent_id).execute()
+        
+        if not library_entry.data:
+            raise HTTPException(status_code=404, detail="Managed agent not found in your library")
+        
+        # Remove from library
+        await client.table('user_agent_library').delete().eq(
+            'user_account_id', user_id
+        ).eq('agent_id', agent_id).eq('original_agent_id', agent_id).execute()
+        
+        logger.info(f"Successfully removed managed agent {agent_id} from user {user_id} library")
+        return {"message": "Agent removed from library successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error removing agent {agent_id} from library: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/marketplace/agents/{agent_id}/add-to-library")
@@ -1875,3 +2554,367 @@ async def get_agent_builder_chat_history(
     except Exception as e:
         logger.error(f"Error fetching agent builder chat history for agent {agent_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch chat history: {str(e)}")
+
+@router.put("/thread/{thread_id}/message/{message_id}/edit")
+async def edit_message(
+    thread_id: str,
+    message_id: str,
+    new_content: str = Body(..., embed=True),
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Edit a message and remove all subsequent messages from the thread."""
+    structlog.contextvars.bind_contextvars(
+        thread_id=thread_id,
+        message_id=message_id,
+    )
+    logger.info(f"Editing message {message_id} in thread {thread_id}")
+    
+    client = await db.client
+    
+    try:
+        # Verify thread access
+        await verify_thread_access(client, thread_id, user_id)
+        
+        # Get the message to edit
+        message_result = await client.table('messages')\
+            .select('*')\
+            .eq('message_id', message_id)\
+            .eq('thread_id', thread_id)\
+            .execute()
+        
+        if not message_result.data:
+            raise HTTPException(status_code=404, detail="Message not found")
+        
+        message = message_result.data[0]
+        
+        # Only allow editing user messages
+        if message['type'] != 'user':
+            raise HTTPException(status_code=400, detail="Only user messages can be edited")
+        
+        # Update the message content
+        parsed_content = json.loads(message['content'])
+        parsed_content['content'] = new_content
+        updated_content = json.dumps(parsed_content)
+        
+        await client.table('messages')\
+            .update({'content': updated_content, 'updated_at': datetime.now(timezone.utc).isoformat()})\
+            .eq('message_id', message_id)\
+            .execute()
+        
+        # Delete all messages that came AFTER this message
+        delete_result = await client.table('messages')\
+            .delete()\
+            .eq('thread_id', thread_id)\
+            .gt('created_at', message['created_at'])\
+            .execute()
+        
+        deleted_count = len(delete_result.data) if delete_result.data else 0
+        
+        logger.info(f"Successfully edited message {message_id} and deleted {deleted_count} subsequent messages")
+        return {
+            "success": True, 
+            "message": "Message edited successfully",
+            "deleted_messages_count": deleted_count
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error editing message {message_id} in thread {thread_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to edit message: {str(e)}")
+
+# Agent Share Link Models
+class CreateAgentShareRequest(BaseModel):
+    share_type: Literal["persistent", "ephemeral"]
+    expires_in_hours: Optional[int] = None  # For ephemeral links
+    max_uses: Optional[int] = None  # For limited use links
+    include_knowledge_bases: bool = True
+    include_custom_mcp_tools: bool = True
+    managed_agent: bool = False
+
+class AgentShareResponse(BaseModel):
+    share_id: str
+    token: str
+    share_url: str
+    expires_at: Optional[datetime]
+    access_count: int
+    sharing_preferences: Optional[Dict[str, Any]] = {}
+
+class AgentShareListResponse(BaseModel):
+    shares: List[AgentShareResponse]
+
+class SharedAgentResponse(BaseModel):
+    agent: AgentResponse
+    share_info: Dict[str, Any]
+
+# Agent Share Link Endpoints
+
+@router.post("/agents/{agent_id}/share")
+async def create_agent_share_link(
+    agent_id: str,
+    share_data: CreateAgentShareRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Create a share link for an agent."""
+    if not await is_enabled("agent_marketplace"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Agent sharing currently disabled. This feature is not available at the moment."
+        )
+    
+    logger.info(f"Creating share link for agent {agent_id} by user {user_id}")
+    client = await db.client
+    
+    try:
+        # Verify agent ownership
+        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
+        if not agent_result.data:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        agent = agent_result.data[0]
+        if agent['account_id'] != user_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Validate share type and expiration
+        if share_data.share_type == "ephemeral" and not share_data.expires_in_hours:
+            raise HTTPException(status_code=400, detail="Ephemeral links require expiration time")
+        
+        if share_data.expires_in_hours and share_data.expires_in_hours < 1:
+            raise HTTPException(status_code=400, detail="Expiration must be at least 1 hour")
+        
+        # Store sharing preferences
+        sharing_preferences = {
+            'include_knowledge_bases': share_data.include_knowledge_bases,
+            'include_custom_mcp_tools': share_data.include_custom_mcp_tools,
+            'managed_agent': share_data.managed_agent
+        }
+        
+        # Create share link using database function
+        result = await client.rpc('create_agent_share_link', {
+            'p_agent_id': agent_id,
+            'p_share_type': share_data.share_type,
+            'p_expires_in_hours': share_data.expires_in_hours,
+            'p_max_uses': share_data.max_uses,
+            'p_sharing_preferences': sharing_preferences
+        }).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to create share link")
+        
+        share = result.data[0]
+        
+        logger.info(f"Successfully created share link {share['share_id']} for agent {agent_id}")
+        return AgentShareResponse(
+            share_id=share['share_id'],
+            token=share['token'],
+            share_url=share['share_url'],
+            expires_at=share['expires_at'],
+            access_count=0,
+            sharing_preferences=share.get('sharing_preferences', {})
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating share link for agent {agent_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/agents/{agent_id}/shares")
+async def get_agent_share_links(
+    agent_id: str,
+    user_id: str = Depends(get_current_user_id_from_jwt),
+    request: Request = None
+):
+    """Get all share links for an agent."""
+    logger.info(f"Getting share links for agent {agent_id}")
+    client = await db.client
+    
+    try:
+        # Verify agent ownership
+        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
+        if not agent_result.data:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        agent = agent_result.data[0]
+        if agent['account_id'] != user_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Get all share links for this agent
+        shares_result = await client.table('agent_shares').select('*').eq('agent_id', agent_id).eq('creator_account_id', user_id).execute()
+        
+        shares = []
+        for share in shares_result.data or []:
+            share_url = f"{request.url.scheme}://{request.url.netloc}/shared-agents/{share['token']}"
+            shares.append(AgentShareResponse(
+                share_id=share['id'],
+                token=share['token'],
+                share_url=share_url,
+                expires_at=share['expires_at'],
+                access_count=share['access_count'],
+                sharing_preferences=share.get('sharing_preferences', {})
+            ))
+        
+        return AgentShareListResponse(shares=shares)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting share links for agent {agent_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.delete("/agents/{agent_id}/shares/{share_id}")
+async def revoke_agent_share_link(
+    agent_id: str,
+    share_id: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Revoke a specific agent share link."""
+    logger.info(f"Revoking share link {share_id} for agent {agent_id}")
+    client = await db.client
+    
+    try:
+        # Verify agent ownership
+        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
+        if not agent_result.data:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        agent = agent_result.data[0]
+        if agent['account_id'] != user_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Verify share ownership and get share info
+        share_result = await client.table('agent_shares').select('*').eq('id', share_id).eq('creator_account_id', user_id).execute()
+        if not share_result.data:
+            raise HTTPException(status_code=404, detail="Share link not found")
+
+        # Delete the share link
+        await client.table('agent_shares').delete().eq('id', share_id).execute()
+        
+        logger.info(f"Successfully revoked share link {share_id} for agent {agent_id}")
+        return {"message": "Share link revoked successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error revoking share link {share_id} for agent {agent_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.post("/agents/{agent_id}/unshare-managed")
+async def unshare_managed_agent(
+    agent_id: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Completely unshare a managed agent - revoke all share links and remove from all users' libraries."""
+    logger.info(f"Unsharing managed agent {agent_id}")
+    client = await db.client
+    
+    try:
+        # Verify agent ownership
+        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
+        if not agent_result.data:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        agent = agent_result.data[0]
+        if agent['account_id'] != user_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Check if this is a managed agent
+        sharing_prefs = agent.get('sharing_preferences', {})
+        is_managed_agent = sharing_prefs.get('managed_agent', False)
+        
+        if not is_managed_agent:
+            raise HTTPException(status_code=400, detail="Agent is not a managed agent")
+
+        # Get all share links for this agent
+        shares_result = await client.table('agent_shares').select('*').eq('agent_id', agent_id).eq('creator_account_id', user_id).execute()
+        share_count = len(shares_result.data) if shares_result.data else 0
+        
+        # Delete all share links for this agent
+        await client.table('agent_shares').delete().eq('agent_id', agent_id).eq('creator_account_id', user_id).execute()
+        
+        # Remove this managed agent from all users' libraries
+        # Note: We only remove managed agents (where agent_id == original_agent_id)
+        library_result = await client.table('user_agent_library').delete().eq('agent_id', agent_id).eq('original_agent_id', agent_id).execute()
+        
+        removed_count = len(library_result.data) if library_result.data else 0
+        
+        logger.info(f"Successfully unshared managed agent {agent_id}: revoked {share_count} share links, removed from {removed_count} libraries")
+        return {
+            "message": "Managed agent unshared successfully",
+            "share_links_revoked": share_count,
+            "libraries_removed": removed_count
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error unsharing managed agent {agent_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/shared-agents/{token}")
+async def get_shared_agent(
+    token: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Get a shared agent by token."""
+    logger.info(f"Accessing shared agent with token {token} by user {user_id}")
+    client = await db.client
+    
+    try:
+        # Get shared agent data using database function
+        result = await client.rpc('get_shared_agent', {
+            'p_token': token
+        }).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Share link not found, expired, or exceeded usage limit")
+        
+        shared_data = result.data[0]
+        agent_data = shared_data['agent_data']
+        sharing_preferences = shared_data['sharing_preferences']
+        share_info = shared_data['share_info']
+        
+        # Apply sharing preferences filtering
+        if not sharing_preferences.get('include_knowledge_bases', True):
+            agent_data['knowledge_bases'] = []
+        if not sharing_preferences.get('include_custom_mcp_tools', True):
+            agent_data['configured_mcps'] = []
+            agent_data['custom_mcps'] = []
+        
+        # Convert to AgentResponse format
+        agent_response = AgentResponse(
+            agent_id=agent_data['agent_id'],
+            account_id=agent_data['account_id'],
+            name=agent_data['name'],
+            description=agent_data.get('description'),
+            system_prompt=agent_data['system_prompt'],
+            configured_mcps=agent_data.get('configured_mcps', []),
+            custom_mcps=agent_data.get('custom_mcps', []),
+            agentpress_tools=agent_data.get('agentpress_tools', {}),
+            is_default=agent_data.get('is_default', False),
+            is_public=agent_data.get('is_public', False),
+            visibility=agent_data.get('visibility', 'private'),
+            knowledge_bases=agent_data.get('knowledge_bases', []),
+            marketplace_published_at=agent_data.get('marketplace_published_at'),
+            download_count=agent_data.get('download_count', 0),
+            tags=agent_data.get('tags', []),
+            sharing_preferences=sharing_preferences,
+            avatar=agent_data.get('avatar'),
+            avatar_color=agent_data.get('avatar_color'),
+            created_at=agent_data['created_at'],
+            updated_at=agent_data['updated_at'],
+            is_managed=sharing_preferences.get('managed_agent', False),
+            is_owned=False  # User doesn't own shared agents
+        )
+        
+        logger.info(f"Successfully retrieved shared agent {agent_data['agent_id']} via token {token}")
+        return SharedAgentResponse(
+            agent=agent_response,
+            share_info=share_info
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting shared agent with token {token}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")

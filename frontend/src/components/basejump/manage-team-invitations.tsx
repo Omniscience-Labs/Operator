@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -5,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../ui/card';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/client';
 import { Table, TableRow, TableBody, TableCell } from '../ui/table';
 import { Badge } from '../ui/badge';
 import CreateTeamInvitationButton from './create-team-invitation-button';
@@ -16,15 +19,38 @@ type Props = {
   accountId: string;
 };
 
-export default async function ManageTeamInvitations({ accountId }: Props) {
-  const supabaseClient = await createClient();
+export default function ManageTeamInvitations({ accountId }: Props) {
+  const [invitations, setInvitations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: invitations } = await supabaseClient.rpc(
-    'get_account_invitations',
-    {
-      account_id: accountId,
-    },
-  );
+  useEffect(() => {
+    async function loadInvitations() {
+      try {
+        const supabaseClient = createClient();
+        
+        const { data: invitationsData } = await supabaseClient.rpc(
+          'get_account_invitations',
+          {
+            account_id: accountId,
+          },
+        );
+
+        setInvitations(invitationsData || []);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading invitations:', error);
+        setLoading(false);
+      }
+    }
+
+    if (accountId) {
+      loadInvitations();
+    }
+  }, [accountId]);
+
+  if (loading) {
+    return <div>Loading invitations...</div>;
+  }
 
   return (
     <Card>
@@ -43,7 +69,7 @@ export default async function ManageTeamInvitations({ accountId }: Props) {
         <CardContent>
           <Table>
             <TableBody>
-              {invitations?.map((invitation: any) => (
+              {invitations.map((invitation: any) => (
                 <TableRow key={invitation.invitation_id}>
                   <TableCell>
                     <div className="flex gap-x-2">

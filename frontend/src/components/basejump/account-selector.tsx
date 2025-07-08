@@ -177,7 +177,7 @@ export default function AccountSelector({
           </Command>
         </PopoverContent>
       </Popover>
-      <DialogContent className="sm:max-w-[425px] border-subtle dark:border-white/10 bg-card-bg dark:bg-background-secondary rounded-2xl shadow-custom">
+      <DialogContent className="sm:max-w-[425px] border bg-background rounded-2xl shadow-lg">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             Create a new team

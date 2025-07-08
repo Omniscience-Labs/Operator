@@ -40,6 +40,13 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-card-title: var(--card-foreground);
+  --color-card-bg: var(--card);
+  --color-background-secondary: var(--card);
+  --color-hover-bg: var(--accent);
+  --color-hover-bg-dark: var(--accent);
+  --color-subtle: var(--border);
+  --color-border-subtle: var(--border);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -274,8 +281,8 @@
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(27.39% 0.005 286.03);
-  --accent-foreground: oklch(98.46% 0.002 247.84)
-    --destructive: oklch(0.396 0.141 25.723);
+  --accent-foreground: oklch(98.46% 0.002 247.84);
+  --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
@@ -296,9 +303,28 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+  /* Apply outline to focusable elements only */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    @apply outline-ring/50;
   }
+  
+  /* Apply border color to elements that explicitly use border classes */
+  /* This prevents the global application of gray borders */
+  .border,
+  .border-t,
+  .border-r,
+  .border-b,
+  .border-l,
+  .border-x,
+  .border-y {
+    @apply border-border;
+  }
+  
   html {
     scroll-behavior: smooth;
     zoom: 100%;
@@ -418,7 +444,7 @@
     margin-bottom: 0.5em;
     padding: 0.75em 1em;
     /* background 95 */
-    background-color: theme('colors.background/95');
+    background-color: hsl(var(--muted));
     border-radius: 0.375rem;
     overflow-x: auto;
     font-family: var(--font-mono);
@@ -440,7 +466,7 @@
     padding: 0.2em 0.4em;
     font-size: 0.85em;
     font-family: var(--font-mono);
-    background-color: theme('colors.background/95');
+    background-color: hsl(var(--muted));
     border-radius: 3px;
     word-break: break-word;
   }
@@ -455,7 +481,7 @@
   }
 
   & th {
-    background-color: theme('colors.slate.100');
+    background-color: hsl(var(--muted));
     font-weight: 600;
     text-align: left;
     padding: 0.5em 0.75em;
@@ -463,46 +489,46 @@
 
   & td {
     padding: 0.5em 0.75em;
-    border: 1px solid theme('colors.slate.200');
+    border: 1px solid hsl(var(--border));
   }
 
   /* Fix blockquotes */
   & blockquote {
-    border-left: 3px solid theme('colors.slate.300');
+    border-left: 3px solid hsl(var(--border));
     padding-left: 1em;
     margin-left: 0;
     font-style: italic;
-    color: theme('colors.slate.600');
+    color: hsl(var(--muted-foreground));
   }
 
   /* Dark mode specific overrides */
   .dark & {
     /* Code blocks in dark mode */
     & pre {
-      background-color: theme('colors.background/95');
-      /* border: 1px solid theme('colors.zinc.700'); */
+      background-color: hsl(var(--muted));
+      /* border: 1px solid hsl(var(--border)); */
     }
 
     & code:not([class*='language-']) {
-      background-color: theme('colors.background/95');
-      color: theme('colors.zinc.200');
-      /* border: 1px solid theme('colors.zinc.700'); */
+      background-color: hsl(var(--muted));
+      color: hsl(var(--foreground));
+      /* border: 1px solid hsl(var(--border)); */
     }
 
     /* Tables in dark mode */
     & th {
-      background-color: theme('colors.zinc.800');
-      border-color: theme('colors.zinc.700');
+      background-color: hsl(var(--muted));
+      border-color: hsl(var(--border));
     }
 
     & td {
-      border-color: theme('colors.zinc.700');
+      border-color: hsl(var(--border));
     }
 
     /* Blockquotes in dark mode */
     & blockquote {
-      border-left-color: theme('colors.zinc.600');
-      color: theme('colors.zinc.400');
+      border-left-color: hsl(var(--border));
+      color: hsl(var(--muted-foreground));
     }
 
     /* Syntax highlighting in dark mode */
@@ -511,7 +537,7 @@
     & .hljs-built_in,
     & .hljs-name,
     & .hljs-tag {
-      color: theme('colors.blue.400');
+      color: #60a5fa;
     }
 
     & .hljs-string,
@@ -523,14 +549,14 @@
     & .hljs-template-variable,
     & .hljs-type,
     & .hljs-addition {
-      color: theme('colors.green.400');
+      color: #4ade80;
     }
 
     & .hljs-comment,
     & .hljs-quote,
     & .hljs-deletion,
     & .hljs-meta {
-      color: theme('colors.zinc.500');
+      color: hsl(var(--muted-foreground));
     }
 
     & .hljs-keyword,
@@ -629,7 +655,7 @@
   content: '';
   @apply absolute top-0 left-0 w-full h-full;
   background: linear-gradient(
-    140deg
+    140deg,
     rgba(255, 255, 255, 0) 0%,
     rgba(255, 255, 255, 0.8) 50%,
     rgba(255, 255, 255, 0) 100%
@@ -652,5 +678,229 @@
     60% {
       background-position: calc(100% + var(--shiny-width)) 0;
     }
+  }
+}
+
+/* Docx Preview Styles */
+.docx-preview-container {
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+.docx-preview {
+  font-family: inherit !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  color: inherit !important;
+}
+
+.docx-preview p {
+  margin-bottom: 0.75rem;
+}
+
+.docx-preview h1,
+.docx-preview h2,
+.docx-preview h3,
+.docx-preview h4,
+.docx-preview h5,
+.docx-preview h6 {
+  font-weight: 600;
+  margin-bottom: 1rem;
+  margin-top: 1.5rem;
+}
+
+.docx-preview table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+}
+
+.docx-preview td,
+.docx-preview th {
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.docx-preview th {
+  background-color: #f8fafc;
+  font-weight: 600;
+}
+
+.docx-preview img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1rem 0;
+}
+
+.docx-preview ul,
+.docx-preview ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.docx-preview li {
+  margin-bottom: 0.25rem;
+}
+
+/* Header and Footer Styles */
+.docx-preview .docx-header {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Fix negative height issue in docx-preview headers */
+.docx-preview header {
+  min-height: auto !important;
+  height: auto !important;
+  margin-top: 0 !important;
+  padding: 1.5rem 0 !important; /* Increased padding for more prominence */
+  display: block !important;
+  visibility: visible !important;
+  overflow: visible !important;
+  /* Subtle border to separate header from content */
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 1rem !important;
+  /* Ensure header content doesn't get cut off */
+  min-height: 60px !important;
+}
+
+.docx-preview_header {
+  margin: 0 !important;
+  padding: 0.5rem 0 !important;
+  min-height: auto !important;
+  height: auto !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Fix header image positioning and scaling */
+.docx-preview header img {
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  max-height: 120px !important; /* Increased from 80px for better visibility */
+  min-height: 40px !important;  /* Ensure minimum readable size */
+  width: auto !important;
+  display: inline-block !important;
+  margin: 0.5rem 0 !important;
+  /* Improve image quality for small logos */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  /* Scale up very small images reasonably */
+  transform: scale(1.2);
+  transform-origin: left center;
+}
+
+/* Fix header div positioning */
+.docx-preview header div {
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  display: inline-block !important;
+}
+
+/* Improve header text readability */
+.docx-preview header span,
+.docx-preview header p {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  color: inherit !important;
+}
+
+/* Responsive header scaling for smaller screens */
+@media (max-width: 768px) {
+  .docx-preview header img {
+    max-height: 100px !important;
+    transform: scale(1.1);
+  }
+  
+  .docx-preview header {
+    padding: 1rem 0 !important;
+  }
+}
+
+.docx-preview .docx-footer {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
+  margin-top: 1.5rem;
+}
+
+.docx-preview .docx-header table,
+.docx-preview .docx-footer table {
+  width: 100%;
+  border: none !important;
+  margin: 0;
+}
+
+.docx-preview .docx-header td,
+.docx-preview .docx-footer td {
+  border: none !important;
+  padding: 0.25rem;
+  vertical-align: top;
+}
+
+.docx-preview .docx-header img,
+.docx-preview .docx-footer img {
+  max-height: 60px;
+  width: auto;
+}
+
+/* Page break styles */
+.docx-preview .docx-page-break {
+  page-break-before: always;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px dashed #cbd5e1;
+}
+
+/* Footnotes and endnotes */
+.docx-preview .docx-footnotes,
+.docx-preview .docx-endnotes {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  font-size: 0.9em;
+}
+
+.docx-preview .docx-footnote,
+.docx-preview .docx-endnote {
+  margin-bottom: 0.5rem;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .docx-preview {
+    color: #f1f5f9 !important;
+  }
+  
+  .docx-preview td,
+  .docx-preview th {
+    border-color: #475569;
+  }
+  
+  .docx-preview th {
+    background-color: #334155;
+  }
+
+  .docx-preview .docx-header {
+    border-bottom-color: #475569;
+  }
+
+  .docx-preview .docx-footer {
+    border-top-color: #475569;
+  }
+
+  .docx-preview .docx-page-break {
+    border-top-color: #64748b;
+  }
+
+  .docx-preview .docx-footnotes,
+  .docx-preview .docx-endnotes {
+    border-top-color: #475569;
   }
 }

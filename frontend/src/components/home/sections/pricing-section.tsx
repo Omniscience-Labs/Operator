@@ -116,7 +116,7 @@ function PricingTabs({ activeTab, setActiveTab, className }: PricingTabsProps) {
               activeTab === tab ? 'text-primary' : 'text-muted-foreground',
             )}
           >
-            {tab === 'cloud' ? 'Cloud' : 'Self-hosted'}
+            {tab === 'cloud' ? 'Cloud' : 'Enterprise'}
           </span>
         </button>
       ))}
@@ -655,9 +655,9 @@ export function PricingSection({
 
   const handleTabChange = (tab: 'cloud' | 'self-hosted') => {
     if (tab === 'self-hosted') {
-      const openSourceSection = document.getElementById('open-source');
-      if (openSourceSection) {
-        const rect = openSourceSection.getBoundingClientRect();
+      const enterpriseSection = document.getElementById('enterprise');
+      if (enterpriseSection) {
+        const rect = enterpriseSection.getBoundingClientRect();
         const scrollTop =
           window.pageYOffset || document.documentElement.scrollTop;
         const offsetPosition = scrollTop + rect.top - 100;

@@ -51,7 +51,7 @@ function getContentTypeFromPath(path: string): 'text' | 'blob' | 'json' {
   const ext = path.toLowerCase().split('.').pop() || '';
   
   // Binary file extensions
-  if (/^(xlsx|xls|docx|doc|pptx|ppt|pdf|png|jpg|jpeg|gif|bmp|webp|svg|ico|zip|exe|dll|bin|dat|obj|o|so|dylib|mp3|mp4|avi|mov|wmv|flv|wav|ogg)$/.test(ext)) {
+  if (/^(xlsx|xls|docx|doc|pptx|ppt|pdf|png|jpg|jpeg|gif|bmp|webp|svg|ico|zip|exe|dll|bin|dat|obj|o|so|dylib|mp3|mp4|avi|mov|wmv|flv|wav|ogg|webm)$/.test(ext)) {
     return 'blob';
   }
   

@@ -330,7 +330,7 @@ export const FileCache = {
     const ext = path.toLowerCase().split('.').pop() || '';
     
     // Binary file extensions
-    if (/^(xlsx|xls|docx|doc|pptx|ppt|pdf|png|jpg|jpeg|gif|bmp|webp|svg|ico|zip|exe|dll|bin|dat|obj|o|so|dylib|mp3|mp4|avi|mov|wmv|flv|wav|ogg)$/.test(ext)) {
+    if (/^(xlsx|xls|docx|doc|pptx|ppt|pdf|png|jpg|jpeg|gif|bmp|webp|svg|ico|zip|exe|dll|bin|dat|obj|o|so|dylib|mp3|mp4|avi|mov|wmv|flv|wav|ogg|webm)$/.test(ext)) {
       return 'blob';
     }
     
@@ -385,6 +385,12 @@ export const FileCache = {
       
       // Archives
       case 'zip': return 'application/zip';
+      
+      // Audio files
+      case 'webm': return 'audio/webm';
+      case 'mp3': return 'audio/mpeg';
+      case 'wav': return 'audio/wav';
+      case 'ogg': return 'audio/ogg';
       
       // Default
       default: return 'application/octet-stream';
@@ -489,7 +495,7 @@ export const FileCache = {
           // Check if this is a binary file (includes Office documents, PDFs, images)
           const isBinaryFile = ['png', 'jpg', 'jpeg', 'gif', 'pdf', 'mp3', 'mp4', 
                                'xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt', 
-                               'zip', 'exe', 'bin'].includes(extension || '');
+                               'zip', 'exe', 'bin', 'webm'].includes(extension || '');
           
           if (isBinaryFile) {
             const blob = await response.blob();
@@ -701,7 +707,7 @@ export async function fetchFileContent(
       // CRITICAL: Detect correct response handling based on file type
       // Excel files, PDFs and other binary documents should be handled as blobs
       const extension = filePath.split('.').pop()?.toLowerCase();
-      const isBinaryFile = ['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip'].includes(extension || '');
+      const isBinaryFile = ['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip', 'webm'].includes(extension || '');
       
       // Handle response based on content type
       if (contentType === 'blob' || isBinaryFile) {

@@ -114,8 +114,8 @@ class Configuration:
     GROQ_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: Optional[str] = None
     OPENROUTER_API_BASE: Optional[str] = "https://openrouter.ai/api/v1"
-    OR_SITE_URL: Optional[str] = "https://kortix.ai"
-    OR_APP_NAME: Optional[str] = "Kortix AI"    
+    OR_SITE_URL: Optional[str] = "https://becomeomni.ai"
+    OR_APP_NAME: Optional[str] = "Omni"    
     
     # AWS Bedrock credentials
     AWS_ACCESS_KEY_ID: Optional[str] = None
@@ -170,6 +170,66 @@ class Configuration:
     LANGFUSE_PUBLIC_KEY: Optional[str] = None
     LANGFUSE_SECRET_KEY: Optional[str] = None
     LANGFUSE_HOST: str = "https://cloud.langfuse.com"
+
+    # Credit System Configuration
+    CREDIT_RATES = {
+        # Base rates per minute
+        "base_rate": 1.0,  # 1 credit per minute for normal conversations
+        "reasoning_rate_medium": 2.5,  # 2.5x for medium reasoning  
+        "reasoning_rate_high": 4.0,    # 4x for high reasoning
+        
+        # Tool-specific credit costs (executed per tool call)
+        "tool_costs": {
+            # High-cost tools (resource intensive)
+            "sb_browser_tool": 3.0,
+            "sb_deploy_tool": 5.0,
+            "web_search_tool": 2.0,
+            "sb_excel_tool": 2.0,
+            "sb_vision_tool": 2.0,
+            "sb_pdf_form_tool": 1.5,
+            
+            # Data provider tools (individual tracking)
+            "linkedin_data_provider": 3.0,
+            "apollo_data_provider": 2.5, 
+            "amazon_data_provider": 2.0,
+            "twitter_data_provider": 1.5,
+            "zillow_data_provider": 1.5,
+            "yahoo_finance_data_provider": 1.0,
+            "activejobs_data_provider": 1.0,
+            
+            # Medium-cost tools
+            "sb_shell_tool": 1.5,
+            "sb_audio_transcription_tool": 1.0,
+            "sb_podcast_tool": 1.5,
+            
+            # Low-cost tools (basic operations)
+            "sb_files_tool": 0.5,
+            "sb_expose_tool": 0.3,
+            
+            # MCP tools (variable cost)
+            "mcp_tool": 1.0,  # Base cost, can be overridden per server
+            
+            # Legacy data providers base cost (fallback)
+            "data_providers_tool": 2.0,
+            
+            # Default cost for unspecified tools
+            "default": 0.5
+        },
+        
+        # Individual data provider costs
+        "data_provider_costs": {
+            "linkedin": 3.0,       # LinkedIn API calls are expensive
+            "apollo": 2.5,         # Apollo lead generation costs
+            "twitter": 1.5,        # Twitter API moderate cost
+            "yahoo_finance": 1.0,  # Financial data moderate cost
+            "amazon": 2.0,         # Amazon product data
+            "zillow": 1.5,         # Real estate data
+            "activejobs": 1.0,     # Job search data
+            
+            # Default for unknown data providers
+            "default": 2.0
+        }
+    }
 
     @property
     def STRIPE_PRODUCT_ID(self) -> str:

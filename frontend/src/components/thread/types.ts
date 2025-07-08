@@ -13,7 +13,7 @@ export interface UnifiedMessage {
   sequence?: number;
   message_id: string | null; // Can be null for transient stream events (chunks, unsaved statuses)
   thread_id: string;
-  type: 'user' | 'assistant' | 'tool' | 'system' | 'status' | 'browser_state'; // Add 'system' if used
+  type: 'user' | 'assistant' | 'tool' | 'system' | 'status' | 'browser_state' | 'reasoning'; // Add 'reasoning' for thinking content
   is_llm_message: boolean;
   content: string; // ALWAYS a JSON string from the backend
   metadata: string; // ALWAYS a JSON string from the backend
@@ -34,7 +34,7 @@ export interface ParsedContent {
 
 // Helper type for parsed metadata
 export interface ParsedMetadata {
-  stream_status?: 'chunk' | 'complete';
+  stream_status?: 'chunk' | 'complete' | 'streaming';
   thread_run_id?: string;
   tool_index?: number;
   assistant_message_id?: string; // Link tool results/statuses back

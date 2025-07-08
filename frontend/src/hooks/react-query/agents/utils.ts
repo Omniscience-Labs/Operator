@@ -9,9 +9,11 @@ export type Agent = {
   name: string;
   description?: string;
   system_prompt: string;
-  configured_mcps: Array<{
+  configured_mcps?: Array<{
     name: string;
+    qualifiedName?: string;
     config: Record<string, any>;
+    enabledTools?: string[];
   }>;
   custom_mcps?: Array<{
     name: string;
@@ -19,16 +21,27 @@ export type Agent = {
     config: Record<string, any>;
     enabledTools: string[];
   }>;
-  agentpress_tools: Record<string, any>;
+  agentpress_tools?: Record<string, { enabled: boolean; description: string }>;
   is_default: boolean;
   is_public?: boolean;
+  visibility?: 'public' | 'teams' | 'private';
   marketplace_published_at?: string;
   download_count?: number;
   tags?: string[];
+  sharing_preferences?: {
+    include_knowledge_bases?: boolean;
+    include_custom_mcp_tools?: boolean;
+    managed_agent?: boolean;
+    original_agent_id?: string;
+    is_marketplace_agent?: boolean;
+  };
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   avatar?: string;
   avatar_color?: string;
+  knowledge_bases?: Array<{ name: string; index_name: string; description: string }>;
+  is_managed?: boolean;  // True if this is a managed agent (live reference)
+  is_owned?: boolean;    // True if user owns this agent
 };
 
 export type PaginationInfo = {
@@ -53,6 +66,7 @@ export type AgentsParams = {
   has_mcp_tools?: boolean;
   has_agentpress_tools?: boolean;
   tools?: string;
+  account_id?: string;
 };
 
 export type ThreadAgentResponse = {
@@ -77,6 +91,7 @@ export type AgentCreateRequest = {
   }>;
   agentpress_tools?: Record<string, any>;
   is_default?: boolean;
+  knowledge_bases?: Array<{ name: string; index_name: string; description: string }>;
 };
 
 export type AgentUpdateRequest = {
@@ -95,6 +110,7 @@ export type AgentUpdateRequest = {
   }>;
   agentpress_tools?: Record<string, any>;
   is_default?: boolean;
+  knowledge_bases?: Array<{ name: string; index_name: string; description: string }>;
 };
 
 export const getAgents = async (params: AgentsParams = {}): Promise<AgentsResponse> => {
@@ -120,6 +136,7 @@ export const getAgents = async (params: AgentsParams = {}): Promise<AgentsRespon
     if (params.has_mcp_tools !== undefined) queryParams.append('has_mcp_tools', params.has_mcp_tools.toString());
     if (params.has_agentpress_tools !== undefined) queryParams.append('has_agentpress_tools', params.has_agentpress_tools.toString());
     if (params.tools) queryParams.append('tools', params.tools);
+    if (params.account_id) queryParams.append('account_id', params.account_id);
 
     const url = `${API_URL}/agents${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
@@ -281,6 +298,39 @@ export const deleteAgent = async (agentId: string): Promise<void> => {
     console.log('[API] Deleted agent:', agentId);
   } catch (err) {
     console.error('Error deleting agent:', err);
+    throw err;
+  }
+};
+
+export const removeAgentFromLibrary = async (agentId: string): Promise<void> => {
+  try {
+    const agentPlaygroundEnabled = await isFlagEnabled('custom_agents');
+    if (!agentPlaygroundEnabled) {
+      throw new Error('Custom agents is not enabled');
+    }
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      throw new Error('You must be logged in to remove an agent from library');
+    }
+
+    const response = await fetch(`${API_URL}/agents/${agentId}/remove-from-library`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    console.log('[API] Removed agent from library:', agentId);
+  } catch (err) {
+    console.error('Error removing agent from library:', err);
     throw err;
   }
 };

@@ -1,22 +1,29 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Plus, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, AlertCircle, Loader2, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { UpdateAgentDialog } from './_components/update-agent-dialog';
-import { useAgents, useUpdateAgent, useDeleteAgent, useOptimisticAgentUpdate, useCreateAgent } from '@/hooks/react-query/agents/use-agents';
+
+import { PublishAgentDialog } from './_components/publish-agent-dialog';
+import { ShareAgentDialog } from './_components/share-agent-dialog';
+import { useAgents, useUpdateAgent, useDeleteAgent, useRemoveAgentFromLibrary, useOptimisticAgentUpdate, useCreateAgent } from '@/hooks/react-query/agents/use-agents';
+import { usePublishAgent, useUnpublishAgent } from '@/hooks/react-query/marketplace/use-marketplace';
 import { SearchAndFilters } from './_components/search-and-filters';
 import { ResultsInfo } from './_components/results-info';
 import { EmptyState } from './_components/empty-state';
-import { AgentsGrid } from './_components/agents-grid';
 import { AgentsList } from './_components/agents-list';
+import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
 import { LoadingState } from './_components/loading-state';
 import { Pagination } from './_components/pagination';
 import { useRouter } from 'next/navigation';
 import { DEFAULT_AGENTPRESS_TOOLS } from './_data/tools';
 import { AgentsParams } from '@/hooks/react-query/agents/utils';
 import { useFeatureFlags } from '@/lib/feature-flags';
+import { toast } from 'sonner';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useSidebar } from '@/components/ui/sidebar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ViewMode = 'grid' | 'list';
 type SortOption = 'name' | 'created_at' | 'updated_at' | 'tools_count';
@@ -31,9 +38,13 @@ interface FilterOptions {
 
 export default function AgentsPage() {
   const router = useRouter();
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingAgentId, setEditingAgentId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
+  const { setOpenMobile } = useSidebar();
+
+  const [publishDialogAgent, setPublishDialogAgent] = useState<any>(null);
+  const [shareDialogAgent, setShareDialogAgent] = useState<any>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [highlightedAgentId, setHighlightedAgentId] = useState<string | null>(null);
   
   
   // Server-side parameters
@@ -83,7 +94,9 @@ export default function AgentsPage() {
   
   const updateAgentMutation = useUpdateAgent();
   const deleteAgentMutation = useDeleteAgent();
+  const removeFromLibraryMutation = useRemoveAgentFromLibrary();
   const createAgentMutation = useCreateAgent();
+  const unpublishAgentMutation = useUnpublishAgent();
   const { optimisticallyUpdateAgent, revertOptimisticUpdate } = useOptimisticAgentUpdate();
 
   const agents = agentsResponse?.agents || [];
@@ -136,6 +149,14 @@ export default function AgentsPage() {
     }
   };
 
+  const handleRemoveFromLibrary = async (agentId: string) => {
+    try {
+      await removeFromLibraryMutation.mutateAsync(agentId);
+    } catch (error) {
+      console.error('Error removing agent from library:', error);
+    }
+  };
+
   const handleToggleDefault = async (agentId: string, currentDefault: boolean) => {
     optimisticallyUpdateAgent(agentId, { is_default: !currentDefault });
     try {
@@ -150,8 +171,12 @@ export default function AgentsPage() {
   };
 
   const handleEditAgent = (agentId: string) => {
-    setEditingAgentId(agentId);
-    setEditDialogOpen(true);
+    const agent = agents.find(a => a.agent_id === agentId);
+    if (agent?.is_managed) {
+      toast.error('This is a managed agent. Contact the creator of the agent for modifications.');
+      return;
+    }
+    router.push(`/agents/new/${agentId}`);
   };
 
   const handleCreateNewAgent = async () => {
@@ -177,9 +202,37 @@ export default function AgentsPage() {
     }
   };
 
+  const handlePublish = (agentId: string) => {
+    const agent = agents.find(a => a.agent_id === agentId);
+    if (agent) {
+      setPublishDialogAgent(agent);
+    }
+  };
+
+  const handleShare = (agentId: string) => {
+    const agent = agents.find(a => a.agent_id === agentId);
+    if (agent) {
+      setShareDialogAgent(agent);
+    }
+  };
+
+  const handleMakePrivate = async (agentId: string) => {
+    try {
+      await unpublishAgentMutation.mutateAsync(agentId);
+      toast.success('Agent made private successfully');
+    } catch (error) {
+      console.error('Error making agent private:', error);
+      toast.error('Failed to make agent private');
+    }
+  };
+
+  const handleHighlightChange = (agentId: string | null) => {
+    setHighlightedAgentId(agentId);
+  };
+
   if (error) {
     return (
-      <div className="container mx-auto max-w-7xl px-4 py-8">
+      <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -192,9 +245,28 @@ export default function AgentsPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8">
+    <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full relative">
+      {isMobile && (
+        <div className="absolute top-6 left-2 z-20">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setOpenMobile(true)}
+              >
+                <Menu className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Open menu</TooltipContent>
+          </Tooltip>
+        </div>
+      )}
+      
       <div className="space-y-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-8 sm:mt-0">
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               Your Agents
@@ -258,13 +330,26 @@ export default function AgentsPage() {
             onClearFilters={clearFilters}
           />
         ) : (
-          <AgentsGrid
-            agents={agents}
-            onEditAgent={handleEditAgent}
-            onDeleteAgent={handleDeleteAgent}
-            onToggleDefault={handleToggleDefault}
-            deleteAgentMutation={deleteAgentMutation}
-          />
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 sm:gap-6">
+            {agents.map((agent) => (
+              <AgentProfileCard
+                key={agent.agent_id}
+                agent={agent}
+                mode="library"
+                onChat={(agentId) => router.push(`/dashboard?agent_id=${agentId}`)}
+                onCustomize={handleEditAgent}
+                onDelete={handleDeleteAgent}
+                onRemoveFromLibrary={handleRemoveFromLibrary}
+                onPublish={handlePublish}
+                onMakePrivate={handleMakePrivate}
+                onShare={handleShare}
+                isLoading={(deleteAgentMutation.isPending && deleteAgentMutation.variables === agent.agent_id) || (removeFromLibraryMutation.isPending && removeFromLibraryMutation.variables === agent.agent_id)}
+                enableTilt={true}
+                isHighlighted={highlightedAgentId === agent.agent_id}
+                onHighlightChange={handleHighlightChange}
+              />
+            ))}
+          </div>
         )}
 
         {pagination && pagination.pages > 1 && (
@@ -276,15 +361,29 @@ export default function AgentsPage() {
           />
         )}
 
-        <UpdateAgentDialog
-          agentId={editingAgentId}
-          isOpen={editDialogOpen}
-          onOpenChange={(open) => {
-            setEditDialogOpen(open);
-            if (!open) setEditingAgentId(null);
-          }}
-          onAgentUpdated={loadAgents}
-        />
+
+
+        {publishDialogAgent && (
+          <PublishAgentDialog
+            agent={publishDialogAgent}
+            isOpen={!!publishDialogAgent}
+            onClose={() => {
+              setPublishDialogAgent(null);
+              loadAgents();
+            }}
+          />
+        )}
+
+        {shareDialogAgent && (
+          <ShareAgentDialog
+            agent={shareDialogAgent}
+            isOpen={!!shareDialogAgent}
+            onClose={() => {
+              setShareDialogAgent(null);
+              loadAgents();
+            }}
+          />
+        )}
       </div>
     </div>
   );

@@ -6,12 +6,17 @@ import { cn } from '@/lib/utils';
 import { UploadedFile } from './chat-input';
 import { FileUploadHandler } from './file-upload-handler';
 import { VoiceRecorder } from './voice-recorder';
+import { MeetingRecorder } from './meeting-recorder';
 import { ModelSelector } from './model-selector';
+import { ReasoningControl, ReasoningSettings } from './reasoning-control';
 import { SubscriptionStatus } from './_use-model-selection';
 import { isLocalMode } from '@/lib/config';
 import { TooltipContent } from '@/components/ui/tooltip';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipProvider, TooltipTrigger } from '@radix-ui/react-tooltip';
+import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
+import { Crown } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface MessageInputProps {
   value: string;
@@ -41,6 +46,10 @@ interface MessageInputProps {
   subscriptionStatus: SubscriptionStatus;
   canAccessModel: (modelId: string) => boolean;
   refreshCustomModels?: () => void;
+  
+  // New reasoning props
+  reasoningSettings: ReasoningSettings;
+  onReasoningChange: (settings: ReasoningSettings) => void;
 }
 
 export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
@@ -73,9 +82,15 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
       subscriptionStatus,
       canAccessModel,
       refreshCustomModels,
+      
+      // New reasoning props
+      reasoningSettings,
+      onReasoningChange,
     },
     ref,
   ) => {
+    const isMobile = useIsMobile();
+    
     useEffect(() => {
       const textarea = ref as React.RefObject<HTMLTextAreaElement>;
       if (!textarea.current) return;
@@ -131,8 +146,8 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
         </div>
 
 
-        <div className="flex items-center justify-between mt-1 ml-3 mb-1 pr-2">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between mt-1 ml-3 mb-1 pr-2 gap-1 sm:gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             {!hideAttachments && (
               <FileUploadHandler
                 ref={fileInputRef}
@@ -147,17 +162,23 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
                 messages={messages}
               />
             )}
-            <VoiceRecorder
-              onTranscription={onTranscription}
-              disabled={loading || (disabled && !isAgentRunning)}
-            />
+            {!hideAttachments && (
+              <MeetingRecorder
+                onFileAttached={(file) => setUploadedFiles(prev => [...prev, file])}
+                setPendingFiles={setPendingFiles}
+                setUploadedFiles={setUploadedFiles}
+                setIsUploading={setIsUploading}
+                sandboxId={sandboxId}
+                messages={messages}
+                disabled={loading || (disabled && !isAgentRunning)}
+              />
+            )}
           </div>
           {subscriptionStatus === 'no_subscription' && !isLocalMode() &&
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
-                  <p className='text-sm text-amber-500 hidden sm:block'>Upgrade for full performance</p>
-
+                  <Crown className='h-4 w-4 text-amber-500' />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>The free tier is severely limited by inferior models; upgrade to experience the true full Operator experience.</p>
@@ -165,7 +186,7 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
               </Tooltip>
             </TooltipProvider>
           }
-          <div className='flex items-center gap-2'>
+          <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
             <ModelSelector
               selectedModel={selectedModel}
               onModelChange={onModelChange}
@@ -174,42 +195,56 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
               canAccessModel={canAccessModel}
               refreshCustomModels={refreshCustomModels}
             />
-            <Button
-              type="submit"
-              onClick={isAgentRunning && onStopAgent ? onStopAgent : onSubmit}
-              size="sm"
-              className={cn(
-                'w-7 h-7 flex-shrink-0 self-end',
-                isAgentRunning ? 'bg-red-500 hover:bg-red-600' : '',
-                (!value.trim() && uploadedFiles.length === 0 && !isAgentRunning) ||
-                  loading ||
-                  (disabled && !isAgentRunning)
-                  ? 'opacity-50'
-                  : '',
-              )}
-              disabled={
-                (!value.trim() && uploadedFiles.length === 0 && !isAgentRunning) ||
-                loading ||
-                (disabled && !isAgentRunning)
-              }
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : isAgentRunning ? (
+            <ReasoningControl
+              value={reasoningSettings}
+              onChange={onReasoningChange}
+              disabled={loading || (disabled && !isAgentRunning)}
+              modelName={selectedModel}
+              subscriptionStatus={subscriptionStatus}
+            />
+            <VoiceRecorder
+              onTranscription={onTranscription}
+              disabled={loading || (disabled && !isAgentRunning)}
+            />
+            {isAgentRunning ? (
+              <Button
+                type="button"
+                onClick={onStopAgent}
+                size="icon"
+                variant="destructive"
+                className="w-8 h-8 flex-shrink-0 rounded-lg p-0"
+              >
                 <Square className="h-4 w-4" />
-              ) : (
-                <ArrowUp className="h-4 w-4" />
-              )}
-            </Button>
+              </Button>
+            ) : (
+              <LiquidButton
+                type="submit"
+                onClick={onSubmit}
+                size="icon"
+                variant="default"
+                className={cn(
+                  'w-8 h-8 flex-shrink-0 rounded-lg p-0',
+                  (!value.trim() && uploadedFiles.length === 0) ||
+                    loading ||
+                    disabled
+                    ? 'opacity-50'
+                    : '',
+                )}
+                disabled={
+                  (!value.trim() && uploadedFiles.length === 0) ||
+                  loading ||
+                  disabled
+                }
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowUp className="h-4 w-4" />
+                )}
+              </LiquidButton>
+            )}
           </div>
         </div>
-        {subscriptionStatus === 'no_subscription' && !isLocalMode() &&
-          <div className='sm:hidden absolute -bottom-8 left-0 right-0 flex justify-center'>
-            <p className='text-xs text-amber-500 px-2 py-1'>
-              Upgrade for better performance
-            </p>
-          </div>
-        }
       </div>
     );
   },

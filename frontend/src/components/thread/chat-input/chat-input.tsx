@@ -14,20 +14,43 @@ import { handleFiles } from './file-upload-handler';
 import { MessageInput } from './message-input';
 import { AttachmentGroup } from '../attachment-group';
 import { useModelSelection } from './_use-model-selection';
+import { ReasoningSettings } from './reasoning-control';
 import { AgentSelector } from './agent-selector';
 import { useFileDelete } from '@/hooks/react-query/files';
 import { useQueryClient } from '@tanstack/react-query';
 import { ThreeSpinner } from '@/components/ui/three-spinner';
 
+// Helper function to load reasoning settings from localStorage
+const loadReasoningSettings = (): ReasoningSettings => {
+  try {
+    const stored = localStorage.getItem('reasoning-settings');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.warn('Failed to load reasoning settings from localStorage:', error);
+  }
+  // Default settings
+  return {
+    enabled: false,
+    effort: 'none',
+  };
+};
+
 export interface ChatInputHandles {
   getPendingFiles: () => File[];
   clearPendingFiles: () => void;
+  addExternalFile: (file: File) => void;
 }
 
 export interface ChatInputProps {
   onSubmit: (
     message: string,
-    options?: { model_name?: string; enable_thinking?: boolean },
+    options?: { 
+      model_name?: string; 
+      enable_thinking?: boolean;
+      reasoning_effort?: string;
+    },
   ) => void;
   placeholder?: string;
   loading?: boolean;
@@ -53,6 +76,10 @@ export interface UploadedFile {
   size: number;
   type: string;
   localUrl?: string;
+  metadata?: {
+    isMeetingRecording?: boolean;
+    duration?: string;
+  };
 }
 
 export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
@@ -88,6 +115,18 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
     const [pendingFiles, setPendingFiles] = useState<File[]>([]);
     const [isUploading, setIsUploading] = useState(false);
     const [isDraggingOver, setIsDraggingOver] = useState(false);
+    
+    // Initialize reasoning settings from localStorage
+    const [reasoningSettings, setReasoningSettings] = useState<ReasoningSettings>(() => {
+      // Only load from localStorage on client side
+      if (typeof window !== 'undefined') {
+        return loadReasoningSettings();
+      }
+      return {
+        enabled: false,
+        effort: 'none',
+      };
+    });
 
     const {
       selectedModel,
@@ -108,6 +147,17 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
     useImperativeHandle(ref, () => ({
       getPendingFiles: () => pendingFiles,
       clearPendingFiles: () => setPendingFiles([]),
+      addExternalFile: (file: File) => {
+        handleFiles(
+          [file],
+          sandboxId,
+          setPendingFiles,
+          setUploadedFiles,
+          setIsUploading,
+          messages,
+          queryClient,
+        );
+      },
     }));
 
     useEffect(() => {
@@ -133,22 +183,31 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
       let message = value;
 
       if (uploadedFiles.length > 0) {
+        // Check if any uploaded file is a meeting recording
+        const meetingRecording = uploadedFiles.find(f => f.metadata?.isMeetingRecording);
+        
+        if (meetingRecording) {
+          // Automatically add transcription request for meeting recordings
+          const transcriptionRequest = `Please transcribe the following meeting recording (duration: ${meetingRecording.metadata?.duration}):`;
+          const fileInfo = uploadedFiles
+            .map((file) => `[Uploaded File: ${file.path}]`)
+            .join('\n');
+          message = message ? `${message}\n\n${transcriptionRequest}\n${fileInfo}` : `${transcriptionRequest}\n${fileInfo}`;
+        } else {
+          // Normal file attachment
         const fileInfo = uploadedFiles
           .map((file) => `[Uploaded File: ${file.path}]`)
           .join('\n');
         message = message ? `${message}\n\n${fileInfo}` : fileInfo;
+        }
       }
 
-      let baseModelName = getActualModelId(selectedModel);
-      let thinkingEnabled = false;
-      if (selectedModel.endsWith('-thinking')) {
-        baseModelName = getActualModelId(selectedModel.replace(/-thinking$/, ''));
-        thinkingEnabled = true;
-      }
+      const baseModelName = getActualModelId(selectedModel);
 
       onSubmit(message, {
         model_name: baseModelName,
-        enable_thinking: thinkingEnabled,
+        enable_thinking: reasoningSettings.enabled,
+        reasoning_effort: reasoningSettings.effort,
       });
 
       if (!isControlled) {
@@ -237,7 +296,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
             setIsDraggingOver(false);
 
             if (fileInputRef.current && e.dataTransfer.files.length > 0) {
-              const files = Array.from(e.dataTransfer.files);
+              const files = Array.from(e.dataTransfer.files) as File[];
               handleFiles(
                 files,
                 sandboxId,
@@ -290,6 +349,9 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
                 subscriptionStatus={subscriptionStatus}
                 canAccessModel={canAccessModel}
                 refreshCustomModels={refreshCustomModels}
+                
+                reasoningSettings={reasoningSettings}
+                onReasoningChange={setReasoningSettings}
               />
             </CardContent>
           </div>

@@ -1,7 +1,8 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowDown, CircleDashed, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ArrowDown, CircleDashed, CheckCircle, AlertTriangle, Copy, Check, Edit, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Markdown } from '@/components/ui/markdown';
 import { ThreeSpinner } from '@/components/ui/three-spinner';
 import { UnifiedMessage, ParsedContent, ParsedMetadata } from '@/components/thread/types';
@@ -19,6 +20,8 @@ import { OmniLogo } from '@/components/sidebar/omni-logo';
 import { AgentLoader } from './loader';
 import { parseXmlToolCalls, isNewXmlFormat, extractToolNameFromStream } from '@/components/thread/tool-views/xml-parser';
 import { parseToolResult } from '@/components/thread/tool-views/tool-result-parser';
+import { ReasoningDisplay } from './ReasoningDisplay';
+import StarBorder from '@/Animations/StarBorder/StarBorder';
 
 // Define the set of  tags whose raw XML should be hidden during streaming
 const HIDE_STREAMING_XML_TAGS = new Set([
@@ -283,6 +286,9 @@ export interface ThreadContentProps {
     isSidePanelOpen?: boolean; // Add side panel state prop
     isLeftSidebarOpen?: boolean; // Add left sidebar state prop
     onScrollStateChange?: (userHasScrolled: boolean, isAtBottom: boolean) => void; // Add scroll state callback
+    // Edit functionality props
+    onEditMessage?: (messageId: string, newContent: string) => Promise<void>; // Callback for editing messages
+    threadId?: string; // Thread ID for editing
 }
 
 export const ThreadContent: React.FC<ThreadContentProps> = ({
@@ -308,6 +314,8 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     isSidePanelOpen = false,
     isLeftSidebarOpen = false,
     onScrollStateChange,
+    onEditMessage,
+    threadId,
 }) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -320,8 +328,59 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     const autoScrollingRef = useRef(false);
     const { session } = useAuth();
 
+    // Edit state management
+    const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+    const [editContent, setEditContent] = useState<string>('');
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
+    const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+
     // React Query file preloader
     const { preloadFiles } = useFilePreloader();
+
+    // Edit helper functions
+    const startEditing = useCallback((messageId: string, currentContent: string) => {
+        if (readOnly || agentStatus === 'running' || agentStatus === 'connecting') return;
+        
+        setEditingMessageId(messageId);
+        setEditContent(currentContent);
+        
+        // Focus textarea after state update
+        setTimeout(() => {
+            editTextareaRef.current?.focus();
+            editTextareaRef.current?.setSelectionRange(currentContent.length, currentContent.length);
+        }, 100);
+    }, [readOnly, agentStatus]);
+
+    const cancelEditing = useCallback(() => {
+        setEditingMessageId(null);
+        setEditContent('');
+        setIsSavingEdit(false);
+    }, []);
+
+    const saveEdit = useCallback(async () => {
+        if (!editingMessageId || !onEditMessage || !editContent.trim()) return;
+        
+        setIsSavingEdit(true);
+        try {
+            await onEditMessage(editingMessageId, editContent.trim());
+            setEditingMessageId(null);
+            setEditContent('');
+        } catch (error) {
+            console.error('Failed to save edit:', error);
+            // The parent component should handle error display via toast
+        } finally {
+            setIsSavingEdit(false);
+        }
+    }, [editingMessageId, editContent, onEditMessage]);
+
+    // Auto-resize textarea
+    useEffect(() => {
+        const textarea = editTextareaRef.current;
+        if (textarea && editingMessageId) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+        }
+    }, [editContent, editingMessageId]);
 
     const containerClassName = isPreviewMode 
         ? "flex-1 overflow-y-auto scrollbar-thin scrollbar-track-secondary/0 scrollbar-thumb-primary/10 scrollbar-thumb-rounded-full hover:scrollbar-thumb-primary/10 px-6 py-4 pb-72"
@@ -491,10 +550,18 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                 // Render scrollable content container
                 <div
                     ref={messagesContainerRef}
-                    className={containerClassName}
+                    className={`${containerClassName} ${editingMessageId ? 'relative' : ''}`}
                     onScroll={handleScroll}
                 >
-                    <div className="mx-auto max-w-3xl md:px-8 min-w-0">
+                    {/* Blur overlay for non-editing messages */}
+                    {editingMessageId && (
+                        <div 
+                            className="absolute inset-0 bg-background/60 backdrop-blur-sm z-30 transition-all duration-200"
+                            onClick={cancelEditing}
+                        />
+                    )}
+                    
+                    <div className={`mx-auto max-w-3xl md:px-8 min-w-0 ${editingMessageId ? 'relative z-40' : ''}`}>
                         <div className="space-y-8 min-w-0">
                             {(() => {
 
@@ -519,7 +586,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                         }
                                         // Create a new user message group
                                         groupedMessages.push({ type: 'user', messages: [message], key });
-                                    } else if (messageType === 'assistant' || messageType === 'tool' || messageType === 'browser_state') {
+                                    } else if (messageType === 'assistant' || messageType === 'tool' || messageType === 'browser_state' || messageType === 'reasoning') {
                                         if (currentGroup && currentGroup.type === 'assistant_group') {
                                             // Add to existing assistant group
                                             currentGroup.messages.push(message);
@@ -663,17 +730,143 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                         // Remove attachment info from the message content
                                         const cleanContent = messageContent.replace(/\[Uploaded File: .*?\]/g, '').trim();
 
-                                        return (
-                                            <div key={group.key} className="flex justify-end">
-                                                <div className="flex max-w-[85%] rounded-xl bg-primary/10 px-4 py-3 break-words overflow-hidden">
-                                                    <div className="space-y-3 min-w-0 flex-1">
-                                                        {cleanContent && (
-                                                            <Markdown className="text-sm prose prose-sm dark:prose-invert chat-markdown max-w-none [&>:first-child]:mt-0 prose-headings:mt-3 break-words overflow-wrap-anywhere">{cleanContent}</Markdown>
-                                                        )}
+                                        // Copy button component
+                                        const CopyButton = () => {
+                                            const [isCopied, setIsCopied] = useState(false);
 
-                                                        {/* Use the helper function to render user attachments */}
-                                                        {renderAttachments(attachments as string[], handleOpenFileViewer, sandboxId, project)}
+                                            const handleCopy = async () => {
+                                                if (!cleanContent) return;
+                                                
+                                                try {
+                                                    await navigator.clipboard.writeText(cleanContent);
+                                                    setIsCopied(true);
+                                                    setTimeout(() => setIsCopied(false), 2000);
+                                                } catch (err) {
+                                                    console.error('Failed to copy:', err);
+                                                }
+                                            };
+
+                                            return (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={handleCopy}
+                                                    className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-muted/80"
+                                                >
+                                                    {isCopied ? (
+                                                        <Check className="h-3.5 w-3.5" />
+                                                    ) : (
+                                                        <Copy className="h-3.5 w-3.5" />
+                                                    )}
+                                                    <span className="sr-only">
+                                                        {isCopied ? 'Copied!' : 'Copy message'}
+                                                    </span>
+                                                </Button>
+                                            );
+                                        };
+
+                                        // Edit button component
+                                        const EditButton = () => {
+                                            const isEditing = editingMessageId === message.message_id;
+                                            const canEdit = !readOnly && onEditMessage && message.message_id && 
+                                                          agentStatus !== 'running' && agentStatus !== 'connecting';
+                                            
+                                            if (!canEdit) return null;
+
+                                            if (isEditing) {
+                                                return (
+                                                    <div className="flex gap-1">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={saveEdit}
+                                                            disabled={isSavingEdit || !editContent.trim()}
+                                                            className="h-7 w-7 p-0 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950"
+                                                        >
+                                                            <Check className="h-3.5 w-3.5" />
+                                                            <span className="sr-only">Save edit</span>
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={cancelEditing}
+                                                            disabled={isSavingEdit}
+                                                            className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                                                        >
+                                                            <X className="h-3.5 w-3.5" />
+                                                            <span className="sr-only">Cancel edit</span>
+                                                        </Button>
                                                     </div>
+                                                );
+                                            }
+
+                                            return (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => startEditing(message.message_id!, cleanContent)}
+                                                    className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-muted/80"
+                                                >
+                                                    <Edit className="h-3.5 w-3.5" />
+                                                    <span className="sr-only">Edit message</span>
+                                                </Button>
+                                            );
+                                        };
+
+                                        const isEditing = editingMessageId === message.message_id;
+
+                                        return (
+                                            <div key={group.key} className={`flex justify-end ${
+                                                isEditing ? 'relative z-50' : ''
+                                            }`}>
+                                                <div className="group flex flex-col items-end max-w-[85%]">
+                                                    <div className={`flex rounded-xl bg-primary/10 px-4 py-3 break-words overflow-hidden transition-all duration-200 ${
+                                                        isEditing ? 'ring-2 ring-primary/30 shadow-lg' : ''
+                                                    }`}>
+                                                        <div className="space-y-3 min-w-0 flex-1">
+                                                            {isEditing ? (
+                                                                <div className="space-y-2">
+                                                                    <Textarea
+                                                                        ref={editTextareaRef}
+                                                                        value={editContent}
+                                                                        onChange={(e) => setEditContent(e.target.value)}
+                                                                        disabled={isSavingEdit}
+                                                                        className="min-h-[60px] max-h-[200px] resize-none text-sm border-0 bg-transparent p-0 focus-visible:ring-0 placeholder:text-muted-foreground/50"
+                                                                        placeholder="Edit your message..."
+                                                                        onKeyDown={(e) => {
+                                                                            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                                                                                e.preventDefault();
+                                                                                saveEdit();
+                                                                            } else if (e.key === 'Escape') {
+                                                                                e.preventDefault();
+                                                                                cancelEditing();
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    <div className="text-xs text-muted-foreground">
+                                                                        Press Ctrl+Enter to save, Escape to cancel
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <>
+                                                                    {cleanContent && (
+                                                                        <Markdown className="text-sm prose prose-sm dark:prose-invert chat-markdown max-w-none [&>:first-child]:mt-0 prose-headings:mt-3 break-words overflow-wrap-anywhere">{cleanContent}</Markdown>
+                                                                    )}
+
+                                                                    {/* Use the helper function to render user attachments */}
+                                                                    {renderAttachments(attachments as string[], handleOpenFileViewer, sandboxId, project)}
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Action buttons - positioned at bottom-left, aligned with bubble edge */}
+                                                    {cleanContent && (
+                                                        <div className="self-start mt-1 flex gap-1">
+                                                            <CopyButton />
+                                                            <EditButton />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -689,6 +882,31 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                                         <p className='ml-2 text-sm text-muted-foreground'>{agentName ? agentName : 'Operator'}</p>
                                                     </div>
                                                     
+                                                    {/* Reasoning content - show first if present */}
+                                                    {(() => {
+                                                        const reasoningMessages = group.messages.filter(msg => msg.type === 'reasoning');
+                                                        if (reasoningMessages.length > 0) {
+                                                            // Find the most complete reasoning message (prefer 'complete' status)
+                                                            const completeReasoning = reasoningMessages.find(msg => {
+                                                                const metadata = safeJsonParse<ParsedMetadata>(msg.metadata, {});
+                                                                return metadata.stream_status === 'complete';
+                                                            });
+                                                            
+                                                            const reasoningToShow = completeReasoning || reasoningMessages[reasoningMessages.length - 1];
+                                                            const metadata = safeJsonParse<ParsedMetadata>(reasoningToShow.metadata, {});
+                                                            const isStreaming = metadata.stream_status === 'streaming' || 
+                                                                               (!completeReasoning && reasoningMessages.length > 0);
+                                                            
+                                                            return (
+                                                                <ReasoningDisplay 
+                                                                    reasoningMessage={reasoningToShow}
+                                                                    isStreaming={isStreaming}
+                                                                />
+                                                            );
+                                                        }
+                                                        return null;
+                                                    })()}
+
                                                     {/* Message content - ALL messages in the group */}
                                                     <div className="flex max-w-[90%] rounded-lg text-sm break-words overflow-hidden">
                                                         <div className="space-y-2 min-w-0 flex-1">
@@ -1061,18 +1279,18 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 </div>
                                 
                                 {/* Text container */}
-                                <motion.button
+                                <StarBorder
+                                    as={motion.button}
                                     whileHover={{ scale: 1.01 }}
                                     whileTap={{ scale: 0.99 }}
                                     onClick={() => scrollToBottom('smooth')}
-                                    className="animate-shimmer backdrop-blur-sm border border-primary/20 shadow-lg rounded-full px-4 py-2 text-sm font-medium text-primary transition-all duration-200"
-                                    style={{
-                                        animationDuration: '4s'
-                                    }}
+                                    className="backdrop-blur-sm border border-primary/20 shadow-lg rounded-full px-4 py-2 text-sm font-medium text-primary transition-all duration-200"
+                                    color="hsl(var(--primary))"
+                                    speed="4s"
+                                    thickness={1}
                                 >
-                                
                                     <span>{agentName ? `${agentName} is working...` : 'Operator is working...'}</span>
-                                </motion.button>
+                                </StarBorder>
                             </motion.div>
                         )}
                         {showScrollButton && !(agentStatus === 'running' || agentStatus === 'connecting') && (

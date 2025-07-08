@@ -15,6 +15,7 @@ import { useAddUserMessageMutation } from '@/hooks/react-query/threads/use-messa
 import { useStartAgentMutation, useStopAgentMutation } from '@/hooks/react-query/threads/use-agent-run';
 import { BillingError } from '@/lib/api';
 import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
+import { createClient } from '@/lib/supabase/client';
 
 interface Agent {
   agent_id: string;
@@ -205,9 +206,14 @@ export const AgentPreview = ({ agent }: AgentPreviewProps) => {
         } else {
           console.log('[PREVIEW] No agent_run_id in result, starting agent manually...');
           try {
+            // Get user name from Supabase auth
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            const userName = user?.user_metadata?.name;
+
             const agentResult = await startAgentMutation.mutateAsync({
               threadId: result.thread_id,
-              options
+              options: { ...options, user_name: userName || undefined }
             });
             console.log('[PREVIEW] Agent started manually:', agentResult);
             setAgentRunId(agentResult.agent_run_id);
@@ -272,9 +278,14 @@ export const AgentPreview = ({ agent }: AgentPreviewProps) => {
           message
         });
 
+        // Get user name from Supabase auth
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        const userName = user?.user_metadata?.name;
+
         const agentPromise = startAgentMutation.mutateAsync({
           threadId,
-          options
+          options: { ...options, user_name: userName || undefined }
         });
 
         const results = await Promise.allSettled([messagePromise, agentPromise]);

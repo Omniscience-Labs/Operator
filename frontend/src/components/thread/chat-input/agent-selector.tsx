@@ -20,6 +20,7 @@ import {
 import { useAgents } from '@/hooks/react-query/agents/use-agents';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 
 interface AgentSelectorProps {
   selectedAgentId?: string;
@@ -75,7 +76,11 @@ export function AgentSelector({
         >
           <span className="flex items-center gap-2 truncate">
             <Bot className="h-3 w-3" />
-            {selectedAgent?.name || 'Select an agent...'}
+            <GradientText 
+              text={selectedAgent?.name || 'Select an agent...'} 
+              gradient="linear-gradient(90deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%)"
+              transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
+            />
           </span>
           <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
         </Button>

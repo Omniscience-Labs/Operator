@@ -9,9 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useMarketplaceAgents, useAddAgentToLibrary } from '@/hooks/react-query/marketplace/use-marketplace';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { getAgentAvatar } from '../agents/_utils/get-agent-style';
+
+import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Pagination } from '../agents/_components/pagination';
+import { useCurrentAccount } from '@/hooks/use-current-account';
 
 type SortOption = 'newest' | 'popular' | 'most_downloaded' | 'name';
 
@@ -21,14 +23,17 @@ export default function MarketplacePage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [addingAgentId, setAddingAgentId] = useState<string | null>(null);
+  const [highlightedAgentId, setHighlightedAgentId] = useState<string | null>(null);
+  const currentAccount = useCurrentAccount();
   
   const queryParams = useMemo(() => ({
     page,
     limit: 20,
     search: searchQuery || undefined,
     tags: selectedTags.length > 0 ? selectedTags : undefined,
-    sort_by: sortBy
-  }), [page, searchQuery, selectedTags, sortBy]);
+    sort_by: sortBy,
+    account_id: currentAccount?.is_team_context ? currentAccount.account_id : undefined
+  }), [page, searchQuery, selectedTags, sortBy, currentAccount]);
 
   const { data: agentsResponse, isLoading, error } = useMarketplaceAgents(queryParams);
   const addToLibraryMutation = useAddAgentToLibrary();
@@ -64,15 +69,11 @@ export default function MarketplacePage() {
     );
   };
 
-  const getAgentStyling = (agent: any) => {
-    if (agent.avatar && agent.avatar_color) {
-      return {
-        avatar: agent.avatar,
-        color: agent.avatar_color,
-      };
-    }
-    return getAgentAvatar(agent.agent_id);
+  const handleHighlightChange = (agentId: string | null) => {
+    setHighlightedAgentId(agentId);
   };
+
+
 
   const allTags = React.useMemo(() => {
     const tags = new Set<string>();
@@ -84,7 +85,7 @@ export default function MarketplacePage() {
 
   if (error) {
     return (
-      <div className="container mx-auto max-w-7xl px-4 py-8">
+      <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full">
         <Alert variant="destructive">
           <AlertDescription>
             Failed to load marketplace agents. Please try again later.
@@ -95,7 +96,7 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8">
+    <div className="container mx-auto max-w-7xl px-4 py-8 min-h-full">
       <div className="space-y-8">
         <div className="space-y-4">
           <div className="space-y-2">
@@ -103,7 +104,9 @@ export default function MarketplacePage() {
               Agent Marketplace
             </h1>
             <p className="text-md text-muted-foreground max-w-2xl">
-              Discover and add powerful AI agents created by the community to your personal library
+              {currentAccount?.is_team_context 
+                ? `Discover and add AI agents available to ${currentAccount.name}`
+                : 'Discover and add powerful AI agents created by the community to your personal library'}
             </p>
           </div>
         </div>
@@ -176,17 +179,23 @@ export default function MarketplacePage() {
         </div>
 
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 sm:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-neutral-100 dark:bg-sidebar border border-border rounded-2xl overflow-hidden">
-                <Skeleton className="h-50" />
-                <div className="p-4 space-y-3">
-                  <Skeleton className="h-5 rounded" />
-                  <div className="space-y-2">
+              <div key={i} className="min-h-[400px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden">
+                <div className="p-6 space-y-4 h-full flex flex-col">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-12 w-12 rounded-xl" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-32 rounded" />
+                      <Skeleton className="h-4 w-20 rounded" />
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-3">
                     <Skeleton className="h-4 rounded" />
                     <Skeleton className="h-4 rounded w-3/4" />
+                    <Skeleton className="h-4 rounded w-1/2" />
                   </div>
-                  <Skeleton className="h-8" />
+                  <Skeleton className="h-10 rounded" />
                 </div>
               </div>
             ))}
@@ -200,89 +209,19 @@ export default function MarketplacePage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {agents.map((agent) => {
-              const { avatar, color } = getAgentStyling(agent);
-              
-              return (
-                <div 
-                  key={agent.agent_id} 
-                  className="bg-neutral-100 dark:bg-sidebar border border-border rounded-2xl overflow-hidden hover:bg-muted/50 transition-all duration-200 cursor-pointer group flex flex-col h-full"
-                >
-                  <div className={`h-50 flex items-center justify-center relative`} style={{ backgroundColor: color }}>
-                    <div className="text-4xl">
-                      {avatar}
-                    </div>
-                    <div className="absolute top-3 right-3 flex gap-2">
-                      <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">
-                        <Download className="h-3 w-3 text-white" />
-                        <span className="text-white text-xs font-medium">{agent.download_count || 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 flex flex-col flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-foreground font-medium text-lg line-clamp-1 flex-1">
-                        {agent.name}
-                      </h3>
-                    </div>
-                    <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
-                      {agent.description || 'No description available'}
-                    </p>
-                    
-                    {agent.tags && agent.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {agent.tags.slice(0, 2).map(tag => (
-                          <Badge key={tag} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {agent.tags.length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{agent.tags.length - 2}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="space-y-1 mb-4">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <User className="h-3 w-3" />
-                        <span>By {agent.creator_name}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        <span>{new Date(agent.marketplace_published_at).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-
-                    <Button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToLibrary(agent.agent_id, agent.name);
-                      }}
-                      disabled={addingAgentId === agent.agent_id}
-                      className="w-full transition-opacity mt-auto"
-                      size="sm"
-                      key={agent.agent_id} 
-                    >
-                      {addingAgentId === agent.agent_id ? (
-                        <>
-                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-background border-t-transparent mr-2" />
-                          Adding...
-                        </>
-                      ) : (
-                        <>
-                          <Download className="h-3 w-3" />
-                          Add to Library
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 sm:gap-6">
+            {agents.map((agent) => (
+              <AgentProfileCard
+                key={agent.agent_id} 
+                agent={agent}
+                mode="marketplace"
+                onAddToLibrary={(agentId) => handleAddToLibrary(agentId, agent.name)}
+                isLoading={addingAgentId === agent.agent_id}
+                enableTilt={true}
+                isHighlighted={highlightedAgentId === agent.agent_id}
+                onHighlightChange={handleHighlightChange}
+              />
+            ))}
           </div>
         )}
 

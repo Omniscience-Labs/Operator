@@ -17,6 +17,8 @@ import { ExecuteDataProviderCallToolView } from '../data-provider-tool/ExecuteDa
 import { DataProviderEndpointsToolView } from '../data-provider-tool/DataProviderEndpointsToolView';
 import { DeployToolView } from '../DeployToolView';
 import { ExcelToolView } from '../excel-tool/ExcelToolView';
+import { KnowledgeSearchToolView } from '../knowledge-search-tool/KnowledgeSearchToolView';
+import { ListKnowledgeBasesToolView } from '../list-knowledge-bases-tool/ListKnowledgeBasesToolView';
 
 
 export type ToolViewComponent = React.ComponentType<ToolViewProps>;
@@ -76,6 +78,9 @@ const defaultRegistry: ToolViewRegistryType = {
   'read-data': ExcelToolView,
   'list-sheets': ExcelToolView,
 
+  // Knowledge base tools
+  'list-available-knowledge-bases': ListKnowledgeBasesToolView,
+
   'default': GenericToolView,
 };
 
@@ -95,7 +100,18 @@ class ToolViewRegistry {
   }
 
   get(toolName: string): ToolViewComponent {
-    return this.registry[toolName] || this.registry['default'];
+    // Check for exact matches first
+    if (this.registry[toolName]) {
+      return this.registry[toolName];
+    }
+    
+    // Handle dynamic knowledge search tools (start with 'search_')
+    if (toolName.startsWith('search_') || toolName.startsWith('search-')) {
+      return KnowledgeSearchToolView;
+    }
+    
+    // Return default
+    return this.registry['default'];
   }
 
   has(toolName: string): boolean {

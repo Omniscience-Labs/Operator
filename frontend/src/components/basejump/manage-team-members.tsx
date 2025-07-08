@@ -1,4 +1,7 @@
-import { createClient } from '@/lib/supabase/server';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { Table, TableRow, TableBody, TableCell } from '../ui/table';
 import { Badge } from '../ui/badge';
 import TeamMemberOptions from './team-member-options';
@@ -7,23 +10,48 @@ type Props = {
   accountId: string;
 };
 
-export default async function ManageTeamMembers({ accountId }: Props) {
-  const supabaseClient = await createClient();
+export default function ManageTeamMembers({ accountId }: Props) {
+  const [members, setMembers] = useState<any[]>([]);
+  const [isPrimaryOwner, setIsPrimaryOwner] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const { data: members } = await supabaseClient.rpc('get_account_members', {
-    account_id: accountId,
-  });
+  useEffect(() => {
+    async function loadMembers() {
+      try {
+        const supabaseClient = createClient();
+        
+        const { data: membersData } = await supabaseClient.rpc('get_account_members', {
+          account_id: accountId,
+        });
 
-  const { data } = await supabaseClient.auth.getUser();
-  const isPrimaryOwner = members?.find(
-    (member: any) => member.user_id === data?.user?.id,
-  )?.is_primary_owner;
+        const { data } = await supabaseClient.auth.getUser();
+        const isPrimary = membersData?.find(
+          (member: any) => member.user_id === data?.user?.id,
+        )?.is_primary_owner;
+
+        setMembers(membersData || []);
+        setIsPrimaryOwner(isPrimary || false);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading members:', error);
+        setLoading(false);
+      }
+    }
+
+    if (accountId) {
+      loadMembers();
+    }
+  }, [accountId]);
+
+  if (loading) {
+    return <div>Loading members...</div>;
+  }
 
   return (
     <div>
       <Table>
         <TableBody>
-          {members?.map((member: any) => (
+          {members.map((member: any) => (
             <TableRow
               key={member.user_id}
               className="hover:bg-hover-bg border-subtle dark:border-white/10"

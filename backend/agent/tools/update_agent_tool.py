@@ -75,6 +75,18 @@ class UpdateAgentTool(Tool):
                     "avatar_color": {
                         "type": "string",
                         "description": "Hex color code for the agent's avatar background."
+                    },
+                    "knowledge_bases": {
+                        "type": "array",
+                        "description": "List of LlamaCloud knowledge base indices for the agent to search.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string", "description": "Name of the tool (used for method name generation)"},
+                                "index_name": {"type": "string", "description": "Name of the LlamaCloud index (used for API calls)"},
+                                "description": {"type": "string", "description": "Description of what this knowledge base contains"}
+                            }
+                        }
                     }
                 },
                 "required": []
@@ -90,7 +102,8 @@ class UpdateAgentTool(Tool):
             {"param_name": "agentpress_tools", "node_type": "element", "path": "agentpress_tools", "required": False},
             {"param_name": "configured_mcps", "node_type": "element", "path": "configured_mcps", "required": False},
             {"param_name": "avatar", "node_type": "attribute", "path": ".", "required": False},
-            {"param_name": "avatar_color", "node_type": "attribute", "path": ".", "required": False}
+            {"param_name": "avatar_color", "node_type": "attribute", "path": ".", "required": False},
+            {"param_name": "knowledge_bases", "node_type": "element", "path": "knowledge_bases", "required": False}
         ],
         example='''
         <function_calls>
@@ -113,7 +126,8 @@ class UpdateAgentTool(Tool):
         agentpress_tools: Optional[Dict[str, Dict[str, Any]]] = None,
         configured_mcps: Optional[list] = None,
         avatar: Optional[str] = None,
-        avatar_color: Optional[str] = None
+        avatar_color: Optional[str] = None,
+        knowledge_bases: Optional[List[Dict[str, str]]] = None
     ) -> ToolResult:
         """Update agent configuration with provided fields.
         
@@ -125,6 +139,7 @@ class UpdateAgentTool(Tool):
             configured_mcps: MCP servers configuration
             avatar: Emoji avatar
             avatar_color: Avatar background color
+            knowledge_bases: List of LlamaCloud knowledge base configurations for the agent to search
             
         Returns:
             ToolResult with updated agent data or error
@@ -156,6 +171,8 @@ class UpdateAgentTool(Tool):
                 update_data["avatar"] = avatar
             if avatar_color is not None:
                 update_data["avatar_color"] = avatar_color
+            if knowledge_bases is not None:
+                update_data["knowledge_bases"] = knowledge_bases
                 
             if not update_data:
                 return self.fail_response("No fields provided to update")
@@ -221,15 +238,17 @@ class UpdateAgentTool(Tool):
                 "avatar_color": agent.get("avatar_color", "#6B7280"),
                 "agentpress_tools": agent.get("agentpress_tools", {}),
                 "configured_mcps": agent.get("configured_mcps", []),
+                "knowledge_bases": agent.get("knowledge_bases", []),
                 "created_at": agent.get("created_at"),
                 "updated_at": agent.get("updated_at")
             }
             
             tools_count = len([t for t, cfg in config_summary["agentpress_tools"].items() if cfg.get("enabled")])
             mcps_count = len(config_summary["configured_mcps"])
+            kb_count = len(config_summary["knowledge_bases"])
             
             return self.success_response({
-                "summary": f"Agent '{config_summary['name']}' has {tools_count} tools enabled and {mcps_count} MCP servers configured.",
+                "summary": f"Agent '{config_summary['name']}' has {tools_count} tools enabled, {mcps_count} MCP servers configured, and {kb_count} knowledge bases.",
                 "configuration": config_summary
             })
             

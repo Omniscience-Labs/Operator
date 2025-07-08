@@ -229,3 +229,28 @@ async def get_optional_user_id(request: Request) -> Optional[str]:
         return user_id
     except PyJWTError:
         return None
+
+def get_current_user_token(request: Request) -> Optional[str]:
+    """
+    Extract the raw JWT token from the Authorization header.
+    This is used to store user authentication context for webhook operations.
+    
+    Args:
+        request: The FastAPI request object
+        
+    Returns:
+        Optional[str]: The raw JWT token, or None if no valid token found
+    """
+    auth_header = request.headers.get('Authorization')
+    
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return None
+    
+    token = auth_header.split(' ')[1]
+    
+    try:
+        # Validate the token format by trying to decode it
+        jwt.decode(token, options={"verify_signature": False})
+        return token
+    except PyJWTError:
+        return None

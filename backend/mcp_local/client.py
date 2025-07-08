@@ -303,3 +303,25 @@ class MCPManager:
                 }
                 
         return None 
+
+# Global MCP manager instance for module-level functions
+_global_mcp_manager: Optional[MCPManager] = None
+
+def get_mcp_manager() -> MCPManager:
+    """Get or create the global MCP manager instance"""
+    global _global_mcp_manager
+    if _global_mcp_manager is None:
+        _global_mcp_manager = MCPManager()
+    return _global_mcp_manager
+
+async def cleanup_connections():
+    """Module-level cleanup function for MCP connections"""
+    global _global_mcp_manager
+    if _global_mcp_manager is not None:
+        try:
+            await _global_mcp_manager.disconnect_all()
+            logger.info("MCP connections cleaned up successfully")
+        except Exception as e:
+            logger.error(f"Error during MCP cleanup: {str(e)}")
+        finally:
+            _global_mcp_manager = None 

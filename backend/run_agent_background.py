@@ -65,6 +65,7 @@ async def run_agent_background(
     is_agent_builder: Optional[bool] = False,
     target_agent_id: Optional[str] = None,
     request_id: Optional[str] = None,
+    user_name: Optional[str] = None,
 ):
     """Run the agent in the background using Redis for state."""
     structlog.contextvars.clear_contextvars()
@@ -304,7 +305,8 @@ async def run_agent_background(
             agent_config=agent_config,
             trace=trace,
             is_agent_builder=is_agent_builder,
-            target_agent_id=target_agent_id
+            target_agent_id=target_agent_id,
+            user_name=user_name,
         )
 
         final_status = "running"
@@ -352,6 +354,39 @@ async def run_agent_background(
         # Update DB status
         await update_agent_run_status(client, agent_run_id, final_status, error=error_message, responses=all_responses)
 
+        # Finalize agent run with credit tracking and duration calculation
+        end_time = datetime.now(timezone.utc)
+        try:
+            from services.agent_run_finalizer import AgentRunFinalizer
+            finalizer = AgentRunFinalizer()
+            
+            # Extract tool results with credit info from responses
+            tool_results = []
+            for response in all_responses:
+                if isinstance(response, dict) and response.get('type') == 'tool_result':
+                    tool_results.append(response)
+            
+            reasoning_mode = 'none'  # Default
+            if enable_thinking:
+                if reasoning_effort == 'high':
+                    reasoning_mode = 'high'
+                elif reasoning_effort in ['medium', 'low']:
+                    reasoning_mode = 'medium'
+            
+            finalization_result = await finalizer.finalize_agent_run(
+                agent_run_id=agent_run_id,
+                start_time=start_time,
+                end_time=end_time,
+                tool_results=tool_results,
+                reasoning_mode=reasoning_mode
+            )
+            
+            logger.info(f"Agent run finalization completed", extra=finalization_result)
+            
+        except Exception as finalization_error:
+            logger.error(f"Error during agent run finalization for {agent_run_id}: {str(finalization_error)}", exc_info=True)
+            # Don't fail the entire run if finalization fails
+
         # Publish final control signal (END_STREAM or ERROR)
         control_signal = "END_STREAM" if final_status == "completed" else "ERROR" if final_status == "failed" else "STOP"
         try:
@@ -388,6 +423,39 @@ async def run_agent_background(
 
         # Update DB status
         await update_agent_run_status(client, agent_run_id, "failed", error=f"{error_message}\n{traceback_str}", responses=all_responses)
+
+        # Finalize failed agent run with credit tracking and duration calculation
+        end_time = datetime.now(timezone.utc)
+        try:
+            from services.agent_run_finalizer import AgentRunFinalizer
+            finalizer = AgentRunFinalizer()
+            
+            # Extract tool results with credit info from responses
+            tool_results = []
+            for response in all_responses:
+                if isinstance(response, dict) and response.get('type') == 'tool_result':
+                    tool_results.append(response)
+            
+            reasoning_mode = 'none'  # Default
+            if enable_thinking:
+                if reasoning_effort == 'high':
+                    reasoning_mode = 'high'
+                elif reasoning_effort in ['medium', 'low']:
+                    reasoning_mode = 'medium'
+            
+            finalization_result = await finalizer.finalize_agent_run(
+                agent_run_id=agent_run_id,
+                start_time=start_time,
+                end_time=end_time,
+                tool_results=tool_results,
+                reasoning_mode=reasoning_mode
+            )
+            
+            logger.info(f"Failed agent run finalization completed", extra=finalization_result)
+            
+        except Exception as finalization_error:
+            logger.error(f"Error during failed agent run finalization for {agent_run_id}: {str(finalization_error)}", exc_info=True)
+            # Don't fail the entire run if finalization fails
 
         # Publish ERROR signal
         try:

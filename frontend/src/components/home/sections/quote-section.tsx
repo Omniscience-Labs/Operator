@@ -2,8 +2,6 @@
 import { siteConfig } from '@/lib/home';
 
 export function QuoteSection() {
-  const { quoteSection } = siteConfig;
-
   return (
     <section
       id="quote"
@@ -11,22 +9,22 @@ export function QuoteSection() {
     >
       <blockquote className="max-w-3xl text-left px-4">
         <p className="text-xl md:text-2xl text-primary leading-relaxed tracking-tighter font-medium mb-6">
-          {quoteSection.quote}
+          "Operator has transformed our daily operations. Tasks that once consumed hours now complete in moments, freeing our team to focus on creativity and strategic growth."
         </p>
 
         <div className="flex gap-4">
           <div className="size-10 rounded-full bg-primary border border-border">
             <img
-              src={quoteSection.author.image}
-              alt={quoteSection.author.name}
+              src="https://randomuser.me/api/portraits/men/91.jpg"
+              alt="Alex Johnson"
               className="size-full rounded-full object-contain"
             />
           </div>
           <div className="text-left">
             <cite className="text-lg font-medium text-primary not-italic">
-              {quoteSection.author.name}
+              Alex Johnson
             </cite>
-            <p className="text-sm text-primary">{quoteSection.author.role}</p>
+            <p className="text-sm text-primary">CTO, Innovatech</p>
           </div>
         </div>
       </blockquote>
