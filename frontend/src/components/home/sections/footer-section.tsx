@@ -108,80 +108,8 @@ export function FooterSection() {
         <div className="absolute inset-0 bg-gradient-to-t from-transparent to-background z-10 from-40%" />
         <div className="absolute inset-0 mx-6">
           <FlickeringGrid
-            text={tablet ? 
-              `BECOME OMNI
-
-
-Omni
-/ˈäm.nī/ (prefix)
-
-All; of all things. Empower industries 
-with comprehensive AI solutions for 
-manufacturing, logistics, and supply chain.
-
-
-Omnipotent
-/ˌäm'nīpəd(ə)nt/ (adjective)
-
-Having unlimited power and authority. 
-Provide unparalleled control over industrial 
-processes, boosting efficiency.
-
-
-Omnipresent
-/ˌämnī'prez(ə)nt/ (adjective)
-
-Present everywhere simultaneously. Enable 
-monitoring and management of operations 
-across multiple facilities.
-
-
-Omniscient
-/ˌäm'nīSHənt/ (adjective)
-
-Having complete knowledge and understanding. 
-Equip businesses with deep insights and 
-predictive analytics.` :
-              `BECOME OMNI
-
-
-
-Omni
-/ˈäm.nī/ (prefix)
-
-All; of all things. Empower industries with comprehensive 
-AI solutions for manufacturing, logistics, and supply chain, 
-enhancing operations across the entire industrial ecosystem.
-
-
-
-Omnipotent
-/ˌäm'nīpəd(ə)nt/ (adjective)
-
-Having unlimited power and authority. Provide unparalleled 
-control over industrial processes, from manufacturing to 
-logistics, boosting efficiency and productivity for businesses.
-
-
-
-Omnipresent
-/ˌämnī'prez(ə)nt/ (adjective)
-
-Present everywhere simultaneously. Enable monitoring and 
-management of operations across multiple facilities, supply 
-chains, and customer touchpoints, enhancing visibility.
-
-
-
-Omniscient
-/ˌäm'nīSHənt/ (adjective)
-
-Having complete knowledge and understanding. Equip businesses 
-with deep insights and predictive analytics across entire 
-industrial operations, improving decision-making.`
-            }
-            fontSize={tablet ? 24 : 32}
-            fontWeight={600}
+            text={tablet ? 'BECOME OMNI BECOME OMNI BECOME OMNI' : 'BECOME OMNI BECOME OMNI BECOME OMNI'}
+            fontSize={tablet ? 70 : 90}
             className="h-full w-full"
             squareSize={2}
             gridGap={tablet ? 2 : 3}
