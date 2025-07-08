@@ -369,7 +369,7 @@ export function HeroSection() {
                 {/* Enhanced glow effect - only on hover/focus */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 
-                {/* Input container with completely transparent design */}
+                {/* Input container with cyan theme outline */}
                 <div 
                   className="hero-input-container relative flex items-center rounded-full px-6 transition-all duration-300" 
                   style={{ 
@@ -379,23 +379,23 @@ export function HeroSection() {
                     backgroundColor: 'transparent !important',
                     backdropFilter: 'none !important',
                     WebkitBackdropFilter: 'none !important',
-                    border: '1px solid rgba(var(--border), 0.3)',
+                    border: '1px solid rgba(34, 211, 238, 0.2) !important',
                     '--input': 'transparent',
                     '--color-input': 'transparent'
                   } as React.CSSProperties}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(var(--primary), 0.5)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.4)';
                   }}
                   onMouseLeave={(e) => {
                     if (!e.currentTarget.querySelector('input:focus')) {
-                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(var(--border), 0.3)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.2)';
                     }
                   }}
                   onFocusCapture={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(var(--primary), 0.7)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.6)';
                   }}
                   onBlurCapture={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(var(--border), 0.3)';
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.2)';
                   }}
                 >
                   <input
