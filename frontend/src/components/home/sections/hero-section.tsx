@@ -212,28 +212,6 @@ export function HeroSection() {
 
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
-      <style jsx global>{`
-        /* Clean input styling with proper theme support */
-        #hero .hero-input-container input {
-          outline: none !important;
-          border: none !important;
-          box-shadow: none !important;
-          -webkit-appearance: none !important;
-          -moz-appearance: none !important;
-          appearance: none !important;
-          -webkit-tap-highlight-color: transparent !important;
-          color: hsl(var(--foreground)) !important;
-        }
-        
-        #hero .hero-input-container input::placeholder {
-          color: hsl(var(--muted-foreground)) !important;
-          opacity: 0.7;
-        }
-        
-        #hero .hero-input-container input:focus::placeholder {
-          opacity: 0.4;
-        }
-      `}</style>
       {/* Lamp Container as Background */}
       <LampContainer className="absolute inset-0 -z-10">
         <div /> {/* Empty div to satisfy children requirement */}
@@ -311,31 +289,7 @@ export function HeroSection() {
                 
                 {/* Input container with beautiful theme-aware design */}
                 <div 
-                  className="hero-input-container relative flex items-center rounded-full px-6 transition-all duration-300" 
-                  style={{ 
-                    background: 'hsl(var(--background) / 0.1)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(34, 211, 238, 0.3)',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.5)';
-                    (e.currentTarget as HTMLElement).style.background = 'hsl(var(--background) / 0.15)';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!e.currentTarget.querySelector('input:focus')) {
-                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.3)';
-                      (e.currentTarget as HTMLElement).style.background = 'hsl(var(--background) / 0.1)';
-                    }
-                  }}
-                  onFocusCapture={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.7)';
-                    (e.currentTarget as HTMLElement).style.background = 'hsl(var(--background) / 0.2)';
-                  }}
-                  onBlurCapture={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.3)';
-                    (e.currentTarget as HTMLElement).style.background = 'hsl(var(--background) / 0.1)';
-                  }}
+                  className="hero-input-container relative flex items-center rounded-full px-6 transition-all duration-300 border border-cyan-500/30 bg-background/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:border-cyan-500/50 hover:bg-background/15 focus-within:border-cyan-500/70 focus-within:bg-background/20"
                 >
                   <input
                     type="text"
@@ -343,7 +297,7 @@ export function HeroSection() {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg text-foreground py-2 font-medium transition-all duration-200 border-0 outline-none focus:ring-0"
+                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg text-foreground placeholder:text-muted-foreground placeholder:opacity-70 focus:placeholder:opacity-40 py-2 font-medium transition-all duration-200 border-0 outline-none focus:outline-none focus:ring-0 appearance-none [-webkit-appearance:none] [-moz-appearance:none]"
                     disabled={isSubmitting}
                     autoComplete="off"
                     spellCheck="false"
