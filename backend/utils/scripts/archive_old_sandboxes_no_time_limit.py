@@ -9,6 +9,7 @@ This script:
 1. Gets all projects with associated sandbox information.
 2. Filters for sandboxes that are currently in a 'stopped' state.
 3. Archives these stopped sandboxes.
+4. Cleans up database entries for sandboxes that are no longer found in Daytona.
 
 Make sure your environment variables are properly set:
 - SUPABASE_URL
@@ -21,7 +22,7 @@ import sys
 import os
 import argparse
 from typing import List, Dict, Any
-from datetime import datetime, timedelta # timedelta is no longer strictly needed but kept as it's part of datetime
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 
@@ -29,7 +30,7 @@ from dotenv import load_dotenv
 load_dotenv(".env")
 
 from services.supabase import DBConnection
-from sandbox.sandbox import daytona, SandboxState # Import SandboxState for clarity
+from sandbox.sandbox import daytona, SandboxState
 from utils.logger import logger
 
 # Global DB connection to reuse
@@ -164,10 +165,10 @@ async def archive_sandbox(project: Dict[str, Any], dry_run: bool) -> bool:
         sandbox = daytona.get(sandbox_id)
         
         # Check sandbox state - it must be stopped before archiving
-        sandbox_info = sandbox.info()
+        # sandbox_info = sandbox.info() # This line caused the previous error.
         
         # Log the current state
-        logger.info(f"Sandbox {sandbox_id} is in '{sandbox_info.state}' state")
+        logger.info(f"Sandbox {sandbox_id} is in '{sandbox.state}' state") # Changed to sandbox.state
         
         # Only archive if the sandbox is in the stopped state
         if sandbox.state == SandboxState.STOPPED: # Using SandboxState enum for clarity
@@ -176,7 +177,7 @@ async def archive_sandbox(project: Dict[str, Any], dry_run: bool) -> bool:
             logger.info(f"Successfully archived sandbox {sandbox_id}")
             return True
         else:
-            logger.info(f"Skipping sandbox {sandbox_id} as it is not in stopped state (current: {sandbox_info.state})")
+            logger.info(f"Skipping sandbox {sandbox_id} as it is not in stopped state (current: {sandbox.state})") # Changed to sandbox.state
             return True
             
     except Exception as e:
@@ -198,6 +199,41 @@ async def archive_sandbox(project: Dict[str, Any], dry_run: bool) -> bool:
                 logger.error(f"Could not parse response data from error")
         
         print(f"Failed to process sandbox {sandbox_id}: {error_type} - {str(e)}")
+        return False
+
+
+async def delete_project_from_db(project_id: str) -> bool:
+    """
+    Deletes a project from the Supabase database.
+    
+    Args:
+        project_id: The ID of the project to delete.
+        
+    Returns:
+        True if successful, False otherwise.
+    """
+    global db_connection
+    if db_connection is None:
+        db_connection = DBConnection()
+    
+    client = await db_connection.client
+    
+    try:
+        logger.info(f"Attempting to delete project {project_id} from database (sandbox not found in Daytona).")
+        response = await client.table('projects').delete().eq('project_id', project_id).execute()
+        
+        if response.data:
+            logger.info(f"Successfully deleted project {project_id} from database.")
+            print(f"Successfully deleted stale project {project_id} from database.")
+            return True
+        else:
+            logger.warning(f"Project {project_id} not found in database for deletion or no data returned.")
+            print(f"Warning: Project {project_id} not found in database for deletion or no data returned.")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error deleting project {project_id} from database: {str(e)}")
+        print(f"Error deleting project {project_id} from database: {str(e)}")
         return False
 
 
@@ -271,25 +307,39 @@ async def main():
         # Filter for stopped sandboxes
         stopped_sandboxes = []
         print("\nChecking sandbox states (this might take a while for many sandboxes)...")
+        
+        stale_sandbox_found_count = 0
         # Add a counter for progress
         for i, project in enumerate(all_projects_with_sandboxes):
             sandbox_id = project['sandbox'].get('id')
-            if sandbox_id:
+            project_id = project.get('project_id')
+
+            if sandbox_id and project_id:
                 try:
                     sandbox = daytona.get(sandbox_id)
-                    sandbox_info = sandbox.info()
+                    # The sandbox.state is directly available now, no need for .info()
                     if sandbox.state == SandboxState.STOPPED:
                         stopped_sandboxes.append(project)
-                    logger.info(f"Sandbox {sandbox_id} state: {sandbox_info.state}")
+                    logger.info(f"Sandbox {sandbox_id} state: {sandbox.state}")
                 except Exception as e:
-                    logger.error(f"Error checking state for sandbox {sandbox_id}: {str(e)}")
-                    print(f"Error checking state for sandbox {sandbox_id}: {str(e)}")
+                    # Specifically handle the "Sandbox not found" error
+                    if "not found" in str(e).lower():
+                        logger.warning(f"Sandbox {sandbox_id} for project {project_id} not found in Daytona. Marking for deletion from DB.")
+                        print(f"Sandbox {sandbox_id} for project {project_id} not found in Daytona. Deleting from DB...")
+                        stale_sandbox_found_count += 1
+                        if not args.dry_run:
+                            await delete_project_from_db(project_id)
+                    else:
+                        logger.error(f"Error checking state for sandbox {sandbox_id} for project {project_id}: {str(e)}")
+                        print(f"Error checking state for sandbox {sandbox_id} for project {project_id}: {str(e)}")
             
             # Print progress periodically for state checking
             if (i + 1) % 50 == 0 or (i + 1) == len(all_projects_with_sandboxes):
                 progress = (i + 1) / len(all_projects_with_sandboxes) * 100
                 print(f"Progress checking states: {i + 1}/{len(all_projects_with_sandboxes)} sandboxes checked ({progress:.1f}%)")
 
+        if stale_sandbox_found_count > 0:
+            print(f"\nFound and processed {stale_sandbox_found_count} stale sandbox entries in the database.")
 
         if not stopped_sandboxes:
             logger.info("No stopped sandboxes to archive.")
@@ -298,7 +348,7 @@ async def main():
         
         # Print summary of what will be processed
         print("\n===== SANDBOX CLEANUP SUMMARY =====")
-        print(f"Total projects with sandboxes found: {len(all_projects_with_sandboxes)}")
+        print(f"Total projects with sandboxes found (including stale): {len(all_projects_with_sandboxes)}")
         print(f"Total stopped sandboxes to be archived: {len(stopped_sandboxes)}")
         print("===================================")
         
@@ -339,12 +389,12 @@ async def main():
         # Print final summary
         print("\nSandbox Cleanup Summary:")
         print(f"Total stopped sandboxes to archive: {len(stopped_sandboxes)}")
-        print(f"Total sandboxes processed: {processed_count}") # Changed from len(stopped_sandboxes) to processed_count for accuracy
+        print(f"Total sandboxes processed: {processed_count}")
         
         if args.dry_run:
             print(f"DRY RUN: No sandboxes were actually archived")
         else:
-            print(f"Successfully archived: {processed_count - failed_count}") # Corrected to show actual archived count
+            print(f"Successfully archived: {processed_count - failed_count}")
             print(f"Failed to archive: {failed_count}")
         
         logger.info("Sandbox cleanup completed")
