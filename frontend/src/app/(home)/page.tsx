@@ -1,6 +1,3 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import { BentoSection } from '@/components/home/sections/bento-section';
 import { CompanyShowcase } from '@/components/home/sections/company-showcase';
 import { CTASection } from '@/components/home/sections/cta-section';

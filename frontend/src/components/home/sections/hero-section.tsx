@@ -214,17 +214,55 @@ export function HeroSection() {
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
       {/* Critical CSS to prevent border flash */}
       <style dangerouslySetInnerHTML={{ __html: `
-        /* Critical CSS to prevent gray border flash on page load */
+        /* Critical CSS to prevent gray border flash and shape issues on page load */
         #hero .hero-input-container {
           border: 1px solid rgba(34, 211, 238, 0.3) !important;
           border-width: 1px !important;
           border-style: solid !important;
+          border-radius: 9999px !important; /* rounded-full */
+          background-color: rgba(255, 255, 255, 0.1) !important;
+          backdrop-filter: blur(12px) !important;
+          -webkit-backdrop-filter: blur(12px) !important;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+          padding-left: 1.5rem !important;
+          padding-right: 1.5rem !important;
+          display: flex !important;
+          align-items: center !important;
+          position: relative !important;
+          transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+          /* Prevent any size changes */
+          width: 100% !important;
+          height: auto !important;
+          min-height: 4rem !important; /* h-16 */
+          overflow: hidden !important;
+        }
+        @media (prefers-color-scheme: dark) {
+          #hero .hero-input-container {
+            background-color: rgba(0, 0, 0, 0.1) !important;
+          }
+        }
+        @media (min-width: 1024px) {
+          #hero .hero-input-container {
+            min-height: 4.5rem !important; /* lg:h-18 */
+          }
         }
         #hero .hero-input-container:hover {
           border-color: rgba(34, 211, 238, 0.5) !important;
+          background-color: rgba(255, 255, 255, 0.15) !important;
+        }
+        @media (prefers-color-scheme: dark) {
+          #hero .hero-input-container:hover {
+            background-color: rgba(0, 0, 0, 0.15) !important;
+          }
         }
         #hero .hero-input-container:focus-within {
           border-color: rgba(34, 211, 238, 0.7) !important;
+          background-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        @media (prefers-color-scheme: dark) {
+          #hero .hero-input-container:focus-within {
+            background-color: rgba(0, 0, 0, 0.2) !important;
+          }
         }
         #hero .hero-input-container * {
           border: none !important;
@@ -236,6 +274,23 @@ export function HeroSection() {
           -webkit-appearance: none !important;
           -moz-appearance: none !important;
           appearance: none !important;
+          background: transparent !important;
+          width: 100% !important;
+          flex: 1 !important;
+        }
+        #hero .hero-input-container button {
+          border-radius: 9999px !important;
+        }
+        /* Ensure form and glow don't affect sizing */
+        #hero form {
+          width: 100% !important;
+          position: relative !important;
+        }
+        #hero form > div:first-child {
+          position: relative !important;
+        }
+        #hero .hero-input-container + div {
+          pointer-events: none !important;
         }
       ` }} />
       {/* Lamp Container as Background */}
@@ -304,10 +359,12 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
+            layout="position"
           >
             <form 
               className="w-full relative group" 
               onSubmit={handleSubmit}
+              id="hero-form"
             >
               <div className="relative">
                 {/* Enhanced glow effect */}
