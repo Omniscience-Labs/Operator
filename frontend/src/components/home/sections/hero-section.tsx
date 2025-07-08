@@ -213,20 +213,17 @@ export function HeroSection() {
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
       <style jsx global>{`
-        /* CRITICAL: Override the LampContainer grey backgrounds that were causing the issue */
-        #hero .bg-background {
+        /* TARGETED: Only override specific problematic lamp background elements */
+        #hero .bg-background.blur-2xl {
           background: transparent !important;
-          background-color: transparent !important;
         }
         
-        /* Target specific lamp elements that create grey backgrounds */
-        #hero [class*="bg-background"],
-        #hero [class*="blur"] {
+        /* Only target the lamp's solid background divs that create grey boxes, not the glow effects */
+        #hero [class*="bg-background"][class*="mask-image"] {
           background: transparent !important;
-          background-color: transparent !important;
         }
         
-        /* Clean input styling without global interference */
+        /* Clean input styling with proper theme support */
         #hero .hero-input-container input {
           outline: none !important;
           border: none !important;
@@ -235,12 +232,16 @@ export function HeroSection() {
           -moz-appearance: none !important;
           appearance: none !important;
           -webkit-tap-highlight-color: transparent !important;
+          color: hsl(var(--foreground)) !important;
         }
         
-        /* Ensure the input container glass effect works properly */
-        #hero .hero-input-container {
-          -webkit-backdrop-filter: blur(10px);
-          backdrop-filter: blur(10px);
+        #hero .hero-input-container input::placeholder {
+          color: hsl(var(--muted-foreground)) !important;
+          opacity: 0.7;
+        }
+        
+        #hero .hero-input-container input:focus::placeholder {
+          opacity: 0.4;
         }
       `}</style>
       {/* Lamp Container as Background */}
@@ -318,31 +319,32 @@ export function HeroSection() {
                 {/* Enhanced glow effect */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 via-cyan-400/10 to-cyan-500/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 
-                {/* Input container with beautiful design */}
+                {/* Input container with beautiful theme-aware design */}
                 <div 
                   className="hero-input-container relative flex items-center rounded-full px-6 transition-all duration-300" 
                   style={{ 
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    backdropFilter: 'blur(10px)',
+                    background: 'hsl(var(--background) / 0.1)',
+                    backdropFilter: 'blur(12px)',
                     border: '1px solid rgba(34, 211, 238, 0.3)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.5)';
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.08)';
+                    (e.currentTarget as HTMLElement).style.background = 'hsl(var(--background) / 0.15)';
                   }}
                   onMouseLeave={(e) => {
                     if (!e.currentTarget.querySelector('input:focus')) {
                       (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.3)';
-                      (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.05)';
+                      (e.currentTarget as HTMLElement).style.background = 'hsl(var(--background) / 0.1)';
                     }
                   }}
                   onFocusCapture={(e) => {
                     (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.7)';
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.1)';
+                    (e.currentTarget as HTMLElement).style.background = 'hsl(var(--background) / 0.2)';
                   }}
                   onBlurCapture={(e) => {
                     (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.3)';
-                    (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.05)';
+                    (e.currentTarget as HTMLElement).style.background = 'hsl(var(--background) / 0.1)';
                   }}
                 >
                   <input
@@ -351,7 +353,7 @@ export function HeroSection() {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg placeholder:text-white/60 text-white py-2 font-medium transition-all duration-200 focus:placeholder:text-white/40"
+                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg text-foreground py-2 font-medium transition-all duration-200"
                     disabled={isSubmitting}
                     autoComplete="off"
                     spellCheck="false"
@@ -361,7 +363,7 @@ export function HeroSection() {
                     className={`rounded-full p-3 lg:p-4 transition-all duration-300 ${
                       inputValue.trim()
                         ? 'bg-cyan-500 text-white hover:bg-cyan-400 shadow-lg hover:shadow-cyan-500/40 scale-100'
-                        : 'bg-white/20 text-white/60 scale-95'
+                        : 'bg-muted/40 text-muted-foreground scale-95'
                     }`}
                     disabled={!inputValue.trim() || isSubmitting}
                     aria-label="Submit"
@@ -369,7 +371,7 @@ export function HeroSection() {
                     whileTap={inputValue.trim() ? { scale: 0.95 } : {}}
                   >
                     {isSubmitting ? (
-                      <div className="h-5 lg:h-6 w-5 lg:w-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="h-5 lg:h-6 w-5 lg:w-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <ArrowRight className="size-5 lg:size-6" />
                     )}
