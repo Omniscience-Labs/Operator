@@ -278,7 +278,7 @@ async def main():
                 try:
                     sandbox = daytona.get(sandbox_id)
                     sandbox_info = sandbox.info()
-                    if sandbox_info.state == SandboxState.STOPPED:
+                    if sandbox.state == SandboxState.STOPPED:
                         stopped_sandboxes.append(project)
                     logger.info(f"Sandbox {sandbox_id} state: {sandbox_info.state}")
                 except Exception as e:
