@@ -104,7 +104,7 @@ export function FooterSection() {
           </div>
         </div>
       </div>
-      <div className="mt-24 relative h-screen">
+      <div className="mt-24 relative h-48 md:h-64">
         <div className="absolute inset-0 bg-gradient-to-t from-transparent to-background z-10 from-40%" />
         <div className="absolute inset-0 mx-6">
           <FlickeringGrid

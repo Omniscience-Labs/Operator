@@ -213,20 +213,29 @@ export function HeroSection() {
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
       <style jsx>{`
-        input:focus,
-        input:active,
-        input:focus-visible,
-        input:focus-within,
-        input:target,
-        input:-webkit-autofill,
-        input:-webkit-autofill:focus,
-        input:-webkit-autofill:active,
-        input:-webkit-autofill:hover {
-          outline: none !important;
+        /* Ultra-aggressive transparent input overrides */
+        .hero-input-container,
+        .hero-input-container *,
+        .hero-input-container input,
+        .hero-input-container input:focus,
+        .hero-input-container input:active,
+        .hero-input-container input:focus-visible,
+        .hero-input-container input:focus-within,
+        .hero-input-container input:target,
+        .hero-input-container input:-webkit-autofill,
+        .hero-input-container input:-webkit-autofill:focus,
+        .hero-input-container input:-webkit-autofill:active,
+        .hero-input-container input:-webkit-autofill:hover {
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
           box-shadow: none !important;
-          border: none !important;
           -webkit-box-shadow: none !important;
           -moz-box-shadow: none !important;
+          outline: none !important;
+          border: none !important;
           -webkit-appearance: none !important;
           -moz-appearance: none !important;
           appearance: none !important;
@@ -238,6 +247,27 @@ export function HeroSection() {
           user-select: text !important;
         }
         
+        /* Container specific overrides */
+        .hero-input-container {
+          background: transparent !important;
+          background-color: transparent !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          box-shadow: none !important;
+          -webkit-box-shadow: none !important;
+        }
+        
+        /* Remove any potential grey from input color variables */
+        .hero-input-container input {
+          color: var(--foreground) !important;
+        }
+        
+        .hero-input-container input::placeholder {
+          color: var(--muted-foreground) !important;
+          opacity: 0.7 !important;
+        }
+        
+        /* Override any global focus styles */
         *:focus,
         *:active,
         *:focus-visible,
@@ -332,17 +362,19 @@ export function HeroSection() {
                   WebkitTapHighlightColor: 'transparent'
                 } as React.CSSProperties}
               >
-                {/* Enhanced glow effect */}
+                {/* Enhanced glow effect - only on hover/focus */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 
-                {/* Input container with clean transparent design */}
+                {/* Input container with completely transparent design */}
                 <div 
-                  className="relative flex items-center rounded-full border border-border/30 backdrop-blur-sm px-6 shadow-lg transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70 focus-within:shadow-xl focus-within:shadow-primary/10" 
+                  className="hero-input-container relative flex items-center rounded-full border border-border/30 px-6 transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70" 
                   style={{ 
                     outline: 'none !important', 
                     boxShadow: 'none !important',
                     WebkitTapHighlightColor: 'transparent',
-                    backgroundColor: 'transparent'
+                    backgroundColor: 'transparent !important',
+                    backdropFilter: 'none !important',
+                    WebkitBackdropFilter: 'none !important'
                   } as React.CSSProperties}
                 >
                   <input
@@ -351,16 +383,23 @@ export function HeroSection() {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg placeholder:text-muted-foreground/70 text-foreground py-2 font-medium"
+                    className="flex-1 h-16 lg:h-18 rounded-full px-2 text-base lg:text-lg py-2 font-medium"
                     style={{ 
                       outline: 'none !important', 
                       boxShadow: 'none !important', 
                       border: 'none !important',
+                      background: 'transparent !important',
+                      backgroundColor: 'transparent !important',
+                      backgroundImage: 'none !important',
+                      backdropFilter: 'none !important',
+                      WebkitBackdropFilter: 'none !important',
                       WebkitAppearance: 'none',
                       MozAppearance: 'none',
                       appearance: 'none',
                       WebkitTapHighlightColor: 'transparent',
-                      resize: 'none'
+                      resize: 'none',
+                      color: 'var(--foreground)',
+                      caretColor: 'var(--foreground)'
                     } as React.CSSProperties}
                     disabled={isSubmitting}
                     autoComplete="off"
