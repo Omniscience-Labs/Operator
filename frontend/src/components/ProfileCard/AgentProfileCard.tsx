@@ -79,10 +79,19 @@ const getKnowledgeBasesCount = (agent: Agent) => {
   return agent.knowledge_bases?.length || 0;
 };
 
-const truncateDescription = (description?: string, maxLength = 100) => {
+const truncateDescription = (description?: string, maxLength = 120) => {
   if (!description) return "🤖 *Mysterious agent with no description* - What am I? That's for me to know and you to find out!";
   if (description.length <= maxLength) return description;
-  return description.substring(0, maxLength).trim() + '...';
+  
+  // Find the last space before the maxLength to avoid cutting words
+  const truncated = description.substring(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(' ');
+  
+  if (lastSpace > 0 && lastSpace > maxLength - 20) {
+    return truncated.substring(0, lastSpace).trim() + '...';
+  }
+  
+  return truncated.trim() + '...';
 };
 
 const formatDate = (dateString?: string) => {
@@ -209,7 +218,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
     <div
       ref={cardRef}
       className={cn(
-        'group relative w-full h-[400px] rounded-2xl overflow-hidden transition-all duration-500 ease-out cursor-pointer',
+        'group relative w-full min-h-[400px] rounded-2xl overflow-hidden transition-all duration-500 ease-out cursor-pointer',
         'hover:shadow-2xl hover:shadow-black/30 hover:-translate-y-2',
         // Enhanced hover glow effect
         'before:absolute before:inset-0 before:rounded-2xl before:p-[1px] before:bg-gradient-to-br before:opacity-0',
@@ -339,7 +348,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
             </div>
             <div>
               <h3 className={cn(
-                "text-xl font-semibold text-foreground/90 truncate max-w-[200px] transition-colors duration-300 group-hover:text-foreground",
+                "text-xl font-semibold text-foreground/90 break-words max-w-[160px] sm:max-w-[200px] transition-colors duration-300 group-hover:text-foreground",
                 isHighlighted && "text-foreground"
               )}>
                 {agent.name}
@@ -446,9 +455,9 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         </div>
 
         {/* Description */}
-        <div className="flex-1 mb-4">
+        <div className="flex-1 mb-4 overflow-hidden">
           <p className={cn(
-            "text-muted-foreground text-sm leading-relaxed transition-colors duration-300 group-hover:text-foreground/85",
+            "text-muted-foreground text-sm leading-relaxed transition-colors duration-300 group-hover:text-foreground/85 break-words",
             isHighlighted && "text-foreground/85"
           )}>
             {truncateDescription(agent.description)}
@@ -539,12 +548,13 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
 
           {/* Tags */}
           {agent.tags && agent.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1 overflow-hidden">
               {agent.tags.slice(0, 3).map((tag, index) => (
                 <Badge 
                   key={index} 
                   variant="secondary" 
-                  className="text-xs bg-muted/50 text-muted-foreground border-border/50 transition-all duration-300 group-hover:bg-muted/70 group-hover:text-foreground/85"
+                  className="text-xs bg-muted/50 text-muted-foreground border-border/50 transition-all duration-300 group-hover:bg-muted/70 group-hover:text-foreground/85 truncate max-w-[120px] flex-shrink-0"
+                  title={tag}
                 >
                   {tag}
                 </Badge>
@@ -552,7 +562,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               {agent.tags.length > 3 && (
                 <Badge 
                   variant="secondary" 
-                  className="text-xs bg-muted/50 text-muted-foreground border-border/50 transition-all duration-300 group-hover:bg-muted/70 group-hover:text-foreground/85"
+                  className="text-xs bg-muted/50 text-muted-foreground border-border/50 transition-all duration-300 group-hover:bg-muted/70 group-hover:text-foreground/85 flex-shrink-0"
                 >
                   +{agent.tags.length - 3}
                 </Badge>
@@ -562,7 +572,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2 mt-auto">
+        <div className="flex gap-2 pt-2 mt-auto flex-wrap">
           {mode === 'marketplace' ? (
             <Button
               onClick={(e) => {
@@ -636,20 +646,12 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                           <span className="hidden sm:inline">Private</span>
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="max-w-md">
+                      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                         <AlertDialogHeader>
-                          <AlertDialogTitle className="text-xl">
-                            Make Managed Agent Private
-                          </AlertDialogTitle>
+                          <AlertDialogTitle>Make Agent Private</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to make &quot;{agent.name}&quot; private? 
-                            <br /><br />
-                            <strong>This will:</strong>
-                            <ul className="list-disc list-inside mt-2 space-y-1">
-                              <li>Remove it from the marketplace</li>
-                              <li>Remove it from all users&apos; libraries who added it</li>
-                              <li>Stop all live updates to users who had this agent</li>
-                            </ul>
+                            This will make your agent private and remove it from the marketplace. 
+                            Your agent will still be marked as "Managed" since it was previously published as a managed agent.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

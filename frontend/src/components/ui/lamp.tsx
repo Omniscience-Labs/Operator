@@ -116,7 +116,7 @@ export const LampContainer = ({
             duration: 0.8,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-50 h-0.5 w-[30rem] -translate-y-[7rem] sm:-translate-y-[8rem] md:-translate-y-[9rem] lg:-translate-y-[10rem] left-[25%] -translate-x-1/2 pointer-events-none select-none outline-none"
+          className="absolute inset-auto z-50 h-0.5 w-[30rem] -translate-y-[2rem] sm:-translate-y-[2.5rem] md:-translate-y-[3rem] lg:-translate-y-[3.5rem] left-1/2 -translate-x-1/2 pointer-events-none select-none outline-none"
           style={{
             background: 'linear-gradient(90deg, rgba(34, 211, 238, 0.8) 0%, rgba(34, 211, 238, 1) 50%, rgba(34, 211, 238, 0.8) 100%)',
             boxShadow: '0 0 20px rgba(34, 211, 238, 0.6), 0 0 40px rgba(34, 211, 238, 0.4)'
@@ -134,7 +134,7 @@ export const LampContainer = ({
             duration: 1.2,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-30 h-40 w-[35rem] -translate-y-[7rem] sm:-translate-y-[8rem] md:-translate-y-[9rem] lg:-translate-y-[10rem] left-[25%] -translate-x-1/2 rounded-full blur-xl pointer-events-none"
+          className="absolute inset-auto z-30 h-40 w-[35rem] -translate-y-[2rem] sm:-translate-y-[2.5rem] md:-translate-y-[3rem] lg:-translate-y-[3.5rem] left-1/2 -translate-x-1/2 rounded-full blur-xl pointer-events-none"
           style={{
             background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.6) 0%, rgba(34, 211, 238, 0.4) 25%, rgba(34, 211, 238, 0.2) 50%, rgba(34, 211, 238, 0.08) 75%, transparent 90%)',
             maskImage: 'radial-gradient(ellipse at center, black 0%, rgba(0,0,0,0.8) 30%, rgba(0,0,0,0.4) 60%, transparent 100%)',
@@ -151,7 +151,7 @@ export const LampContainer = ({
             duration: 1.5,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-20 h-60 w-[55rem] -translate-y-[7rem] sm:-translate-y-[8rem] md:-translate-y-[9rem] lg:-translate-y-[10rem] left-[25%] -translate-x-1/2 rounded-full blur-2xl pointer-events-none"
+          className="absolute inset-auto z-20 h-60 w-[55rem] -translate-y-[2rem] sm:-translate-y-[2.5rem] md:-translate-y-[3rem] lg:-translate-y-[3.5rem] left-1/2 -translate-x-1/2 rounded-full blur-2xl pointer-events-none"
           style={{
             background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.4) 0%, rgba(34, 211, 238, 0.25) 20%, rgba(34, 211, 238, 0.15) 40%, rgba(34, 211, 238, 0.06) 60%, rgba(34, 211, 238, 0.02) 80%, transparent 95%)',
             maskImage: 'radial-gradient(ellipse at center, black 0%, rgba(0,0,0,0.7) 25%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 75%, transparent 100%)',
@@ -168,7 +168,7 @@ export const LampContainer = ({
             duration: 2.0,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-10 h-80 w-[80rem] -translate-y-[7rem] sm:-translate-y-[8rem] md:-translate-y-[9rem] lg:-translate-y-[10rem] left-[25%] -translate-x-1/2 rounded-full blur-3xl pointer-events-none"
+          className="absolute inset-auto z-10 h-80 w-[80rem] -translate-y-[2rem] sm:-translate-y-[2.5rem] md:-translate-y-[3rem] lg:-translate-y-[3.5rem] left-1/2 -translate-x-1/2 rounded-full blur-3xl pointer-events-none"
           style={{
             background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.25) 0%, rgba(34, 211, 238, 0.15) 15%, rgba(34, 211, 238, 0.08) 30%, rgba(34, 211, 238, 0.04) 45%, rgba(34, 211, 238, 0.02) 60%, transparent 85%)',
             maskImage: 'radial-gradient(ellipse at center, black 0%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.05) 70%, transparent 100%)',
@@ -185,7 +185,7 @@ export const LampContainer = ({
             duration: 2.5,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-5 h-[40rem] w-[140rem] -translate-y-[7rem] sm:-translate-y-[8rem] md:-translate-y-[9rem] lg:-translate-y-[10rem] left-[25%] -translate-x-1/2 rounded-full pointer-events-none"
+          className="absolute inset-auto z-5 h-[40rem] w-[140rem] -translate-y-[2rem] sm:-translate-y-[2.5rem] md:-translate-y-[3rem] lg:-translate-y-[3.5rem] left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
           style={{
             background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.15) 0%, rgba(34, 211, 238, 0.08) 10%, rgba(34, 211, 238, 0.04) 20%, rgba(34, 211, 238, 0.02) 30%, rgba(34, 211, 238, 0.01) 40%, transparent 65%)',
             maskImage: 'radial-gradient(ellipse at center, black 0%, rgba(0,0,0,0.5) 15%, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.02) 50%, transparent 80%)',
@@ -203,7 +203,7 @@ export const LampContainer = ({
             duration: 3.0,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-0 h-[48rem] w-[180rem] -translate-y-[7rem] sm:-translate-y-[8rem] md:-translate-y-[9rem] lg:-translate-y-[10rem] left-[25%] -translate-x-1/2 rounded-full pointer-events-none"
+          className="absolute inset-auto z-0 h-[48rem] w-[180rem] -translate-y-[2rem] sm:-translate-y-[2.5rem] md:-translate-y-[3rem] lg:-translate-y-[3.5rem] left-1/2 -translate-x-1/2 rounded-full pointer-events-none"
           style={{
             background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.08) 0%, rgba(34, 211, 238, 0.04) 8%, rgba(34, 211, 238, 0.02) 15%, rgba(34, 211, 238, 0.01) 25%, rgba(34, 211, 238, 0.005) 35%, transparent 55%)',
             maskImage: 'radial-gradient(ellipse at center, black 0%, rgba(0,0,0,0.3) 10%, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.01) 40%, transparent 70%)',

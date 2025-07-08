@@ -10,9 +10,9 @@ export const LoadingState = ({ viewMode }: LoadingStateProps) => {
   const skeletonCount = viewMode === 'grid' ? 8 : 8;
   
   return (
-    <div className={viewMode === 'grid' ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" : "space-y-4"}>
+    <div className={viewMode === 'grid' ? "grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 sm:gap-6" : "space-y-4"}>
       {Array.from({ length: skeletonCount }, (_, i) => (
-        <div key={i} className="h-[400px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden">
+        <div key={i} className="min-h-[400px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden">
           <div className="p-6 space-y-4 h-full flex flex-col">
             <div className="flex items-center gap-3">
               <Skeleton className="h-12 w-12 rounded-xl" />
