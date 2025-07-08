@@ -327,13 +327,13 @@ export function BentoSection() {
               </h3>
               
               <p className="text-lg lg:text-xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto">
-                Join industry leaders who trust Operator to deploy AI that amplifies their competitive edge while protecting their most valuable assets.
+                Join industry leaders who trust Omni to deploy AI that amplifies their competitive edge while protecting their most valuable assets.
               </p>
               
               {/* Enhanced Schedule Demo CTA */}
-              <div className="relative group">
+              <div className="relative group inline-block">
                 <div className="absolute -inset-1 bg-gradient-to-r from-secondary to-primary rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-300"></div>
-                <div className="relative group inline-flex h-14 items-center justify-center gap-3 text-base font-semibold tracking-wide rounded-xl text-primary-foreground dark:text-black px-12 shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] bg-primary dark:bg-white hover:bg-primary/90 dark:hover:bg-white/90 transition-all duration-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:scale-105">
+                <div className="relative group inline-flex h-14 items-center justify-center gap-3 text-base font-semibold tracking-wide rounded-xl text-primary-foreground dark:text-black px-8 shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] bg-primary dark:bg-white hover:bg-primary/90 dark:hover:bg-white/90 transition-all duration-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] hover:scale-105">
                   <OmniProcessModal />
                 </div>
               </div>
