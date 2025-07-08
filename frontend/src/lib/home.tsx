@@ -788,7 +788,7 @@ export const siteConfig = {
         id: 3,
         question: 'Is Operator really free?',
         answer:
-          'Yes, Operator is completely free and open source. We believe in democratizing AI technology and making it accessible to everyone. You can use it, modify it, and contribute to its development without any cost.',
+          'Operator offers a free tier with 60 minutes of usage per month, giving you access to basic AI capabilities and public projects. For more advanced features like private projects, longer usage hours, and access to our full intelligent model, we offer Pro ($40/month) and Custom plans starting at $100/month. For enterprises, we provide custom deployment options with local data storage, SSO integration, RBAC, and tailored pricing based on your specific needs.',
       },
       {
         id: 4,
@@ -798,9 +798,9 @@ export const siteConfig = {
       },
       {
         id: 5,
-        question: 'How can I contribute to Operator?',
+        question: 'What types of tasks can Operator handle?',
         answer:
-          'You can contribute to Operator by submitting pull requests on GitHub, reporting bugs, suggesting new features, or helping with documentation. Join our Discord community to connect with other contributors and Hire Operator.',
+          'Operator can handle a wide variety of tasks including competitor analysis, lead generation, travel planning, Excel spreadsheet creation, LinkedIn research, SEO analysis, scientific paper research, and much more. For industrial use cases, it can automate supply chain analysis, regulatory compliance research, market intelligence gathering, technical documentation creation, and vendor evaluation processes. It can browse the web, analyze data, create documents, and interact with various platforms on your behalf.',
       },
       {
         id: 6,

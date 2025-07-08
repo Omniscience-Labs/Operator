@@ -6,11 +6,14 @@ import { siteConfig } from '@/lib/home';
 import { ChevronRightIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { motion } from 'motion/react';
+import { useTheme } from 'next-themes';
 
 import { ThreeSpinner } from '@/components/ui/three-spinner';
 
 export function FooterSection() {
   const tablet = useMediaQuery('(max-width: 1024px)');
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
 
 
 
@@ -128,15 +131,15 @@ export function FooterSection() {
             className="h-full w-full"
             squareSize={2}
             gridGap={tablet ? 2 : 3}
-            color="#6B7280"
-            maxOpacity={0.2}
+            color={isDarkMode ? '#6B7280' : '#9CA3AF'}
+            maxOpacity={isDarkMode ? 0.2 : 0.15}
             flickerChance={0.08}
           />
         </div>
         <div className="relative z-20 max-w-6xl mx-auto py-16 px-6">
           <div className="text-center mb-16">
             <motion.h2 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 drop-shadow-lg"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 drop-shadow-lg"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -145,14 +148,14 @@ export function FooterSection() {
               BECOME OMNI
             </motion.h2>
             <motion.div 
-              className="inline-flex items-center gap-2 text-white/80"
+              className="inline-flex items-center gap-2 text-muted-foreground"
               initial={{ opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-                <div className="w-4 h-4 bg-white rounded-full animate-pulse"></div>
+              <div className="w-8 h-8 rounded-full bg-muted/20 backdrop-blur-sm flex items-center justify-center border border-border/30">
+                <div className="w-4 h-4 bg-primary rounded-full animate-pulse"></div>
               </div>
             </motion.div>
           </div>
@@ -190,7 +193,7 @@ export function FooterSection() {
             ].map((item, index) => (
               <motion.div 
                 key={item.title}
-                className="space-y-4 p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105"
+                className="space-y-4 p-6 rounded-2xl bg-muted/5 backdrop-blur-sm border border-border/20 hover:bg-muted/10 transition-all duration-300 hover:scale-105"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: item.delay }}
@@ -198,11 +201,11 @@ export function FooterSection() {
                 whileHover={{ y: -5 }}
               >
                 <div className="space-y-2">
-                  <h3 className="text-3xl font-bold text-white drop-shadow-md">{item.title}</h3>
-                  <p className="text-white/60 text-lg font-mono">{item.pronunciation}</p>
-                  <p className="text-white/40 text-sm italic">{item.type}</p>
+                  <h3 className="text-3xl font-bold text-foreground drop-shadow-md">{item.title}</h3>
+                  <p className="text-muted-foreground/80 text-lg font-mono">{item.pronunciation}</p>
+                  <p className="text-muted-foreground/60 text-sm italic">{item.type}</p>
                 </div>
-                <p className="text-white/80 leading-relaxed">
+                <p className="text-muted-foreground leading-relaxed">
                   {item.description}
                 </p>
               </motion.div>
