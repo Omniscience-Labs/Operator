@@ -300,7 +300,7 @@ export function HeroSection() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="relative z-40"
+            className="relative z-40 -mt-8"
           >
             <Link
               href="#enterprise"
