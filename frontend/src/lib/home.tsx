@@ -663,7 +663,7 @@ export const siteConfig = {
   },
   ctaSection: {
     id: 'cta',
-    title: 'Start Using Operator Today',
+    title: 'Start Using Operator Today!',
     backgroundImage: '/holo.png',
     button: {
       text: 'Get Started for free',
