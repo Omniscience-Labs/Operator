@@ -1,5 +1,8 @@
 BEGIN;
 
+-- Drop existing publish_agent_with_visibility_by_user function first to avoid conflicts
+DROP FUNCTION IF EXISTS publish_agent_with_visibility_by_user(UUID, VARCHAR(20), UUID, UUID[]);
+
 -- Add publish_agent_with_visibility_by_user function that is referenced in Python code
 -- This function publishes an agent with specific visibility settings
 

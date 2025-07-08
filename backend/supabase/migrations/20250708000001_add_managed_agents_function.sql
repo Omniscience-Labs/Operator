@@ -1,5 +1,8 @@
 BEGIN;
 
+-- Drop existing get_managed_agents_for_user function first to avoid type conflicts
+DROP FUNCTION IF EXISTS get_managed_agents_for_user(UUID);
+
 -- Add get_managed_agents_for_user function that is referenced in Python code
 -- This function returns managed agents (references) for a user
 
