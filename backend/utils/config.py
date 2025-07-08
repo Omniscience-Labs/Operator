@@ -179,38 +179,123 @@ class Configuration:
         "reasoning_rate_high": 4.0,    # 4x for high reasoning
         
         # Tool-specific credit costs (executed per tool call)
+        # Using native function names for 100% scalability
         "tool_costs": {
             # High-cost tools (resource intensive)
-            "sb_browser_tool": 3.0,
-            "sb_deploy_tool": 5.0,
-            "web_search_tool": 2.0,
-            "sb_excel_tool": 2.0,
-            "sb_vision_tool": 2.0,
-            "sb_pdf_form_tool": 1.5,
             
-            # Data provider tools (individual tracking)
-            "linkedin_data_provider": 3.0,
-            "apollo_data_provider": 2.5, 
-            "amazon_data_provider": 2.0,
-            "twitter_data_provider": 1.5,
-            "zillow_data_provider": 1.5,
-            "yahoo_finance_data_provider": 1.0,
-            "activejobs_data_provider": 1.0,
+            # Browser automation (sb_browser_tool)
+            "browser_navigate_to": 0.2,
+            "browser_go_back": 0.2,
+            "browser_wait": 0.2,
+            "browser_click_element": 0.2,
+            "browser_input_text": 0.2,
+            "browser_send_keys": 0.2,
+            "browser_switch_tab": 0.2,
+            "browser_close_tab": 0.2,
+            "browser_scroll_down": 0.2,
+            "browser_scroll_up": 0.2,
+            "browser_scroll_to_text": 0.2,
+            "browser_get_dropdown_options": 0.2,
+            "browser_select_dropdown_option": 0.2,
+            "browser_drag_drop": 0.2,
+            "browser_click_coordinates": 0.2,
+            
+            # Computer use tool
+            "move_to": 0.2,
+            "click": 0.2,
+            "scroll": 0.2,
+            "typing": 0.2,
+            "press": 0.2,
+            "wait": 0.2,
+            "mouse_down": 0.2,
+            "mouse_up": 0.2,
+            "drag_to": 0.2,
+            "hotkey": 0.2,
+            
+            # Deployment (sb_deploy_tool)
+            "deploy": 5.0,
+            
+            # Web search (web_search_tool)
+            "web_search": 2.0,
+            "scrape_webpage": 2.5,
+            
+            # Excel operations (sb_excel_tool)
+            "create_workbook": 2.0,
+            "write_data": 1.5,
+            "read_data": 1.5,
+            "list_sheets": 1.0,
+            
+            # Vision (sb_vision_tool)
+            "see_image": 2.0,
+            
+            # PDF form operations (sb_pdf_form_tool)
+            "read_form_fields": 1.5,
+            "fill_form": 2.0,
+            "get_form_field_value": 1.0,
+            "flatten_form": 1.5,
+            "fill_form_coordinates": 2.0,
+            "analyze_form_layout": 1.5,
+            "create_coordinate_template": 1.0,
+            "generate_coordinate_grid": 1.0,
+            
+            # Data provider tools
+            "get_data_provider_endpoints": 0.5,
+            "execute_data_provider_call": 2.0,
             
             # Medium-cost tools
-            "sb_shell_tool": 1.5,
-            "sb_audio_transcription_tool": 1.0,
-            "sb_podcast_tool": 1.5,
+            
+            # Shell operations (sb_shell_tool)
+            "execute_command": 1.5,
+            "check_command_output": 1.0,
+            "terminate_command": 0.5,
+            "list_commands": 0.5,
+            
+            # Audio transcription (sb_audio_transcription_tool)
+            "transcribe_audio": 1.0,
+            
+            # Podcast generation (sb_podcast_tool)
+            "generate_podcast": 4,
+            "list_podcasts": 0.5,
+            
+            # Memory and knowledge
+            "search_memory": 1.0,
+            "list_available_knowledge_bases": 0.5,
+            
+            # Agent management
+            "update_agent": 2.0,
+            "get_current_agent_config": 0.5,
+            "search_mcp_servers": 1.0,
+            "get_mcp_server_tools": 1.0,
+            "configure_mcp_server": 1.5,
+            "get_popular_mcp_servers": 0.5,
+            "test_mcp_server_connection": 1.0,
             
             # Low-cost tools (basic operations)
-            "sb_files_tool": 0.5,
-            "sb_expose_tool": 0.3,
+            
+            # File operations (sb_files_tool)
+            "create_file": 0.5,
+            "str_replace": 0.5,
+            "full_file_rewrite": 1.0,
+            "delete_file": 0.3,
+            "read_file": 0.3,
+            
+            # Expose operations (sb_expose_tool)
+            "expose_port": 0.3,
+            
+            # Message operations
+            "ask": 0.5,
+            "web_browser_takeover": 1.0,
+            "complete": 0.3,
+            
+            # DateTime operations
+            "get_current_datetime": 0.2,
+            "list_timezones": 0.2,
+            
+            # Utility operations
+            "expand_message": 0.3,
             
             # MCP tools (variable cost)
-            "mcp_tool": 1.0,  # Base cost, can be overridden per server
-            
-            # Legacy data providers base cost (fallback)
-            "data_providers_tool": 2.0,
+            "call_mcp_tool": 1.0,  # Base cost, can be overridden per server
             
             # Default cost for unspecified tools
             "default": 0.5
