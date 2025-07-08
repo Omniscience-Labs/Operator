@@ -1,6 +1,8 @@
+'use client';
+
 import React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { SectionHeader } from '@/components/home/section-header';
 import { Globe } from '@/components/magicui/globe';
