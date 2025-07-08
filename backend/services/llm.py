@@ -66,7 +66,16 @@ def setup_api_keys() -> None:
 
 async def handle_error(error: Exception, attempt: int, max_attempts: int) -> None:
     """Handle API errors with appropriate delays and logging."""
-    delay = RATE_LIMIT_DELAY if isinstance(error, litellm.exceptions.RateLimitError) else RETRY_DELAY
+    if isinstance(error, litellm.exceptions.RateLimitError):
+        delay = RATE_LIMIT_DELAY
+    elif isinstance(error, litellm.exceptions.InternalServerError):
+        # For InternalServerError (like Anthropic overloaded), use longer delay
+        delay = RATE_LIMIT_DELAY
+        if "overloaded" in str(error).lower():
+            logger.warning(f"Provider is overloaded, waiting {delay} seconds before retry...")
+    else:
+        delay = RETRY_DELAY
+    
     logger.warning(f"Error on attempt {attempt + 1}/{max_attempts}: {str(error)}")
     logger.debug(f"Waiting {delay} seconds before retry...")
     await asyncio.sleep(delay)
@@ -258,6 +267,12 @@ async def make_llm_api_call(
     """
     Make an API call to a language model using LiteLLM.
 
+    This function includes retry logic for temporary errors including:
+    - Rate limits (RateLimitError)
+    - Internal server errors (InternalServerError) like provider overload
+    - OpenAI-specific errors
+    - JSON decode errors
+
     Args:
         messages: List of message dictionaries for the conversation
         model_name: Name of the model to use (e.g., "gpt-4", "claude-3", "openrouter/openai/gpt-4", "bedrock/anthropic.claude-3-sonnet-20240229-v1:0")
@@ -311,7 +326,7 @@ async def make_llm_api_call(
             logger.debug(f"Response: {response}")
             return response
 
-        except (litellm.exceptions.RateLimitError, OpenAIError, json.JSONDecodeError) as e:
+        except (litellm.exceptions.RateLimitError, litellm.exceptions.InternalServerError, OpenAIError, json.JSONDecodeError) as e:
             last_error = e
             await handle_error(e, attempt, MAX_RETRIES)
 
