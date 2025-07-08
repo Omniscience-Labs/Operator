@@ -170,7 +170,7 @@ async def archive_sandbox(project: Dict[str, Any], dry_run: bool) -> bool:
         logger.info(f"Sandbox {sandbox_id} is in '{sandbox_info.state}' state")
         
         # Only archive if the sandbox is in the stopped state
-        if sandbox_info.state == SandboxState.STOPPED: # Using SandboxState enum for clarity
+        if sandbox.state == SandboxState.STOPPED: # Using SandboxState enum for clarity
             logger.info(f"Archiving sandbox {sandbox_id} as it is in stopped state")
             sandbox.archive()
             logger.info(f"Successfully archived sandbox {sandbox_id}")
