@@ -213,73 +213,9 @@ export function HeroSection() {
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
       <style jsx>{`
-        /* CRITICAL: Override the problematic --input CSS variable that causes grey backgrounds */
-        .hero-input-container,
-        .hero-input-container *,
-        .hero-input-container input,
-        .hero-input-container input:focus,
-        .hero-input-container input:active,
-        .hero-input-container input:focus-visible,
-        .hero-input-container input:focus-within,
-        .hero-input-container input:target,
-        .hero-input-container input:-webkit-autofill,
-        .hero-input-container input:-webkit-autofill:focus,
-        .hero-input-container input:-webkit-autofill:active,
-        .hero-input-container input:-webkit-autofill:hover {
-          /* Override the --input CSS variable that's causing grey backgrounds */
-          --input: transparent !important;
-          --color-input: transparent !important;
-          
-          background: transparent !important;
-          background-color: transparent !important;
-          background-image: none !important;
-          backdrop-filter: none !important;
-          -webkit-backdrop-filter: none !important;
-          box-shadow: none !important;
-          -webkit-box-shadow: none !important;
-          -moz-box-shadow: none !important;
-          outline: none !important;
-          border: none !important;
-          -webkit-appearance: none !important;
-          -moz-appearance: none !important;
-          appearance: none !important;
-          -webkit-tap-highlight-color: transparent !important;
-          -webkit-focus-ring-color: transparent !important;
-          -webkit-user-select: text !important;
-          -moz-user-select: text !important;
-          -ms-user-select: text !important;
-          user-select: text !important;
-        }
-        
-        /* Container specific overrides */
-        .hero-input-container {
-          background: transparent !important;
-          background-color: transparent !important;
-          backdrop-filter: none !important;
-          -webkit-backdrop-filter: none !important;
-          box-shadow: none !important;
-          -webkit-box-shadow: none !important;
-        }
-        
-        /* Remove any potential grey from input color variables */
-        .hero-input-container input {
-          color: var(--foreground) !important;
-        }
-        
-        .hero-input-container input::placeholder {
-          color: var(--muted-foreground) !important;
-          opacity: 0.7 !important;
-        }
-        
-        /* Override any global focus styles */
-        *:focus,
-        *:active,
-        *:focus-visible,
-        *:focus-within {
-          outline: none !important;
-          box-shadow: none !important;
-          -webkit-tap-highlight-color: transparent !important;
-          -webkit-focus-ring-color: transparent !important;
+        /* DEBUGGING: Minimal CSS - only target our test input */
+        .debug-input-test * {
+          box-sizing: border-box;
         }
       `}</style>
       {/* Lamp Container as Background */}
@@ -342,134 +278,65 @@ export function HeroSection() {
             </p>
           </motion.div>
 
-          {/* Enhanced input with modern styling */}
+          {/* DEBUGGING: Completely stripped input - zero styling */}
           <motion.div 
-            className="flex items-center w-full max-w-2xl relative z-40"
+            className="debug-input-test flex items-center w-full max-w-2xl relative z-40"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
           >
-            <form 
-              className="w-full relative group" 
-              onSubmit={handleSubmit}
-              style={{ 
-                outline: 'none !important', 
-                boxShadow: 'none !important',
-                WebkitTapHighlightColor: 'transparent'
-              } as React.CSSProperties}
-            >
-              <div 
-                className="relative" 
-                style={{ 
-                  outline: 'none !important', 
-                  boxShadow: 'none !important',
-                  WebkitTapHighlightColor: 'transparent'
-                } as React.CSSProperties}
+            <div style={{
+              width: '100%',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              background: 'none',
+              border: '1px solid cyan',
+              borderRadius: '50px',
+              padding: '0 24px'
+            }}>
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={hero.inputPlaceholder}
+                style={{
+                  all: 'unset',
+                  width: '100%',
+                  height: '64px',
+                  fontSize: '16px',
+                  color: 'white',
+                  background: 'none',
+                  border: 'none',
+                  outline: 'none'
+                }}
+                disabled={isSubmitting}
+                autoComplete="off"
+                spellCheck="false"
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSubmit(e as any);
+                }}
+                style={{
+                  all: 'unset',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  background: inputValue.trim() ? 'cyan' : 'gray',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+                disabled={!inputValue.trim() || isSubmitting}
               >
-                {/* Enhanced glow effect - only on hover/focus */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none"></div>
-                
-                {/* Input container with cyan theme outline */}
-                <div 
-                  className="hero-input-container relative flex items-center rounded-full px-6 transition-all duration-300" 
-                  style={{ 
-                    outline: 'none !important', 
-                    boxShadow: 'none !important',
-                    WebkitTapHighlightColor: 'transparent',
-                    backgroundColor: 'transparent !important',
-                    backdropFilter: 'none !important',
-                    WebkitBackdropFilter: 'none !important',
-                    border: '1px solid rgba(34, 211, 238, 0.2) !important',
-                    '--input': 'transparent',
-                    '--color-input': 'transparent'
-                  } as React.CSSProperties}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!e.currentTarget.querySelector('input:focus')) {
-                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.2)';
-                    }
-                  }}
-                  onFocusCapture={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.6)';
-                  }}
-                  onBlurCapture={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(34, 211, 238, 0.2)';
-                  }}
-                >
-                  <input
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={hero.inputPlaceholder}
-                    style={{ 
-                      // Layout and sizing
-                      flex: '1',
-                      height: '4rem',
-                      borderRadius: '9999px',
-                      padding: '0.5rem',
-                      fontSize: '1rem',
-                      fontWeight: '500',
-                      
-                      // Complete transparency and reset
-                      outline: 'none !important', 
-                      boxShadow: 'none !important', 
-                      border: 'none !important',
-                      background: 'transparent !important',
-                      backgroundColor: 'transparent !important',
-                      backgroundImage: 'none !important',
-                      backdropFilter: 'none !important',
-                      WebkitBackdropFilter: 'none !important',
-                      
-                      // Browser reset
-                      WebkitAppearance: 'none',
-                      MozAppearance: 'none',
-                      appearance: 'none',
-                      WebkitTapHighlightColor: 'transparent',
-                      resize: 'none',
-                      
-                      // Colors
-                      color: 'var(--foreground)',
-                      caretColor: 'var(--foreground)',
-                      
-                      // Override problematic CSS variables locally
-                      '--input': 'transparent',
-                      '--color-input': 'transparent',
-                      
-                      // Responsive font size
-                      '@media (min-width: 1024px)': {
-                        height: '4.5rem',
-                        fontSize: '1.125rem'
-                      }
-                    } as React.CSSProperties}
-                    disabled={isSubmitting}
-                    autoComplete="off"
-                    spellCheck="false"
-                  />
-                  <motion.button
-                    type="submit"
-                    className={`rounded-full p-3 lg:p-4 transition-all duration-300 outline-none focus:outline-none ring-0 focus:ring-0 [&:focus]:outline-none [&:focus]:ring-0 ${
-                      inputValue.trim()
-                        ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-primary/40 scale-100'
-                        : 'bg-muted/50 text-muted-foreground scale-95'
-                    }`}
-                    style={{ outline: 'none !important', boxShadow: inputValue.trim() ? undefined : 'none !important' }}
-                    disabled={!inputValue.trim() || isSubmitting}
-                    aria-label="Submit"
-                                        whileHover={inputValue.trim() ? { scale: 1.05 } : {}}
-                    whileTap={inputValue.trim() ? { scale: 0.95 } : {}}
-                  >
-                    {isSubmitting ? (
-                      <div className="h-5 lg:h-6 w-5 lg:w-6 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <ArrowRight className="size-5 lg:size-6" />
-                    )}
-                  </motion.button>
-                </div>
-              </div>
-            </form>
+                →
+              </button>
+            </div>
           </motion.div>
 
           {/* Dynamic value proposition with FlipWords */}
