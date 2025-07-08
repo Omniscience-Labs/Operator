@@ -335,13 +335,14 @@ export function HeroSection() {
                 {/* Enhanced glow effect */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 
-                {/* Input container with better contrast */}
+                {/* Input container with clean transparent design */}
                 <div 
-                  className="relative flex items-center rounded-full border border-border/50 bg-background/30 backdrop-blur-md px-6 shadow-2xl transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70 focus-within:shadow-2xl focus-within:shadow-primary/20 focus-within:bg-background/40" 
+                  className="relative flex items-center rounded-full border border-border/30 backdrop-blur-sm px-6 shadow-lg transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70 focus-within:shadow-xl focus-within:shadow-primary/10" 
                   style={{ 
                     outline: 'none !important', 
                     boxShadow: 'none !important',
-                    WebkitTapHighlightColor: 'transparent'
+                    WebkitTapHighlightColor: 'transparent',
+                    backgroundColor: 'transparent'
                   } as React.CSSProperties}
                 >
                   <input

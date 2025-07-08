@@ -244,7 +244,7 @@ export function BentoSection() {
               {/* Expanded container for better spacing */}
               <div className="relative w-[800px] h-[600px] mx-auto mb-20">
                 {/* Central Icon Cloud */}
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px]">
+                <div className="absolute top-[45%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px]">
                   <div className="relative z-10 w-full h-full flex items-center justify-center scale-110">
                     <IconCloud images={enterpriseIntegrationImages} />
                   </div>

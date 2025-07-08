@@ -128,49 +128,77 @@ export function FooterSection() {
             text={tablet ? 
               `BECOME OMNI
 
-Omni /ˈäm.nī/ (prefix)
-All; of all things. Empower industries with comprehensive AI 
-solutions for manufacturing, logistics, and supply chain, 
+
+Omni
+/ˈäm.nī/ (prefix)
+
+All; of all things. Empower industries 
+with comprehensive AI solutions for 
+manufacturing, logistics, and supply chain.
+
+
+Omnipotent
+/ˌäm'nīpəd(ə)nt/ (adjective)
+
+Having unlimited power and authority. 
+Provide unparalleled control over industrial 
+processes, boosting efficiency.
+
+
+Omnipresent
+/ˌämnī'prez(ə)nt/ (adjective)
+
+Present everywhere simultaneously. Enable 
+monitoring and management of operations 
+across multiple facilities.
+
+
+Omniscient
+/ˌäm'nīSHənt/ (adjective)
+
+Having complete knowledge and understanding. 
+Equip businesses with deep insights and 
+predictive analytics.` :
+              `BECOME OMNI
+
+
+
+Omni
+/ˈäm.nī/ (prefix)
+
+All; of all things. Empower industries with comprehensive 
+AI solutions for manufacturing, logistics, and supply chain, 
 enhancing operations across the entire industrial ecosystem.
 
-Omnipotent /ˌäm'nīpəd(ə)nt/ (adjective)
+
+
+Omnipotent
+/ˌäm'nīpəd(ə)nt/ (adjective)
+
 Having unlimited power and authority. Provide unparalleled 
 control over industrial processes, from manufacturing to 
 logistics, boosting efficiency and productivity for businesses.
 
-Omnipresent /ˌämnī'prez(ə)nt/ (adjective)
+
+
+Omnipresent
+/ˌämnī'prez(ə)nt/ (adjective)
+
 Present everywhere simultaneously. Enable monitoring and 
 management of operations across multiple facilities, supply 
 chains, and customer touchpoints, enhancing visibility.
 
-Omniscient /ˌäm'nīSHənt/ (adjective)
+
+
+Omniscient
+/ˌäm'nīSHənt/ (adjective)
+
 Having complete knowledge and understanding. Equip businesses 
 with deep insights and predictive analytics across entire 
-industrial operations, improving decision-making.` :
-              `BECOME OMNI
-
-Omni /ˈäm.nī/ (prefix)
-All; of all things. Empower industries with comprehensive AI solutions 
-for manufacturing, logistics, and supply chain, enhancing operations 
-across the entire industrial ecosystem.
-
-Omnipotent /ˌäm'nīpəd(ə)nt/ (adjective)
-Having unlimited power and authority. Provide unparalleled control over 
-industrial processes, from manufacturing to logistics, boosting efficiency 
-and productivity for businesses of all sizes.
-
-Omnipresent /ˌämnī'prez(ə)nt/ (adjective)
-Present everywhere simultaneously. Enable monitoring and management 
-of operations across multiple facilities, supply chains, and customer 
-touchpoints, enhancing visibility and responsiveness.
-
-Omniscient /ˌäm'nīSHənt/ (adjective)
-Having complete knowledge and understanding. Equip businesses with deep 
-insights and predictive analytics across entire industrial operations, 
-improving decision-making and strategic planning.`
+industrial operations, improving decision-making.`
             }
-            fontSize={tablet ? 16 : 18}
-            fontWeight={400}
+            fontSize={tablet ? 24 : 32}
+            fontWeight={600}
             className="h-full w-full"
             squareSize={2}
             gridGap={tablet ? 2 : 3}
