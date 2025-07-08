@@ -9,12 +9,10 @@ import {
   ChevronDown,
   ChevronsUpDown,
   Command,
-  CreditCard,
   LogOut,
   Palette,
   Plus,
   Settings,
-  User,
   AudioWaveform,
   Sun,
   Moon,
@@ -361,14 +359,6 @@ export function NavUserWithTeams({
               <DropdownMenuItem onClick={() => router.push('/settings')}>
                 <Settings />
                 Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onOpen('paymentRequiredDialog')}>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/settings/personalization')}>
-                <User />
-                Personalization
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
                 {theme === 'dark' ? <Sun /> : <Moon />}
