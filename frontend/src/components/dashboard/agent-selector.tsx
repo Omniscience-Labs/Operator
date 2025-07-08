@@ -200,16 +200,14 @@ export function AgentSelector({
 
                           <DropdownMenuSeparator />
             
-            {!currentAccount?.is_team_context && (
-              <DropdownMenuItem onClick={handleCreateAgent} className="cursor-pointer">
-                <div className="flex items-center justify-between w-full">
-                  Agents
-                  <Badge variant="new" className="ml-2">
-                    New
-                  </Badge>
-                </div>
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem onClick={handleCreateAgent} className="cursor-pointer">
+              <div className="flex items-center justify-between w-full">
+                Agents
+                <Badge variant="new" className="ml-2">
+                  New
+                </Badge>
+              </div>
+            </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -320,19 +318,17 @@ export function AgentSelector({
             
             <DropdownMenuSeparator />
             
-            {!currentAccount?.is_team_context && (
-              <>
-                <DropdownMenuItem onClick={handleCreateAgent} className="cursor-pointer">
-                  <Plus className="h-4 w-4" />
-                  Create New Agent
-                </DropdownMenuItem>
-                
-                <DropdownMenuItem onClick={handleManageAgents} className="cursor-pointer">
-                  <Bot className="h-4 w-4" />
-                  Manage All Agents
-                </DropdownMenuItem>
-              </>
-            )}
+            <>
+              <DropdownMenuItem onClick={handleCreateAgent} className="cursor-pointer">
+                <Plus className="h-4 w-4" />
+                Create New Agent
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem onClick={handleManageAgents} className="cursor-pointer">
+                <Bot className="h-4 w-4" />
+                Manage All Agents
+              </DropdownMenuItem>
+            </>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

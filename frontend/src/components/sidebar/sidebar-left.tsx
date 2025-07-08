@@ -57,8 +57,8 @@ export function SidebarLeft({
   const marketplaceEnabled = flags.agent_marketplace;
   const enterpriseDemoEnabled = flags.enterprise_demo;
   
-  // Hide agents for team accounts
-  const showAgentPlayground = customAgentsEnabled && !currentAccount?.is_team_context;
+  // Always show agents when custom agents are enabled
+  const showAgentPlayground = customAgentsEnabled;
 
   // Fetch user data
   useEffect(() => {
