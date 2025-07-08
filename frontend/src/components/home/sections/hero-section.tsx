@@ -343,7 +343,7 @@ export function HeroSection() {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg text-foreground py-2 font-medium transition-all duration-200"
+                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg text-foreground py-2 font-medium transition-all duration-200 border-0 outline-none focus:ring-0"
                     disabled={isSubmitting}
                     autoComplete="off"
                     spellCheck="false"
