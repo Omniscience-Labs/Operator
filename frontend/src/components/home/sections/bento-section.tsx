@@ -241,67 +241,70 @@ export function BentoSection() {
 
             {/* Desktop Layout - Positioned around cloud */}
             <div className="hidden lg:block relative">
-              {/* Central Icon Cloud */}
-              <div className="relative flex items-center justify-center mx-auto w-[500px] h-[500px] mb-20">
-                <div className="relative z-10 w-full h-full flex items-center justify-center scale-110">
-                  <IconCloud images={enterpriseIntegrationImages} />
+              {/* Expanded container for better spacing */}
+              <div className="relative w-[800px] h-[600px] mx-auto mb-20">
+                {/* Central Icon Cloud */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px]">
+                  <div className="relative z-10 w-full h-full flex items-center justify-center scale-110">
+                    <IconCloud images={enterpriseIntegrationImages} />
+                  </div>
                 </div>
-              </div>
 
-              {/* Features positioned tightly around the cloud */}
-              {/* Top Left */}
-              <div className="absolute top-8 left-8 text-center p-4 max-w-[180px]">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
-                  <Shield className="h-6 w-6 text-secondary" />
+                {/* Features positioned with more spacing around the cloud */}
+                {/* Top Left */}
+                <div className="absolute top-0 left-0 text-center p-4 max-w-[200px]">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
+                    <Shield className="h-6 w-6 text-secondary" />
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">Zero-Trust Authentication</h4>
+                  <p className="text-muted-foreground text-sm">
+                    Secure API connections with enterprise-grade authentication and authorization protocols.
+                  </p>
                 </div>
-                <h4 className="text-lg font-semibold mb-2">Zero-Trust Authentication</h4>
-                <p className="text-muted-foreground text-sm">
-                  Secure API connections with enterprise-grade authentication and authorization protocols.
-                </p>
-              </div>
 
-              {/* Top Right */}
-              <div className="absolute top-8 right-8 text-center p-4 max-w-[180px]">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
-                  <Lock className="h-6 w-6 text-secondary" />
+                {/* Top Right */}
+                <div className="absolute top-0 right-0 text-center p-4 max-w-[200px]">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
+                    <Lock className="h-6 w-6 text-secondary" />
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">End-to-End Encryption</h4>
+                  <p className="text-muted-foreground text-sm">
+                    All data transfers are encrypted with AES-256 standards, ensuring complete privacy.
+                  </p>
                 </div>
-                <h4 className="text-lg font-semibold mb-2">End-to-End Encryption</h4>
-                <p className="text-muted-foreground text-sm">
-                  All data transfers are encrypted with AES-256 standards, ensuring complete privacy.
-                </p>
-              </div>
 
-              {/* Bottom Left */}
-              <div className="absolute bottom-20 left-8 text-center p-4 max-w-[180px]">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
-                  <Zap className="h-6 w-6 text-secondary" />
+                {/* Bottom Left */}
+                <div className="absolute bottom-0 left-0 text-center p-4 max-w-[200px]">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
+                    <Zap className="h-6 w-6 text-secondary" />
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">Real-Time Sync</h4>
+                  <p className="text-muted-foreground text-sm">
+                    Instant synchronization with your enterprise systems for up-to-date insights.
+                  </p>
                 </div>
-                <h4 className="text-lg font-semibold mb-2">Real-Time Sync</h4>
-                <p className="text-muted-foreground text-sm">
-                  Instant synchronization with your enterprise systems for up-to-date insights.
-                </p>
-              </div>
 
-              {/* Bottom Right */}
-              <div className="absolute bottom-20 right-8 text-center p-4 max-w-[180px]">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
-                  <Users2 className="h-6 w-6 text-secondary" />
+                {/* Bottom Right */}
+                <div className="absolute bottom-0 right-0 text-center p-4 max-w-[200px]">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
+                    <Users2 className="h-6 w-6 text-secondary" />
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">RBAC</h4>
+                  <p className="text-muted-foreground text-sm">
+                    Role-based access control with granular permissions and enterprise-grade user management.
+                  </p>
                 </div>
-                <h4 className="text-lg font-semibold mb-2">RBAC</h4>
-                <p className="text-muted-foreground text-sm">
-                  Role-based access control with granular permissions and enterprise-grade user management.
-                </p>
-              </div>
 
-              {/* Bottom Center */}
-              <div className="absolute bottom-[-40px] left-1/2 transform -translate-x-1/2 text-center p-4 max-w-[180px]">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
-                  <Settings className="h-6 w-6 text-secondary" />
+                {/* Bottom Center */}
+                <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 text-center p-4 max-w-[200px]">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-secondary/10 rounded-2xl border border-secondary/20 mb-4">
+                    <Settings className="h-6 w-6 text-secondary" />
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">Custom Integration Development</h4>
+                  <p className="text-muted-foreground text-sm">
+                    Tailored integration solutions for your unique enterprise systems and workflows.
+                  </p>
                 </div>
-                <h4 className="text-lg font-semibold mb-2">Custom Integration Development</h4>
-                <p className="text-muted-foreground text-sm">
-                  Tailored integration solutions for your unique enterprise systems and workflows.
-                </p>
               </div>
             </div>
           </div>

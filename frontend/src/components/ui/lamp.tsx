@@ -77,7 +77,7 @@ export const LampContainer = ({
         <div className="absolute top-1/2 h-48 w-full translate-y-12 scale-x-150 bg-background blur-2xl"></div>
         <div className="absolute top-1/2 z-50 h-48 w-full bg-transparent opacity-10 backdrop-blur-md"></div>
         
-        {/* Lamp bar - positioned higher over the Operator text */}
+        {/* Lamp bar - positioned higher over the Operator text with enhanced brightness */}
         <motion.div
           initial={{ width: "15rem" }}
           whileInView={{ width: "30rem" }}
@@ -86,13 +86,17 @@ export const LampContainer = ({
             duration: 0.8,
             ease: "easeInOut",
           }}
-          className="absolute inset-auto z-50 h-0.5 w-[30rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 bg-cyan-400 pointer-events-none select-none outline-none"
+          className="absolute inset-auto z-50 h-0.5 w-[30rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 pointer-events-none select-none outline-none"
+          style={{
+            background: 'linear-gradient(90deg, rgba(34, 211, 238, 0.8) 0%, rgba(34, 211, 238, 1) 50%, rgba(34, 211, 238, 0.8) 100%)',
+            boxShadow: '0 0 20px rgba(34, 211, 238, 0.6), 0 0 40px rgba(34, 211, 238, 0.4)'
+          }}
         ></motion.div>
 
-        {/* Core glow - brightest and most focused with radial gradient */}
+        {/* Core glow - brightest and most focused with enhanced radial gradient */}
         <motion.div
           initial={{ width: "15rem", opacity: 0 }}
-          whileInView={{ width: "25rem", opacity: 0.4 }}
+          whileInView={{ width: "25rem", opacity: 0.55 }}
           transition={{
             delay: 0.3,
             duration: 1.2,
@@ -100,15 +104,15 @@ export const LampContainer = ({
           }}
           className="absolute inset-auto z-30 h-32 w-[25rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full blur-xl pointer-events-none"
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.4) 0%, rgba(34, 211, 238, 0.25) 25%, rgba(34, 211, 238, 0.1) 50%, transparent 75%)',
+            background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.5) 0%, rgba(34, 211, 238, 0.3) 25%, rgba(34, 211, 238, 0.15) 50%, rgba(34, 211, 238, 0.05) 75%, transparent 90%)',
             maskImage: 'radial-gradient(ellipse at center, black 0%, rgba(0,0,0,0.8) 30%, rgba(0,0,0,0.4) 60%, transparent 100%)'
           }}
         ></motion.div>
 
-        {/* Mid glow - medium spread with improved gradient */}
+        {/* Mid glow - medium spread with enhanced gradient */}
         <motion.div
           initial={{ width: "20rem", opacity: 0 }}
-          whileInView={{ width: "40rem", opacity: 0.3 }}
+          whileInView={{ width: "40rem", opacity: 0.4 }}
           transition={{
             delay: 0.3,
             duration: 1.5,
@@ -116,15 +120,15 @@ export const LampContainer = ({
           }}
           className="absolute inset-auto z-20 h-48 w-[40rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full blur-2xl pointer-events-none"
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.25) 0%, rgba(34, 211, 238, 0.15) 20%, rgba(34, 211, 238, 0.08) 40%, rgba(34, 211, 238, 0.03) 60%, transparent 80%)',
+            background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.3) 0%, rgba(34, 211, 238, 0.18) 20%, rgba(34, 211, 238, 0.1) 40%, rgba(34, 211, 238, 0.04) 60%, rgba(34, 211, 238, 0.01) 80%, transparent 95%)',
             maskImage: 'radial-gradient(ellipse at center, black 0%, rgba(0,0,0,0.7) 25%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 75%, transparent 100%)'
           }}
         ></motion.div>
 
-        {/* Outer glow - most diffuse with seamless edges */}
+        {/* Outer glow - diffuse with seamless edges */}
         <motion.div
           initial={{ width: "30rem", opacity: 0 }}
-          whileInView={{ width: "60rem", opacity: 0.2 }}
+          whileInView={{ width: "60rem", opacity: 0.25 }}
           transition={{
             delay: 0.4,
             duration: 2.0,
@@ -132,15 +136,15 @@ export const LampContainer = ({
           }}
           className="absolute inset-auto z-10 h-64 w-[60rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full blur-3xl pointer-events-none"
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.15) 0%, rgba(34, 211, 238, 0.08) 15%, rgba(34, 211, 238, 0.04) 30%, rgba(34, 211, 238, 0.02) 45%, rgba(34, 211, 238, 0.01) 60%, transparent 80%)',
+            background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.18) 0%, rgba(34, 211, 238, 0.1) 15%, rgba(34, 211, 238, 0.05) 30%, rgba(34, 211, 238, 0.025) 45%, rgba(34, 211, 238, 0.01) 60%, transparent 85%)',
             maskImage: 'radial-gradient(ellipse at center, black 0%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.05) 70%, transparent 100%)'
           }}
         ></motion.div>
 
-        {/* Atmospheric glow - very large and subtle with perfect edge blending */}
+        {/* Atmospheric glow - large and subtle with perfect edge blending */}
         <motion.div
           initial={{ width: "40rem", opacity: 0 }}
-          whileInView={{ width: "100rem", opacity: 0.15 }}
+          whileInView={{ width: "100rem", opacity: 0.2 }}
           transition={{
             delay: 0.5,
             duration: 2.5,
@@ -148,7 +152,7 @@ export const LampContainer = ({
           }}
           className="absolute inset-auto z-5 h-96 w-[100rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full pointer-events-none"
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.08) 0%, rgba(34, 211, 238, 0.04) 10%, rgba(34, 211, 238, 0.02) 20%, rgba(34, 211, 238, 0.01) 30%, rgba(34, 211, 238, 0.005) 40%, transparent 60%)',
+            background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.1) 0%, rgba(34, 211, 238, 0.05) 10%, rgba(34, 211, 238, 0.025) 20%, rgba(34, 211, 238, 0.015) 30%, rgba(34, 211, 238, 0.008) 40%, transparent 65%)',
             maskImage: 'radial-gradient(ellipse at center, black 0%, rgba(0,0,0,0.5) 15%, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.02) 50%, transparent 80%)',
             filter: 'blur(80px)'
           }}
@@ -157,7 +161,7 @@ export const LampContainer = ({
         {/* Ultra-wide atmospheric glow for seamless blending */}
         <motion.div
           initial={{ width: "60rem", opacity: 0 }}
-          whileInView={{ width: "120rem", opacity: 0.08 }}
+          whileInView={{ width: "120rem", opacity: 0.12 }}
           transition={{
             delay: 0.6,
             duration: 3.0,
@@ -165,7 +169,7 @@ export const LampContainer = ({
           }}
           className="absolute inset-auto z-0 h-[32rem] w-[120rem] -translate-y-[11rem] left-[25%] -translate-x-1/2 rounded-full pointer-events-none"
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.03) 0%, rgba(34, 211, 238, 0.015) 8%, rgba(34, 211, 238, 0.008) 15%, rgba(34, 211, 238, 0.004) 25%, rgba(34, 211, 238, 0.002) 35%, transparent 50%)',
+            background: 'radial-gradient(ellipse at center, rgba(34, 211, 238, 0.04) 0%, rgba(34, 211, 238, 0.02) 8%, rgba(34, 211, 238, 0.012) 15%, rgba(34, 211, 238, 0.006) 25%, rgba(34, 211, 238, 0.003) 35%, transparent 55%)',
             maskImage: 'radial-gradient(ellipse at center, black 0%, rgba(0,0,0,0.3) 10%, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.01) 40%, transparent 70%)',
             filter: 'blur(120px)'
           }}

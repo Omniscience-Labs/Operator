@@ -5,7 +5,6 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { siteConfig } from '@/lib/home';
 import { ChevronRightIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
-import { motion } from 'motion/react';
 import { useTheme } from 'next-themes';
 
 import { ThreeSpinner } from '@/components/ui/three-spinner';
@@ -122,95 +121,63 @@ export function FooterSection() {
           </div>
         </div>
       </div>
-      <div className="mt-24 relative">
+      <div className="mt-24 relative h-screen">
         <div className="absolute inset-0 bg-gradient-to-t from-transparent to-background z-10 from-40%" />
         <div className="absolute inset-0 mx-6">
           <FlickeringGrid
-            text={tablet ? 'BECOME OMNI' : 'BECOME OMNI'}
-            fontSize={tablet ? 50 : 70}
+            text={tablet ? 
+              `BECOME OMNI
+
+Omni /ˈäm.nī/ (prefix)
+All; of all things. Empower industries with comprehensive AI 
+solutions for manufacturing, logistics, and supply chain, 
+enhancing operations across the entire industrial ecosystem.
+
+Omnipotent /ˌäm'nīpəd(ə)nt/ (adjective)
+Having unlimited power and authority. Provide unparalleled 
+control over industrial processes, from manufacturing to 
+logistics, boosting efficiency and productivity for businesses.
+
+Omnipresent /ˌämnī'prez(ə)nt/ (adjective)
+Present everywhere simultaneously. Enable monitoring and 
+management of operations across multiple facilities, supply 
+chains, and customer touchpoints, enhancing visibility.
+
+Omniscient /ˌäm'nīSHənt/ (adjective)
+Having complete knowledge and understanding. Equip businesses 
+with deep insights and predictive analytics across entire 
+industrial operations, improving decision-making.` :
+              `BECOME OMNI
+
+Omni /ˈäm.nī/ (prefix)
+All; of all things. Empower industries with comprehensive AI solutions 
+for manufacturing, logistics, and supply chain, enhancing operations 
+across the entire industrial ecosystem.
+
+Omnipotent /ˌäm'nīpəd(ə)nt/ (adjective)
+Having unlimited power and authority. Provide unparalleled control over 
+industrial processes, from manufacturing to logistics, boosting efficiency 
+and productivity for businesses of all sizes.
+
+Omnipresent /ˌämnī'prez(ə)nt/ (adjective)
+Present everywhere simultaneously. Enable monitoring and management 
+of operations across multiple facilities, supply chains, and customer 
+touchpoints, enhancing visibility and responsiveness.
+
+Omniscient /ˌäm'nīSHənt/ (adjective)
+Having complete knowledge and understanding. Equip businesses with deep 
+insights and predictive analytics across entire industrial operations, 
+improving decision-making and strategic planning.`
+            }
+            fontSize={tablet ? 16 : 18}
+            fontWeight={400}
             className="h-full w-full"
             squareSize={2}
             gridGap={tablet ? 2 : 3}
             color={isDarkMode ? '#6B7280' : '#9CA3AF'}
-            maxOpacity={isDarkMode ? 0.2 : 0.15}
-            flickerChance={0.08}
+            maxOpacity={isDarkMode ? 0.3 : 0.25}
+            flickerChance={0.12}
           />
-        </div>
-        <div className="relative z-20 max-w-6xl mx-auto py-16 px-6">
-          <div className="text-center mb-16">
-            <motion.h2 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 drop-shadow-lg"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-            >
-              BECOME OMNI
-            </motion.h2>
-            <motion.div 
-              className="inline-flex items-center gap-2 text-muted-foreground"
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-            >
-              <div className="w-8 h-8 rounded-full bg-muted/20 backdrop-blur-sm flex items-center justify-center border border-border/30">
-                <div className="w-4 h-4 bg-primary rounded-full animate-pulse"></div>
-              </div>
-            </motion.div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-            {[
-              {
-                title: "Omni",
-                pronunciation: "/ˈäm.nī/",
-                type: "prefix",
-                description: "All; of all things. Empower industries with comprehensive AI solutions for manufacturing, logistics, and supply chain, enhancing operations across the entire industrial ecosystem.",
-                delay: 0.3
-              },
-              {
-                title: "Omnipotent", 
-                pronunciation: "/ˌäm'nīpəd(ə)nt/",
-                type: "adjective",
-                description: "Having unlimited power and authority. Provide unparalleled control over industrial processes, from manufacturing to logistics, boosting efficiency and productivity for businesses of all sizes.",
-                delay: 0.4
-              },
-              {
-                title: "Omnipresent",
-                pronunciation: "/ˌämnī'prez(ə)nt/", 
-                type: "adjective",
-                description: "Present everywhere simultaneously. Enable monitoring and management of operations across multiple facilities, supply chains, and customer touchpoints, enhancing visibility and responsiveness.",
-                delay: 0.5
-              },
-              {
-                title: "Omniscient",
-                pronunciation: "/ˌäm'nīSHənt/",
-                type: "adjective", 
-                description: "Having complete knowledge and understanding. Equip businesses with deep insights and predictive analytics across entire industrial operations, improving decision-making and strategic planning.",
-                delay: 0.6
-              }
-            ].map((item, index) => (
-              <motion.div 
-                key={item.title}
-                className="space-y-4 p-6 rounded-2xl bg-muted/5 backdrop-blur-sm border border-border/20 hover:bg-muted/10 transition-all duration-300 hover:scale-105"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: item.delay }}
-                viewport={{ once: true }}
-                whileHover={{ y: -5 }}
-              >
-                <div className="space-y-2">
-                  <h3 className="text-3xl font-bold text-foreground drop-shadow-md">{item.title}</h3>
-                  <p className="text-muted-foreground/80 text-lg font-mono">{item.pronunciation}</p>
-                  <p className="text-muted-foreground/60 text-sm italic">{item.type}</p>
-                </div>
-                <p className="text-muted-foreground leading-relaxed">
-                  {item.description}
-                </p>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </div>
     </footer>

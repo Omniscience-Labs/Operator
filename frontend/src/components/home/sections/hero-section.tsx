@@ -212,6 +212,42 @@ export function HeroSection() {
 
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
+      <style jsx>{`
+        input:focus,
+        input:active,
+        input:focus-visible,
+        input:focus-within,
+        input:target,
+        input:-webkit-autofill,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active,
+        input:-webkit-autofill:hover {
+          outline: none !important;
+          box-shadow: none !important;
+          border: none !important;
+          -webkit-box-shadow: none !important;
+          -moz-box-shadow: none !important;
+          -webkit-appearance: none !important;
+          -moz-appearance: none !important;
+          appearance: none !important;
+          -webkit-tap-highlight-color: transparent !important;
+          -webkit-focus-ring-color: transparent !important;
+          -webkit-user-select: text !important;
+          -moz-user-select: text !important;
+          -ms-user-select: text !important;
+          user-select: text !important;
+        }
+        
+        *:focus,
+        *:active,
+        *:focus-visible,
+        *:focus-within {
+          outline: none !important;
+          box-shadow: none !important;
+          -webkit-tap-highlight-color: transparent !important;
+          -webkit-focus-ring-color: transparent !important;
+        }
+      `}</style>
       {/* Lamp Container as Background */}
       <LampContainer className="absolute inset-0 -z-10">
         <div /> {/* Empty div to satisfy children requirement */}
@@ -279,22 +315,55 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
           >
-            <form className="w-full relative group outline-none" onSubmit={handleSubmit}>
-              <div className="relative outline-none">
+            <form 
+              className="w-full relative group" 
+              onSubmit={handleSubmit}
+              style={{ 
+                outline: 'none !important', 
+                boxShadow: 'none !important',
+                WebkitTapHighlightColor: 'transparent'
+              } as React.CSSProperties}
+            >
+              <div 
+                className="relative" 
+                style={{ 
+                  outline: 'none !important', 
+                  boxShadow: 'none !important',
+                  WebkitTapHighlightColor: 'transparent'
+                } as React.CSSProperties}
+              >
                 {/* Enhanced glow effect */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 
                 {/* Input container with better contrast */}
-                <div className="relative flex items-center rounded-full border border-border/50 bg-background/30 backdrop-blur-md px-6 shadow-2xl transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70 focus-within:shadow-2xl focus-within:shadow-primary/20 focus-within:bg-background/40 outline-none focus:outline-none ring-0 focus:ring-0 [&:focus]:outline-none [&:focus-within]:outline-none [&:focus]:ring-0 [&:focus-within]:ring-0" style={{ outline: 'none !important', boxShadow: 'none' }}>
+                <div 
+                  className="relative flex items-center rounded-full border border-border/50 bg-background/30 backdrop-blur-md px-6 shadow-2xl transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70 focus-within:shadow-2xl focus-within:shadow-primary/20 focus-within:bg-background/40" 
+                  style={{ 
+                    outline: 'none !important', 
+                    boxShadow: 'none !important',
+                    WebkitTapHighlightColor: 'transparent'
+                  } as React.CSSProperties}
+                >
                   <input
                     type="text"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent focus:outline-none outline-none ring-0 focus:ring-0 border-0 focus:border-0 text-base lg:text-lg placeholder:text-muted-foreground/70 text-foreground py-2 font-medium [&:focus]:outline-none [&:focus]:ring-0 [&:focus]:border-0"
-                    style={{ outline: 'none !important', boxShadow: 'none !important', border: 'none !important' }}
+                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg placeholder:text-muted-foreground/70 text-foreground py-2 font-medium"
+                    style={{ 
+                      outline: 'none !important', 
+                      boxShadow: 'none !important', 
+                      border: 'none !important',
+                      WebkitAppearance: 'none',
+                      MozAppearance: 'none',
+                      appearance: 'none',
+                      WebkitTapHighlightColor: 'transparent',
+                      resize: 'none'
+                    } as React.CSSProperties}
                     disabled={isSubmitting}
+                    autoComplete="off"
+                    spellCheck="false"
                   />
                   <motion.button
                     type="submit"
