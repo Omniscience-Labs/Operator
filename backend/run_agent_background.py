@@ -362,9 +362,13 @@ async def run_agent_background(
             
             # Extract tool results with credit info from responses
             tool_results = []
+            logger.info(f"Extracting tool results from {len(all_responses)} total responses for credit tracking")
             for response in all_responses:
-                if isinstance(response, dict) and response.get('type') == 'tool_result':
+                if isinstance(response, dict) and response.get('type') == 'tool':
                     tool_results.append(response)
+                    logger.debug(f"Found tool result: {response.get('metadata', {}).get('_credit_info', {}).get('tool_name', 'unknown')}")
+            
+            logger.info(f"Extracted {len(tool_results)} tool results for finalization")
             
             reasoning_mode = 'none'  # Default
             if enable_thinking:
@@ -432,9 +436,13 @@ async def run_agent_background(
             
             # Extract tool results with credit info from responses
             tool_results = []
+            logger.info(f"Extracting tool results from {len(all_responses)} total responses for failed run credit tracking")
             for response in all_responses:
-                if isinstance(response, dict) and response.get('type') == 'tool_result':
+                if isinstance(response, dict) and response.get('type') == 'tool':
                     tool_results.append(response)
+                    logger.debug(f"Found tool result in failed run: {response.get('metadata', {}).get('_credit_info', {}).get('tool_name', 'unknown')}")
+            
+            logger.info(f"Extracted {len(tool_results)} tool results for failed run finalization")
             
             reasoning_mode = 'none'  # Default
             if enable_thinking:

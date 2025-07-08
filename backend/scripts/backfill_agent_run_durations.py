@@ -85,7 +85,7 @@ class AgentRunBackfiller:
             
             if responses:
                 for response in responses:
-                    if isinstance(response, dict) and response.get('type') == 'tool_result':
+                    if isinstance(response, dict) and response.get('type') == 'tool':
                         tool_results.append(response)
             
             # Determine reasoning mode (default to 'none' if not set)
