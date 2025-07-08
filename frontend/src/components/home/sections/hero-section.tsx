@@ -213,7 +213,7 @@ export function HeroSection() {
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
       <style jsx>{`
-        /* Ultra-aggressive transparent input overrides */
+        /* CRITICAL: Override the problematic --input CSS variable that causes grey backgrounds */
         .hero-input-container,
         .hero-input-container *,
         .hero-input-container input,
@@ -226,6 +226,10 @@ export function HeroSection() {
         .hero-input-container input:-webkit-autofill:focus,
         .hero-input-container input:-webkit-autofill:active,
         .hero-input-container input:-webkit-autofill:hover {
+          /* Override the --input CSS variable that's causing grey backgrounds */
+          --input: transparent !important;
+          --color-input: transparent !important;
+          
           background: transparent !important;
           background-color: transparent !important;
           background-image: none !important;
@@ -367,15 +371,32 @@ export function HeroSection() {
                 
                 {/* Input container with completely transparent design */}
                 <div 
-                  className="hero-input-container relative flex items-center rounded-full border border-border/30 px-6 transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70" 
+                  className="hero-input-container relative flex items-center rounded-full px-6 transition-all duration-300" 
                   style={{ 
                     outline: 'none !important', 
                     boxShadow: 'none !important',
                     WebkitTapHighlightColor: 'transparent',
                     backgroundColor: 'transparent !important',
                     backdropFilter: 'none !important',
-                    WebkitBackdropFilter: 'none !important'
+                    WebkitBackdropFilter: 'none !important',
+                    border: '1px solid rgba(var(--border), 0.3)',
+                    '--input': 'transparent',
+                    '--color-input': 'transparent'
                   } as React.CSSProperties}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(var(--primary), 0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!e.currentTarget.querySelector('input:focus')) {
+                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(var(--border), 0.3)';
+                    }
+                  }}
+                  onFocusCapture={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(var(--primary), 0.7)';
+                  }}
+                  onBlurCapture={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(var(--border), 0.3)';
+                  }}
                 >
                   <input
                     type="text"
@@ -383,8 +404,16 @@ export function HeroSection() {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="flex-1 h-16 lg:h-18 rounded-full px-2 text-base lg:text-lg py-2 font-medium"
                     style={{ 
+                      // Layout and sizing
+                      flex: '1',
+                      height: '4rem',
+                      borderRadius: '9999px',
+                      padding: '0.5rem',
+                      fontSize: '1rem',
+                      fontWeight: '500',
+                      
+                      // Complete transparency and reset
                       outline: 'none !important', 
                       boxShadow: 'none !important', 
                       border: 'none !important',
@@ -393,13 +422,27 @@ export function HeroSection() {
                       backgroundImage: 'none !important',
                       backdropFilter: 'none !important',
                       WebkitBackdropFilter: 'none !important',
+                      
+                      // Browser reset
                       WebkitAppearance: 'none',
                       MozAppearance: 'none',
                       appearance: 'none',
                       WebkitTapHighlightColor: 'transparent',
                       resize: 'none',
+                      
+                      // Colors
                       color: 'var(--foreground)',
-                      caretColor: 'var(--foreground)'
+                      caretColor: 'var(--foreground)',
+                      
+                      // Override problematic CSS variables locally
+                      '--input': 'transparent',
+                      '--color-input': 'transparent',
+                      
+                      // Responsive font size
+                      '@media (min-width: 1024px)': {
+                        height: '4.5rem',
+                        fontSize: '1.125rem'
+                      }
                     } as React.CSSProperties}
                     disabled={isSubmitting}
                     autoComplete="off"
