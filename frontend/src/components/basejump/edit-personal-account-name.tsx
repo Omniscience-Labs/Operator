@@ -26,7 +26,7 @@ export default function EditPersonalAccountName({ account }: Props) {
             id="name"
             placeholder="Marty Mcfly"
             required
-            className="h-10 rounded-lg border-subtle dark:border-white/10 bg-white dark:bg-background-secondary"
+            className="h-10 rounded-lg border-subtle dark:border-white/10 bg-white dark:bg-background-secondary text-foreground placeholder:text-muted-foreground"
           />
         </div>
         <div className="flex justify-end mt-2">
