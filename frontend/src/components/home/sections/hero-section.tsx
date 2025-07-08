@@ -799,7 +799,7 @@ export function HeroSection() {
       <div className="relative flex flex-col items-center w-full px-6 z-20">
         {/* Center content */}
         <motion.div 
-          className="relative z-30 max-w-4xl mx-auto h-full w-full flex flex-col gap-8 lg:gap-12 items-center justify-center py-20"
+          className="relative z-30 max-w-4xl mx-auto h-full w-full flex flex-col gap-8 lg:gap-12 items-center justify-center py-12 md:py-20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -809,7 +809,7 @@ export function HeroSection() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="relative z-40 -mt-8"
+            className="relative z-40 -mt-4 md:-mt-8"
           >
             <Link
               href="#enterprise"
@@ -832,15 +832,15 @@ export function HeroSection() {
 
           {/* Hero text with improved typography */}
           <motion.div 
-            className="flex flex-col items-center justify-center gap-6 text-center relative z-40"
+            className="flex flex-col items-center justify-center gap-4 md:gap-6 text-center relative z-40"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-balance leading-[1.1] bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent drop-shadow-lg">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-balance leading-[1.1] bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent drop-shadow-lg px-4">
               {hero.title}
             </h1>
-            <p className="text-lg md:text-xl lg:text-2xl text-center text-muted-foreground font-normal text-balance leading-relaxed max-w-2xl tracking-tight drop-shadow-md">
+            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-center text-muted-foreground font-normal text-balance leading-relaxed max-w-2xl tracking-tight drop-shadow-md px-4">
               Operator by OMNI – is a generalist{' '}
               <GradientText 
                 text="AI Agent" 
@@ -900,7 +900,7 @@ export function HeroSection() {
                 
                 {/* Input container with beautiful theme-aware design */}
                 <div 
-                  className="hero-input-container relative flex items-center rounded-full px-6 transition-all duration-300"
+                  className="hero-input-container relative flex items-center rounded-full px-4 sm:px-6 transition-all duration-300"
                   data-hero-element="input-container"
                   data-safari-fix="true"
                   style={{
@@ -910,13 +910,13 @@ export function HeroSection() {
                     backdropFilter: 'blur(12px)',
                     WebkitBackdropFilter: 'blur(12px)',
                     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                    paddingLeft: '1.5rem',
-                    paddingRight: '1.5rem',
+                    paddingLeft: '1rem',
+                    paddingRight: '1rem',
                     display: 'flex',
                     alignItems: 'center',
                     position: 'relative',
                     width: '100%',
-                    minHeight: '4rem',
+                    minHeight: '3.5rem',
                     overflow: 'hidden'
                   }}
                 >
@@ -926,7 +926,7 @@ export function HeroSection() {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="hero-input flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent text-base lg:text-lg text-foreground placeholder:text-muted-foreground placeholder:opacity-70 focus:placeholder:opacity-40 py-2 font-medium transition-all duration-200 appearance-none"
+                    className="hero-input flex-1 h-14 sm:h-16 lg:h-18 rounded-full px-2 bg-transparent text-sm sm:text-base lg:text-lg text-foreground placeholder:text-muted-foreground placeholder:opacity-70 focus:placeholder:opacity-40 py-2 font-medium transition-all duration-200 appearance-none"
                     style={{
                       border: 'none',
                       borderStyle: 'none',
@@ -955,7 +955,7 @@ export function HeroSection() {
                   />
                   <motion.button
                     type="submit"
-                    className={`rounded-full p-3 lg:p-4 transition-all duration-300 ${
+                    className={`rounded-full p-2.5 sm:p-3 lg:p-4 transition-all duration-300 ${
                       inputValue.trim()
                         ? 'bg-cyan-500 text-white hover:bg-cyan-400 shadow-lg hover:shadow-cyan-500/40 scale-100'
                         : 'bg-muted/40 text-muted-foreground scale-95'
@@ -966,9 +966,9 @@ export function HeroSection() {
                     whileTap={inputValue.trim() ? { scale: 0.95 } : {}}
                   >
                     {isSubmitting ? (
-                      <div className="h-5 lg:h-6 w-5 lg:w-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      <div className="h-4 sm:h-5 lg:h-6 w-4 sm:w-5 lg:w-6 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <ArrowRight className="size-5 lg:size-6" />
+                      <ArrowRight className="size-4 sm:size-5 lg:size-6" />
                     )}
                   </motion.button>
                 </div>
@@ -978,7 +978,7 @@ export function HeroSection() {
 
           {/* Dynamic value proposition with FlipWords */}
           <motion.div 
-            className="text-lg md:text-xl lg:text-2xl xl:text-3xl text-muted-foreground font-medium text-center max-w-4xl relative z-40"
+            className="text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl text-muted-foreground font-medium text-center max-w-4xl relative z-40 px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8, duration: 0.8 }}
@@ -990,7 +990,7 @@ export function HeroSection() {
                 <FlipWords 
                   words={moreWords} 
                   duration={3000}
-                  className="text-primary font-bold text-lg drop-shadow-lg"
+                  className="text-primary font-bold text-base drop-shadow-lg"
                 />
               </div>
               <div className="flex items-center justify-center gap-2">
@@ -998,7 +998,7 @@ export function HeroSection() {
                 <FlipWords 
                   words={lessWords} 
                   duration={4500}
-                  className="text-primary font-bold text-lg drop-shadow-lg"
+                  className="text-primary font-bold text-base drop-shadow-lg"
                 />
               </div>
             </div>
@@ -1020,17 +1020,17 @@ export function HeroSection() {
             </div>
           </motion.div>
         </motion.div>
-      </div>
 
-      {/* Video section with better spacing */}
-      <motion.div 
-        className="w-full max-w-6xl mx-auto px-6 pb-10 relative z-30"
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1, duration: 1 }}
-      >
-        <HeroVideoSection />
-      </motion.div>
+        {/* Video section positioned below the main content with better mobile spacing */}
+        <motion.div 
+          className="w-full max-w-6xl mx-auto mt-8 md:mt-12 lg:mt-16 mb-8 md:mb-16 relative z-30"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1, duration: 1 }}
+        >
+          <HeroVideoSection />
+        </motion.div>
+      </div>
 
       {/* Auth Dialog with enhanced styling */}
       <Dialog open={authDialogOpen} onOpenChange={setAuthDialogOpen}>
