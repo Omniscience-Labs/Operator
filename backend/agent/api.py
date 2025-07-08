@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Request, Body, File, UploadFile, Form, Query
 from fastapi.responses import StreamingResponse
+from fastapi.exceptions import RequestValidationError
 import asyncio
 import json
 import traceback
@@ -11,7 +12,7 @@ from pydantic import BaseModel
 import tempfile
 import os
 from uuid import UUID
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, ValidationError
 
 from agentpress.thread_manager import ThreadManager
 from services.supabase import DBConnection
@@ -2174,12 +2175,35 @@ class PublishAgentRequest(BaseModel):
     include_custom_mcp_tools: Optional[bool] = True  # Whether to include custom MCP tools when sharing
     managed_agent: Optional[bool] = False  # Whether this is a managed agent (users get live reference instead of copy)
     
-    @validator('team_ids')
+    @validator('team_ids', pre=True)
     def validate_team_ids(cls, v):
         if v is None:
             return []
-        # Pydantic will automatically validate UUIDs, but we can add additional validation if needed
-        return v
+        
+        if not isinstance(v, list):
+            raise ValueError(f"team_ids must be a list, got {type(v)}")
+        
+        validated_uuids = []
+        for i, team_id in enumerate(v):
+            if team_id is None:
+                raise ValueError(f"team_ids[{i}] cannot be None")
+            
+            # Convert to string and strip whitespace
+            team_id_str = str(team_id).strip()
+            
+            if not team_id_str:
+                raise ValueError(f"team_ids[{i}] cannot be empty")
+            
+            try:
+                # Attempt to create UUID object to validate format
+                uuid_obj = UUID(team_id_str)
+                validated_uuids.append(uuid_obj)
+            except ValueError as e:
+                logger.error(f"Invalid UUID format for team_ids[{i}]: '{team_id_str}' - {str(e)}")
+                raise ValueError(f"team_ids[{i}] is not a valid UUID: '{team_id_str}'. UUIDs must be in the format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
+        
+        logger.info(f"Successfully validated {len(validated_uuids)} team IDs: {[str(uid) for uid in validated_uuids]}")
+        return validated_uuids
 
 @router.get("/marketplace/agents", response_model=MarketplaceAgentsResponse)
 async def get_marketplace_agents(
