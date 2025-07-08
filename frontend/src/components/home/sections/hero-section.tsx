@@ -812,7 +812,7 @@ export function HeroSection() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, duration: 0.6 }}
-              className="relative z-50 mb-4"
+              className="relative z-50 mb-4 mt-8 md:mt-12"
             >
               <Link
                 href="#enterprise"
@@ -838,15 +838,15 @@ export function HeroSection() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 1.2 }}
-              className="relative z-10 w-full max-w-4xl mx-auto my-4 md:my-6"
+              className="relative z-10 w-full max-w-4xl mx-auto my-2"
             >
-              <div className="relative w-full h-8 md:h-12 flex items-center justify-center">
+              <div className="relative w-full h-6 md:h-8 flex items-center justify-center">
+                {/* Glow effect container */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  {/* Animated gradient line with glow effect */}
                   <div className="relative w-full max-w-sm md:max-w-md h-[2px]">
-                    {/* Main gradient line */}
+                    {/* Outer glow */}
                     <motion.div
-                      className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full"
+                      className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full blur-[16px] opacity-60"
                       style={{
                         backgroundImage: 'linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)',
                       }}
@@ -855,9 +855,20 @@ export function HeroSection() {
                       transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
                     />
                     
-                    {/* Glow effect */}
+                    {/* Inner glow */}
                     <motion.div
                       className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full blur-[8px] mix-blend-plus-lighter"
+                      style={{
+                        backgroundImage: 'linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)',
+                      }}
+                      initial={{ backgroundPosition: '0% 0%' }}
+                      animate={{ backgroundPosition: '500% 100%' }}
+                      transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                    />
+                    
+                    {/* Main gradient line */}
+                    <motion.div
+                      className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full"
                       style={{
                         backgroundImage: 'linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)',
                       }}
@@ -885,7 +896,7 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7, duration: 0.8 }}
             >
-              Operator by OMNI – is a generalist{' '}
+              a generalist{' '}
               <GradientText 
                 text="AI Agent" 
                 gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"

@@ -111,7 +111,7 @@ export const siteConfig = {
       </>
     ),
     description:
-      'Operator by OMNI – is a generalist AI Agent that works on your behalf.',
+      'a generalist AI Agent that works on your behalf.',
     inputPlaceholder: 'Ask Operator to...',
   },
   bentoSection: {
