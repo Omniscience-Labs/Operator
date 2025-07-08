@@ -275,14 +275,14 @@ export function HeroSection() {
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all duration-500 pointer-events-none"></div>
                 
                 {/* Input container with better contrast */}
-                <div className="relative flex items-center rounded-full border border-border/50 bg-background/30 backdrop-blur-md px-6 shadow-2xl transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70 focus-within:shadow-2xl focus-within:shadow-primary/20 focus-within:bg-background/40 outline-none focus:outline-none">
+                <div className="relative flex items-center rounded-full border border-border/50 bg-background/30 backdrop-blur-md px-6 shadow-2xl transition-all duration-300 hover:border-primary/50 focus-within:border-primary/70 focus-within:shadow-2xl focus-within:shadow-primary/20 focus-within:bg-background/40 outline-none focus:outline-none ring-0 focus:ring-0">
                   <input
                     type="text"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={hero.inputPlaceholder}
-                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent focus:outline-none outline-none text-base lg:text-lg placeholder:text-muted-foreground/70 text-foreground py-2 font-medium"
+                    className="flex-1 h-16 lg:h-18 rounded-full px-2 bg-transparent focus:outline-none outline-none ring-0 focus:ring-0 border-0 focus:border-0 text-base lg:text-lg placeholder:text-muted-foreground/70 text-foreground py-2 font-medium"
                     disabled={isSubmitting}
                   />
                   <motion.button

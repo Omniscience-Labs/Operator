@@ -3,6 +3,7 @@
 import { SectionHeader } from '@/components/home/section-header';
 import { ProfileCard } from '@/components/ProfileCard';
 import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
+import { InfoCard } from '@/components/InfoCard';
 import { IconCloud } from '@/components/magicui/icon-cloud';
 import { OmniProcessModal } from '@/components/sidebar/omni-enterprise-modal';
 import { GoogleGeminiEffect } from '@/components/ui/google-gemini-effect';
@@ -115,17 +116,9 @@ export function BentoSection() {
   return (
     <section
       id="bento"
-      className="flex flex-col items-center justify-center w-full relative py-24 lg:py-32 overflow-hidden"
+      className="flex flex-col items-center justify-center w-full relative py-24 lg:py-32"
     >
-      {/* Google Gemini Effect spanning entire page */}
-      <div className="absolute inset-0 z-0 w-full h-full">
-        <GoogleGeminiEffect 
-          pathLengths={pathLengths}
-          className="opacity-30"
-        />
-      </div>
-      
-      <div className="w-full max-w-7xl mx-auto px-6 relative z-10">
+      <div className="w-full max-w-7xl mx-auto px-6">
         {/* Header Section */}
         <div className="text-center mb-20">
           <div className="flex items-center justify-center gap-3 mb-8">
@@ -151,19 +144,16 @@ export function BentoSection() {
           </div>
         </div>
 
-        {/* Feature Cards - 2x2 Grid using AgentProfileCard */}
+        {/* Feature Cards - 2x2 Grid using InfoCard */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 max-w-6xl mx-auto">
           {secureAIAgents.map((agent) => (
-            <AgentProfileCard
+            <InfoCard
               key={agent.agent_id}
-              agent={{
-                ...agent,
-                is_owned: true, // Show as owned to hide marketplace features
-                download_count: 0, // Set to 0 to hide download count
-                is_public: false, // Hide public features
-                is_managed: true // Hide marketplace features
-              }}
-              mode="library"
+              title={agent.name}
+              description={agent.description}
+              avatar={agent.avatar}
+              avatar_color={agent.avatar_color}
+              tags={agent.tags}
               className="h-[420px]"
               enableTilt={true}
             />
@@ -171,8 +161,18 @@ export function BentoSection() {
         </div>
 
         {/* Enterprise Connections Section */}
-        <div className="mt-24 lg:mt-32">
-          <div className="text-center mb-16">
+        <div className="mt-24 lg:mt-32 relative overflow-hidden">
+          {/* Google Gemini Effect centered in this section */}
+          <div className="absolute inset-0 z-0 w-full h-full flex items-center justify-center">
+            <div className="w-full max-w-[1200px] h-full">
+              <GoogleGeminiEffect 
+                pathLengths={pathLengths}
+                className="opacity-40"
+              />
+            </div>
+          </div>
+
+          <div className="text-center mb-16 relative z-10">
             <h3 className="text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight text-balance leading-[1.05] mb-6">
               Connect Securely to Enterprise Data and Tools
             </h3>
@@ -182,10 +182,10 @@ export function BentoSection() {
           </div>
 
           {/* Integration Features Layout with Central Icon Cloud */}
-          <div className="relative max-w-7xl mx-auto mb-48">
+          <div className="relative max-w-7xl mx-auto mb-48 z-10">
             {/* Central Icon Cloud */}
-            <div className="relative flex items-center justify-center mx-auto w-[600px] h-[500px] lg:w-[700px] lg:h-[600px] mt-8">
-              <div className="relative z-10 w-full h-full flex items-center justify-center scale-110 lg:scale-125">
+            <div className="relative flex items-center justify-center mx-auto w-[700px] h-[600px] lg:w-[800px] lg:h-[700px] -mt-4">
+              <div className="relative z-10 w-full h-full flex items-center justify-center scale-125 lg:scale-150">
                 <IconCloud images={enterpriseIntegrationImages} />
               </div>
           </div>

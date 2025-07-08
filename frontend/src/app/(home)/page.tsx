@@ -22,8 +22,8 @@ export default function Home() {
         <div className="w-full">
           <HeroSection />
           <TestimonialSection />
-          <BentoSection />
           <CompanyShowcase />
+          <BentoSection />
           <FeatureSection />
           <UseCasesSection />
           <EnterpriseSection />

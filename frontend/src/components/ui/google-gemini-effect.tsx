@@ -20,15 +20,15 @@ export const GoogleGeminiEffect = ({
       <svg
         width="100%"
         height="100%"
-        viewBox="0 0 3000 1000"
+        viewBox="0 0 1200 600"
         xmlns="http://www.w3.org/2000/svg"
         className="absolute inset-0 w-full h-full"
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMidYMid meet"
       >
         <motion.path
-          d="M0 663C300 663 450 666 600 647C750 630 900 621 1050 566C1200 531 1350 529 1500 523C1650 519 1800 503 1950 504C2100 504 2250 514 2400 522C2550 525 2700 526 2850 523C3000 515"
+          d="M0 398C120 398 180 400 240 388C300 378 360 373 420 340C480 318 540 317 600 314C660 312 720 302 780 302C840 302 900 308 960 313C1020 315 1080 316 1140 314C1200 309"
           stroke="#FFB7C5"
-          strokeWidth="3"
+          strokeWidth="2"
           fill="none"
           initial={{
             pathLength: 0,
@@ -39,9 +39,9 @@ export const GoogleGeminiEffect = ({
           transition={transition}
         />
         <motion.path
-          d="M0 587C300 587 450 587 600 573C750 563 900 543 1050 535C1200 523 1350 526 1500 515C1650 512 1800 510 1950 512C2100 516 2250 523 2400 523C2550 523 2700 496 2850 497C3000 497"
+          d="M0 352C120 352 180 352 240 344C300 338 360 326 420 321C480 314 540 316 600 309C660 307 720 306 780 307C840 310 900 314 960 314C1020 314 1080 298 1140 298C1200 298"
           stroke="#FFDDB7"
-          strokeWidth="3"
+          strokeWidth="2"
           fill="none"
           initial={{
             pathLength: 0,
@@ -52,9 +52,9 @@ export const GoogleGeminiEffect = ({
           transition={transition}
         />
         <motion.path
-          d="M0 514C300 514 450 513 600 513C750 514 900 515 1050 515C1200 514 1350 506 1500 511C1650 511 1800 512 1950 513C2100 516 2250 521 2400 519C2550 515 2700 499 2850 499C3000 499"
+          d="M0 308C120 308 180 308 240 308C300 309 360 309 420 309C480 308 540 304 600 307C660 307 720 307 780 308C840 310 900 313 960 312C1020 309 1080 299 1140 299C1200 299"
           stroke="#B1C5FF"
-          strokeWidth="3"
+          strokeWidth="2"
           fill="none"
           initial={{
             pathLength: 0,
@@ -65,9 +65,9 @@ export const GoogleGeminiEffect = ({
           transition={transition}
         />
         <motion.path
-          d="M0 438C300 438 450 438 600 456C750 464 900 484 1050 494C1200 501 1350 503 1500 507C1650 512 1800 516 1950 518C2100 521 2250 501 2400 501C2550 501 2700 529 2850 528C3000 528"
+          d="M0 263C120 263 180 263 240 274C300 278 360 290 420 296C480 301 540 302 600 304C660 307 720 310 780 311C840 313 900 301 960 301C1020 301 1080 318 1140 317C1200 317"
           stroke="#4FABFF"
-          strokeWidth="3"
+          strokeWidth="2"
           fill="none"
           initial={{
             pathLength: 0,
@@ -78,9 +78,9 @@ export const GoogleGeminiEffect = ({
           transition={transition}
         />
         <motion.path
-          d="M0 364C300 362 450 361 600 378C750 391 900 457 1050 467C1200 478 1350 491 1500 502C1650 503 1800 504 1950 505C2100 511 2250 520 2400 521C2550 521 2700 498 2850 498C3000 498"
+          d="M0 218C120 217 180 217 240 227C300 235 360 274 420 280C480 287 540 294 600 301C660 302 720 302 780 303C840 307 900 312 960 313C1020 313 1080 299 1140 299C1200 299"
           stroke="#076EFF"
-          strokeWidth="3"
+          strokeWidth="2"
           fill="none"
           initial={{
             pathLength: 0,
@@ -93,50 +93,9 @@ export const GoogleGeminiEffect = ({
 
         {/* Gaussian blur for the background paths */}
 
-        <path
-          d="M0 663C300 663 450 666 600 647C750 630 900 621 1050 566C1200 531 1350 529 1500 523C1650 519 1800 503 1950 504C2100 504 2250 514 2400 522C2550 525 2700 526 2850 523C3000 515"
-          stroke="#FFB7C5"
-          strokeWidth="3"
-          fill="none"
-          pathLength={1}
-          filter="url(#blurMe)"
-        />
-        <path
-          d="M0 587C300 587 450 587 600 573C750 563 900 543 1050 535C1200 523 1350 526 1500 515C1650 512 1800 510 1950 512C2100 516 2250 523 2400 523C2550 523 2700 496 2850 497C3000 497"
-          stroke="#FFDDB7"
-          strokeWidth="3"
-          fill="none"
-          pathLength={1}
-          filter="url(#blurMe)"
-        />
-        <path
-          d="M0 514C300 514 450 513 600 513C750 514 900 515 1050 515C1200 514 1350 506 1500 511C1650 511 1800 512 1950 513C2100 516 2250 521 2400 519C2550 515 2700 499 2850 499C3000 499"
-          stroke="#B1C5FF"
-          strokeWidth="3"
-          fill="none"
-          pathLength={1}
-          filter="url(#blurMe)"
-        />
-        <path
-          d="M0 438C300 438 450 438 600 456C750 464 900 484 1050 494C1200 501 1350 503 1500 507C1650 512 1800 516 1950 518C2100 521 2250 501 2400 501C2550 501 2700 529 2850 528C3000 528"
-          stroke="#4FABFF"
-          strokeWidth="3"
-          fill="none"
-          pathLength={1}
-          filter="url(#blurMe)"
-        />
-        <path
-          d="M0 364C300 362 450 361 600 378C750 391 900 457 1050 467C1200 478 1350 491 1500 502C1650 503 1800 504 1950 505C2100 511 2250 520 2400 521C2550 521 2700 498 2850 498C3000 498"
-          stroke="#076EFF"
-          strokeWidth="3"
-          fill="none"
-          pathLength={1}
-          filter="url(#blurMe)"
-        />
-
         <defs>
           <filter id="blurMe">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" />
           </filter>
         </defs>
       </svg>
