@@ -804,39 +804,39 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          {/* Badge with enhanced styling */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="relative z-40 -mt-4 md:-mt-8"
-          >
-            <Link
-              href="#enterprise"
-              className="group relative inline-flex items-center gap-2 rounded-full border border-border/50 bg-background/20 backdrop-blur-sm px-4 py-2 text-sm transition-all duration-300 hover:border-border/70 hover:bg-background/30 hover:shadow-lg hover:shadow-primary/20"
-            >
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <GradientText 
-                  text={hero.badge}
-                  gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
-                  transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                  className="font-medium text-xs tracking-wider uppercase group-hover:opacity-90 transition-opacity duration-300"
-                />
-              </div>
-              <div className="inline-flex items-center justify-center size-4 rounded-full bg-primary/20 group-hover:bg-primary/30 transition-colors duration-300">
-                <ArrowRight className="h-2.5 w-2.5 text-primary group-hover:translate-x-0.5 transition-transform duration-300" />
-              </div>
-            </Link>
-          </motion.div>
-
           {/* Hero text with improved typography */}
           <motion.div 
             className="flex flex-col items-center justify-center gap-4 md:gap-6 text-center relative z-40"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
           >
+            {/* Badge with enhanced styling - moved above the main heading */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1, duration: 0.6 }}
+              className="relative z-40 mb-4"
+            >
+              <Link
+                href="#enterprise"
+                className="group relative inline-flex items-center gap-2 rounded-full border border-border/50 bg-background/20 backdrop-blur-sm px-4 py-2 text-sm transition-all duration-300 hover:border-border/70 hover:bg-background/30 hover:shadow-lg hover:shadow-primary/20"
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  <GradientText 
+                    text={hero.badge}
+                    gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                    transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                    className="font-medium text-xs tracking-wider uppercase group-hover:opacity-90 transition-opacity duration-300"
+                  />
+                </div>
+                <div className="inline-flex items-center justify-center size-4 rounded-full bg-primary/20 group-hover:bg-primary/30 transition-colors duration-300">
+                  <ArrowRight className="h-2.5 w-2.5 text-primary group-hover:translate-x-0.5 transition-transform duration-300" />
+                </div>
+              </Link>
+            </motion.div>
+            
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold tracking-tight text-balance leading-[1.1] bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent drop-shadow-lg px-4">
               {hero.title}
             </h1>

@@ -59,7 +59,7 @@ export function InfoCard({
       className={cn(
         "relative group cursor-default",
         "bg-card/70 backdrop-blur-md border border-border/60",
-        "rounded-3xl p-7 h-full",
+        "rounded-3xl p-4 sm:p-6 lg:p-7 h-full",
         "transition-all duration-500",
         "overflow-hidden",
         className
@@ -93,9 +93,9 @@ export function InfoCard({
       
       <div className="relative z-10 h-full flex flex-col">
         {/* Header */}
-        <div className="flex items-start gap-5 mb-6">
+        <div className="flex items-start gap-3 sm:gap-4 lg:gap-5 mb-4 sm:mb-5 lg:mb-6">
           <motion.div 
-            className="flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-medium shadow-lg transition-all duration-300 group-hover:scale-110"
+            className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-xl sm:text-2xl font-medium shadow-lg transition-all duration-300 group-hover:scale-110"
             style={{ 
               backgroundColor: `${avatar_color}20`, 
               color: avatar_color,
@@ -107,16 +107,16 @@ export function InfoCard({
           </motion.div>
           
           <div className="flex-1 min-w-0">
-            <h3 className="text-xl font-bold text-foreground mb-3 leading-tight group-hover:text-opacity-90 transition-all duration-300">
+            <h3 className="text-lg sm:text-xl font-bold text-foreground mb-2 sm:mb-3 leading-tight group-hover:text-opacity-90 transition-all duration-300">
               {title}
             </h3>
             
             {/* Tags */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {tags.map((tag, index) => (
                 <motion.span
                   key={index}
-                  className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300"
+                  className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-semibold transition-all duration-300"
                   style={{ 
                     backgroundColor: `${avatar_color}15`,
                     color: avatar_color,
@@ -132,14 +132,14 @@ export function InfoCard({
         </div>
 
         {/* Description */}
-        <div className="mb-5">
-          <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+        <div className="mb-3 sm:mb-4 lg:mb-5">
+          <p className="text-sm sm:text-sm text-muted-foreground leading-relaxed font-medium">
             {description}
           </p>
         </div>
 
         {/* Key Points */}
-        <div className="flex-1 space-y-3">
+        <div className="flex-1 space-y-2 sm:space-y-3">
           {keyPoints.map((point, index) => (
             <motion.div
               key={index}
@@ -166,7 +166,7 @@ export function InfoCard({
 
         {/* Enhanced hover indicator */}
         <motion.div 
-          className="flex items-center gap-2 mt-4 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300"
+          className="flex items-center gap-2 mt-3 sm:mt-4 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300"
           style={{ color: avatar_color }}
         >
           <span>Enterprise Ready</span>

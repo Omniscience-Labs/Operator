@@ -156,7 +156,7 @@ export function BentoSection() {
               avatar_color={agent.avatar_color}
               tags={agent.tags}
               keyPoints={agent.keyPoints}
-              className="h-[420px]"
+              className="min-h-[380px] lg:h-[420px] h-auto"
               enableTilt={true}
             />
           ))}
