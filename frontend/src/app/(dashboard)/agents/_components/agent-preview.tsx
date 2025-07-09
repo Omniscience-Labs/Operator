@@ -352,7 +352,7 @@ export const AgentPreview = ({ agent }: AgentPreviewProps) => {
         </div>
         <Badge variant="highlight" className="text-sm">Preview Mode</Badge>
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
         <div className="h-full overflow-y-auto scrollbar-hide">
           <ThreadContent
             messages={messages}
@@ -366,6 +366,7 @@ export const AgentPreview = ({ agent }: AgentPreviewProps) => {
             agentName={agent.name}
             agentAvatar={avatar}
             isSidePanelOpen={false}
+            isAgentBuilder={true}
             emptyStateComponent={
               <div className="flex flex-col items-center text-center text-muted-foreground/80">
                 <div className="flex w-20 aspect-square items-center justify-center rounded-2xl bg-muted-foreground/10 p-4 mb-4">

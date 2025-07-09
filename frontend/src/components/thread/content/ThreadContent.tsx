@@ -1232,7 +1232,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
 
             {/* Unified floating pill - shows either "Working" or "Scroll to latest" */}
             {((!readOnly && (agentStatus === 'running' || agentStatus === 'connecting')) || showScrollButton) && (
-                <div className={`${isAgentBuilder ? 'absolute' : 'fixed'} bottom-48 z-20 transform -translate-x-1/2 transition-all duration-200 ease-in-out ${
+                <div className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-48'} z-20 transform -translate-x-1/2 transition-all duration-200 ease-in-out ${
                     (() => {
                         if (isAgentBuilder) {
                             // Agent builder mode - center within container

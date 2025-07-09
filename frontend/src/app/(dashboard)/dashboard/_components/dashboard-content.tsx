@@ -115,13 +115,13 @@ export function DashboardContent() {
   useEffect(() => {
     if (!isLoadingUserName) {
       // Calculate total greeting animation time
-      const firstTextLength = `Hey ${userName || 'there'}, I'm`.length;
+      const firstTextLength = `Hey ${userName || 'there'}`.length;
       const secondTextLength = `What would you like to do this ${getTimeBasedGreeting()}?`.length;
       
-      const firstAnimationTime = 400 + (firstTextLength * 50); // delay + duration per char
-      const secondAnimationTime = 2000 + (secondTextLength * 80); // delay + duration per char
+      const firstAnimationTime = 200 + (firstTextLength * 60); // delay + duration per char for typing
+      const secondAnimationTime = 1500 + 800; // delay + blur animation duration
       
-      const totalGreetingTime = Math.max(firstAnimationTime, secondAnimationTime) + 500; // Add buffer
+      const totalGreetingTime = Math.max(firstAnimationTime, secondAnimationTime) + 200; // Reduced buffer from 500 to 200
       
       const timer = setTimeout(() => {
         setGreetingComplete(true);
@@ -133,8 +133,8 @@ export function DashboardContent() {
           // Cascade examples after chat input
           setTimeout(() => {
             setShowExamples(true);
-          }, 400); // Stagger for cascade effect
-        }, 300); // Small delay after greeting
+          }, 300); // Reduced from 400 to 300
+        }, 200); // Reduced from 300 to 200
       }, totalGreetingTime);
 
       return () => clearTimeout(timer);
@@ -581,12 +581,11 @@ ${meeting.transcript || '(No transcript available)'}`;
                                     <div className="flex flex-col items-center gap-3 justify-center w-full max-w-2xl mx-auto">
                     {/* Line 1: Hey [name] */}
                     <div className="flex items-center justify-center w-full">
-                      <BlurText
+                      <TypingText
                         text={`Hey ${userName || 'there'}`}
                         className="tracking-tight text-4xl text-muted-foreground leading-tight text-center"
-                        delay={200}
-                        animateBy="words"
-                        direction="bottom"
+                        duration={60} // Animation speed: milliseconds per character for typing effect
+                        delay={200} // Wait time: milliseconds before starting the typing animation
                       />
                     </div>
                     
@@ -614,11 +613,12 @@ ${meeting.transcript || '(No transcript available)'}`;
                     
                     {/* Line 3: What would you like to do this [time]? */}
                     <div className="flex items-center justify-center w-full min-h-[2.5rem]">
-                      <TypingText
+                      <BlurText
                         text={`What would you like to do this ${getTimeBasedGreeting()}?`}
                         className="tracking-tight text-3xl font-normal text-muted-foreground/80 text-center"
-                        duration={60} // Animation speed: milliseconds per character for typing effect
-                        delay={1500} // Wait time: milliseconds before starting the typing animation
+                        delay={1500} // Wait time: milliseconds before starting the blur animation
+                        animateBy="words"
+                        direction="bottom"
                       />
                     </div>
                     
