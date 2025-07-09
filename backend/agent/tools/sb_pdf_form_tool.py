@@ -190,11 +190,11 @@ from PyPDFForm import PdfWrapper, FormWrapper
             # Create Python script to execute in sandbox
             script_content = f"""
 import json
-from PyPDFForm import FormWrapper
+from PyPDFForm import PdfWrapper
 
 try:
-    # Load PDF form using FormWrapper to preserve editability
-    wrapper = FormWrapper('{full_path}')
+    # Use PdfWrapper for inspection (has .schema attribute)
+    wrapper = PdfWrapper('{full_path}')
     
     # Get form schema
     schema = wrapper.schema
@@ -308,14 +308,14 @@ except Exception as e:
             # Create Python script to execute in sandbox
             script_content = f"""
 try:
-    # Import FormWrapper for editable forms instead of PdfWrapper
-    from PyPDFForm import FormWrapper
+    # Import both wrappers - PdfWrapper for inspection, FormWrapper for editable filling
+    from PyPDFForm import PdfWrapper, FormWrapper
     
-    # Load PDF form using FormWrapper to keep it editable
-    wrapper = FormWrapper('{full_path}')
+    # Use PdfWrapper for inspection (has .schema attribute)
+    inspector = PdfWrapper('{full_path}')
     
     # Get original schema to check available fields
-    original_schema = wrapper.schema
+    original_schema = inspector.schema
     available_fields = set(original_schema.get('properties', {{}}).keys()) if original_schema else set()
     
     # Pre-process fields to handle different field types
@@ -339,8 +339,9 @@ try:
         else:
             processed_fields[field_name] = value
     
-    # Fill the form with processed fields, explicitly keeping it editable
-    filled_pdf_stream = wrapper.fill(processed_fields, flatten=False)
+    # Use FormWrapper for filling to keep form editable
+    filler = FormWrapper('{full_path}')
+    filled_pdf_stream = filler.fill(processed_fields, flatten=False)
     
     # Ensure parent directory exists
     os.makedirs(os.path.dirname('{filled_path}'), exist_ok=True)
@@ -450,8 +451,8 @@ except Exception as e:
             # Create Python script to execute in sandbox
             script_content = f"""
 try:
-    # Load PDF form using FormWrapper to preserve editability
-    wrapper = FormWrapper('{full_path}')
+    # Use PdfWrapper for inspection (has .schema and .sample_data attributes)
+    wrapper = PdfWrapper('{full_path}')
     
     # Get schema and sample data
     schema = wrapper.schema
@@ -549,8 +550,8 @@ except Exception as e:
             # Create Python script to execute in sandbox
             script_content = f"""
 try:
-    # Load PDF form using FormWrapper 
-    wrapper = FormWrapper('{full_path}')
+    # Use PdfWrapper for inspection and flattening
+    wrapper = PdfWrapper('{full_path}')
     
     # Flatten the form
     # First check if the PDF has any fillable fields
@@ -565,8 +566,8 @@ try:
         # Create a flattened version by filling with current values and setting flatten=True
         current_values = wrapper.sample_data
         
-        # Fill the form with current values and flatten it
-        flattened_stream = wrapper.fill(current_values, flatten=True)
+        # Fill the form with current values and flatten it (PdfWrapper flattens by default)
+        flattened_stream = wrapper.fill(current_values)
         
         # Ensure parent directory exists
         os.makedirs(os.path.dirname('{flattened_path}'), exist_ok=True)
