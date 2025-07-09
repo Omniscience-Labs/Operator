@@ -234,8 +234,8 @@ Use this tool when you need to discover what endpoints are available.
                     "provider": service_name,
                     "route": route,
                     "credits_charged": float(credits),
-                    "cost_tier": credit_details["cost_tier"],
-                    "calculation_details": credit_details
+                    "cost_tier": credit_details["cost_tier"] if credit_details else "unknown",
+                    "calculation_details": credit_details or {}
                 },
                 "provider_metadata": {
                     "service_name": service_name,
