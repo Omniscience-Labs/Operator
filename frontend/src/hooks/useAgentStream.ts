@@ -323,6 +323,10 @@ export function useAgentStream(
           setToolCall(null); // Clear any streaming tool call
           if (message.message_id) callbacks.onMessage(message);
           break;
+        case 'reasoning':
+          // Handle reasoning/thinking content during streaming
+          if (message.message_id) callbacks.onMessage(message);
+          break;
         case 'status':
           switch (parsedContent.status_type) {
             case 'tool_started':
