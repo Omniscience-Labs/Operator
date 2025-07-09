@@ -119,9 +119,9 @@ export function DashboardContent() {
       const secondTextLength = `What would you like to do this ${getTimeBasedGreeting()}?`.length;
       
       const firstAnimationTime = 200 + (firstTextLength * 60); // delay + duration per char for typing
-      const secondAnimationTime = 1500 + 800; // delay + blur animation duration
+      const secondAnimationTime = firstAnimationTime + 400; // start right after first animation + fast blur duration
       
-      const totalGreetingTime = Math.max(firstAnimationTime, secondAnimationTime) + 200; // Reduced buffer from 500 to 200
+      const totalGreetingTime = Math.max(firstAnimationTime, secondAnimationTime) + 100; // Reduced buffer from 200 to 100
       
       const timer = setTimeout(() => {
         setGreetingComplete(true);
@@ -133,8 +133,8 @@ export function DashboardContent() {
           // Cascade examples after chat input
           setTimeout(() => {
             setShowExamples(true);
-          }, 300); // Reduced from 400 to 300
-        }, 200); // Reduced from 300 to 200
+          }, 150); // Reduced from 300 to 150
+        }, 100); // Reduced from 200 to 100
       }, totalGreetingTime);
 
       return () => clearTimeout(timer);
@@ -616,7 +616,7 @@ ${meeting.transcript || '(No transcript available)'}`;
                       <BlurText
                         text={`What would you like to do this ${getTimeBasedGreeting()}?`}
                         className="tracking-tight text-3xl font-normal text-muted-foreground/80 text-center"
-                        delay={1500} // Wait time: milliseconds before starting the blur animation
+                        delay={200 + (`Hey ${userName || 'there'}`.length * 60)} // Start right after typing finishes
                         animateBy="words"
                         direction="bottom"
                       />
