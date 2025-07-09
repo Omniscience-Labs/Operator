@@ -1230,7 +1230,16 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
 
             {/* Unified floating pill - shows either "Working" or "Scroll to latest" */}
             {((!readOnly && (agentStatus === 'running' || agentStatus === 'connecting')) || showScrollButton) && (
-                <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-20 transition-all duration-200 ease-in-out">
+                <div className={`fixed bottom-32 z-20 transition-all duration-200 ease-in-out ${
+                    // Calculate horizontal positioning based on sidebar states
+                    isSidePanelOpen && isLeftSidebarOpen 
+                        ? 'left-1/2 transform -translate-x-1/2' // Both sidebars open - center between them
+                        : isSidePanelOpen 
+                            ? 'left-1/2 transform -translate-x-8' // Only right sidebar open - shift left
+                            : isLeftSidebarOpen 
+                                ? 'left-1/2 transform translate-x-8' // Only left sidebar open - shift right  
+                                : 'left-1/2 transform -translate-x-1/2' // No sidebars open - center
+                }`}>
                     <AnimatePresence mode="wait">
                         {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
                             <motion.div
