@@ -28,9 +28,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || 'https://localhost:3000',
   ),
-  title: 'Operator - Open Source Generalist AI Agent',
+  title: 'Operator - Generalist AI Agent for Industrial Enterprises',
   description:
-    'The Generalist AI Agent that works on your behalf. Operator is 100% open source and free.',
+    'The Generalist AI Agent that works on your behalf. Operator is Built for Industrial Enterprises.',
   keywords: [
     'OMNI Team - Adam Cohen Hillel, Marko Kraemer, Domenico Gagliardi, and Quoc Dat Le',
   ],
