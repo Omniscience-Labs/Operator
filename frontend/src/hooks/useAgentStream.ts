@@ -29,6 +29,8 @@ interface ApiMessageType {
 export interface UseAgentStreamResult {
   status: string;
   textContent: string;
+  reasoningContent: string;
+  isReasoningStreaming: boolean;
   toolCall: ParsedContent | null;
   error: string | null;
   agentRunId: string | null; // Expose the currently managed agentRunId
@@ -75,6 +77,10 @@ export function useAgentStream(
   const [textContent, setTextContent] = useState<
     { content: string; sequence?: number }[]
   >([]);
+  const [reasoningContent, setReasoningContent] = useState<
+    { content: string; sequence?: number }[]
+  >([]);
+  const [isReasoningStreaming, setIsReasoningStreaming] = useState<boolean>(false);
   const [toolCall, setToolCall] = useState<ParsedContent | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -89,6 +95,12 @@ export function useAgentStream(
       .sort((a, b) => a.sequence - b.sequence)
       .reduce((acc, curr) => acc + curr.content, '');
   }, [textContent]);
+
+  const orderedReasoningContent = useMemo(() => {
+    return reasoningContent
+      .sort((a, b) => a.sequence - b.sequence)
+      .reduce((acc, curr) => acc + curr.content, '');
+  }, [reasoningContent]);
 
   // Update refs if threadId or setMessages changes
   useEffect(() => {
@@ -157,6 +169,8 @@ export function useAgentStream(
 
       // Reset streaming-specific state
       setTextContent([]);
+      setReasoningContent([]);
+      setIsReasoningStreaming(false);
       setToolCall(null);
 
       // Update status and clear run ID
@@ -325,7 +339,27 @@ export function useAgentStream(
           break;
         case 'reasoning':
           // Handle reasoning/thinking content during streaming
-          if (message.message_id) callbacks.onMessage(message);
+          if (
+            parsedMetadata.stream_status === 'chunk' &&
+            parsedContent.content
+          ) {
+            // Accumulate reasoning chunks and mark as streaming
+            setIsReasoningStreaming(true);
+            setReasoningContent((prev) => {
+              return prev.concat({
+                sequence: message.sequence,
+                content: parsedContent.content,
+              });
+            });
+          } else if (parsedMetadata.stream_status === 'complete') {
+            // When reasoning is complete, pass the final message and stop streaming
+            setIsReasoningStreaming(false);
+            setReasoningContent([]);
+            if (message.message_id) callbacks.onMessage(message);
+          } else if (!parsedMetadata.stream_status) {
+            // Handle non-chunked reasoning messages if needed
+            if (message.message_id) callbacks.onMessage(message);
+          }
           break;
         case 'status':
           switch (parsedContent.status_type) {
@@ -521,6 +555,8 @@ export function useAgentStream(
       // Reset state on unmount if needed, though finalizeStream should handle most cases
       setStatus('idle');
       setTextContent([]);
+      setReasoningContent([]);
+      setIsReasoningStreaming(false);
       setToolCall(null);
       setError(null);
       setAgentRunId(null);
@@ -548,6 +584,8 @@ export function useAgentStream(
 
       // Reset state before starting
       setTextContent([]);
+      setReasoningContent([]);
+      setIsReasoningStreaming(false);
       setToolCall(null);
       setError(null);
       updateStatus('connecting');
@@ -636,6 +674,8 @@ export function useAgentStream(
   return {
     status,
     textContent: orderedTextContent,
+    reasoningContent: orderedReasoningContent,
+    isReasoningStreaming,
     toolCall,
     error,
     agentRunId,
