@@ -160,6 +160,61 @@ export async function resetPassword(prevState: any, formData: FormData) {
   };
 }
 
+export async function changePassword(prevState: any, formData: FormData) {
+  const currentPassword = formData.get('currentPassword') as string;
+  const newPassword = formData.get('newPassword') as string;
+  const confirmPassword = formData.get('confirmPassword') as string;
+
+  if (!currentPassword) {
+    return { message: 'Current password is required' };
+  }
+
+  if (!newPassword || newPassword.length < 6) {
+    return { message: 'New password must be at least 6 characters' };
+  }
+
+  if (newPassword !== confirmPassword) {
+    return { message: 'New passwords do not match' };
+  }
+
+  if (currentPassword === newPassword) {
+    return { message: 'New password must be different from current password' };
+  }
+
+  const supabase = await createClient();
+
+  // First verify the current password by attempting to sign in
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user?.email) {
+    return { message: 'Unable to verify current user' };
+  }
+
+  // Verify current password
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  });
+
+  if (verifyError) {
+    return { message: 'Current password is incorrect' };
+  }
+
+  // Update to new password
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    return { message: error.message || 'Could not update password' };
+  }
+
+  return {
+    success: true,
+    message: 'Password updated successfully',
+  };
+}
+
 export async function signOut() {
   const supabase = await createClient();
   const { error } = await supabase.auth.signOut();

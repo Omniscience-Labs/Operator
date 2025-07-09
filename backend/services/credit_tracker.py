@@ -236,7 +236,8 @@ class CreditTracker:
             
             query = client.table('credit_usage')\
                 .select('data_provider_name, credit_amount, created_at, calculation_details')\
-                .eq('usage_type', 'data_provider')
+                .eq('usage_type', 'tool')\
+                .not_.is_('data_provider_name', 'null')
             
             if agent_run_id:
                 query = query.eq('agent_run_id', agent_run_id)
