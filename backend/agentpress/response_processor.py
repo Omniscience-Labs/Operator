@@ -1409,7 +1409,8 @@ class ResponseProcessor:
                     data_provider_name = credit_tracking.get('data_provider_name')
                     logger.info(f"Data provider call detected: {data_provider_name} = {final_credits} credits (tool: {final_tool_name})")
                 else:
-                    logger.warning(f"No credit tracking found for data provider call. Result metadata keys: {list(result.metadata.keys()) if hasattr(result, 'metadata') else 'No metadata'}")
+                    logger.warning(f"DEBUG: No credit tracking found for data provider call. Result metadata keys: {list(result.metadata.keys()) if hasattr(result, 'metadata') else 'No metadata'}")
+                    logger.warning(f"DEBUG: Result object type: {type(result)}, has metadata: {hasattr(result, 'metadata')}")
             
             # Save credit usage to database if we have an agent_run_id
             # Note: This would need to be passed down from the calling context

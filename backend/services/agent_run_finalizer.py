@@ -65,7 +65,12 @@ class AgentRunFinalizer:
             if tool_results:
                 logger.info(f"Processing {len(tool_results)} tool results for credit tracking")
                 for i, tool_result in enumerate(tool_results):
-                    logger.info(f"DEBUG: Processing tool result {i+1}/{len(tool_results)} with structure: {json.dumps(tool_result, indent=2)[:500]}...")
+                    logger.info(f"DEBUG: Processing tool result {i+1}/{len(tool_results)}")
+                    logger.info(f"DEBUG: Tool result keys: {list(tool_result.keys())}")
+                    if 'metadata' in tool_result:
+                        logger.info(f"DEBUG: Tool result metadata: {tool_result['metadata']}")
+                    if 'content' in tool_result:
+                        logger.info(f"DEBUG: Tool result content type: {type(tool_result['content'])}")
                     
                     # Extract credit info from tool result
                     credit_info = self._extract_credit_info_from_tool_result(tool_result)
@@ -404,7 +409,7 @@ class AgentRunFinalizer:
                         except Exception as parse_error:
                             logger.debug(f"Failed to parse message content: {parse_error}")
             
-            logger.debug("No credit info found in tool result")
+            logger.info(f"DEBUG: No credit info found in tool result with keys: {list(tool_result.keys())}")
             return None
             
         except Exception as e:
