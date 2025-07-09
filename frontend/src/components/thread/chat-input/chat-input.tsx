@@ -352,7 +352,6 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
                 
                 reasoningSettings={reasoningSettings}
                 onReasoningChange={setReasoningSettings}
-                agentName={agentName}
               />
             </CardContent>
           </div>
