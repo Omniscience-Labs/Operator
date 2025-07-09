@@ -126,10 +126,14 @@ async def run_agent(
             thread_manager.add_tool(DataProvidersTool)
     else:
         logger.info("Custom agent specified - registering only enabled tools")
+        # Always register basic tools for all custom agents
         thread_manager.add_tool(ExpandMessageTool, thread_id=thread_id, thread_manager=thread_manager)
         thread_manager.add_tool(MessageTool)
         # Always enable memory search for custom agents
         thread_manager.add_tool(MemorySearchTool, thread_manager=thread_manager)
+        thread_manager.add_tool(DateTimeTool)  # Always enable datetime tool for custom agents
+        
+        # Register other tools based on configuration
         if enabled_tools.get('sb_shell_tool', {}).get('enabled', False):
             thread_manager.add_tool(SandboxShellTool, project_id=project_id, thread_manager=thread_manager)
         if enabled_tools.get('sb_files_tool', {}).get('enabled', False):
@@ -154,8 +158,6 @@ async def run_agent(
             thread_manager.add_tool(SandboxPodcastTool, project_id=project_id, thread_manager=thread_manager)
         if config.RAPID_API_KEY and enabled_tools.get('data_providers_tool', {}).get('enabled', False):
             thread_manager.add_tool(DataProvidersTool)
-        if enabled_tools.get('datetime_tool', {}).get('enabled', False):
-            thread_manager.add_tool(DateTimeTool)
 
     # Register knowledge search tool if agent has knowledge bases configured
     if agent_config and agent_config.get('knowledge_bases'):

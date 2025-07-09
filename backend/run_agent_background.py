@@ -360,12 +360,6 @@ async def run_agent_background(
             from services.agent_run_finalizer import AgentRunFinalizer
             finalizer = AgentRunFinalizer()
             
-            # Extract tool results with credit info from responses
-            tool_results = []
-            for response in all_responses:
-                if isinstance(response, dict) and response.get('type') == 'tool_result':
-                    tool_results.append(response)
-            
             reasoning_mode = 'none'  # Default
             if enable_thinking:
                 if reasoning_effort == 'high':
@@ -373,11 +367,12 @@ async def run_agent_background(
                 elif reasoning_effort in ['medium', 'low']:
                     reasoning_mode = 'medium'
             
+            # Simple finalization without complex tool result extraction
             finalization_result = await finalizer.finalize_agent_run(
                 agent_run_id=agent_run_id,
                 start_time=start_time,
                 end_time=end_time,
-                tool_results=tool_results,
+                tool_results=None,  # Let the finalizer handle tool results internally
                 reasoning_mode=reasoning_mode
             )
             
@@ -430,12 +425,6 @@ async def run_agent_background(
             from services.agent_run_finalizer import AgentRunFinalizer
             finalizer = AgentRunFinalizer()
             
-            # Extract tool results with credit info from responses
-            tool_results = []
-            for response in all_responses:
-                if isinstance(response, dict) and response.get('type') == 'tool_result':
-                    tool_results.append(response)
-            
             reasoning_mode = 'none'  # Default
             if enable_thinking:
                 if reasoning_effort == 'high':
@@ -443,11 +432,12 @@ async def run_agent_background(
                 elif reasoning_effort in ['medium', 'low']:
                     reasoning_mode = 'medium'
             
+            # Simple finalization without complex tool result extraction
             finalization_result = await finalizer.finalize_agent_run(
                 agent_run_id=agent_run_id,
                 start_time=start_time,
                 end_time=end_time,
-                tool_results=tool_results,
+                tool_results=None,  # Let the finalizer handle tool results internally
                 reasoning_mode=reasoning_mode
             )
             

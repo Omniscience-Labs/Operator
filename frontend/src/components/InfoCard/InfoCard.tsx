@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Check, ArrowRight } from 'lucide-react';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 
 interface InfoCardProps {
   title: string;
@@ -26,6 +27,15 @@ export function InfoCard({
   className,
   enableTilt = false,
 }: InfoCardProps) {
+  // Function to parse description and replace "AI" with GradientText
+  const parseDescription = (text: string) => {
+    return text.split('AI').map((part, index) => (
+      <React.Fragment key={index}>
+        {part}
+        {index < text.split('AI').length - 1 && <GradientText text="AI" />}
+      </React.Fragment>
+    ));
+  };
   const cardVariants = {
     initial: { 
       scale: 1, 
@@ -134,7 +144,7 @@ export function InfoCard({
         {/* Description */}
         <div className="mb-3 sm:mb-4 lg:mb-5">
           <p className="text-sm sm:text-sm text-muted-foreground leading-relaxed font-medium">
-            {description}
+            {parseDescription(description)}
           </p>
         </div>
 

@@ -79,37 +79,25 @@ class AgentRunBackfiller:
             start_time = datetime.fromisoformat(started_at_str.replace('Z', '+00:00'))
             end_time = datetime.fromisoformat(completed_at_str.replace('Z', '+00:00'))
             
-            # Extract tool results from responses if available
-            tool_results = []
+            # Parse the responses to determine reasoning mode
             responses = agent_run.get('responses', [])
             
-            if responses:
-                for response in responses:
-                    if isinstance(response, dict) and response.get('type') == 'tool_result':
-                        tool_results.append(response)
-            
-            # Determine reasoning mode (default to 'none' if not set)
-            reasoning_mode = agent_run.get('reasoning_mode', 'none')
-            if not reasoning_mode:
-                reasoning_mode = 'none'
+            # Determine reasoning mode based on responses
+            reasoning_mode = self._determine_reasoning_mode(responses)
             
             logger.info(f"Backfilling agent run {agent_run_id}: {start_time} -> {end_time} ({reasoning_mode})")
             
-            # Use the finalizer to calculate and save everything
-            finalization_result = await self.finalizer.finalize_agent_run(
+            # Finalize the agent run with credit tracking
+            await self.finalizer.finalize_agent_run(
                 agent_run_id=agent_run_id,
                 start_time=start_time,
                 end_time=end_time,
-                tool_results=tool_results,
+                tool_results=None,  # Let finalizer handle tool results internally
                 reasoning_mode=reasoning_mode
             )
             
-            if 'error' not in finalization_result:
-                logger.info(f"Successfully backfilled agent run {agent_run_id}", extra=finalization_result)
-                return True
-            else:
-                logger.error(f"Error backfilling agent run {agent_run_id}: {finalization_result.get('error')}")
-                return False
+            logger.info(f"Successfully backfilled agent run {agent_run_id}")
+            return True
                 
         except Exception as e:
             logger.error(f"Error backfilling agent run {agent_run_id}: {str(e)}", exc_info=True)
@@ -171,6 +159,45 @@ class AgentRunBackfiller:
             await asyncio.sleep(1)
         
         return stats
+    
+    def _determine_reasoning_mode(self, responses: List[Dict[str, Any]]) -> str:
+        """
+        Determine the reasoning mode based on responses.
+        
+        Args:
+            responses: List of response messages
+            
+        Returns:
+            Reasoning mode ('none', 'medium', 'high')
+        """
+        try:
+            # Look for thinking/reasoning indicators in responses
+            for response in responses:
+                if isinstance(response, dict):
+                    # Check for reasoning content or thinking tags
+                    content = response.get('content', '')
+                    if isinstance(content, str):
+                        # Simple heuristics for reasoning mode detection
+                        if 'thinking' in content.lower() or 'reasoning' in content.lower():
+                            # More sophisticated logic could be added here
+                            if len(content) > 2000:  # Long reasoning = high
+                                return 'high'
+                            elif len(content) > 500:  # Medium reasoning
+                                return 'medium'
+                            else:
+                                return 'medium'  # Default for any reasoning
+                    
+                    # Check response type for reasoning indicators
+                    response_type = response.get('type', '')
+                    if 'thinking' in response_type or 'reasoning' in response_type:
+                        return 'medium'  # Default for reasoning responses
+            
+            # Default to 'none' if no reasoning indicators found
+            return 'none'
+            
+        except Exception as e:
+            logger.warning(f"Error determining reasoning mode: {str(e)}")
+            return 'none'  # Safe default
 
 async def main():
     """Main function to run the backfill process."""

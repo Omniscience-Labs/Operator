@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Request, Body, File, UploadFile, Form, Query
 from fastapi.responses import StreamingResponse
+from fastapi.exceptions import RequestValidationError
 import asyncio
 import json
 import traceback
@@ -10,6 +11,8 @@ import jwt
 from pydantic import BaseModel
 import tempfile
 import os
+from uuid import UUID
+from pydantic import BaseModel, Field, validator, ValidationError
 
 from agentpress.thread_manager import ThreadManager
 from services.supabase import DBConnection
@@ -1799,12 +1802,12 @@ async def get_agents(
         # Format the response
         agent_list = []
         for agent in agents_data:
-                            agent_list.append(AgentResponse(
-                agent_id=agent['agent_id'],
-                account_id=agent['account_id'],
-                name=agent['name'],
+            agent_list.append(AgentResponse(
+                agent_id=agent.get('agent_id', ''),  # Use .get() with default
+                account_id=agent.get('account_id', filter_account_id),  # Use filter_account_id as fallback
+                name=agent.get('name', ''),  # Use .get() with default
                 description=agent.get('description'),
-                system_prompt=agent['system_prompt'],
+                system_prompt=agent.get('system_prompt', ''),  # Use .get() with default
                 configured_mcps=agent.get('configured_mcps', []),
                 custom_mcps=agent.get('custom_mcps', []),
                 agentpress_tools=agent.get('agentpress_tools', {}),
@@ -1818,8 +1821,8 @@ async def get_agents(
                 sharing_preferences=agent.get('sharing_preferences', {}),
                 avatar=agent.get('avatar'),
                 avatar_color=agent.get('avatar_color'),
-                created_at=agent['created_at'],
-                updated_at=agent['updated_at'],
+                created_at=agent.get('created_at', ''),  # Use .get() with default
+                updated_at=agent.get('updated_at', ''),  # Use .get() with default
                 is_managed=agent.get('_is_managed', False),
                 is_owned=agent.get('_is_owned', True)
             ))
@@ -2167,10 +2170,51 @@ class MarketplaceAgentsResponse(BaseModel):
 class PublishAgentRequest(BaseModel):
     tags: Optional[List[str]] = []
     visibility: Optional[str] = "public"  # "public", "teams", or "private"
-    team_ids: Optional[List[str]] = []  # Team account IDs to share with
+    team_ids: Optional[List[UUID]] = []  # Team account IDs to share with (must be valid UUIDs)
     include_knowledge_bases: Optional[bool] = True  # Whether to include knowledge bases when sharing
     include_custom_mcp_tools: Optional[bool] = True  # Whether to include custom MCP tools when sharing
     managed_agent: Optional[bool] = False  # Whether this is a managed agent (users get live reference instead of copy)
+    
+    @validator('team_ids', pre=True)
+    def validate_team_ids(cls, v):
+        if v is None:
+            return []
+        
+        if not isinstance(v, list):
+            logger.error(f"team_ids must be a list, got {type(v)}: {v}")
+            raise ValueError(f"team_ids must be a list, got {type(v)}")
+        
+        validated_uuids = []
+        for i, team_id in enumerate(v):
+            if team_id is None:
+                logger.error(f"team_ids[{i}] cannot be None")
+                raise ValueError(f"team_ids[{i}] cannot be None")
+            
+            # Convert to string and strip whitespace
+            team_id_str = str(team_id).strip()
+            
+            if not team_id_str:
+                logger.error(f"team_ids[{i}] cannot be empty")
+                raise ValueError(f"team_ids[{i}] cannot be empty")
+            
+            # More lenient UUID validation - just check basic format
+            import re
+            uuid_pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            if not re.match(uuid_pattern, team_id_str, re.IGNORECASE):
+                logger.error(f"Invalid UUID format for team_ids[{i}]: '{team_id_str}'")
+                raise ValueError(f"team_ids[{i}] is not a valid UUID format: '{team_id_str}'")
+            
+            try:
+                # Still try to create UUID object but with better error handling
+                uuid_obj = UUID(team_id_str)
+                validated_uuids.append(uuid_obj)
+                logger.info(f"Successfully validated team_id[{i}]: {team_id_str}")
+            except ValueError as e:
+                logger.error(f"UUID validation failed for team_ids[{i}]: '{team_id_str}' - {str(e)}")
+                raise ValueError(f"team_ids[{i}] failed UUID validation: '{team_id_str}' - {str(e)}")
+        
+        logger.info(f"Successfully validated {len(validated_uuids)} team IDs")
+        return validated_uuids
 
 @router.get("/marketplace/agents", response_model=MarketplaceAgentsResponse)
 async def get_marketplace_agents(
@@ -2267,6 +2311,11 @@ async def publish_agent_to_marketplace(
         )
     
     logger.info(f"Publishing agent {agent_id} with visibility: {publish_data.visibility}")
+    logger.info(f"Team IDs received: {publish_data.team_ids}")
+    logger.info(f"Include knowledge bases: {publish_data.include_knowledge_bases}")
+    logger.info(f"Include custom MCP tools: {publish_data.include_custom_mcp_tools}")
+    logger.info(f"Managed agent: {publish_data.managed_agent}")
+    
     client = await db.client
     
     try:
@@ -2301,13 +2350,23 @@ async def publish_agent_to_marketplace(
             'sharing_preferences': sharing_preferences
         }).eq('agent_id', agent_id).execute()
         
+        # Prepare team IDs for database function
+        team_ids_for_db = None
+        if publish_data.visibility == "teams" and publish_data.team_ids:
+            team_ids_for_db = [str(team_id) for team_id in publish_data.team_ids]
+            logger.info(f"Converted team IDs for database: {team_ids_for_db}")
+        
         # Use the new database function that accepts user_id explicitly
-        await client.rpc('publish_agent_with_visibility_by_user', {
+        logger.info(f"Calling publish_agent_with_visibility_by_user with: agent_id={agent_id}, visibility={publish_data.visibility}, user_id={user_id}, team_ids={team_ids_for_db}")
+        
+        result = await client.rpc('publish_agent_with_visibility_by_user', {
             'p_agent_id': agent_id,
             'p_visibility': publish_data.visibility,
             'p_user_id': user_id,
-            'p_team_ids': publish_data.team_ids if publish_data.visibility == "teams" else None
+            'p_team_ids': team_ids_for_db
         }).execute()
+        
+        logger.info(f"Database function call successful: {result}")
         
         # Update tags if provided
         if publish_data.tags:
@@ -2326,7 +2385,9 @@ async def publish_agent_to_marketplace(
         raise
     except Exception as e:
         logger.error(f"Error publishing agent {agent_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        logger.error(f"Error type: {type(e)}")
+        logger.error(f"Error details: {repr(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.post("/agents/{agent_id}/unpublish")
 async def unpublish_agent_from_marketplace(

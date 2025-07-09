@@ -1,0 +1,7 @@
+---
+description: Always create new migrations
+globs:
+alwaysApply: true
+---
+Always ask if the migration you want to modify has been run as most mig
+rations get run immediately, instead of modify existing mgrations just create new ones.

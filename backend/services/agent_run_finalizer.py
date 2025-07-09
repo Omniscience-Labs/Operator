@@ -4,10 +4,13 @@ Agent run finalizer service for processing credit usage when agent runs complete
 
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
-from utils.logger import logger
+import logging
 from services.credit_calculator import CreditCalculator
 from services.credit_tracker import CreditTracker
 from services.supabase import DBConnection
+from agentpress.utils.json_helpers import safe_json_parse
+
+logger = logging.getLogger(__name__)
 
 class AgentRunFinalizer:
     """Handles finalizing agent runs and calculating total credit usage."""
@@ -29,23 +32,18 @@ class AgentRunFinalizer:
         Finalize an agent run by calculating and saving all credit usage.
         
         Args:
-            agent_run_id: ID of the agent run to finalize
+            agent_run_id: The agent run ID to finalize
             start_time: When the agent run started
             end_time: When the agent run ended
-            tool_results: List of tool execution results with credit info
-            reasoning_mode: The reasoning mode used
+            tool_results: Optional list of tool results (will query database if not provided)
+            reasoning_mode: The reasoning mode used ('none', 'medium', 'high')
             
         Returns:
             Dictionary with finalization summary
         """
         try:
-            logger.info(f"Finalizing agent run {agent_run_id}")
-            
-            # Calculate total time
-            total_time_minutes = (end_time - start_time).total_seconds() / 60.0
-            logger.info(f"Agent run duration: {total_time_minutes:.2f} minutes")
-            
             # Calculate conversation credits
+            total_time_minutes = (end_time - start_time).total_seconds() / 60
             conversation_credits, conversation_details = self.credit_calculator.calculate_conversation_credits(
                 total_time_minutes, reasoning_mode
             )
@@ -55,26 +53,47 @@ class AgentRunFinalizer:
                 agent_run_id, float(conversation_credits), conversation_details
             )
             
-                         # Process tool credit usage
+            # Get tool results from database if not provided
+            if tool_results is None:
+                tool_results = await self._get_tool_results_from_database(agent_run_id)
+            
+            # Process tool credit usage
             tool_credits_saved = 0
             data_provider_calls = 0
             
             if tool_results:
-                for tool_result in tool_results:
-                    credit_info = tool_result.get('_credit_info')
+                logger.info(f"Processing {len(tool_results)} tool results for credit tracking")
+                for i, tool_result in enumerate(tool_results):
+                    logger.debug(f"Processing tool result {i+1}/{len(tool_results)}")
+                    
+                    # Extract credit info from tool result
+                    credit_info = self._extract_credit_info_from_tool_result(tool_result)
+                    
                     if credit_info:
-                        await self.credit_tracker.save_tool_credit_usage(
-                            agent_run_id=agent_run_id,
-                            tool_name=credit_info['tool_name'],
-                            credits=credit_info['credits'],
-                            calculation_details=credit_info['calculation_details'],
-                            data_provider_name=credit_info.get('data_provider_name')
-                        )
-                        tool_credits_saved += 1
-                        
-                        # Count data provider calls (those with data_provider_name)
-                        if credit_info.get('data_provider_name'):
-                            data_provider_calls += 1
+                        logger.info(f"Found credit info for tool: {credit_info.get('tool_name', 'unknown')} - {credit_info.get('credits', 0)} credits")
+                        try:
+                            await self.credit_tracker.save_tool_credit_usage(
+                                agent_run_id=agent_run_id,
+                                tool_name=credit_info['tool_name'],
+                                credits=credit_info['credits'],
+                                calculation_details=credit_info['calculation_details'],
+                                data_provider_name=credit_info.get('data_provider_name')
+                            )
+                            tool_credits_saved += 1
+                            logger.debug(f"Successfully saved credit usage for {credit_info['tool_name']}")
+                            
+                            # Count data provider calls (those with data_provider_name)
+                            if credit_info.get('data_provider_name'):
+                                data_provider_calls += 1
+                                logger.debug(f"Counted data provider call: {credit_info['data_provider_name']}")
+                        except Exception as save_error:
+                            logger.error(f"Failed to save credit usage for {credit_info.get('tool_name', 'unknown')}: {save_error}")
+                    else:
+                        logger.warning(f"No credit info found for tool result {i+1}")
+            else:
+                logger.info("No tool results to process for credit tracking")
+            
+            logger.info(f"Credit tracking summary: {tool_credits_saved} tool credits saved, {data_provider_calls} data provider calls")
             
             # Update agent run totals
             await self.credit_tracker.update_agent_run_totals(
@@ -261,3 +280,80 @@ class AgentRunFinalizer:
                     'agent_runs': 0
                 }
             } 
+    
+    async def _get_tool_results_from_database(self, agent_run_id: str) -> List[Dict[str, Any]]:
+        """
+        Get tool results from the database for an agent run.
+        
+        Args:
+            agent_run_id: The agent run ID
+            
+        Returns:
+            List of tool results with credit info
+        """
+        try:
+            client = await self.db.client
+            
+            # Get agent run with responses
+            result = await client.table('agent_runs')\
+                .select('responses')\
+                .eq('id', agent_run_id)\
+                .execute()
+            
+            if not result.data:
+                logger.warning(f"No agent run found for ID {agent_run_id}")
+                return []
+            
+            responses = result.data[0].get('responses', [])
+            if not responses:
+                logger.info(f"No responses found for agent run {agent_run_id}")
+                return []
+            
+            # Extract tool results
+            tool_results = []
+            for response in responses:
+                if isinstance(response, dict) and response.get('type') == 'tool':
+                    tool_results.append(response)
+            
+            logger.info(f"Found {len(tool_results)} tool results in database for agent run {agent_run_id}")
+            return tool_results
+            
+        except Exception as e:
+            logger.error(f"Error getting tool results from database: {str(e)}", exc_info=True)
+            return []
+    
+    def _extract_credit_info_from_tool_result(self, tool_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Extract credit info from a tool result.
+        
+        Args:
+            tool_result: Tool result dictionary
+            
+        Returns:
+            Credit info dictionary or None if not found
+        """
+        try:
+            # Check direct credit info first
+            if '_credit_info' in tool_result:
+                return tool_result['_credit_info']
+            
+            # Check metadata (which may be a JSON string)
+            if 'metadata' in tool_result:
+                metadata = tool_result['metadata']
+                
+                # If metadata is a string, parse it
+                if isinstance(metadata, str):
+                    try:
+                        metadata = safe_json_parse(metadata, {})
+                    except:
+                        metadata = {}
+                
+                # Extract credit info from metadata
+                if isinstance(metadata, dict) and '_credit_info' in metadata:
+                    return metadata['_credit_info']
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error extracting credit info from tool result: {str(e)}")
+            return None 
