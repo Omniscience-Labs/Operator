@@ -5,6 +5,7 @@ Agent run finalizer service for processing credit usage when agent runs complete
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 import logging
+import json
 from services.credit_calculator import CreditCalculator
 from services.credit_tracker import CreditTracker
 from services.supabase import DBConnection
@@ -64,13 +65,13 @@ class AgentRunFinalizer:
             if tool_results:
                 logger.info(f"Processing {len(tool_results)} tool results for credit tracking")
                 for i, tool_result in enumerate(tool_results):
-                    logger.debug(f"Processing tool result {i+1}/{len(tool_results)}")
+                    logger.info(f"DEBUG: Processing tool result {i+1}/{len(tool_results)} with structure: {json.dumps(tool_result, indent=2)[:500]}...")
                     
                     # Extract credit info from tool result
                     credit_info = self._extract_credit_info_from_tool_result(tool_result)
                     
                     if credit_info:
-                        logger.info(f"Found credit info for tool: {credit_info.get('tool_name', 'unknown')} - {credit_info.get('credits', 0)} credits")
+                        logger.info(f"DEBUG: Found credit info for tool: {credit_info.get('tool_name', 'unknown')} - {credit_info.get('credits', 0)} credits - data_provider_name: {credit_info.get('data_provider_name')}")
                         try:
                             await self.credit_tracker.save_tool_credit_usage(
                                 agent_run_id=agent_run_id,
@@ -80,16 +81,16 @@ class AgentRunFinalizer:
                                 data_provider_name=credit_info.get('data_provider_name')
                             )
                             tool_credits_saved += 1
-                            logger.debug(f"Successfully saved credit usage for {credit_info['tool_name']}")
+                            logger.info(f"DEBUG: Successfully saved credit usage for {credit_info['tool_name']} with data_provider_name: {credit_info.get('data_provider_name')}")
                             
                             # Count data provider calls (those with data_provider_name)
                             if credit_info.get('data_provider_name'):
                                 data_provider_calls += 1
-                                logger.debug(f"Counted data provider call: {credit_info['data_provider_name']}")
+                                logger.info(f"DEBUG: Counted data provider call: {credit_info['data_provider_name']}")
                         except Exception as save_error:
                             logger.error(f"Failed to save credit usage for {credit_info.get('tool_name', 'unknown')}: {save_error}")
                     else:
-                        logger.warning(f"No credit info found for tool result {i+1}")
+                        logger.warning(f"DEBUG: No credit info found for tool result {i+1}")
             else:
                 logger.info("No tool results to process for credit tracking")
             
@@ -333,25 +334,77 @@ class AgentRunFinalizer:
             Credit info dictionary or None if not found
         """
         try:
+            logger.info(f"DEBUG: Extracting credit info from tool result with keys: {list(tool_result.keys())}")
+            
             # Check direct credit info first
             if '_credit_info' in tool_result:
+                logger.info("DEBUG: Found _credit_info directly in tool_result")
                 return tool_result['_credit_info']
             
             # Check metadata (which may be a JSON string)
             if 'metadata' in tool_result:
                 metadata = tool_result['metadata']
+                logger.info(f"DEBUG: Found metadata in tool_result, type: {type(metadata)}, value: {metadata}")
                 
                 # If metadata is a string, parse it
                 if isinstance(metadata, str):
                     try:
                         metadata = safe_json_parse(metadata, {})
+                        logger.info(f"DEBUG: Parsed metadata from string: {metadata}")
                     except:
                         metadata = {}
+                        logger.info("DEBUG: Failed to parse metadata string")
                 
                 # Extract credit info from metadata
                 if isinstance(metadata, dict) and '_credit_info' in metadata:
+                    logger.info("DEBUG: Found _credit_info in metadata")
                     return metadata['_credit_info']
+                elif isinstance(metadata, dict):
+                    logger.info(f"DEBUG: Metadata is dict but no _credit_info. Keys: {list(metadata.keys())}")
             
+            # Fallback: Check if this is a data provider call and calculate credits
+            if 'content' in tool_result:
+                content = tool_result.get('content', {})
+                if isinstance(content, str):
+                    try:
+                        content = safe_json_parse(content, {})
+                    except:
+                        pass
+                
+                if isinstance(content, dict) and content.get('role') in ['user', 'assistant']:
+                    message_content = content.get('content', '')
+                    if isinstance(message_content, str):
+                        try:
+                            parsed_content = safe_json_parse(message_content, {})
+                            if isinstance(parsed_content, dict) and 'tool_execution' in parsed_content:
+                                tool_execution = parsed_content['tool_execution']
+                                function_name = tool_execution.get('function_name')
+                                arguments = tool_execution.get('arguments', {})
+                                
+                                if function_name == 'execute_data_provider_call':
+                                    service_name = arguments.get('service_name')
+                                    route = arguments.get('route')
+                                    
+                                    if service_name:
+                                        logger.info(f"DEBUG: Detected data provider call without credit info: {service_name} - {route}")
+                                        # Calculate credits for this data provider
+                                        from services.credit_calculator import CreditCalculator
+                                        credit_calc = CreditCalculator()
+                                        credits, details, tool_name = credit_calc.calculate_data_provider_credits(service_name, route)
+                                        
+                                        logger.info(f"DEBUG: Calculated credits for fallback: tool_name={tool_name}, credits={credits}, data_provider_name={service_name}")
+                                        
+                                        return {
+                                            'tool_name': tool_name,
+                                            'credits': float(credits),
+                                            'calculation_details': details,
+                                            'data_provider_name': service_name,
+                                            'usage_type': 'tool'
+                                        }
+                        except Exception as parse_error:
+                            logger.debug(f"Failed to parse message content: {parse_error}")
+            
+            logger.debug("No credit info found in tool result")
             return None
             
         except Exception as e:

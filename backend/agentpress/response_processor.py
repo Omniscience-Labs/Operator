@@ -1400,6 +1400,7 @@ class ResponseProcessor:
             if function_name == "execute_data_provider_call" and hasattr(result, 'metadata'):
                 # Extract data provider specific credit info if available
                 credit_tracking = result.metadata.get('_credit_tracking', None)
+                logger.info(f"Checking for credit tracking in result metadata: {credit_tracking}")
                 if credit_tracking:
                     # Use the specific provider tool name for analytics
                     final_tool_name = credit_tracking.get('tool_name_for_analytics', function_name)
@@ -1407,6 +1408,8 @@ class ResponseProcessor:
                     final_details = credit_tracking.get('calculation_details', credit_details)
                     data_provider_name = credit_tracking.get('data_provider_name')
                     logger.info(f"Data provider call detected: {data_provider_name} = {final_credits} credits (tool: {final_tool_name})")
+                else:
+                    logger.warning(f"No credit tracking found for data provider call. Result metadata keys: {list(result.metadata.keys()) if hasattr(result, 'metadata') else 'No metadata'}")
             
             # Save credit usage to database if we have an agent_run_id
             # Note: This would need to be passed down from the calling context
@@ -1419,6 +1422,8 @@ class ResponseProcessor:
                     'data_provider_name': data_provider_name,
                     'usage_type': 'tool'  # Always treat as tool for consistent analytics
                 }
+                
+                logger.info(f"Stored credit info in result metadata: tool_name={final_tool_name}, data_provider_name={data_provider_name}, credits={final_credits}")
             
             span.end(status_message="tool_executed", output=result)
             return result
