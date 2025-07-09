@@ -786,11 +786,37 @@ def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path):
                 
                 # Handle page-specific logic
                 if position:
+                    # Check if this field has a specific page assignment
                     if isinstance(position, dict) and 'page' in position:
                         if position.get('page') != page_num:
                             continue
+                    # For fields without specific page assignment, use intelligent page detection
                     elif page_num > 0 and not position.get('repeat_on_all_pages', False):
-                        continue
+                        # Skip fields that likely belong to other pages based on field name patterns
+                        field_lower = field_name.lower()
+                        
+                        # Page 1 fields (usually business basic info)
+                        page1_indicators = ['business', 'company', 'legal', 'trade', 'billing', 'service', 'contact', 'phone', 'email', 'address', 'city', 'state', 'zip']
+                        
+                        # Page 2 fields (usually corporate structure, officers)
+                        page2_indicators = ['president', 'vice', 'secretary', 'treasurer', 'officer', 'director', 'individual', 'partner', 'ssn', 'dob', 'corp']
+                        
+                        # Page 3 fields (usually financial, banking, references)
+                        page3_indicators = ['bank', 'account', 'financial', 'reference', 'trade', 'signature', 'date', 'witness', 'credit']
+                        
+                        # Determine likely page for this field
+                        likely_page = 0  # Default to page 1
+                        
+                        if any(indicator in field_lower for indicator in page2_indicators):
+                            likely_page = 1
+                        elif any(indicator in field_lower for indicator in page3_indicators):
+                            likely_page = 2
+                        elif any(indicator in field_lower for indicator in page1_indicators):
+                            likely_page = 0
+                        
+                        # Skip if field likely belongs to different page
+                        if likely_page != page_num:
+                            continue
                 
                 if position:
                     field_type = position.get('type', 'text')
@@ -923,10 +949,19 @@ try:
     position_missing_count = len([f for f in skipped_fields if "no position found" in f])
     other_errors_count = len(skipped_fields) - overlaps_count - position_missing_count
     
+    # Calculate page-specific statistics
+    page_stats = {{}}
+    for position in placed_positions:
+        page_num = position["page"]
+        if page_num not in page_stats:
+            page_stats[page_num] = {{"filled": 0, "fields": []}}
+        page_stats[page_num]["filled"] += 1
+        page_stats[page_num]["fields"].append(position["field"])
+    
     result = {{
         "success": True,
-        "method": "coordinate_overlay",
-        "message": f"Filled {{filled_count}} fields using coordinate-based overlay",
+        "method": "coordinate_overlay_multipage",
+        "message": f"Filled {{filled_count}} fields across {{len(page_stats)}} pages using coordinate-based overlay",
         "output_path": "{output_path}",
         "input_file": "{file_path}",
         "fields_filled": filled_count,
@@ -935,6 +970,7 @@ try:
         "placed_positions": placed_positions,
         "total_fields_attempted": total_requested,
         "overlap_detected": overlap_detected,
+        "page_statistics": page_stats,
         "diagnostics": {{
             "requested_count": total_requested,
             "filled_count": filled_count,
@@ -942,7 +978,9 @@ try:
             "overlaps_detected": overlaps_count,
             "position_missing": position_missing_count,
             "other_errors": other_errors_count,
-            "method": "coordinate_overlay"
+            "method": "coordinate_overlay_multipage",
+            "pages_processed": len(page_stats),
+            "success_rate": round((filled_count / total_requested) * 100, 1) if total_requested > 0 else 0
         }}
     }}
     
@@ -1181,6 +1219,167 @@ except Exception as e:
         </function_calls>
         '''
     )
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "create_page_specific_template",
+            "description": "Create a coordinate template with automatic page assignment for multi-page forms. Automatically assigns fields to appropriate pages based on field names and content patterns.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "template_name": {
+                        "type": "string",
+                        "description": "Name for this template (e.g., 'credit_application', 'employment_form')"
+                    },
+                    "field_coordinates": {
+                        "type": "object",
+                        "description": "Dictionary mapping field names to their positions {field_name: {x: int, y: int, fontsize: int, type: 'text'|'checkbox'}}. Page assignment will be automatic."
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Optional description of what this template is for",
+                        "default": ""
+                    }
+                },
+                "required": ["template_name", "field_coordinates"]
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="create-page-specific-template",
+        mappings=[
+            {"param_name": "template_name", "node_type": "attribute", "path": "."},
+            {"param_name": "field_coordinates", "node_type": "element", "path": "field_coordinates"},
+            {"param_name": "description", "node_type": "attribute", "path": "description", "required": False}
+        ],
+        example='''
+        <function_calls>
+        <invoke name="create_page_specific_template">
+        <parameter name="template_name">credit_app_multipage</parameter>
+        <parameter name="field_coordinates">{
+            "business_name": {"x": 150, "y": 200, "fontsize": 10, "type": "text"},
+            "president_name": {"x": 150, "y": 300, "fontsize": 10, "type": "text"},
+            "bank_name": {"x": 150, "y": 400, "fontsize": 10, "type": "text"}
+        }</parameter>
+        <parameter name="description">Multi-page credit application with auto page assignment</parameter>
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def create_page_specific_template(self, template_name: str, field_coordinates: Dict[str, Dict[str, Any]], description: str = "") -> ToolResult:
+        """Create a page-specific coordinate template with automatic page assignment."""
+        try:
+            await self._ensure_sandbox()
+            
+            # Validate template name
+            if not template_name or not template_name.replace('_', '').replace('-', '').isalnum():
+                return self.fail_response("Template name must contain only letters, numbers, hyphens, and underscores")
+            
+            # Validate field coordinates
+            if not field_coordinates or not isinstance(field_coordinates, dict):
+                return self.fail_response("Field coordinates must be a non-empty dictionary")
+            
+            template_path = f"{self.workspace_path}/form_templates/{template_name}_multipage.json"
+            
+            script_content = f"""
+import json
+import os
+from datetime import datetime
+
+def assign_page_to_field(field_name):
+    '''Automatically assign page numbers based on field name patterns'''
+    field_lower = field_name.lower()
+    
+    # Page 1 fields (business basic info)
+    page1_indicators = ['business', 'company', 'legal', 'trade', 'billing', 'service', 'contact', 'phone', 'email', 'address', 'city', 'state', 'zip', 'county', 'incorporation']
+    
+    # Page 2 fields (corporate structure, officers)
+    page2_indicators = ['president', 'vice', 'secretary', 'treasurer', 'officer', 'director', 'individual', 'partner', 'ssn', 'dob', 'corp', 'authorize']
+    
+    # Page 3 fields (financial, banking, references)
+    page3_indicators = ['bank', 'account', 'financial', 'reference', 'trade', 'signature', 'date', 'witness', 'credit', 'check', 'routing']
+    
+    if any(indicator in field_lower for indicator in page2_indicators):
+        return 1
+    elif any(indicator in field_lower for indicator in page3_indicators):
+        return 2
+    else:
+        return 0  # Default to page 1
+
+# Process field coordinates with page assignment
+field_coords = {json.dumps(field_coordinates)}
+page_specific_coords = {{}}
+
+for field_name, coords in field_coords.items():
+    if not isinstance(coords, dict):
+        continue
+        
+    # Auto-assign page if not specified
+    if 'page' not in coords:
+        coords['page'] = assign_page_to_field(field_name)
+    
+    # Ensure required fields with defaults
+    normalized_coord = {{
+        "x": int(coords.get("x", 100)),
+        "y": int(coords.get("y", 100)),
+        "fontsize": int(coords.get("fontsize", 10)),
+        "type": coords.get("type", "text"),
+        "page": coords.get("page", 0),
+        "repeat_on_all_pages": coords.get("repeat_on_all_pages", False)
+    }}
+    
+    # Validate ranges
+    if normalized_coord["fontsize"] < 6:
+        normalized_coord["fontsize"] = 6
+    elif normalized_coord["fontsize"] > 24:
+        normalized_coord["fontsize"] = 24
+    
+    page_specific_coords[field_name.lower()] = normalized_coord
+
+# Group fields by page for analysis
+pages_summary = {{}}
+for field_name, coords in page_specific_coords.items():
+    page_num = coords['page']
+    if page_num not in pages_summary:
+        pages_summary[page_num] = []
+    pages_summary[page_num].append(field_name)
+
+template_data = {{
+    "name": "{template_name}_multipage",
+    "description": "{description}",
+    "created": datetime.now().isoformat(),
+    "version": "2.0",
+    "type": "multi_page",
+    "fields": page_specific_coords,
+    "pages_summary": pages_summary,
+    "total_pages": max(pages_summary.keys()) + 1 if pages_summary else 1
+}}
+
+# Create directory if needed
+os.makedirs(os.path.dirname('{template_path}'), exist_ok=True)
+
+# Save template
+with open('{template_path}', 'w') as f:
+    json.dump(template_data, f, indent=2)
+
+result = {{
+    "success": True,
+    "message": "Multi-page template '{template_name}_multipage' created successfully",
+    "template_path": '{template_path}'.replace('{self.workspace_path}/', ''),
+    "field_count": len(page_specific_coords),
+    "pages_summary": pages_summary,
+    "total_pages": template_data["total_pages"]
+}}
+
+print(json.dumps(result))
+"""
+            
+            script = self._create_pdf_script(script_content)
+            return await self._execute_pdf_script(script)
+            
+        except Exception as e:
+            return self.fail_response(f"Error creating multi-page template: {str(e)}")
+
     async def create_coordinate_template(self, template_name: str, field_coordinates: Dict[str, Dict[str, Any]], description: str = "") -> ToolResult:
         """Create and save a coordinate template for reusable form filling."""
         try:
