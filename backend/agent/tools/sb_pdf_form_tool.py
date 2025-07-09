@@ -109,7 +109,7 @@ from PyPDFForm import PdfWrapper
             "check": {"x": 100, "y": 450, "fontsize": 14, "type": "checkbox"},
         }
 
-    async def _execute_pdf_script(self, script: str, timeout: int = 30) -> ToolResult:
+    async def _execute_pdf_script(self, script: str, timeout: int = 60) -> ToolResult:
         """Execute a Python script in the sandbox and return the result"""
         try:
             # Save script to a temporary file in sandbox
@@ -313,7 +313,41 @@ try:
     
     # Fill the form with provided fields
     fields_to_fill = {json.dumps(fields)}
-    filled_pdf_stream = wrapper.fill(fields_to_fill, flatten=False)
+    
+    # Pre-process fields to handle boolean checkboxes
+    processed_fields = {{}}
+    for field_name, value in fields_to_fill.items():
+        # Convert boolean values to integers for checkboxes
+        if isinstance(value, bool):
+            processed_fields[field_name] = 1 if value else 0
+        elif isinstance(value, str) and value.lower() in ['true', 'false']:
+            processed_fields[field_name] = 1 if value.lower() == 'true' else 0
+        else:
+            processed_fields[field_name] = value
+    
+    # Handle large field sets by chunking
+    if len(processed_fields) > 50:
+        # Process in chunks to avoid memory issues
+        chunk_size = 40
+        field_items = list(processed_fields.items())
+        
+        # First chunk
+        chunk_fields = dict(field_items[:chunk_size])
+        filled_pdf_stream = wrapper.fill(chunk_fields, flatten=False)
+        
+        # Process remaining chunks
+        for i in range(chunk_size, len(field_items), chunk_size):
+            chunk_fields = dict(field_items[i:i+chunk_size])
+            # Create new wrapper from the previous result
+            temp_path = f'/tmp/temp_chunk_{{i}}.pdf'
+            with open(temp_path, 'wb') as temp_file:
+                filled_pdf_stream.seek(0)
+                temp_file.write(filled_pdf_stream.read())
+            
+            wrapper = PdfWrapper(temp_path)
+            filled_pdf_stream = wrapper.fill(chunk_fields, flatten=False)
+    else:
+        filled_pdf_stream = wrapper.fill(processed_fields, flatten=False)
     
     # Ensure parent directory exists
     os.makedirs(os.path.dirname('{filled_path}'), exist_ok=True)
@@ -322,12 +356,33 @@ try:
     with open('{filled_path}', 'wb') as output_file:
         output_file.write(filled_pdf_stream.read())
     
+    # Get diagnostic information
+    try:
+        # Check which fields were actually filled
+        filled_wrapper = PdfWrapper('{filled_path}')
+        filled_data = filled_wrapper.sample_data if hasattr(filled_wrapper, 'sample_data') else {{}}
+        
+        # Compare requested vs actual
+        requested_fields = set(processed_fields.keys())
+        filled_fields = set([k for k, v in filled_data.items() if v])
+        failed_fields = requested_fields - filled_fields
+        
+        diagnostics = {{
+            "requested_count": len(requested_fields),
+            "filled_count": len(filled_fields),
+            "failed_count": len(failed_fields),
+            "failed_fields": list(failed_fields)[:10]  # First 10 failed fields
+        }}
+    except:
+        diagnostics = {{"note": "Could not generate diagnostics"}}
+    
     print(json.dumps({{
         "success": True,
         "message": "Successfully filled PDF form and saved to '{output_path}'",
         "input_file": "{file_path}",
         "output_file": "{output_path}",
-        "fields_filled": len(fields_to_fill)
+        "fields_filled": len(fields_to_fill),
+        "diagnostics": diagnostics
     }}))
     
 except Exception as e:
@@ -673,24 +728,30 @@ def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path):
                 position = None
                 field_key = field_name.lower()
                 
-                # Check if field has page-specific coordinates
-                if isinstance(field_positions.get(field_key), dict) and 'page' in field_positions.get(field_key, {{}}):
-                    if field_positions[field_key].get('page') == page_num:
-                        position = field_positions[field_key]
-                elif field_key in field_positions:
-                    # If no specific page, use on all pages or only first page based on configuration
+                # Try exact match first
+                if field_key in field_positions:
                     position = field_positions[field_key]
-                    # Skip if this field was already placed on first page and we're on subsequent pages
-                    if page_num > 0 and not position.get('repeat_on_all_pages', False):
-                        continue
                 else:
-                    # Fuzzy match - check if any position key is contained in field name or vice versa
-                    for pos_key, pos_data in field_positions.items():
-                        if pos_key in field_key or field_key in pos_key:
-                            position = pos_data
-                            if page_num > 0 and not position.get('repeat_on_all_pages', False):
-                                continue
-                            break
+                    # Try normalized field name (remove _2, _3, etc.)
+                    base_field_key = field_key.rstrip('_0123456789')
+                    if base_field_key in field_positions:
+                        position = field_positions[base_field_key]
+                    else:
+                        # Fuzzy match - check if any position key is contained in field name or vice versa
+                        for pos_key, pos_data in field_positions.items():
+                            # Enhanced matching: handle City -> City_2, City_3
+                            if (pos_key in field_key or field_key in pos_key or 
+                                pos_key.rstrip('_0123456789') == base_field_key):
+                                position = pos_data
+                                break
+                
+                # Handle page-specific logic
+                if position:
+                    if isinstance(position, dict) and 'page' in position:
+                        if position.get('page') != page_num:
+                            continue
+                    elif page_num > 0 and not position.get('repeat_on_all_pages', False):
+                        continue
                 
                 if position:
                     field_type = position.get('type', 'text')
@@ -716,8 +777,17 @@ def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path):
                         fontsize = 24
                     
                     try:
-                        if field_type == 'checkbox' and isinstance(value, bool):
-                            if value:
+                        if field_type == 'checkbox':
+                            # Handle various checkbox value formats
+                            is_checked = False
+                            if isinstance(value, bool):
+                                is_checked = value
+                            elif isinstance(value, (int, float)):
+                                is_checked = bool(value)
+                            elif isinstance(value, str):
+                                is_checked = value.lower() in ['true', '1', 'yes', 'checked', 'x']
+                            
+                            if is_checked:
                                 page.insert_text(
                                     (x, y),
                                     "✓",
