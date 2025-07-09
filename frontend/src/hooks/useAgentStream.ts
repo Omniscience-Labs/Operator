@@ -346,10 +346,32 @@ export function useAgentStream(
             // Accumulate reasoning chunks and mark as streaming
             setIsReasoningStreaming(true);
             setReasoningContent((prev) => {
-              return prev.concat({
+              const newContent = prev.concat({
                 sequence: message.sequence,
                 content: parsedContent.content,
               });
+              
+              // Create synthetic reasoning message with accumulated content for UI display
+              const accumulatedText = newContent
+                .sort((a, b) => a.sequence - b.sequence)
+                .reduce((acc, curr) => acc + curr.content, '');
+              
+              const syntheticMessage: UnifiedMessage = {
+                sequence: message.sequence,
+                message_id: null, // Null for streaming chunks
+                thread_id: message.thread_id,
+                type: 'reasoning',
+                is_llm_message: true,
+                content: JSON.stringify({ role: 'assistant', content: accumulatedText }),
+                metadata: JSON.stringify({ stream_status: 'streaming' }),
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              };
+              
+              // Pass synthetic message to display during streaming
+              callbacks.onMessage(syntheticMessage);
+              
+              return newContent;
             });
           } else if (parsedMetadata.stream_status === 'complete') {
             // When reasoning is complete, pass the final message and stop streaming
