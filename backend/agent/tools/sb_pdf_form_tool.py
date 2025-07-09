@@ -543,7 +543,7 @@ except Exception as e:
         "type": "function",
         "function": {
             "name": "fill_form_coordinates",
-            "description": "Fill scanned PDFs or non-fillable documents using coordinate-based text overlay. Use this for: scanned documents, image-based PDFs, or any PDF without interactive form fields. Places text at specific X,Y positions on the page. IMPORTANT: For interactive PDFs with form fields, use fill_form instead.",
+            "description": "Fill scanned PDFs or non-fillable documents using coordinate-based text overlay. Use this for: scanned documents, image-based PDFs, or any PDF without interactive form fields. Places text at specific X,Y positions on all pages. IMPORTANT: For interactive PDFs with form fields, use fill_form instead.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -659,94 +659,107 @@ def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path):
         if len(doc) == 0:
             raise Exception("PDF has no pages")
         
-        # Process first page (can be extended for multi-page)
-        page = doc[0]
-        page_width = page.rect.width
-        page_height = page.rect.height
-        
-        for field_name, value in form_data.items():
-            if value is None or value == "":
-                continue
-                
-            # Find position for this field
-            position = None
-            field_key = field_name.lower()
+        # Process all pages in the document
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            page_width = page.rect.width
+            page_height = page.rect.height
             
-            # Direct match first
-            if field_key in field_positions:
-                position = field_positions[field_key]
-            else:
-                # Fuzzy match - check if any position key is contained in field name or vice versa
-                for pos_key, pos_data in field_positions.items():
-                    if pos_key in field_key or field_key in pos_key:
-                        position = pos_data
-                        break
-            
-            if position:
-                field_type = position.get('type', 'text')
-                x = position.get('x', 100)
-                y = position.get('y', 100)
-                fontsize = position.get('fontsize', 10)
-                
-                # Validate and adjust coordinates
-                if x < 0:
-                    x = 10
-                elif x > page_width - 50:
-                    x = page_width - 50
+            for field_name, value in form_data.items():
+                if value is None or value == "":
+                    continue
                     
-                if y < 0:
-                    y = 20
-                elif y > page_height - 20:
-                    y = page_height - 20
+                # Find position for this field
+                position = None
+                field_key = field_name.lower()
                 
-                # Validate font size
-                if fontsize < 6:
-                    fontsize = 6
-                elif fontsize > 24:
-                    fontsize = 24
+                # Check if field has page-specific coordinates
+                if isinstance(field_positions.get(field_key), dict) and 'page' in field_positions.get(field_key, {{}}):
+                    if field_positions[field_key].get('page') == page_num:
+                        position = field_positions[field_key]
+                elif field_key in field_positions:
+                    # If no specific page, use on all pages or only first page based on configuration
+                    position = field_positions[field_key]
+                    # Skip if this field was already placed on first page and we're on subsequent pages
+                    if page_num > 0 and not position.get('repeat_on_all_pages', False):
+                        continue
+                else:
+                    # Fuzzy match - check if any position key is contained in field name or vice versa
+                    for pos_key, pos_data in field_positions.items():
+                        if pos_key in field_key or field_key in pos_key:
+                            position = pos_data
+                            if page_num > 0 and not position.get('repeat_on_all_pages', False):
+                                continue
+                            break
                 
-                try:
-                    if field_type == 'checkbox' and isinstance(value, bool):
-                        if value:
+                if position:
+                    field_type = position.get('type', 'text')
+                    x = position.get('x', 100)
+                    y = position.get('y', 100)
+                    fontsize = position.get('fontsize', 10)
+                    
+                    # Validate and adjust coordinates
+                    if x < 0:
+                        x = 10
+                    elif x > page_width - 50:
+                        x = page_width - 50
+                        
+                    if y < 0:
+                        y = 20
+                    elif y > page_height - 20:
+                        y = page_height - 20
+                    
+                    # Validate font size
+                    if fontsize < 6:
+                        fontsize = 6
+                    elif fontsize > 24:
+                        fontsize = 24
+                    
+                    try:
+                        if field_type == 'checkbox' and isinstance(value, bool):
+                            if value:
+                                page.insert_text(
+                                    (x, y),
+                                    "✓",
+                                    fontsize=fontsize,
+                                    color=(0, 0, 0)
+                                )
+                                filled_count += 1
+                                placed_positions.append({{
+                                    "field": field_name,
+                                    "page": page_num,
+                                    "x": x,
+                                    "y": y,
+                                    "value": "✓",
+                                    "type": "checkbox"
+                                }})
+                        else:
+                            # Text field - limit length and handle line breaks
+                            text_value = str(value)
+                            if len(text_value) > 60:  # Truncate very long text
+                                text_value = text_value[:57] + "..."
+                            
                             page.insert_text(
                                 (x, y),
-                                "✓",
+                                text_value,
                                 fontsize=fontsize,
                                 color=(0, 0, 0)
                             )
                             filled_count += 1
                             placed_positions.append({{
                                 "field": field_name,
+                                "page": page_num,
                                 "x": x,
                                 "y": y,
-                                "value": "✓",
-                                "type": "checkbox"
+                                "value": text_value,
+                                "type": "text"
                             }})
-                    else:
-                        # Text field - limit length and handle line breaks
-                        text_value = str(value)
-                        if len(text_value) > 60:  # Truncate very long text
-                            text_value = text_value[:57] + "..."
-                        
-                        page.insert_text(
-                            (x, y),
-                            text_value,
-                            fontsize=fontsize,
-                            color=(0, 0, 0)
-                        )
-                        filled_count += 1
-                        placed_positions.append({{
-                            "field": field_name,
-                            "x": x,
-                            "y": y,
-                            "value": text_value,
-                            "type": "text"
-                        }})
-                        
-                except Exception as e:
-                    skipped_fields.append(f"{{field_name}}: {{str(e)}}")
-            else:
-                skipped_fields.append(f"{{field_name}}: no position found")
+                            
+                    except Exception as e:
+                        skipped_fields.append(f"{{field_name}} (page {{page_num}}): {{str(e)}}")
+                else:
+                    if page_num == 0:  # Only report missing position once (on first page)
+                        skipped_fields.append(f"{{field_name}}: no position found")
         
         # Save the filled PDF
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -812,7 +825,7 @@ except Exception as e:
                     },
                     "page_number": {
                         "type": "integer",
-                        "description": "Page number to analyze (0-indexed)",
+                        "description": "Page number to analyze (0-indexed). Use -1 to analyze all pages.",
                         "default": 0
                     }
                 },
@@ -853,13 +866,25 @@ import json
 try:
     doc = pymupdf.open('{full_path}')
     
-    if len(doc) <= {page_number}:
+    # Determine pages to analyze
+    if {page_number} == -1:
+        # Analyze all pages
+        pages_to_analyze = list(range(len(doc)))
+    else:
+        # Analyze specific page
+        if len(doc) <= {page_number}:
         print(json.dumps({{
             "success": False,
             "error": f"Page {{page_number}} does not exist. Document has {{len(doc)}} pages."
         }}))
-    else:
-        page = doc[{page_number}]
+            doc.close()
+            exit()
+        pages_to_analyze = [{page_number}]
+    
+    all_pages_data = []
+    
+    for page_num in pages_to_analyze:
+        page = doc[page_num]
         
         # Extract text with coordinates
         text_instances = []
@@ -914,14 +939,33 @@ try:
                 unique_fields.append(field)
                 seen_positions.add(pos_key)
         
-        print(json.dumps({{
-            "success": True,
-            "file_path": "{file_path}",
-            "page_number": {page_number},
+        page_data = {{
+            "page_number": page_num,
             "page_size": {{"width": round(page.rect.width), "height": round(page.rect.height)}},
             "total_text_elements": len(text_instances),
             "potential_fields": unique_fields[:15],  # Limit to top 15 matches
             "sample_text": text_instances[:5]  # First 5 text elements for reference
+        }}
+        all_pages_data.append(page_data)
+    
+    # Format output based on whether it's single page or all pages
+    if {page_number} == -1:
+        print(json.dumps({{
+            "success": True,
+            "file_path": "{file_path}",
+            "analyzed_all_pages": True,
+            "total_pages": len(doc),
+            "pages": all_pages_data
+        }}))
+    else:
+        print(json.dumps({{
+            "success": True,
+            "file_path": "{file_path}",
+            "page_number": {page_number},
+            "page_size": all_pages_data[0]["page_size"],
+            "total_text_elements": all_pages_data[0]["total_text_elements"],
+            "potential_fields": all_pages_data[0]["potential_fields"],
+            "sample_text": all_pages_data[0]["sample_text"]
         }}))
         
     doc.close()
@@ -1064,7 +1108,7 @@ print(json.dumps(result))
         "type": "function",
         "function": {
             "name": "generate_coordinate_grid",
-            "description": "Generate visual coordinate grid overlay on PDFs to help identify exact X,Y positions for field placement. Use this as a visual aid when working with scanned documents to determine precise coordinates for fill_form_coordinates. Helpful for creating custom coordinates.",
+            "description": "Generate visual coordinate grid overlay on all pages of PDFs to help identify exact X,Y positions for field placement. Use this as a visual aid when working with scanned documents to determine precise coordinates for fill_form_coordinates. Helpful for creating custom coordinates.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -1159,11 +1203,12 @@ try:
     coordinate_labels = {coordinate_labels}
     crosshairs = {crosshairs}
     
-    # Process first page
+    # Process all pages
     if len(doc) > 0:
-        page = doc[0]
-        width = page.rect.width
-        height = page.rect.height
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            width = page.rect.width
+            height = page.rect.height
         
         # Colors
         major_color = (0.6, 0.6, 0.6)  # Darker gray for major lines
@@ -1252,7 +1297,7 @@ try:
     
     print(json.dumps({{
         "success": True,
-        "message": "Precision coordinate grid generated successfully",
+        "message": f"Precision coordinate grid generated successfully for {{len(doc)}} pages",
         "output_path": "{output_path}",
         "grid_spacing": grid_spacing,
         "fine_grid_spacing": fine_spacing if fine_grid else None,
@@ -1261,7 +1306,7 @@ try:
             "coordinate_labels": coordinate_labels,
             "crosshairs": crosshairs
         }},
-        "page_size": {{"width": round(width), "height": round(height)}},
+        "total_pages": len(doc),
         "precision_level": "high" if grid_spacing <= 10 else "medium" if grid_spacing <= 25 else "standard"
     }}))
     
