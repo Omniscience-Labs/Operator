@@ -1230,7 +1230,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
 
             {/* Unified floating pill - shows either "Working" or "Scroll to latest" */}
             {((!readOnly && (agentStatus === 'running' || agentStatus === 'connecting')) || showScrollButton) && (
-                <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 z-20 transition-all duration-200 ease-in-out">
+                <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 z-20 transition-all duration-200 ease-in-out">
                     <AnimatePresence mode="wait">
                         {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
                             <motion.div
