@@ -376,7 +376,7 @@ export const AgentBuilderChat = React.memo(function AgentBuilderChat({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
         <div className="h-full overflow-y-auto scrollbar-hide">
           <ThreadContent
             messages={messages || []}
@@ -389,6 +389,7 @@ export const AgentBuilderChat = React.memo(function AgentBuilderChat({
             agentName="Agent Builder"
             agentAvatar={'🤖'}
             isSidePanelOpen={false}
+            isAgentBuilder={true}
             emptyStateComponent={
               <div className="mt-6 flex flex-col items-center text-center text-muted-foreground/80">
                 <div className="flex w-20 aspect-square items-center justify-center rounded-2xl bg-muted-foreground/10 p-4 mb-4">
@@ -416,7 +417,7 @@ export const AgentBuilderChat = React.memo(function AgentBuilderChat({
           agentName="Agent Builder"
           hideAttachments={true}
           bgColor='bg-muted-foreground/10'
-
+          hideReasoningControl={true}
         />
       </div>
     </div>

@@ -289,6 +289,7 @@ export interface ThreadContentProps {
     // Edit functionality props
     onEditMessage?: (messageId: string, newContent: string) => Promise<void>; // Callback for editing messages
     threadId?: string; // Thread ID for editing
+    isAgentBuilder?: boolean; // Add agent builder flag for positioning
 }
 
 export const ThreadContent: React.FC<ThreadContentProps> = ({
@@ -316,6 +317,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     onScrollStateChange,
     onEditMessage,
     threadId,
+    isAgentBuilder = false,
 }) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -1230,9 +1232,12 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
 
             {/* Unified floating pill - shows either "Working" or "Scroll to latest" */}
             {((!readOnly && (agentStatus === 'running' || agentStatus === 'connecting')) || showScrollButton) && (
-                <div className={`fixed bottom-48 z-20 transform -translate-x-1/2 transition-all duration-200 ease-in-out ${
+                <div className={`${isAgentBuilder ? 'absolute' : 'fixed'} bottom-48 z-20 transform -translate-x-1/2 transition-all duration-200 ease-in-out ${
                     (() => {
-                        if (isSidePanelOpen && isLeftSidebarOpen) {
+                        if (isAgentBuilder) {
+                            // Agent builder mode - center within container
+                            return 'left-1/2';
+                        } else if (isSidePanelOpen && isLeftSidebarOpen) {
                             // Both sidebars open - center between them
                             return 'left-[calc(50%-100px)] sm:left-[calc(50%-200px)] md:left-[calc(50%-225px)] lg:left-[calc(50%-250px)] xl:left-[calc(50%-275px)]';
                         } else if (isSidePanelOpen) {
