@@ -89,9 +89,11 @@ class ToolResult:
     Attributes:
         success (bool): Whether the tool execution succeeded
         output (str): Output message or error description
+        metadata (Dict[str, Any]): Additional metadata for the result
     """
     success: bool
     output: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 class Tool(ABC):
     """Abstract base class for all tools.

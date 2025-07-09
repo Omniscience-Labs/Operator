@@ -1397,9 +1397,9 @@ class ResponseProcessor:
             final_details = credit_details
             data_provider_name = None
             
-            if function_name == "execute_data_provider_call" and hasattr(result, '__dict__'):
+            if function_name == "execute_data_provider_call" and hasattr(result, 'metadata'):
                 # Extract data provider specific credit info if available
-                credit_tracking = getattr(result, '_credit_tracking', None)
+                credit_tracking = result.metadata.get('_credit_tracking', None)
                 if credit_tracking:
                     # Use the specific provider tool name for analytics
                     final_tool_name = credit_tracking.get('tool_name_for_analytics', function_name)
@@ -1411,8 +1411,8 @@ class ResponseProcessor:
             # Save credit usage to database if we have an agent_run_id
             # Note: This would need to be passed down from the calling context
             # For now, we'll store the credit info on the result for later processing
-            if hasattr(result, '__dict__'):
-                result.__dict__['_credit_info'] = {
+            if hasattr(result, 'metadata'):
+                result.metadata['_credit_info'] = {
                     'tool_name': final_tool_name,  # Use the analytics-friendly tool name
                     'credits': float(final_credits),
                     'calculation_details': final_details,
@@ -1606,8 +1606,8 @@ class ResponseProcessor:
                 self.trace.event(name="adding_parsing_details_to_tool_result_metadata", level="DEFAULT", status_message=(f"Adding parsing_details to tool result metadata"), metadata={"parsing_details": parsing_details})
             # ---
             # --- ADD: Extract and save credit info to metadata ---
-            if hasattr(result, '__dict__') and '_credit_info' in result.__dict__:
-                credit_info = result.__dict__['_credit_info']
+            if hasattr(result, 'metadata') and '_credit_info' in result.metadata:
+                credit_info = result.metadata['_credit_info']
                 metadata["_credit_info"] = credit_info
                 logger.info(f"Adding credit info to tool result metadata: {credit_info}")
                 self.trace.event(name="adding_credit_info_to_tool_result_metadata", level="DEFAULT", status_message=(f"Adding credit info to tool result metadata: {credit_info}"))

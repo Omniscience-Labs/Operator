@@ -248,16 +248,15 @@ Use this tool when you need to discover what endpoints are available.
             # This will be picked up by the response processor for database logging
             success_result = self.success_response(enhanced_result)
             
-            # Add credit tracking metadata to the ToolResult
-            if hasattr(success_result, '__dict__'):
-                success_result.__dict__['_credit_tracking'] = {
-                    'tool_name_for_analytics': tool_name_for_analytics,
-                    'data_provider_name': service_name,
-                    'route': route,
-                    'credits': float(credits),
-                    'calculation_details': credit_details,
-                    'usage_type': 'tool'  # Treat as a tool, not separate category
-                }
+            # Add credit tracking metadata to the ToolResult using the new metadata field
+            success_result.metadata['_credit_tracking'] = {
+                'tool_name_for_analytics': tool_name_for_analytics,
+                'data_provider_name': service_name,
+                'route': route,
+                'credits': float(credits),
+                'calculation_details': credit_details,
+                'usage_type': 'tool'  # Treat as a tool, not separate category
+            }
             
             return success_result
             
