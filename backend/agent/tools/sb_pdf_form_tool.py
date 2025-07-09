@@ -311,12 +311,9 @@ try:
     # Load PDF form
     wrapper = PdfWrapper('{full_path}')
     
-    # Fill the form with provided fields
-    fields_to_fill = {json.dumps(fields)}
-    
     # Pre-process fields to handle boolean checkboxes
     processed_fields = {{}}
-    for field_name, value in fields_to_fill.items():
+    for field_name, value in {repr(fields)}.items():
         # Convert boolean values to integers for checkboxes
         if isinstance(value, bool):
             processed_fields[field_name] = 1 if value else 0
@@ -325,29 +322,8 @@ try:
         else:
             processed_fields[field_name] = value
     
-    # Handle large field sets by chunking
-    if len(processed_fields) > 50:
-        # Process in chunks to avoid memory issues
-        chunk_size = 40
-        field_items = list(processed_fields.items())
-        
-        # First chunk
-        chunk_fields = dict(field_items[:chunk_size])
-        filled_pdf_stream = wrapper.fill(chunk_fields, flatten=False)
-        
-        # Process remaining chunks
-        for i in range(chunk_size, len(field_items), chunk_size):
-            chunk_fields = dict(field_items[i:i+chunk_size])
-            # Create new wrapper from the previous result
-            temp_path = f'/tmp/temp_chunk_{{i}}.pdf'
-            with open(temp_path, 'wb') as temp_file:
-                filled_pdf_stream.seek(0)
-                temp_file.write(filled_pdf_stream.read())
-            
-            wrapper = PdfWrapper(temp_path)
-            filled_pdf_stream = wrapper.fill(chunk_fields, flatten=False)
-    else:
-        filled_pdf_stream = wrapper.fill(processed_fields, flatten=False)
+    # Fill the form with processed fields
+    filled_pdf_stream = wrapper.fill(processed_fields, flatten=False)
     
     # Ensure parent directory exists
     os.makedirs(os.path.dirname('{filled_path}'), exist_ok=True)
@@ -381,7 +357,7 @@ try:
         "message": "Successfully filled PDF form and saved to '{output_path}'",
         "input_file": "{file_path}",
         "output_file": "{output_path}",
-        "fields_filled": len(fields_to_fill),
+        "fields_filled": len(processed_fields),
         "diagnostics": diagnostics
     }}))
     
