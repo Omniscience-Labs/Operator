@@ -31,7 +31,7 @@ import {
   Activity
 } from 'lucide-react';
 
-export function TestimonialSection() {
+export function PlatformOverviewSection() {
   const features = [
     {
       title: "AI-Powered Collaboration",
@@ -65,7 +65,7 @@ export function TestimonialSection() {
 
   return (
     <section
-      id="testimonials"
+      id="platform-overview"
       className="relative z-20 py-20 lg:py-32 max-w-7xl mx-auto"
     >
       <div className="px-6 lg:px-8">

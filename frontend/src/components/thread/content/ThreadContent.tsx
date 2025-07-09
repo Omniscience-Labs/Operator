@@ -550,7 +550,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                 // Render scrollable content container
                 <div
                     ref={messagesContainerRef}
-                    className={`${containerClassName} ${editingMessageId ? 'relative' : ''}`}
+                    className={`${containerClassName} ${editingMessageId ? 'relative' : ''} relative`}
                     onScroll={handleScroll}
                 >
                     {/* Blur overlay for non-editing messages */}
@@ -1230,23 +1230,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
 
             {/* Unified floating pill - shows either "Working" or "Scroll to latest" */}
             {((!readOnly && (agentStatus === 'running' || agentStatus === 'connecting')) || showScrollButton) && (
-                <div className={`fixed bottom-48 z-20 transform -translate-x-1/2 transition-all duration-200 ease-in-out ${
-                    (() => {
-                        if (isSidePanelOpen && isLeftSidebarOpen) {
-                            // Both sidebars open - center between them
-                            return 'left-[calc(50%-100px)] sm:left-[calc(50%-200px)] md:left-[calc(50%-225px)] lg:left-[calc(50%-250px)] xl:left-[calc(50%-275px)]';
-                        } else if (isSidePanelOpen) {
-                            // Only right side panel open
-                            return 'left-[5%] sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]';
-                        } else if (isLeftSidebarOpen) {
-                            // Only left sidebar open - shift right to account for sidebar width
-                            return 'left-[calc(50%+120px)] sm:left-[calc(50%+130px)] md:left-[calc(50%+140px)] lg:left-[calc(50%+150px)]';
-                        } else {
-                            // No sidebars open - center normally
-                            return 'left-1/2';
-                        }
-                    })()
-                }`}>
+                <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 z-20 transition-all duration-200 ease-in-out">
                     <AnimatePresence mode="wait">
                         {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
                             <motion.div
