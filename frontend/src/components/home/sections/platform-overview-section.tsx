@@ -807,4 +807,4 @@ const AutomationSkeleton = () => {
       </div>
     </div>
   );
-}; 
+};

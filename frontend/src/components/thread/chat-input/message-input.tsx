@@ -50,9 +50,7 @@ interface MessageInputProps {
   // New reasoning props
   reasoningSettings: ReasoningSettings;
   onReasoningChange: (settings: ReasoningSettings) => void;
-  
-  // Agent name prop
-  agentName?: string;
+  hideReasoningControl?: boolean;
 }
 
 export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
@@ -89,9 +87,7 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
       // New reasoning props
       reasoningSettings,
       onReasoningChange,
-      
-      // Agent name prop
-      agentName,
+      hideReasoningControl = false,
     },
     ref,
   ) => {
@@ -201,7 +197,7 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
               canAccessModel={canAccessModel}
               refreshCustomModels={refreshCustomModels}
             />
-            {agentName !== 'Agent Builder' && (
+            {!hideReasoningControl && (
               <ReasoningControl
                 value={reasoningSettings}
                 onChange={onReasoningChange}

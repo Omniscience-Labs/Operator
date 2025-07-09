@@ -68,6 +68,7 @@ export interface ChatInputProps {
   agentName?: string;
   messages?: any[];
   bgColor?: string;
+  hideReasoningControl?: boolean;
 }
 
 export interface UploadedFile {
@@ -102,6 +103,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
       agentName,
       messages = [],
       bgColor = 'bg-sidebar',
+      hideReasoningControl = false,
     },
     ref,
   ) => {
@@ -352,7 +354,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
                 
                 reasoningSettings={reasoningSettings}
                 onReasoningChange={setReasoningSettings}
-                agentName={agentName}
+                hideReasoningControl={hideReasoningControl}
               />
             </CardContent>
           </div>

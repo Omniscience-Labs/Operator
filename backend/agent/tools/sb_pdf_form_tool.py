@@ -624,6 +624,11 @@ except Exception as e:
                     "custom_coordinates": {
                         "type": "object",
                         "description": "Optional custom field coordinates {field_name: {x: int, y: int, fontsize: int, type: 'text'|'checkbox'}}. Overrides template."
+                    },
+                    "disable_overlap_detection": {
+                        "type": "boolean",
+                        "description": "Disable overlap detection to allow placement over existing text. Default: false",
+                        "default": False
                     }
                 },
                 "required": ["file_path", "form_data"]
@@ -637,7 +642,8 @@ except Exception as e:
             {"param_name": "form_data", "node_type": "element", "path": "form_data"},
             {"param_name": "output_path", "node_type": "attribute", "path": "output_path", "required": False},
             {"param_name": "template_name", "node_type": "attribute", "path": "template_name", "required": False},
-            {"param_name": "custom_coordinates", "node_type": "element", "path": "custom_coordinates", "required": False}
+            {"param_name": "custom_coordinates", "node_type": "element", "path": "custom_coordinates", "required": False},
+            {"param_name": "disable_overlap_detection", "node_type": "attribute", "path": "disable_overlap_detection", "required": False}
         ],
         example='''
         <function_calls>
@@ -656,7 +662,7 @@ except Exception as e:
         </function_calls>
         '''
     )
-    async def fill_form_coordinates(self, file_path: str, form_data: Dict[str, Any], output_path: Optional[str] = None, template_name: Optional[str] = None, custom_coordinates: Optional[Dict[str, Dict[str, Any]]] = None) -> ToolResult:
+    async def fill_form_coordinates(self, file_path: str, form_data: Dict[str, Any], output_path: Optional[str] = None, template_name: Optional[str] = None, custom_coordinates: Optional[Dict[str, Dict[str, Any]]] = None, disable_overlap_detection: bool = False) -> ToolResult:
         """Fill a PDF using coordinate-based text overlay (for scanned/non-fillable PDFs)."""
         try:
             await self._ensure_sandbox()
@@ -706,16 +712,19 @@ import pymupdf
 import json
 import os
 
-def detect_text_overlap(page, x, y, text_value, fontsize):
+def detect_text_overlap(page, x, y, text_value, fontsize, disable_detection=False):
     '''Detect if placing text at position would overlap with existing text'''
     try:
+        # If overlap detection is disabled, always return no overlap
+        if disable_detection:
+            return False, None
         # Get existing text blocks on the page
         text_blocks = page.get_text("dict")["blocks"]
         
-        # Calculate bounding box for our new text
-        # Rough estimation: character width ≈ fontsize * 0.6, height ≈ fontsize
-        text_width = len(text_value) * fontsize * 0.6
-        text_height = fontsize
+        # Calculate bounding box for our new text (more lenient sizing)
+        # Rough estimation: character width ≈ fontsize * 0.5, height ≈ fontsize * 0.8
+        text_width = len(text_value) * fontsize * 0.5
+        text_height = fontsize * 0.8
         new_bbox = (x, y - text_height, x + text_width, y)
         
         # Check for overlap with existing text
@@ -730,18 +739,19 @@ def detect_text_overlap(page, x, y, text_value, fontsize):
                         if not existing_text:
                             continue
                             
-                        # Check if bounding boxes overlap
-                        if not (new_bbox[2] < existing_bbox[0] or  # new is left of existing
-                                new_bbox[0] > existing_bbox[2] or  # new is right of existing
-                                new_bbox[3] < existing_bbox[1] or  # new is above existing
-                                new_bbox[1] > existing_bbox[3]):   # new is below existing
+                        # Check if bounding boxes overlap with small margin for tolerance
+                        margin = 2  # 2 point margin for overlap tolerance
+                        if not (new_bbox[2] < existing_bbox[0] - margin or  # new is left of existing
+                                new_bbox[0] > existing_bbox[2] + margin or  # new is right of existing
+                                new_bbox[3] < existing_bbox[1] - margin or  # new is above existing
+                                new_bbox[1] > existing_bbox[3] + margin):   # new is below existing
                             return True, existing_text
         
         return False, None
     except Exception:
         return False, None
 
-def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path):
+def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path, disable_overlap_detection=False):
     '''Fill PDF using coordinate-based text overlay with collision detection'''
     try:
         doc = pymupdf.open(pdf_path)
@@ -786,11 +796,37 @@ def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path):
                 
                 # Handle page-specific logic
                 if position:
+                    # Check if this field has a specific page assignment
                     if isinstance(position, dict) and 'page' in position:
                         if position.get('page') != page_num:
                             continue
+                    # For fields without specific page assignment, use intelligent page detection
                     elif page_num > 0 and not position.get('repeat_on_all_pages', False):
-                        continue
+                        # Skip fields that likely belong to other pages based on field name patterns
+                        field_lower = field_name.lower()
+                        
+                        # Page 1 fields (usually business basic info)
+                        page1_indicators = ['business', 'company', 'legal', 'trade', 'billing', 'service', 'contact', 'phone', 'email', 'address', 'city', 'state', 'zip']
+                        
+                        # Page 2 fields (usually corporate structure, officers)
+                        page2_indicators = ['president', 'vice', 'secretary', 'treasurer', 'officer', 'director', 'individual', 'partner', 'ssn', 'dob', 'corp']
+                        
+                        # Page 3 fields (usually financial, banking, references)
+                        page3_indicators = ['bank', 'account', 'financial', 'reference', 'trade', 'signature', 'date', 'witness', 'credit']
+                        
+                        # Determine likely page for this field
+                        likely_page = 0  # Default to page 1
+                        
+                        if any(indicator in field_lower for indicator in page2_indicators):
+                            likely_page = 1
+                        elif any(indicator in field_lower for indicator in page3_indicators):
+                            likely_page = 2
+                        elif any(indicator in field_lower for indicator in page1_indicators):
+                            likely_page = 0
+                        
+                        # Skip if field likely belongs to different page
+                        if likely_page != page_num:
+                            continue
                 
                 if position:
                     field_type = position.get('type', 'text')
@@ -828,7 +864,7 @@ def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path):
                             
                             if is_checked:
                                 # Check for overlap before placing checkbox
-                                has_overlap, existing_text = detect_text_overlap(page, x, y, "✓", fontsize)
+                                has_overlap, existing_text = detect_text_overlap(page, x, y, "✓", fontsize, disable_overlap_detection)
                                 if has_overlap:
                                     overlap_detected.append({{
                                         "field": field_name,
@@ -862,7 +898,7 @@ def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path):
                                 text_value = text_value[:57] + "..."
                             
                             # Check for overlap before placing text
-                            has_overlap, existing_text = detect_text_overlap(page, x, y, text_value, fontsize)
+                            has_overlap, existing_text = detect_text_overlap(page, x, y, text_value, fontsize, disable_overlap_detection)
                             if has_overlap:
                                 overlap_detected.append({{
                                     "field": field_name,
@@ -914,7 +950,7 @@ output_path = '{filled_path}'
 
 try:
     filled_count, skipped_fields, placed_positions, overlap_detected = fill_pdf_coordinates(
-        input_path, form_data, field_positions, output_path
+        input_path, form_data, field_positions, output_path, {disable_overlap_detection}
     )
     
     # Calculate proper diagnostics for coordinate filling
@@ -923,10 +959,19 @@ try:
     position_missing_count = len([f for f in skipped_fields if "no position found" in f])
     other_errors_count = len(skipped_fields) - overlaps_count - position_missing_count
     
+    # Calculate page-specific statistics
+    page_stats = {{}}
+    for position in placed_positions:
+        page_num = position["page"]
+        if page_num not in page_stats:
+            page_stats[page_num] = {{"filled": 0, "fields": []}}
+        page_stats[page_num]["filled"] += 1
+        page_stats[page_num]["fields"].append(position["field"])
+    
     result = {{
         "success": True,
-        "method": "coordinate_overlay",
-        "message": f"Filled {{filled_count}} fields using coordinate-based overlay",
+        "method": "coordinate_overlay_multipage",
+        "message": f"Filled {{filled_count}} fields across {{len(page_stats)}} pages using coordinate-based overlay",
         "output_path": "{output_path}",
         "input_file": "{file_path}",
         "fields_filled": filled_count,
@@ -935,6 +980,7 @@ try:
         "placed_positions": placed_positions,
         "total_fields_attempted": total_requested,
         "overlap_detected": overlap_detected,
+        "page_statistics": page_stats,
         "diagnostics": {{
             "requested_count": total_requested,
             "filled_count": filled_count,
@@ -942,7 +988,9 @@ try:
             "overlaps_detected": overlaps_count,
             "position_missing": position_missing_count,
             "other_errors": other_errors_count,
-            "method": "coordinate_overlay"
+            "method": "coordinate_overlay_multipage",
+            "pages_processed": len(page_stats),
+            "success_rate": round((filled_count / total_requested) * 100, 1) if total_requested > 0 else 0
         }}
     }}
     
@@ -1181,6 +1229,167 @@ except Exception as e:
         </function_calls>
         '''
     )
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "create_page_specific_template",
+            "description": "Create a coordinate template with automatic page assignment for multi-page forms. Automatically assigns fields to appropriate pages based on field names and content patterns.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "template_name": {
+                        "type": "string",
+                        "description": "Name for this template (e.g., 'credit_application', 'employment_form')"
+                    },
+                    "field_coordinates": {
+                        "type": "object",
+                        "description": "Dictionary mapping field names to their positions {field_name: {x: int, y: int, fontsize: int, type: 'text'|'checkbox'}}. Page assignment will be automatic."
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Optional description of what this template is for",
+                        "default": ""
+                    }
+                },
+                "required": ["template_name", "field_coordinates"]
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="create-page-specific-template",
+        mappings=[
+            {"param_name": "template_name", "node_type": "attribute", "path": "."},
+            {"param_name": "field_coordinates", "node_type": "element", "path": "field_coordinates"},
+            {"param_name": "description", "node_type": "attribute", "path": "description", "required": False}
+        ],
+        example='''
+        <function_calls>
+        <invoke name="create_page_specific_template">
+        <parameter name="template_name">credit_app_multipage</parameter>
+        <parameter name="field_coordinates">{
+            "business_name": {"x": 150, "y": 200, "fontsize": 10, "type": "text"},
+            "president_name": {"x": 150, "y": 300, "fontsize": 10, "type": "text"},
+            "bank_name": {"x": 150, "y": 400, "fontsize": 10, "type": "text"}
+        }</parameter>
+        <parameter name="description">Multi-page credit application with auto page assignment</parameter>
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def create_page_specific_template(self, template_name: str, field_coordinates: Dict[str, Dict[str, Any]], description: str = "") -> ToolResult:
+        """Create a page-specific coordinate template with automatic page assignment."""
+        try:
+            await self._ensure_sandbox()
+            
+            # Validate template name
+            if not template_name or not template_name.replace('_', '').replace('-', '').isalnum():
+                return self.fail_response("Template name must contain only letters, numbers, hyphens, and underscores")
+            
+            # Validate field coordinates
+            if not field_coordinates or not isinstance(field_coordinates, dict):
+                return self.fail_response("Field coordinates must be a non-empty dictionary")
+            
+            template_path = f"{self.workspace_path}/form_templates/{template_name}_multipage.json"
+            
+            script_content = f"""
+import json
+import os
+from datetime import datetime
+
+def assign_page_to_field(field_name):
+    '''Automatically assign page numbers based on field name patterns'''
+    field_lower = field_name.lower()
+    
+    # Page 1 fields (business basic info)
+    page1_indicators = ['business', 'company', 'legal', 'trade', 'billing', 'service', 'contact', 'phone', 'email', 'address', 'city', 'state', 'zip', 'county', 'incorporation']
+    
+    # Page 2 fields (corporate structure, officers)
+    page2_indicators = ['president', 'vice', 'secretary', 'treasurer', 'officer', 'director', 'individual', 'partner', 'ssn', 'dob', 'corp', 'authorize']
+    
+    # Page 3 fields (financial, banking, references)
+    page3_indicators = ['bank', 'account', 'financial', 'reference', 'trade', 'signature', 'date', 'witness', 'credit', 'check', 'routing']
+    
+    if any(indicator in field_lower for indicator in page2_indicators):
+        return 1
+    elif any(indicator in field_lower for indicator in page3_indicators):
+        return 2
+    else:
+        return 0  # Default to page 1
+
+# Process field coordinates with page assignment
+field_coords = {json.dumps(field_coordinates)}
+page_specific_coords = {{}}
+
+for field_name, coords in field_coords.items():
+    if not isinstance(coords, dict):
+        continue
+        
+    # Auto-assign page if not specified
+    if 'page' not in coords:
+        coords['page'] = assign_page_to_field(field_name)
+    
+    # Ensure required fields with defaults
+    normalized_coord = {{
+        "x": int(coords.get("x", 100)),
+        "y": int(coords.get("y", 100)),
+        "fontsize": int(coords.get("fontsize", 10)),
+        "type": coords.get("type", "text"),
+        "page": coords.get("page", 0),
+        "repeat_on_all_pages": coords.get("repeat_on_all_pages", False)
+    }}
+    
+    # Validate ranges
+    if normalized_coord["fontsize"] < 6:
+        normalized_coord["fontsize"] = 6
+    elif normalized_coord["fontsize"] > 24:
+        normalized_coord["fontsize"] = 24
+    
+    page_specific_coords[field_name.lower()] = normalized_coord
+
+# Group fields by page for analysis
+pages_summary = {{}}
+for field_name, coords in page_specific_coords.items():
+    page_num = coords['page']
+    if page_num not in pages_summary:
+        pages_summary[page_num] = []
+    pages_summary[page_num].append(field_name)
+
+template_data = {{
+    "name": "{template_name}_multipage",
+    "description": "{description}",
+    "created": datetime.now().isoformat(),
+    "version": "2.0",
+    "type": "multi_page",
+    "fields": page_specific_coords,
+    "pages_summary": pages_summary,
+    "total_pages": max(pages_summary.keys()) + 1 if pages_summary else 1
+}}
+
+# Create directory if needed
+os.makedirs(os.path.dirname('{template_path}'), exist_ok=True)
+
+# Save template
+with open('{template_path}', 'w') as f:
+    json.dump(template_data, f, indent=2)
+
+result = {{
+    "success": True,
+    "message": "Multi-page template '{template_name}_multipage' created successfully",
+    "template_path": '{template_path}'.replace('{self.workspace_path}/', ''),
+    "field_count": len(page_specific_coords),
+    "pages_summary": pages_summary,
+    "total_pages": template_data["total_pages"]
+}}
+
+print(json.dumps(result))
+"""
+            
+            script = self._create_pdf_script(script_content)
+            return await self._execute_pdf_script(script)
+            
+        except Exception as e:
+            return self.fail_response(f"Error creating multi-page template: {str(e)}")
+
     async def create_coordinate_template(self, template_name: str, field_coordinates: Dict[str, Dict[str, Any]], description: str = "") -> ToolResult:
         """Create and save a coordinate template for reusable form filling."""
         try:
@@ -1457,8 +1666,8 @@ except Exception as e:
                     },
                     "grid_spacing": {
                         "type": "integer",
-                        "description": "Major grid spacing in points. Use 10-25 for precise work, 50 for general use",
-                        "default": 25
+                        "description": "Major grid spacing in points. Use 5-10 for precise work, 25 for general use",
+                        "default": 10
                     },
                     "fine_grid": {
                         "type": "boolean",
@@ -1498,7 +1707,7 @@ except Exception as e:
         <function_calls>
         <invoke name="generate_coordinate_grid">
         <parameter name="file_path">forms/application.pdf</parameter>
-        <parameter name="grid_spacing">10</parameter>
+        <parameter name="grid_spacing">5</parameter>
         <parameter name="fine_grid">true</parameter>
         <parameter name="coordinate_labels">true</parameter>
         <parameter name="crosshairs">true</parameter>
@@ -1506,7 +1715,7 @@ except Exception as e:
         </function_calls>
         '''
     )
-    async def generate_coordinate_grid(self, file_path: str, grid_spacing: int = 25, fine_grid: bool = True, coordinate_labels: bool = True, crosshairs: bool = False, output_path: Optional[str] = None) -> ToolResult:
+    async def generate_coordinate_grid(self, file_path: str, grid_spacing: int = 10, fine_grid: bool = True, coordinate_labels: bool = True, crosshairs: bool = False, output_path: Optional[str] = None) -> ToolResult:
         """Generate a precision coordinate grid overlay on PDF to help identify field positions."""
         try:
             await self._ensure_sandbox()
@@ -1535,16 +1744,28 @@ import pymupdf
 import json
 import os
 
-try:
-    doc = pymupdf.open('{full_path}')
-    grid_spacing = {grid_spacing}
-    fine_grid = {fine_grid}
-    coordinate_labels = {coordinate_labels}
-    crosshairs = {crosshairs}
-    
-    # Process all pages
-    if len(doc) > 0:
-        for page_num in range(len(doc)):
+def generate_grid():
+    doc = None
+    try:
+        doc = pymupdf.open('{full_path}')
+        
+        if doc is None:
+            raise Exception("Failed to open PDF document")
+        
+        if doc.is_closed:
+            raise Exception("PDF document is closed")
+            
+        page_count = len(doc)
+        if page_count == 0:
+            raise Exception("PDF document has no pages")
+        
+        grid_spacing = {grid_spacing}
+        fine_grid = {fine_grid}
+        coordinate_labels = {coordinate_labels}
+        crosshairs = {crosshairs}
+        
+        # Process all pages
+        for page_num in range(page_count):
             page = doc[page_num]
             width = page.rect.width
             height = page.rect.height
@@ -1630,30 +1851,41 @@ try:
                     color = (0, 0, 0.6) if i == 0 else (0.2, 0.2, 0.2)
                     page.insert_text((8, 18 + i * 10), instruction, fontsize=font_size, color=color)
     
-    # Save the grid overlay PDF
-    os.makedirs(os.path.dirname('{grid_path}'), exist_ok=True)
-    doc.save('{grid_path}')
-    doc.close()
-    
-    print(json.dumps({{
-        "success": True,
-        "message": f"Precision coordinate grid generated successfully for {{len(doc)}} pages",
-        "output_path": "{output_path}",
-        "grid_spacing": grid_spacing,
-        "fine_grid_spacing": fine_spacing if fine_grid else None,
-        "features": {{
-            "fine_grid": fine_grid,
-            "coordinate_labels": coordinate_labels,
-            "crosshairs": crosshairs
-        }},
-        "total_pages": len(doc),
-        "precision_level": "high" if grid_spacing <= 10 else "medium" if grid_spacing <= 25 else "standard"
-    }}))
-    
+        # Save the grid overlay PDF
+        os.makedirs(os.path.dirname('{grid_path}'), exist_ok=True)
+        doc.save('{grid_path}')
+        
+        result = {{
+            "success": True,
+            "message": f"Precision coordinate grid generated successfully for {{page_count}} pages",
+            "output_path": "{output_path}",
+            "grid_spacing": grid_spacing,
+            "fine_grid_spacing": fine_spacing if fine_grid else None,
+            "features": {{
+                "fine_grid": fine_grid,
+                "coordinate_labels": coordinate_labels,
+                "crosshairs": crosshairs
+            }},
+            "total_pages": page_count,
+            "precision_level": "high" if grid_spacing <= 10 else "medium" if grid_spacing <= 25 else "standard"
+        }}
+        
+        return result
+        
+    except Exception as e:
+        raise Exception(f"Error generating grid: {{str(e)}}")
+    finally:
+        if doc is not None and not doc.is_closed:
+            doc.close()
+
+# Execute the grid generation
+try:
+    result = generate_grid()
+    print(json.dumps(result))
 except Exception as e:
     print(json.dumps({{
         "success": False,
-        "error": f"Error generating grid: {{str(e)}}"
+        "error": str(e)
     }}))
 """
             
