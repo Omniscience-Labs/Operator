@@ -950,7 +950,7 @@ output_path = '{filled_path}'
 
 try:
     filled_count, skipped_fields, placed_positions, overlap_detected = fill_pdf_coordinates(
-        input_path, form_data, field_positions, output_path, {json.dumps(disable_overlap_detection)}
+        input_path, form_data, field_positions, output_path, {disable_overlap_detection}
     )
     
     # Calculate proper diagnostics for coordinate filling
