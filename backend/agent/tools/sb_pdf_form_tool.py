@@ -624,6 +624,11 @@ except Exception as e:
                     "custom_coordinates": {
                         "type": "object",
                         "description": "Optional custom field coordinates {field_name: {x: int, y: int, fontsize: int, type: 'text'|'checkbox'}}. Overrides template."
+                    },
+                    "disable_overlap_detection": {
+                        "type": "boolean",
+                        "description": "Disable overlap detection to allow placement over existing text. Default: false",
+                        "default": False
                     }
                 },
                 "required": ["file_path", "form_data"]
@@ -637,7 +642,8 @@ except Exception as e:
             {"param_name": "form_data", "node_type": "element", "path": "form_data"},
             {"param_name": "output_path", "node_type": "attribute", "path": "output_path", "required": False},
             {"param_name": "template_name", "node_type": "attribute", "path": "template_name", "required": False},
-            {"param_name": "custom_coordinates", "node_type": "element", "path": "custom_coordinates", "required": False}
+            {"param_name": "custom_coordinates", "node_type": "element", "path": "custom_coordinates", "required": False},
+            {"param_name": "disable_overlap_detection", "node_type": "attribute", "path": "disable_overlap_detection", "required": False}
         ],
         example='''
         <function_calls>
@@ -656,7 +662,7 @@ except Exception as e:
         </function_calls>
         '''
     )
-    async def fill_form_coordinates(self, file_path: str, form_data: Dict[str, Any], output_path: Optional[str] = None, template_name: Optional[str] = None, custom_coordinates: Optional[Dict[str, Dict[str, Any]]] = None) -> ToolResult:
+    async def fill_form_coordinates(self, file_path: str, form_data: Dict[str, Any], output_path: Optional[str] = None, template_name: Optional[str] = None, custom_coordinates: Optional[Dict[str, Dict[str, Any]]] = None, disable_overlap_detection: bool = False) -> ToolResult:
         """Fill a PDF using coordinate-based text overlay (for scanned/non-fillable PDFs)."""
         try:
             await self._ensure_sandbox()
@@ -706,16 +712,19 @@ import pymupdf
 import json
 import os
 
-def detect_text_overlap(page, x, y, text_value, fontsize):
+def detect_text_overlap(page, x, y, text_value, fontsize, disable_detection=False):
     '''Detect if placing text at position would overlap with existing text'''
     try:
+        # If overlap detection is disabled, always return no overlap
+        if disable_detection:
+            return False, None
         # Get existing text blocks on the page
         text_blocks = page.get_text("dict")["blocks"]
         
-        # Calculate bounding box for our new text
-        # Rough estimation: character width ≈ fontsize * 0.6, height ≈ fontsize
-        text_width = len(text_value) * fontsize * 0.6
-        text_height = fontsize
+        # Calculate bounding box for our new text (more lenient sizing)
+        # Rough estimation: character width ≈ fontsize * 0.5, height ≈ fontsize * 0.8
+        text_width = len(text_value) * fontsize * 0.5
+        text_height = fontsize * 0.8
         new_bbox = (x, y - text_height, x + text_width, y)
         
         # Check for overlap with existing text
@@ -730,18 +739,19 @@ def detect_text_overlap(page, x, y, text_value, fontsize):
                         if not existing_text:
                             continue
                             
-                        # Check if bounding boxes overlap
-                        if not (new_bbox[2] < existing_bbox[0] or  # new is left of existing
-                                new_bbox[0] > existing_bbox[2] or  # new is right of existing
-                                new_bbox[3] < existing_bbox[1] or  # new is above existing
-                                new_bbox[1] > existing_bbox[3]):   # new is below existing
+                        # Check if bounding boxes overlap with small margin for tolerance
+                        margin = 2  # 2 point margin for overlap tolerance
+                        if not (new_bbox[2] < existing_bbox[0] - margin or  # new is left of existing
+                                new_bbox[0] > existing_bbox[2] + margin or  # new is right of existing
+                                new_bbox[3] < existing_bbox[1] - margin or  # new is above existing
+                                new_bbox[1] > existing_bbox[3] + margin):   # new is below existing
                             return True, existing_text
         
         return False, None
     except Exception:
         return False, None
 
-def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path):
+def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path, disable_overlap_detection=False):
     '''Fill PDF using coordinate-based text overlay with collision detection'''
     try:
         doc = pymupdf.open(pdf_path)
@@ -854,7 +864,7 @@ def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path):
                             
                             if is_checked:
                                 # Check for overlap before placing checkbox
-                                has_overlap, existing_text = detect_text_overlap(page, x, y, "✓", fontsize)
+                                has_overlap, existing_text = detect_text_overlap(page, x, y, "✓", fontsize, disable_overlap_detection)
                                 if has_overlap:
                                     overlap_detected.append({{
                                         "field": field_name,
@@ -888,7 +898,7 @@ def fill_pdf_coordinates(pdf_path, form_data, field_positions, output_path):
                                 text_value = text_value[:57] + "..."
                             
                             # Check for overlap before placing text
-                            has_overlap, existing_text = detect_text_overlap(page, x, y, text_value, fontsize)
+                            has_overlap, existing_text = detect_text_overlap(page, x, y, text_value, fontsize, disable_overlap_detection)
                             if has_overlap:
                                 overlap_detected.append({{
                                     "field": field_name,
@@ -940,7 +950,7 @@ output_path = '{filled_path}'
 
 try:
     filled_count, skipped_fields, placed_positions, overlap_detected = fill_pdf_coordinates(
-        input_path, form_data, field_positions, output_path
+        input_path, form_data, field_positions, output_path, {json.dumps(disable_overlap_detection)}
     )
     
     # Calculate proper diagnostics for coordinate filling
@@ -1656,8 +1666,8 @@ except Exception as e:
                     },
                     "grid_spacing": {
                         "type": "integer",
-                        "description": "Major grid spacing in points. Use 10-25 for precise work, 50 for general use",
-                        "default": 25
+                        "description": "Major grid spacing in points. Use 5-10 for precise work, 25 for general use",
+                        "default": 10
                     },
                     "fine_grid": {
                         "type": "boolean",
@@ -1697,7 +1707,7 @@ except Exception as e:
         <function_calls>
         <invoke name="generate_coordinate_grid">
         <parameter name="file_path">forms/application.pdf</parameter>
-        <parameter name="grid_spacing">10</parameter>
+        <parameter name="grid_spacing">5</parameter>
         <parameter name="fine_grid">true</parameter>
         <parameter name="coordinate_labels">true</parameter>
         <parameter name="crosshairs">true</parameter>
@@ -1705,7 +1715,7 @@ except Exception as e:
         </function_calls>
         '''
     )
-    async def generate_coordinate_grid(self, file_path: str, grid_spacing: int = 25, fine_grid: bool = True, coordinate_labels: bool = True, crosshairs: bool = False, output_path: Optional[str] = None) -> ToolResult:
+    async def generate_coordinate_grid(self, file_path: str, grid_spacing: int = 10, fine_grid: bool = True, coordinate_labels: bool = True, crosshairs: bool = False, output_path: Optional[str] = None) -> ToolResult:
         """Generate a precision coordinate grid overlay on PDF to help identify field positions."""
         try:
             await self._ensure_sandbox()
@@ -1734,16 +1744,28 @@ import pymupdf
 import json
 import os
 
-try:
-    doc = pymupdf.open('{full_path}')
-    grid_spacing = {grid_spacing}
-    fine_grid = {fine_grid}
-    coordinate_labels = {coordinate_labels}
-    crosshairs = {crosshairs}
-    
-    # Process all pages
-    if len(doc) > 0:
-        for page_num in range(len(doc)):
+def generate_grid():
+    doc = None
+    try:
+        doc = pymupdf.open('{full_path}')
+        
+        if doc is None:
+            raise Exception("Failed to open PDF document")
+        
+        if doc.is_closed:
+            raise Exception("PDF document is closed")
+            
+        page_count = len(doc)
+        if page_count == 0:
+            raise Exception("PDF document has no pages")
+        
+        grid_spacing = {grid_spacing}
+        fine_grid = {fine_grid}
+        coordinate_labels = {coordinate_labels}
+        crosshairs = {crosshairs}
+        
+        # Process all pages
+        for page_num in range(page_count):
             page = doc[page_num]
             width = page.rect.width
             height = page.rect.height
@@ -1829,30 +1851,41 @@ try:
                     color = (0, 0, 0.6) if i == 0 else (0.2, 0.2, 0.2)
                     page.insert_text((8, 18 + i * 10), instruction, fontsize=font_size, color=color)
     
-    # Save the grid overlay PDF
-    os.makedirs(os.path.dirname('{grid_path}'), exist_ok=True)
-    doc.save('{grid_path}')
-    doc.close()
-    
-    print(json.dumps({{
-        "success": True,
-        "message": f"Precision coordinate grid generated successfully for {{len(doc)}} pages",
-        "output_path": "{output_path}",
-        "grid_spacing": grid_spacing,
-        "fine_grid_spacing": fine_spacing if fine_grid else None,
-        "features": {{
-            "fine_grid": fine_grid,
-            "coordinate_labels": coordinate_labels,
-            "crosshairs": crosshairs
-        }},
-        "total_pages": len(doc),
-        "precision_level": "high" if grid_spacing <= 10 else "medium" if grid_spacing <= 25 else "standard"
-    }}))
-    
+        # Save the grid overlay PDF
+        os.makedirs(os.path.dirname('{grid_path}'), exist_ok=True)
+        doc.save('{grid_path}')
+        
+        result = {{
+            "success": True,
+            "message": f"Precision coordinate grid generated successfully for {{page_count}} pages",
+            "output_path": "{output_path}",
+            "grid_spacing": grid_spacing,
+            "fine_grid_spacing": fine_spacing if fine_grid else None,
+            "features": {{
+                "fine_grid": fine_grid,
+                "coordinate_labels": coordinate_labels,
+                "crosshairs": crosshairs
+            }},
+            "total_pages": page_count,
+            "precision_level": "high" if grid_spacing <= 10 else "medium" if grid_spacing <= 25 else "standard"
+        }}
+        
+        return result
+        
+    except Exception as e:
+        raise Exception(f"Error generating grid: {{str(e)}}")
+    finally:
+        if doc is not None and not doc.is_closed:
+            doc.close()
+
+# Execute the grid generation
+try:
+    result = generate_grid()
+    print(json.dumps(result))
 except Exception as e:
     print(json.dumps({{
         "success": False,
-        "error": f"Error generating grid: {{str(e)}}"
+        "error": str(e)
     }}))
 """
             
