@@ -4,7 +4,7 @@ import { siteConfig } from '@/lib/home';
 export function FeatureSection() {
   const steps = [
     {
-      title: 'Ask Your AI Agent Directly',
+      title: 'Ask Operator Directly',
       description: 'Speak or type your command—let Operator capture your intent. Your request instantly sets the process in motion.',
       icon: '1'
     },

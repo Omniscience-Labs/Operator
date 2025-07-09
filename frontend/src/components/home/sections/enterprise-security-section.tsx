@@ -8,6 +8,7 @@ import { IconCloud } from '@/components/magicui/icon-cloud';
 import { AnimatedBeam } from '@/components/magicui/animated-beam';
 import { GradientText } from '@/components/animate-ui/text/gradient';
 import { OmniProcessModal } from '@/components/sidebar/omni-enterprise-modal';
+import { CompanyShowcase } from '@/components/home/sections/company-showcase';
 import { Shield, Lock, Brain, Database, Zap, Users2, Settings } from 'lucide-react';
 import { useRef, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -57,7 +58,7 @@ const FeaturePill = forwardRef<
 
 FeaturePill.displayName = "FeaturePill";
 
-export function BentoSection() {
+export function EnterpriseSecuritySection() {
   // Refs for AnimatedBeam connections
   const containerRef = useRef<HTMLDivElement>(null);
   const centerRef = useRef<HTMLDivElement>(null);
@@ -173,8 +174,8 @@ export function BentoSection() {
 
   return (
     <section
-      id="bento"
-      className="flex flex-col items-center justify-center w-full relative py-24 lg:py-32"
+      id="enterprise-security"
+      className="flex flex-col items-center justify-center w-full relative pt-24 lg:pt-32 pb-12 lg:pb-16"
     >
       <div className="w-full max-w-7xl mx-auto px-6">
         {/* Header Section */}
@@ -184,7 +185,7 @@ export function BentoSection() {
               <Shield className="h-6 w-6 text-secondary" />
             </div>
             <span className="text-sm font-semibold text-secondary uppercase tracking-wider">
-              Enterprise <GradientText text="AI" /> Security
+              Trusted by Enterprise • <GradientText text="AI" /> Security
             </span>
           </div>
           
@@ -194,7 +195,7 @@ export function BentoSection() {
           
           <div className="max-w-4xl mx-auto space-y-6">
             <p className="text-xl md:text-2xl text-muted-foreground font-normal leading-relaxed">
-              Your data and knowledge are your competitive edge.
+              Trusted by enterprise leaders who value data sovereignty and competitive advantage.
             </p>
             <p className="text-lg md:text-xl text-muted-foreground/70 font-normal leading-relaxed max-w-3xl mx-auto">
               Supercharge your business with <GradientText text="AI" /> that learns exclusively from your proprietary assets—without sharing your advantage with competitors or public models.
@@ -223,206 +224,213 @@ export function BentoSection() {
         <div className="mt-24 lg:mt-32">
           <div className="text-center mb-16">
             <h3 className="text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight text-balance leading-[1.05] mb-6">
-              Connect Your <GradientText text="AI Agents" /> Securely to Enterprise Data and Tools
+              Connect Your <GradientText text="Operator" /> Securely to Enterprise Data and Tools
             </h3>
             <p className="text-lg md:text-xl text-muted-foreground font-normal leading-relaxed max-w-3xl mx-auto">
               Seamlessly integrate with your existing enterprise infrastructure while maintaining zero-trust security protocols.
             </p>
           </div>
 
-            {/* Mobile Layout - Stacked vertically */}
-            <div className="block lg:hidden">
-             <div className="space-y-6 px-4">
-               {/* Central Icon Cloud for mobile */}
-               <div className="flex justify-center mb-8">
-                 <div className="w-[280px] h-[280px] bg-gradient-to-br from-secondary/5 to-primary/5 rounded-full border border-border/30 shadow-lg backdrop-blur-sm flex items-center justify-center">
-                   <div className="w-[240px] h-[240px]">
-                  <IconCloud images={enterpriseIntegrationImages} />
-                </div>
-              </div>
-                </div>
-
-               {/* Feature Pills */}
-               <div className="flex justify-center">
-                 <FeaturePill
-                   icon={<Shield className="h-5 w-5 text-secondary" />}
-                   title="Zero-Trust Authentication"
-                   description="Secure API connections with enterprise-grade authentication and authorization protocols."
-                 />
-                  </div>
-               <div className="flex justify-center">
-                 <FeaturePill
-                   icon={<Lock className="h-5 w-5 text-secondary" />}
-                   title="End-to-End Encryption"
-                   description="All data transfers are encrypted with AES-256 standards, ensuring complete privacy."
-                 />
-                </div>
-               <div className="flex justify-center">
-                 <FeaturePill
-                   icon={<Zap className="h-5 w-5 text-secondary" />}
-                   title="Real-Time Sync"
-                   description="Instant synchronization with your enterprise systems for up-to-date insights."
-                 />
-                  </div>
-               <div className="flex justify-center">
-                 <FeaturePill
-                   icon={<Users2 className="h-5 w-5 text-secondary" />}
-                   title="RBAC"
-                   description="Role-based access control with granular permissions and enterprise-grade user management."
-                 />
-                </div>
-               <div className="flex justify-center">
-                 <FeaturePill
-                   icon={<Settings className="h-5 w-5 text-secondary" />}
-                   title="Custom Integration Development"
-                   description="Tailored integration solutions for your unique enterprise systems and workflows."
-                 />
+          {/* Mobile Layout - Stacked vertically */}
+          <div className="block lg:hidden">
+            <div className="space-y-6">
+              {/* Central Icon Cloud for mobile */}
+              <div className="flex items-center justify-center mb-8">
+                <div className="relative w-[300px] h-[300px] bg-gradient-to-br from-secondary/5 to-primary/5 rounded-full border border-border/30 shadow-lg backdrop-blur-sm">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-[260px] h-[260px]">
+                      <IconCloud images={enterpriseIntegrationImages} />
+                    </div>
                   </div>
                 </div>
               </div>
 
-                     {/* Desktop Layout with AnimatedBeam */}
-           <div className="hidden lg:block">
-             <div 
-               ref={containerRef}
-               className="relative w-full max-w-6xl mx-auto h-[700px] overflow-hidden"
-             >
-               {/* Central Icon Cloud in Container */}
-               <div 
-                 ref={centerRef}
-                 className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] z-10 bg-gradient-to-br from-secondary/5 to-primary/5 rounded-full border border-border/30 shadow-lg backdrop-blur-sm overflow-hidden"
-               >
-                 <div className="absolute inset-0 flex items-center justify-center">
-                   <div className="w-[280px] h-[280px] flex items-center justify-center">
-                     <IconCloud images={enterpriseIntegrationImages} />
-                </div>
+              {/* Feature Pills */}
+              <div className="flex justify-center px-4">
+                <FeaturePill
+                  icon={<Shield className="h-5 w-5 text-secondary" />}
+                  title="Zero-Trust Authentication"
+                  description="Secure API connections with enterprise-grade authentication and authorization protocols."
+                />
+              </div>
+              <div className="flex justify-center px-4">
+                <FeaturePill
+                  icon={<Lock className="h-5 w-5 text-secondary" />}
+                  title="End-to-End Encryption"
+                  description="All data transfers are encrypted with AES-256 standards, ensuring complete privacy."
+                />
+              </div>
+              <div className="flex justify-center px-4">
+                <FeaturePill
+                  icon={<Zap className="h-5 w-5 text-secondary" />}
+                  title="Real-Time Sync"
+                  description="Instant synchronization with your enterprise systems for up-to-date insights."
+                />
+              </div>
+              <div className="flex justify-center px-4">
+                <FeaturePill
+                  icon={<Users2 className="h-5 w-5 text-secondary" />}
+                  title="RBAC"
+                  description="Role-based access control with granular permissions and enterprise-grade user management."
+                />
+              </div>
+              <div className="flex justify-center px-4">
+                <FeaturePill
+                  icon={<Settings className="h-5 w-5 text-secondary" />}
+                  title="Custom Integration Development"
+                  description="Tailored integration solutions for your unique enterprise systems and workflows."
+                />
               </div>
             </div>
+          </div>
 
-                              {/* Feature Pills positioned around the center */}
-               <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
-                 <FeaturePill
-                   ref={feature1Ref}
-                   icon={<Shield className="h-5 w-5 text-secondary" />}
-                   title="Zero-Trust Authentication"
-                   description="Secure API connections with enterprise-grade authentication and authorization protocols."
-                   floatDelay={0}
-                   enableFloat={true}
-                 />
+          {/* Desktop Layout with AnimatedBeam */}
+          <div className="hidden lg:block">
+            <div 
+              ref={containerRef}
+              className="relative w-full max-w-6xl mx-auto h-[700px] overflow-hidden"
+            >
+              {/* Central Icon Cloud in Container */}
+              <div 
+                ref={centerRef}
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] z-10 bg-gradient-to-br from-secondary/5 to-primary/5 rounded-full border border-border/30 shadow-lg backdrop-blur-sm overflow-hidden"
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-[280px] h-[280px] flex items-center justify-center">
+                    <IconCloud images={enterpriseIntegrationImages} />
+                  </div>
                 </div>
+              </div>
 
-               <div className="absolute top-1/2 left-4 transform -translate-y-1/2">
-                 <FeaturePill
-                   ref={feature2Ref}
-                   icon={<Lock className="h-5 w-5 text-secondary" />}
-                   title="End-to-End Encryption"
-                   description="All data transfers are encrypted with AES-256 standards, ensuring complete privacy."
-                   floatDelay={1.2}
-                   enableFloat={true}
-                 />
-                </div>
+              {/* Feature Pills positioned around the center */}
+              <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
+                <FeaturePill
+                  ref={feature1Ref}
+                  icon={<Shield className="h-5 w-5 text-secondary" />}
+                  title="Zero-Trust Authentication"
+                  description="Secure API connections with enterprise-grade authentication and authorization protocols."
+                  floatDelay={0}
+                  enableFloat={true}
+                />
+              </div>
 
-               <div className="absolute top-1/2 right-4 transform -translate-y-1/2">
-                 <FeaturePill
-                   ref={feature3Ref}
-                   icon={<Zap className="h-5 w-5 text-secondary" />}
-                   title="Real-Time Sync"
-                   description="Instant synchronization with your enterprise systems for up-to-date insights."
-                   floatDelay={2.4}
-                   enableFloat={true}
-                 />
-                </div>
+              <div className="absolute top-1/2 left-4 transform -translate-y-1/2">
+                <FeaturePill
+                  ref={feature2Ref}
+                  icon={<Lock className="h-5 w-5 text-secondary" />}
+                  title="End-to-End Encryption"
+                  description="All data transfers are encrypted with AES-256 standards, ensuring complete privacy."
+                  floatDelay={1.2}
+                  enableFloat={true}
+                />
+              </div>
 
-               <div className="absolute bottom-16 left-1/4 transform -translate-x-1/2">
-                 <FeaturePill
-                   ref={feature4Ref}
-                   icon={<Users2 className="h-5 w-5 text-secondary" />}
-                   title="RBAC"
-                   description="Role-based access control with granular permissions and enterprise-grade user management."
-                   floatDelay={3.6}
-                   enableFloat={true}
-                 />
-                </div>
+              <div className="absolute top-1/2 right-4 transform -translate-y-1/2">
+                <FeaturePill
+                  ref={feature3Ref}
+                  icon={<Zap className="h-5 w-5 text-secondary" />}
+                  title="Real-Time Sync"
+                  description="Instant synchronization with your enterprise systems for up-to-date insights."
+                  floatDelay={2.4}
+                  enableFloat={true}
+                />
+              </div>
 
-               <div className="absolute bottom-16 right-1/4 transform translate-x-1/2">
-                 <FeaturePill
-                   ref={feature5Ref}
-                   icon={<Settings className="h-5 w-5 text-secondary" />}
-                   title="Custom Integration Development"
-                   description="Tailored integration solutions for your unique enterprise systems and workflows."
-                   floatDelay={4.8}
-                   enableFloat={true}
-                 />
-                </div>
+              <div className="absolute bottom-16 left-1/4 transform -translate-x-1/2">
+                <FeaturePill
+                  ref={feature4Ref}
+                  icon={<Users2 className="h-5 w-5 text-secondary" />}
+                  title="RBAC"
+                  description="Role-based access control with granular permissions and enterprise-grade user management."
+                  floatDelay={3.6}
+                  enableFloat={true}
+                />
+              </div>
 
-               {/* AnimatedBeam connections - exact edge to edge */}
-               {/* Top pill to center circle */}
-               <AnimatedBeam
-                 containerRef={containerRef}
-                 fromRef={feature1Ref}
-                 toRef={centerRef}
-                 curvature={-50}
-                 duration={3}
-                 delay={0.5}
-                 startYOffset={37}
-                 endYOffset={-140}
-               />
-               {/* Left pill to center circle */}
-               <AnimatedBeam
-                 containerRef={containerRef}
-                 fromRef={feature2Ref}
-                 toRef={centerRef}
-                 curvature={0}
-                 duration={2.5}
-                 delay={1}
-                 startXOffset={169}
-                 endXOffset={-140}
-               />
-               {/* Right pill to center circle */}
-               <AnimatedBeam
-                 containerRef={containerRef}
-                 fromRef={feature3Ref}
-                 toRef={centerRef}
-                 curvature={0}
-                 duration={2.5}
-                 delay={1.5}
-                 reverse
-                 startXOffset={-169}
-                 endXOffset={140}
-               />
-               {/* Bottom-left pill to center circle */}
-               <AnimatedBeam
-                 containerRef={containerRef}
-                 fromRef={feature4Ref}
-                 toRef={centerRef}
-                 curvature={80}
-                 duration={3}
-                 delay={0.3}
-                 startXOffset={130}
-                 startYOffset={-37}
-                 endXOffset={-85}
-                 endYOffset={95}
-               />
-               {/* Bottom-right pill to center circle */}
-               <AnimatedBeam
-                 containerRef={containerRef}
-                 fromRef={feature5Ref}
-                 toRef={centerRef}
-                 curvature={-80}
-                 duration={3}
-                 delay={0.8}
-                 reverse
-                 startXOffset={-130}
-                 startYOffset={-37}
-                 endXOffset={85}
-                 endYOffset={95}
-               />
+              <div className="absolute bottom-16 right-1/4 transform translate-x-1/2">
+                <FeaturePill
+                  ref={feature5Ref}
+                  icon={<Settings className="h-5 w-5 text-secondary" />}
+                  title="Custom Integration Development"
+                  description="Tailored integration solutions for your unique enterprise systems and workflows."
+                  floatDelay={4.8}
+                  enableFloat={true}
+                />
+              </div>
+
+              {/* AnimatedBeam connections - exact edge to edge */}
+              {/* Top pill to center circle */}
+              <AnimatedBeam
+                containerRef={containerRef}
+                fromRef={feature1Ref}
+                toRef={centerRef}
+                curvature={-50}
+                duration={3}
+                delay={0.5}
+                startYOffset={37}
+                endYOffset={-140}
+              />
+              {/* Left pill to center circle */}
+              <AnimatedBeam
+                containerRef={containerRef}
+                fromRef={feature2Ref}
+                toRef={centerRef}
+                curvature={0}
+                duration={2.5}
+                delay={1}
+                startXOffset={169}
+                endXOffset={-140}
+              />
+              {/* Right pill to center circle */}
+              <AnimatedBeam
+                containerRef={containerRef}
+                fromRef={feature3Ref}
+                toRef={centerRef}
+                curvature={0}
+                duration={2.5}
+                delay={1.5}
+                reverse
+                startXOffset={-169}
+                endXOffset={140}
+              />
+              {/* Bottom-left pill to center circle */}
+              <AnimatedBeam
+                containerRef={containerRef}
+                fromRef={feature4Ref}
+                toRef={centerRef}
+                curvature={80}
+                duration={3}
+                delay={0.3}
+                startXOffset={130}
+                startYOffset={-37}
+                endXOffset={-85}
+                endYOffset={95}
+              />
+              {/* Bottom-right pill to center circle */}
+              <AnimatedBeam
+                containerRef={containerRef}
+                fromRef={feature5Ref}
+                toRef={centerRef}
+                curvature={-80}
+                duration={3}
+                delay={0.8}
+                reverse
+                startXOffset={-130}
+                startYOffset={-37}
+                endXOffset={85}
+                endYOffset={95}
+              />
             </div>
           </div>
         </div>
 
+        {/* Company Showcase */}
+        <div className="mt-4 lg:mt-6">
+          <CompanyShowcase />
+        </div>
+
         {/* CTA Section */}
-        <div className="mt-20 lg:mt-32">
+        <div className="mt-8 lg:mt-10">
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-secondary/5 to-primary/5 border border-border/50 p-12 lg:p-16">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.15)_1px,transparent_0)] [background-size:20px_20px] opacity-20"></div>
             
@@ -454,4 +462,4 @@ export function BentoSection() {
       </div>
     </section>
   );
-}
+} 

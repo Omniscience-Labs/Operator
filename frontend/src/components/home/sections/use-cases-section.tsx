@@ -5,6 +5,7 @@ import { siteConfig } from '@/lib/home';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 
 interface UseCase {
   id: string;
@@ -26,14 +27,14 @@ export function UseCasesSection() {
   return (
     <section
       id="use-cases"
-      className="flex flex-col items-center justify-center gap-10 pb-10 w-full relative"
+      className="flex flex-col items-center justify-center gap-6 pb-10 w-full relative pt-4"
     >
       <SectionHeader>
         <h2 className="text-3xl md:text-4xl font-medium tracking-tighter text-center text-balance">
-          See Operator in action
+          See <GradientText text="Operator" /> in action
         </h2>
         <p className="text-muted-foreground text-center text-balance font-medium">
-          Explore real-world examples of how Operator completes complex tasks
+          Explore real-world examples of how <GradientText text="Operator" /> completes complex tasks
           autonomously
         </p>
       </SectionHeader>

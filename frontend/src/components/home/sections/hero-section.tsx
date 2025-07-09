@@ -795,7 +795,7 @@ export function HeroSection() {
       <div className="relative flex flex-col items-center w-full px-6 z-20">
         {/* Center content */}
         <motion.div 
-          className="relative z-30 max-w-4xl mx-auto h-full w-full flex flex-col gap-8 lg:gap-12 items-center justify-start pt-8 md:pt-12"
+          className="relative z-30 max-w-4xl mx-auto h-full w-full flex flex-col gap-8 lg:gap-12 items-center justify-center -mt-16 md:-mt-20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
