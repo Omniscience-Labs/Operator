@@ -357,25 +357,25 @@ const CollaborationSkeleton = () => {
                       <Code className="w-3 h-3 text-secondary" />
                       <span className="text-xs font-medium text-secondary">Running tools...</span>
                     </div>
-                                         <div className="space-y-1">
-                       {scenario.tools.map((tool, index) => (
-                         <motion.div
-                           key={tool.name}
-                           initial={{ opacity: 0, x: -10 }}
-                           animate={{ opacity: 1, x: 0 }}
-                           transition={{ delay: index * 0.3 }}
-                           className="flex items-center gap-2 text-xs"
-                         >
-                           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                             tool.status === 'complete' 
-                               ? 'bg-green-500' 
-                               : 'bg-yellow-500 animate-pulse'
-                           }`} />
-                           <span className="text-muted-foreground font-mono text-[10px]">{tool.name}</span>
-                           <span className="text-muted-foreground/60 text-[10px] truncate">{tool.description}</span>
-                         </motion.div>
-                       ))}
-                     </div>
+                    <div className="space-y-1">
+                      {scenario.tools.map((tool, index) => (
+                        <motion.div
+                          key={tool.name}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.3 }}
+                          className="flex items-center gap-2 text-xs"
+                        >
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                            tool.status === 'complete' 
+                              ? 'bg-green-500' 
+                              : 'bg-yellow-500 animate-pulse'
+                          }`} />
+                          <span className="text-muted-foreground font-mono text-[10px]">{tool.name}</span>
+                          <span className="text-muted-foreground/60 text-[10px] truncate">{tool.description}</span>
+                        </motion.div>
+                      ))}
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>

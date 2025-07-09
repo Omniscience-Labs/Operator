@@ -50,6 +50,9 @@ interface MessageInputProps {
   // New reasoning props
   reasoningSettings: ReasoningSettings;
   onReasoningChange: (settings: ReasoningSettings) => void;
+  
+  // Agent name prop
+  agentName?: string;
 }
 
 export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
@@ -86,6 +89,9 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
       // New reasoning props
       reasoningSettings,
       onReasoningChange,
+      
+      // Agent name prop
+      agentName,
     },
     ref,
   ) => {
@@ -195,13 +201,15 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
               canAccessModel={canAccessModel}
               refreshCustomModels={refreshCustomModels}
             />
-            <ReasoningControl
-              value={reasoningSettings}
-              onChange={onReasoningChange}
-              disabled={loading || (disabled && !isAgentRunning)}
-              modelName={selectedModel}
-              subscriptionStatus={subscriptionStatus}
-            />
+            {agentName !== 'Agent Builder' && (
+              <ReasoningControl
+                value={reasoningSettings}
+                onChange={onReasoningChange}
+                disabled={loading || (disabled && !isAgentRunning)}
+                modelName={selectedModel}
+                subscriptionStatus={subscriptionStatus}
+              />
+            )}
             <VoiceRecorder
               onTranscription={onTranscription}
               disabled={loading || (disabled && !isAgentRunning)}
