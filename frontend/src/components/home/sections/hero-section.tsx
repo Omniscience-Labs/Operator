@@ -795,7 +795,7 @@ export function HeroSection() {
       <div className="relative flex flex-col items-center w-full px-6 z-20">
         {/* Center content */}
         <motion.div 
-          className="relative z-30 max-w-4xl mx-auto h-full w-full flex flex-col gap-8 lg:gap-12 items-center justify-center py-12 md:py-20"
+          className="relative z-30 max-w-4xl mx-auto h-full w-full flex flex-col gap-8 lg:gap-12 items-center justify-center -mt-16 md:-mt-20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -812,7 +812,7 @@ export function HeroSection() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1, duration: 0.6 }}
-              className="relative z-50 mb-4 mt-4 md:mt-6"
+              className="relative z-50 mb-2"
             >
               <Link
                 href="#enterprise"
@@ -838,17 +838,58 @@ export function HeroSection() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 1.2 }}
-              className="relative z-10 w-full max-w-4xl mx-auto my-2"
+              className="relative z-10 w-full max-w-4xl mx-auto"
             >
-              <div className="relative w-full h-6 md:h-8 flex items-center justify-center">
+              <div className="relative w-full h-3 md:h-4 flex items-center justify-center">
                 {/* Glow effect container */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="relative w-full max-w-sm md:max-w-md h-[2px]">
-                    {/* Outer glow */}
+                    {/* Far outer glow - very soft and wide */}
                     <motion.div
-                      className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full blur-[16px] opacity-60"
+                      className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full blur-[48px] opacity-20"
                       style={{
                         backgroundImage: 'linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)',
+                        transform: 'scale(4, 20)',
+                        transformOrigin: 'center 30%',
+                      }}
+                      initial={{ backgroundPosition: '0% 0%' }}
+                      animate={{ backgroundPosition: '500% 100%' }}
+                      transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                    />
+                    
+                    {/* Extended outer glow */}
+                    <motion.div
+                      className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full blur-[32px] opacity-30"
+                      style={{
+                        backgroundImage: 'linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)',
+                        transform: 'scale(3, 16)',
+                        transformOrigin: 'center 30%',
+                      }}
+                      initial={{ backgroundPosition: '0% 0%' }}
+                      animate={{ backgroundPosition: '500% 100%' }}
+                      transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                    />
+                    
+                    {/* Medium glow */}
+                    <motion.div
+                      className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full blur-[20px] opacity-40"
+                      style={{
+                        backgroundImage: 'linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)',
+                        transform: 'scale(2, 10)',
+                        transformOrigin: 'center 30%',
+                      }}
+                      initial={{ backgroundPosition: '0% 0%' }}
+                      animate={{ backgroundPosition: '500% 100%' }}
+                      transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+                    />
+                    
+                    {/* Inner medium glow */}
+                    <motion.div
+                      className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full blur-[12px] opacity-50"
+                      style={{
+                        backgroundImage: 'linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)',
+                        transform: 'scale(1.8, 6)',
+                        transformOrigin: 'center 30%',
                       }}
                       initial={{ backgroundPosition: '0% 0%' }}
                       animate={{ backgroundPosition: '500% 100%' }}
@@ -857,9 +898,11 @@ export function HeroSection() {
                     
                     {/* Inner glow */}
                     <motion.div
-                      className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full blur-[8px] mix-blend-plus-lighter"
+                      className="absolute inset-0 bg-[length:700%_100%] bg-[position:0%_0%] rounded-full blur-[6px] opacity-70 mix-blend-plus-lighter"
                       style={{
                         backgroundImage: 'linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)',
+                        transform: 'scale(1.5, 4)',
+                        transformOrigin: 'center 30%',
                       }}
                       initial={{ backgroundPosition: '0% 0%' }}
                       animate={{ backgroundPosition: '500% 100%' }}
