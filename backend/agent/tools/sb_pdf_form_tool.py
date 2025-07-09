@@ -32,7 +32,7 @@ import sys
 import json
 import uuid
 import os
-from PyPDFForm import PdfWrapper
+from PyPDFForm import PdfWrapper, FormWrapper
 
 """
         return imports + script_content
@@ -190,11 +190,11 @@ from PyPDFForm import PdfWrapper
             # Create Python script to execute in sandbox
             script_content = f"""
 import json
-from PyPDFForm import PdfWrapper
+from PyPDFForm import FormWrapper
 
 try:
-    # Load PDF form
-    wrapper = PdfWrapper('{full_path}')
+    # Load PDF form using FormWrapper to preserve editability
+    wrapper = FormWrapper('{full_path}')
     
     # Get form schema
     schema = wrapper.schema
@@ -240,7 +240,7 @@ except Exception as e:
         "type": "function",
         "function": {
             "name": "fill_form",
-            "description": "Fills interactive PDF forms with fillable fields only. IMPORTANT: Use this ONLY for PDFs with actual form controls. For scanned documents, image-based PDFs, or non-fillable forms, use fill_form_coordinates instead. This will fail if the PDF doesn't have interactive form fields.",
+            "description": "Fills interactive PDF forms with fillable fields while KEEPING the form editable for manual corrections. IMPORTANT: Use this ONLY for PDFs with actual form controls. For scanned documents, image-based PDFs, or non-fillable forms, use fill_form_coordinates instead. The filled form remains editable - use flatten_form separately if you need a non-editable version.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -308,8 +308,11 @@ except Exception as e:
             # Create Python script to execute in sandbox
             script_content = f"""
 try:
-    # Load PDF form
-    wrapper = PdfWrapper('{full_path}')
+    # Import FormWrapper for editable forms instead of PdfWrapper
+    from PyPDFForm import FormWrapper
+    
+    # Load PDF form using FormWrapper to keep it editable
+    wrapper = FormWrapper('{full_path}')
     
     # Get original schema to check available fields
     original_schema = wrapper.schema
@@ -336,7 +339,7 @@ try:
         else:
             processed_fields[field_name] = value
     
-    # Fill the form with processed fields
+    # Fill the form with processed fields, explicitly keeping it editable
     filled_pdf_stream = wrapper.fill(processed_fields, flatten=False)
     
     # Ensure parent directory exists
@@ -363,20 +366,23 @@ try:
             "failed_count": failed_count,
             "failed_fields": list(unavailable_fields)[:10],  # First 10 failed fields
             "available_fields_in_pdf": len(available_fields),
-            "method": "interactive_form_fill"
+            "method": "interactive_form_fill_editable",
+            "form_remains_editable": True
         }}
     except Exception as diag_error:
         diagnostics = {{
             "note": f"Could not generate diagnostics: {{str(diag_error)}}",
-            "method": "interactive_form_fill"
+            "method": "interactive_form_fill_editable",
+            "form_remains_editable": True
         }}
     
     print(json.dumps({{
         "success": True,
-        "message": "Successfully filled PDF form and saved to '{output_path}'",
+        "message": "Successfully filled PDF form and saved to '{output_path}' (form remains editable)",
         "input_file": "{file_path}",
         "output_file": "{output_path}",
         "fields_filled": len(processed_fields),
+        "form_remains_editable": True,
         "diagnostics": diagnostics
     }}))
     
@@ -444,8 +450,8 @@ except Exception as e:
             # Create Python script to execute in sandbox
             script_content = f"""
 try:
-    # Load PDF form
-    wrapper = PdfWrapper('{full_path}')
+    # Load PDF form using FormWrapper to preserve editability
+    wrapper = FormWrapper('{full_path}')
     
     # Get schema and sample data
     schema = wrapper.schema
@@ -543,8 +549,8 @@ except Exception as e:
             # Create Python script to execute in sandbox
             script_content = f"""
 try:
-    # Load PDF form
-    wrapper = PdfWrapper('{full_path}')
+    # Load PDF form using FormWrapper 
+    wrapper = FormWrapper('{full_path}')
     
     # Flatten the form
     # First check if the PDF has any fillable fields
@@ -571,9 +577,10 @@ try:
         
         print(json.dumps({{
             "success": True,
-            "message": "Successfully flattened PDF form and saved to '{output_path}'",
+            "message": "Successfully flattened PDF form and saved to '{output_path}' (form is now non-editable)",
             "input_file": "{file_path}",
-            "output_file": "{output_path}"
+            "output_file": "{output_path}",
+            "form_flattened": True
         }}))
     
 except Exception as e:
