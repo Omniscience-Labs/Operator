@@ -311,14 +311,24 @@ try:
     # Load PDF form
     wrapper = PdfWrapper('{full_path}')
     
-    # Pre-process fields to handle boolean checkboxes
+    # Pre-process fields to handle different field types
     processed_fields = {{}}
     for field_name, value in {repr(fields)}.items():
-        # Convert boolean values to integers for checkboxes
+        field_name_lower = field_name.lower()
+        
+        # Skip signature and image fields if they contain text (not file paths)
+        if ('signature' in field_name_lower or 'image' in field_name_lower) and isinstance(value, str):
+            # Check if it's a file path (contains extension) or just text
+            if not ('.' in value and any(ext in value.lower() for ext in ['.png', '.jpg', '.jpeg', '.gif', '.bmp'])):
+                # Skip text values for signature/image fields
+                print(f"Skipping signature/image field '{{field_name}}' with text value: {{value}}")
+                continue
+        
+        # Handle boolean values for checkboxes
         if isinstance(value, bool):
-            processed_fields[field_name] = 1 if value else 0
+            processed_fields[field_name] = value  # Keep as boolean per PyPDFForm docs
         elif isinstance(value, str) and value.lower() in ['true', 'false']:
-            processed_fields[field_name] = 1 if value.lower() == 'true' else 0
+            processed_fields[field_name] = value.lower() == 'true'
         else:
             processed_fields[field_name] = value
     
