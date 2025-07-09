@@ -235,11 +235,24 @@ export function EnterpriseSecuritySection() {
           <div className="block lg:hidden">
             <div className="space-y-6">
               {/* Central Icon Cloud for mobile */}
-              <div className="flex items-center justify-center mb-8">
-                <div className="relative w-[300px] h-[300px] bg-gradient-to-br from-secondary/5 to-primary/5 rounded-full border border-border/30 shadow-lg backdrop-blur-sm">
+              <div className="flex items-center justify-center mb-8 px-4">
+                <div className="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] bg-gradient-to-br from-secondary/5 to-primary/5 rounded-full border border-border/30 shadow-lg backdrop-blur-sm">
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-[260px] h-[260px]">
-                      <IconCloud images={enterpriseIntegrationImages} />
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="block sm:hidden">
+                        <IconCloud 
+                          images={enterpriseIntegrationImages} 
+                          width={280} 
+                          height={280}
+                        />
+                      </div>
+                      <div className="hidden sm:block">
+                        <IconCloud 
+                          images={enterpriseIntegrationImages} 
+                          width={320} 
+                          height={320}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -297,7 +310,7 @@ export function EnterpriseSecuritySection() {
               >
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-[280px] h-[280px] flex items-center justify-center">
-                    <IconCloud images={enterpriseIntegrationImages} />
+                    <IconCloud images={enterpriseIntegrationImages} width={280} height={280} />
                   </div>
                 </div>
               </div>
