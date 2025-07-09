@@ -1024,10 +1024,10 @@ try:
     else:
         # Analyze specific page
         if len(doc) <= {page_number}:
-        print(json.dumps({{
-            "success": False,
-            "error": f"Page {{page_number}} does not exist. Document has {{len(doc)}} pages."
-        }}))
+            print(json.dumps({{
+                "success": False,
+                "error": f"Page {page_number} does not exist. Document has {{len(doc)}} pages."
+            }}))
             doc.close()
             exit()
         pages_to_analyze = [{page_number}]
@@ -1548,86 +1548,87 @@ try:
             page = doc[page_num]
             width = page.rect.width
             height = page.rect.height
-        
-        # Colors
-        major_color = (0.6, 0.6, 0.6)  # Darker gray for major lines
-        fine_color = (0.8, 0.8, 0.8)   # Lighter gray for fine lines
-        label_color = (0, 0, 0.8)       # Blue for labels
-        crosshair_color = (1, 0, 0)     # Red for crosshairs
-        
-        # Calculate fine grid spacing (5 subdivisions)
-        fine_spacing = grid_spacing // 5 if fine_grid and grid_spacing >= 10 else grid_spacing
-        
-        # Draw fine grid first (if enabled)
-        if fine_grid and fine_spacing < grid_spacing:
-            # Vertical fine lines
-            for x in range(0, int(width), fine_spacing):
-                if x % grid_spacing != 0:  # Skip major grid positions
-                    page.draw_line((x, 0), (x, height), width=0.3, color=fine_color)
             
-            # Horizontal fine lines  
-            for y in range(0, int(height), fine_spacing):
-                if y % grid_spacing != 0:  # Skip major grid positions
-                    page.draw_line((0, y), (width, y), width=0.3, color=fine_color)
-        
-        # Draw major grid lines
-        major_positions_x = []
-        major_positions_y = []
-        
-        # Vertical major lines
-        for x in range(0, int(width), grid_spacing):
-            page.draw_line((x, 0), (x, height), width=0.8, color=major_color)
-            major_positions_x.append(x)
-        
-        # Horizontal major lines
-        for y in range(0, int(height), grid_spacing):
-            page.draw_line((0, y), (width, y), width=0.8, color=major_color)
-            major_positions_y.append(y)
-        
-        # Add coordinate labels at major intersections
-        if coordinate_labels:
-            for x in major_positions_x:
-                for y in major_positions_y:
-                    if x > 0 and y > 20:  # Skip edges and top area
-                        # X coordinate label (horizontal)
-                        if y == major_positions_y[1] if len(major_positions_y) > 1 else y:  # Second row
-                            page.insert_text((x + 2, y - 8), f"{{x}}", fontsize=7, color=label_color)
-                        
-                        # Y coordinate label (vertical) 
-                        if x == major_positions_x[1] if len(major_positions_x) > 1 else x:  # Second column
-                            page.insert_text((x - 15, y - 2), f"{{y}}", fontsize=7, color=label_color)
-        
-        # Add crosshairs at major intersections for precision targeting
-        if crosshairs:
-            crosshair_size = 5
-            for x in major_positions_x[1::2]:  # Every other intersection
-                for y in major_positions_y[1::2]:
-                    if x > crosshair_size and y > crosshair_size and x < width - crosshair_size and y < height - crosshair_size:
-                        # Draw crosshair
-                        page.draw_line((x - crosshair_size, y), (x + crosshair_size, y), width=1, color=crosshair_color)
-                        page.draw_line((x, y - crosshair_size), (x, y + crosshair_size), width=1, color=crosshair_color)
-                        
-                        # Add precise coordinate label
-                        page.insert_text((x + crosshair_size + 2, y + 2), f"({{x}},{{y}})", fontsize=6, color=crosshair_color)
-        
-        # Add enhanced instructions
-        instructions_bg = pymupdf.Rect(5, 5, 250, 85)
-        page.draw_rect(instructions_bg, color=(1, 1, 1), fill=(1, 1, 1), width=1)
-        
-        instructions = [
-            "PRECISION COORDINATE GRID",
-            f"Major grid: {{grid_spacing}}pt spacing",
-            f"Fine grid: {{'ON' if fine_grid else 'OFF'}} ({{fine_spacing}}pt)" if fine_grid else f"Fine grid: OFF",
-            f"Labels: {{'ON' if coordinate_labels else 'OFF'}}",
-            f"Crosshairs: {{'ON' if crosshairs else 'OFF'}}",
-            "Page size: {{int(width)}} x {{int(height)}} pts",
-            "Use coordinates for fill_form_coordinates"
-        ]
-        
-        for i, instruction in enumerate(instructions):
-            font_size = 9 if i == 0 else 8
-            color = (0, 0, 0.6) if i == 0 else (0.2, 0.2, 0.2)
-            page.insert_text((8, 18 + i * 10), instruction, fontsize=font_size, color=color)
+            # Colors
+            major_color = (0.6, 0.6, 0.6)  # Darker gray for major lines
+            fine_color = (0.8, 0.8, 0.8)   # Lighter gray for fine lines
+            label_color = (0, 0, 0.8)       # Blue for labels
+            crosshair_color = (1, 0, 0)     # Red for crosshairs
+            
+            # Calculate fine grid spacing (5 subdivisions)
+            fine_spacing = grid_spacing // 5 if fine_grid and grid_spacing >= 10 else grid_spacing
+            
+            # Draw fine grid first (if enabled)
+            if fine_grid and fine_spacing < grid_spacing:
+                # Vertical fine lines
+                for x in range(0, int(width), fine_spacing):
+                    if x % grid_spacing != 0:  # Skip major grid positions
+                        page.draw_line((x, 0), (x, height), width=0.3, color=fine_color)
+                
+                # Horizontal fine lines  
+                for y in range(0, int(height), fine_spacing):
+                    if y % grid_spacing != 0:  # Skip major grid positions
+                        page.draw_line((0, y), (width, y), width=0.3, color=fine_color)
+            
+            # Draw major grid lines
+            major_positions_x = []
+            major_positions_y = []
+            
+            # Vertical major lines
+            for x in range(0, int(width), grid_spacing):
+                page.draw_line((x, 0), (x, height), width=0.8, color=major_color)
+                major_positions_x.append(x)
+            
+            # Horizontal major lines
+            for y in range(0, int(height), grid_spacing):
+                page.draw_line((0, y), (width, y), width=0.8, color=major_color)
+                major_positions_y.append(y)
+            
+            # Add coordinate labels at major intersections
+            if coordinate_labels:
+                for x in major_positions_x:
+                    for y in major_positions_y:
+                        if x > 0 and y > 20:  # Skip edges and top area
+                            # X coordinate label (horizontal)
+                            if y == major_positions_y[1] if len(major_positions_y) > 1 else y:  # Second row
+                                page.insert_text((x + 2, y - 8), f"{{x}}", fontsize=7, color=label_color)
+                            
+                            # Y coordinate label (vertical) 
+                            if x == major_positions_x[1] if len(major_positions_x) > 1 else x:  # Second column
+                                page.insert_text((x - 15, y - 2), f"{{y}}", fontsize=7, color=label_color)
+            
+            # Add crosshairs at major intersections for precision targeting
+            if crosshairs:
+                crosshair_size = 5
+                for x in major_positions_x[1::2]:  # Every other intersection
+                    for y in major_positions_y[1::2]:
+                        if x > crosshair_size and y > crosshair_size and x < width - crosshair_size and y < height - crosshair_size:
+                            # Draw crosshair
+                            page.draw_line((x - crosshair_size, y), (x + crosshair_size, y), width=1, color=crosshair_color)
+                            page.draw_line((x, y - crosshair_size), (x, y + crosshair_size), width=1, color=crosshair_color)
+                            
+                            # Add precise coordinate label
+                            page.insert_text((x + crosshair_size + 2, y + 2), f"({{x}},{{y}})", fontsize=6, color=crosshair_color)
+            
+            # Add enhanced instructions (only on first page)
+            if page_num == 0:
+                instructions_bg = pymupdf.Rect(5, 5, 250, 85)
+                page.draw_rect(instructions_bg, color=(1, 1, 1), fill=(1, 1, 1), width=1)
+                
+                instructions = [
+                    "PRECISION COORDINATE GRID",
+                    f"Major grid: {{grid_spacing}}pt spacing",
+                    f"Fine grid: {{'ON' if fine_grid else 'OFF'}} ({{fine_spacing}}pt)" if fine_grid else f"Fine grid: OFF",
+                    f"Labels: {{'ON' if coordinate_labels else 'OFF'}}",
+                    f"Crosshairs: {{'ON' if crosshairs else 'OFF'}}",
+                    "Page size: {{int(width)}} x {{int(height)}} pts",
+                    "Use coordinates for fill_form_coordinates"
+                ]
+                
+                for i, instruction in enumerate(instructions):
+                    font_size = 9 if i == 0 else 8
+                    color = (0, 0, 0.6) if i == 0 else (0.2, 0.2, 0.2)
+                    page.insert_text((8, 18 + i * 10), instruction, fontsize=font_size, color=color)
     
     # Save the grid overlay PDF
     os.makedirs(os.path.dirname('{grid_path}'), exist_ok=True)
