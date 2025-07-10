@@ -52,10 +52,25 @@ class RapidDataProviderBase:
 
         method = endpoint.get('method', 'GET').upper()
         
-        if method == 'GET':
-            response = requests.get(url, params=payload, headers=headers)
-        elif method == 'POST':
-            response = requests.post(url, json=payload, headers=headers)
-        else:
-            raise ValueError(f"Unsupported HTTP method: {method}")
-        return response.json()
+        try:
+            if method == 'GET':
+                response = requests.get(url, params=payload, headers=headers)
+            elif method == 'POST':
+                response = requests.post(url, json=payload, headers=headers)
+            else:
+                raise ValueError(f"Unsupported HTTP method: {method}")
+            
+            # Check if response is successful
+            if not response.ok:
+                raise ValueError(f"API request failed with status {response.status_code}: {response.text}")
+            
+            # Try to parse JSON response
+            try:
+                return response.json()
+            except ValueError as e:
+                raise ValueError(f"Invalid JSON response from API: {e}")
+                
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"Network error when calling API: {e}")
+        except Exception as e:
+            raise ValueError(f"Error calling API endpoint: {e}")
