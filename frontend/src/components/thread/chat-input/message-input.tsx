@@ -17,6 +17,7 @@ import { TooltipProvider, TooltipTrigger } from '@radix-ui/react-tooltip';
 import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
 import { Crown } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useRouter } from 'next/navigation';
 
 interface MessageInputProps {
   value: string;
@@ -92,6 +93,7 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
     ref,
   ) => {
     const isMobile = useIsMobile();
+    const router = useRouter();
     
     useEffect(() => {
       const textarea = ref as React.RefObject<HTMLTextAreaElement>;
@@ -179,8 +181,15 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
           {subscriptionStatus === 'no_subscription' && !isLocalMode() &&
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger>
-                  <Crown className='h-4 w-4 text-amber-500' />
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 hover:bg-amber-500/10"
+                    onClick={() => router.push('/settings/billing')}
+                  >
+                    <Crown className='h-4 w-4 text-amber-500' />
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>The free tier is severely limited by inferior models; upgrade to experience the true full Operator experience.</p>
