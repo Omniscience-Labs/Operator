@@ -132,9 +132,9 @@ def prepare_params(
             
             # Claude 4 models have higher limits but still need to be capped
             elif ("claude-sonnet-4" in model_name or "claude-4" in model_name):
-                model_max_tokens = min(max_tokens, 32768)  # Claude 4 supports up to 32K output tokens
-                if max_tokens > 32768:
-                    logger.warning(f"Reducing max_tokens from {max_tokens} to 32768 for Claude 4 model: {model_name}")
+                model_max_tokens = min(max_tokens, 64000)  # Claude 4 supports up to 64K output tokens
+                if max_tokens > 64000:
+                    logger.warning(f"Reducing max_tokens from {max_tokens} to 64000 for Claude 4 model: {model_name}")
             
             # Other Claude models - use conservative limit
             elif ("claude" in model_name.lower() or "anthropic" in model_name.lower()):
