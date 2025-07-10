@@ -20,6 +20,8 @@ export interface ModelOption {
   top?: boolean;
   isCustom?: boolean;
   priority?: number;
+  recommended?: boolean; // Added missing recommended field
+  lowQuality?: boolean;  // Added missing lowQuality field for completeness
 }
 
 export interface CustomModel {

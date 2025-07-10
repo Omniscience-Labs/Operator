@@ -404,8 +404,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     // Fix the highlighting logic to use the index parameter instead of searching in filteredOptions
     const isHighlighted = index === highlightedIndex;
     const isPremium = opt.requiresSubscription;
-    const isLowQuality = MODELS[opt.id]?.lowQuality || false;
-    const isRecommended = MODELS[opt.id]?.recommended || false;
+    const isLowQuality = opt.lowQuality || MODELS[opt.id]?.lowQuality || false;
+    const isRecommended = opt.recommended || MODELS[opt.id]?.recommended || false;
 
     return (
       <TooltipProvider key={opt.uniqueKey || `model-${opt.id}-${index}`}>
@@ -514,7 +514,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             className="h-8 rounded-lg text-muted-foreground shadow-none border-none focus:ring-0 px-3"
           >
             <div className="flex items-center gap-1 text-sm font-medium">
-              {MODELS[selectedModel]?.lowQuality && (
+              {(enhancedModelOptions.find(m => m.id === selectedModel)?.lowQuality || MODELS[selectedModel]?.lowQuality) && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -577,10 +577,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                               </div>
                               <div className="flex items-center gap-2">
                                 {/* Show capabilities */}
-                                {(MODELS[model.id]?.lowQuality || false) && (
+                                {(model.lowQuality || MODELS[model.id]?.lowQuality || false) && (
                                   <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
                                 )}
-                                {(MODELS[model.id]?.recommended || false) && (
+                                {(model.recommended || MODELS[model.id]?.recommended || false) && (
                                   <span className="text-xs px-1.5 py-0.5 rounded-sm bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 font-medium">
                                     Recommended
                                   </span>
@@ -592,7 +592,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                             </DropdownMenuItem>
                           </div>
                         </TooltipTrigger>
-                        {MODELS[model.id]?.lowQuality && (
+                        {(model.lowQuality || MODELS[model.id]?.lowQuality) && (
                           <TooltipContent side="left" className="text-xs max-w-xs">
                             <p>Basic model with limited capabilities</p>
                           </TooltipContent>
@@ -631,7 +631,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                   </div>
                                   <div className="flex items-center gap-2">
                                     {/* Show capabilities */}
-                                    {MODELS[model.id]?.recommended && (
+                                    {(model.recommended || MODELS[model.id]?.recommended) && (
                                       <span className="text-xs px-1.5 py-0.5 rounded-sm bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 font-medium whitespace-nowrap">
                                         Recommended
                                       </span>
@@ -709,15 +709,15 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   )
                   // Sort to prioritize recommended paid models first
                   .sort((a, b) => {
-                    const aRecommendedPaid = MODELS[a.id]?.recommended && a.requiresSubscription;
-                    const bRecommendedPaid = MODELS[b.id]?.recommended && b.requiresSubscription;
+                    const aRecommendedPaid = (a.recommended || MODELS[a.id]?.recommended) && a.requiresSubscription;
+                    const bRecommendedPaid = (b.recommended || MODELS[b.id]?.recommended) && b.requiresSubscription;
 
                     if (aRecommendedPaid && !bRecommendedPaid) return -1;
                     if (!aRecommendedPaid && bRecommendedPaid) return 1;
 
                     // Secondary sorting: recommended free models next
-                    const aRecommended = MODELS[a.id]?.recommended;
-                    const bRecommended = MODELS[b.id]?.recommended;
+                    const aRecommended = a.recommended || MODELS[a.id]?.recommended;
+                    const bRecommended = b.recommended || MODELS[b.id]?.recommended;
 
                     if (aRecommended && !bRecommended) return -1;
                     if (!aRecommended && bRecommended) return 1;
