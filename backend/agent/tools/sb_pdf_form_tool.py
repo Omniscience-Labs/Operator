@@ -1961,10 +1961,18 @@ except Exception as e:
             # Determine output path
             if output_path:
                 output_path = self.clean_path(output_path)
+                # Ensure Final_filled_ prefix
+                path_parts = output_path.split('/')
+                filename = path_parts[-1]
+                if not filename.startswith("Final_filled_"):
+                    filename = f"Final_filled_{filename}"
+                    path_parts[-1] = filename
+                    output_path = '/'.join(path_parts)
                 filled_path = f"{self.workspace_path}/{output_path}"
             else:
                 base_name = os.path.splitext(file_path)[0]
-                filled_path = f"{self.workspace_path}/{base_name}_smart_filled_{uuid.uuid4().hex[:8]}.pdf"
+                filename = os.path.basename(base_name)
+                filled_path = f"{self.workspace_path}/Final_filled_{filename}_{uuid.uuid4().hex[:8]}.pdf"
                 output_path = filled_path.replace(f"{self.workspace_path}/", "")
             
             script_content = f"""
@@ -2367,12 +2375,13 @@ def match_form_data_to_fields(form_data, detected_fields):
     return matches
 
 def smart_fill_pdf(pdf_path, form_data, output_path):
-    '''Fill PDF using enhanced intelligent field detection'''
+    '''Fill PDF using enhanced intelligent field detection with automatic overlap removal'''
     try:
         doc = pymupdf.open(pdf_path)
         
         total_matches = 0
         total_placed = 0
+        total_removed_overlaps = 0
         all_matches = []
         page_results = []
         
@@ -2386,7 +2395,23 @@ def smart_fill_pdf(pdf_path, form_data, output_path):
             matches = match_form_data_to_fields(form_data, detected_fields)
             
             page_placed = 0
+            page_overlaps_removed = 0
             page_matches_info = []
+            placed_text_positions = []
+            
+            # Get existing text on the page for overlap detection
+            existing_text_dict = page.get_text("dict")
+            existing_words = []
+            for block in existing_text_dict["blocks"]:
+                if "lines" in block:
+                    for line in block["lines"]:
+                        for span in line["spans"]:
+                            text = span["text"].strip()
+                            if text and len(text) > 1:  # Ignore single characters
+                                existing_words.append({{
+                                    "text": text,
+                                    "bbox": span["bbox"]
+                                }})
             
             for match in matches:
                 try:
@@ -2406,27 +2431,99 @@ def smart_fill_pdf(pdf_path, form_data, output_path):
                     elif len(data_value) > 60:
                         fontsize = 7
                     
-                    # Insert the text
-                    page.insert_text(
-                        (x, y),
-                        data_value,
-                        fontsize=fontsize,
-                        color=(0, 0, 0)
-                    )
+                    # Calculate bounding box for the text we're about to place
+                    # Rough estimation: character width ≈ fontsize * 0.6, height ≈ fontsize * 1.2
+                    text_width = len(data_value) * fontsize * 0.6
+                    text_height = fontsize * 1.2
+                    new_text_bbox = [x, y - text_height, x + text_width, y]
                     
-                    page_placed += 1
-                    total_placed += 1
+                    # Check for overlap with existing text
+                    has_significant_overlap = False
+                    overlapping_text = ""
                     
-                    page_matches_info.append({{
-                        "field_label": field["label"],
-                        "data_key": match["data_key"],
-                        "value": data_value,
-                        "position": {{"x": x, "y": y}},
-                        "match_score": match["match_score"]
-                    }})
+                    for existing_word in existing_words:
+                        existing_bbox = existing_word["bbox"]
+                        
+                        # Calculate overlap percentage
+                        overlap_area = max(0, min(new_text_bbox[2], existing_bbox[2]) - max(new_text_bbox[0], existing_bbox[0])) * \
+                                     max(0, min(new_text_bbox[3], existing_bbox[3]) - max(new_text_bbox[1], existing_bbox[1]))
+                        
+                        new_text_area = (new_text_bbox[2] - new_text_bbox[0]) * (new_text_bbox[3] - new_text_bbox[1])
+                        existing_area = (existing_bbox[2] - existing_bbox[0]) * (existing_bbox[3] - existing_bbox[1])
+                        
+                        if new_text_area > 0 and existing_area > 0:
+                            overlap_percentage_new = (overlap_area / new_text_area) * 100
+                            overlap_percentage_existing = (overlap_area / existing_area) * 100
+                            
+                            # If either overlap is > 20%, consider it significant
+                            if overlap_percentage_new > 20 or overlap_percentage_existing > 20:
+                                has_significant_overlap = True
+                                overlapping_text = existing_word["text"]
+                                break
+                    
+                    # Also check for overlap with previously placed text on this page
+                    for placed_pos in placed_text_positions:
+                        placed_bbox = placed_pos["bbox"]
+                        
+                        overlap_area = max(0, min(new_text_bbox[2], placed_bbox[2]) - max(new_text_bbox[0], placed_bbox[0])) * \
+                                     max(0, min(new_text_bbox[3], placed_bbox[3]) - max(new_text_bbox[1], placed_bbox[1]))
+                        
+                        new_text_area = (new_text_bbox[2] - new_text_bbox[0]) * (new_text_bbox[3] - new_text_bbox[1])
+                        placed_area = (placed_bbox[2] - placed_bbox[0]) * (placed_bbox[3] - placed_bbox[1])
+                        
+                        if new_text_area > 0 and placed_area > 0:
+                            overlap_percentage = (overlap_area / min(new_text_area, placed_area)) * 100
+                            
+                            if overlap_percentage > 20:
+                                has_significant_overlap = True
+                                overlapping_text = placed_pos["text"]
+                                break
+                    
+                    # Only place text if no significant overlap
+                    if not has_significant_overlap:
+                        # Insert the text
+                        page.insert_text(
+                            (x, y),
+                            data_value,
+                            fontsize=fontsize,
+                            color=(0, 0, 0)
+                        )
+                        
+                        page_placed += 1
+                        total_placed += 1
+                        
+                        # Track placed text for future overlap detection
+                        placed_text_positions.append({{
+                            "text": data_value,
+                            "bbox": new_text_bbox
+                        }})
+                        
+                        page_matches_info.append({{
+                            "field_label": field["label"],
+                            "data_key": match["data_key"],
+                            "value": data_value,
+                            "position": {{"x": x, "y": y}},
+                            "match_score": match["match_score"],
+                            "status": "placed"
+                        }})
+                    else:
+                        page_overlaps_removed += 1
+                        total_removed_overlaps += 1
+                        
+                        page_matches_info.append({{
+                            "field_label": field["label"],
+                            "data_key": match["data_key"],
+                            "value": data_value,
+                            "position": {{"x": x, "y": y}},
+                            "match_score": match["match_score"],
+                            "status": "removed_overlap",
+                            "overlapping_with": overlapping_text[:30]
+                        }})
+                        
+                        print(f"Removed overlap: '{{match['data_key']}}' would overlap with '{{overlapping_text[:30]}}'")
                     
                 except Exception as e:
-                    print(f"Error placing text for {{match['data_key']}}: {{e}}")
+                    print(f"Error processing {{match['data_key']}}: {{e}}")
             
             total_matches += len(matches)
             page_results.append({{
@@ -2434,6 +2531,7 @@ def smart_fill_pdf(pdf_path, form_data, output_path):
                 "fields_detected": len(detected_fields),
                 "matches_found": len(matches),
                 "successfully_placed": page_placed,
+                "overlaps_removed": page_overlaps_removed,
                 "matches": page_matches_info
             }})
             
@@ -2452,6 +2550,7 @@ def smart_fill_pdf(pdf_path, form_data, output_path):
             "total_fields_requested": requested_fields,
             "total_matches_found": total_matches,
             "total_successfully_placed": total_placed,
+            "total_overlaps_removed": total_removed_overlaps,
             "success_rate": round(success_rate, 1),
             "pages_processed": len(page_results),
             "page_results": page_results
@@ -2470,16 +2569,19 @@ try:
     
     final_result = {{
         "success": True,
-        "method": "enhanced_smart_cv_detection",
-        "message": f"Enhanced smart form filling completed: {{result['total_successfully_placed']}}/{{result['total_fields_requested']}} fields placed ({{result['success_rate']}}%)",
+        "method": "enhanced_smart_cv_detection_with_overlap_removal",
+        "message": f"Smart form filling completed with automatic overlap removal: {{result['total_successfully_placed']}}/{{result['total_fields_requested']}} fields placed ({{result['success_rate']}}%), {{result.get('total_overlaps_removed', 0)}} overlaps removed",
         "output_path": "{output_path}",
         "input_file": "{file_path}",
         "fields_requested": result["total_fields_requested"],
         "fields_placed": result["total_successfully_placed"],
+        "overlaps_removed": result.get("total_overlaps_removed", 0),
         "success_rate": result["success_rate"],
         "pages_processed": result["pages_processed"],
         "page_details": result["page_results"],
-        "method_used": "enhanced_computer_vision_field_detection"
+        "method_used": "enhanced_computer_vision_with_overlap_detection",
+        "final_output": True,
+        "overlap_threshold": "20%"
     }}
     
     print(json.dumps(final_result))
