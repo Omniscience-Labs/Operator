@@ -31,6 +31,30 @@ class DataProvidersTool(Tool):
         """Get cost estimate for a data provider call."""
         return self.credit_calculator.estimate_data_provider_call_cost(service_name, route)
 
+    def _fail_response_with_credit_tracking(self, error_message: str, service_name: str = None, route: str = None, payload: Dict[str, Any] = None) -> ToolResult:
+        """Create a fail response with credit tracking metadata when possible."""
+        failed_result = self.fail_response(error_message)
+        
+        # Only add credit tracking if we have enough information
+        if service_name and route:
+            try:
+                credits, credit_details, tool_name_for_analytics = self.credit_calculator.calculate_data_provider_credits(
+                    service_name, route, payload
+                )
+                
+                failed_result.metadata['_credit_tracking'] = {
+                    'tool_name_for_analytics': tool_name_for_analytics,
+                    'data_provider_name': service_name,
+                    'route': route,
+                    'credits': float(credits),
+                    'calculation_details': credit_details,
+                    'usage_type': 'tool'
+                }
+            except Exception as calc_error:
+                logger.debug(f"Could not calculate credits for failed call: {calc_error}")
+        
+        return failed_result
+
     @openapi_schema({
         "type": "function",
         "function": {
@@ -212,10 +236,16 @@ Use this tool when you need to discover what endpoints are available.
             
             data_provider = self.register_data_providers[service_name]
             if route == service_name:
-                return self.fail_response(f"route '{route}' is the same as service_name '{service_name}'. Please use a valid endpoint route.")
+                return self._fail_response_with_credit_tracking(
+                    f"route '{route}' is the same as service_name '{service_name}'. Please use a valid endpoint route.",
+                    service_name, route, payload
+                )
             
             if route not in data_provider.get_endpoints().keys():
-                return self.fail_response(f"Endpoint '{route}' not found in {service_name} data provider.")
+                return self._fail_response_with_credit_tracking(
+                    f"Endpoint '{route}' not found in {service_name} data provider.",
+                    service_name, route, payload
+                )
             
             # Calculate credit cost BEFORE execution
             credits, credit_details, tool_name_for_analytics = self.credit_calculator.calculate_data_provider_credits(
@@ -266,4 +296,5 @@ Use this tool when you need to discover what endpoints are available.
             simplified_message = f"Error executing data provider call: {error_message[:200]}"
             if len(error_message) > 200:
                 simplified_message += "..."
-            return self.fail_response(simplified_message)
+            
+            return self._fail_response_with_credit_tracking(simplified_message, service_name, route, payload)
