@@ -295,7 +295,7 @@ export const useModelSelection = () => {
           requiresSubscription: false,
           description: MODELS[DEFAULT_FREE_MODEL_ID]?.description || MODEL_TIERS.free.baseDescription,
           priority: MODELS[DEFAULT_FREE_MODEL_ID]?.priority || 100,
-          recommended: MODELS[DEFAULT_FREE_MODEL_ID]?.recommended || false,
+          recommended: MODELS[DEFAULT_FREE_MODEL_ID]?.recommended ?? false,
           lowQuality: MODELS[DEFAULT_FREE_MODEL_ID]?.lowQuality || false,
           top: (MODELS[DEFAULT_FREE_MODEL_ID]?.priority || 100) >= 90
         },
@@ -358,16 +358,24 @@ export const useModelSelection = () => {
         const modelData = MODELS[shortName] || {};
         const isPremium = model?.requires_subscription || modelData.tier === 'premium' || false;
         
+        // ROBUST FIX: Ensure recommended flag is preserved for our main model
+        // If this is our main Omni 5 model, ensure it's marked as recommended
+        let isRecommended = modelData.recommended || false;
+        if (shortName === DEFAULT_FREE_MODEL_ID || shortName === DEFAULT_PREMIUM_MODEL_ID) {
+          // For our main model, always mark as recommended regardless of API data
+          isRecommended = true;
+        }
+        
         return {
           id: shortName,
           label: cleanLabel,
           requiresSubscription: isPremium,
           description: modelData.description || 
             (isPremium ? MODEL_TIERS.premium.baseDescription : MODEL_TIERS.free.baseDescription),
-          top: modelData.priority >= 90, // Mark high-priority models as "top"
+          top: (modelData.priority || 0) >= 90, // Mark high-priority models as "top"
           priority: modelData.priority || 0,
           lowQuality: modelData.lowQuality || false,
-          recommended: modelData.recommended || false
+          recommended: isRecommended
         };
       });
     }
