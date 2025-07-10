@@ -256,91 +256,79 @@ def collect_daytona_info():
 
 def collect_llm_api_keys():
     """Collect LLM API keys for various providers"""
-    print_info("Suna now uses only Omni 5 - the most advanced AI model available")
-    print_info("You need AWS Bedrock credentials to access Omni 5 through Anthropic")
+    print_info("Suna now supports both Omni 4 and Omni 5 - advanced AI models")
+    print_info("Choose your preferred provider configuration:")
     
-    # Only Anthropic (AWS Bedrock) is available for Omni 5
-    print(f"\n{Colors.CYAN}Available LLM provider:{Colors.ENDC}")
-    print(f"{Colors.CYAN}[1] {Colors.GREEN}Anthropic (AWS Bedrock){Colors.ENDC} {Colors.CYAN}- Omni 5 access{Colors.ENDC}")
-    print_info("This is the only available option for accessing Omni 5")
+    # Available providers - Both Anthropic direct API and AWS Bedrock
+    print(f"\n{Colors.CYAN}Available LLM providers:{Colors.ENDC}")
+    print(f"{Colors.CYAN}[1] {Colors.GREEN}Anthropic Direct API{Colors.ENDC} {Colors.CYAN}- Omni 4 access (Recommended){Colors.ENDC}")
+    print(f"{Colors.CYAN}[2] {Colors.GREEN}Anthropic (AWS Bedrock){Colors.ENDC} {Colors.CYAN}- Omni 5 access{Colors.ENDC}")
+    print(f"{Colors.CYAN}[3] {Colors.GREEN}Both Providers{Colors.ENDC} {Colors.CYAN}- Access to both Omni 4 and Omni 5{Colors.ENDC}")
     
-    # Automatically select Anthropic since it's the only option
-    selected_providers = ['ANTHROPIC']
-    print_info("Automatically configuring Anthropic (AWS Bedrock) for Omni 5 access")
-    
-    # # Legacy multi-provider code commented out - only Omni 5 is active
-    # while True:
-    #     providers_input = input("Select providers (required, at least one): ")
-    #     selected_providers = []
-    #     
-    #     try:
-    #         # Parse the input, handle both comma-separated and space-separated
-    #         provider_numbers = [int(p.strip()) for p in providers_input.replace(',', ' ').split()]
-    #         
-    #         for num in provider_numbers:
-    #             if num == 1:
-    #                 selected_providers.append('OPENAI')
-    #             elif num == 2:
-    #                 selected_providers.append('ANTHROPIC')
-    #             elif num == 3:
-    #                 selected_providers.append('OPENROUTER')
-    #         
-    #         if selected_providers:
-    #             break
-    #         else:
-    #             print_error("Please select at least one provider.")
-    #     except ValueError:
-    #         print_error("Invalid input. Please enter provider numbers (e.g., 1,2,3).")
+    # Get user selection
+    while True:
+        providers_input = input("Select provider (1-3, or press Enter for Anthropic Direct API): ").strip()
+        selected_providers = []
+        
+        if not providers_input or providers_input == '1':
+            selected_providers = ['ANTHROPIC_DIRECT']
+            print_info("Selected: Anthropic Direct API for Omni 4 access")
+            break
+        elif providers_input == '2':
+            selected_providers = ['ANTHROPIC_BEDROCK']
+            print_info("Selected: AWS Bedrock for Omni 5 access")
+            break
+        elif providers_input == '3':
+            selected_providers = ['ANTHROPIC_DIRECT', 'ANTHROPIC_BEDROCK']
+            print_info("Selected: Both providers for complete access")
+            break
+        else:
+            print_error("Invalid selection. Please enter 1, 2, or 3.")
 
     # Collect API keys for selected providers
     api_keys = {}
     model_info = {}
     
-    # Model aliases for reference - Only Omni 5 is recommended and active
+    # Model aliases for reference - Both Omni 4 and Omni 5 available
     model_aliases = {
         'OPENAI': [
-            # 'openai/gpt-4o', 'openai/gpt-4o-mini'  # Commented out - only Omni 5 is active
+            # 'openai/gpt-4o', 'openai/gpt-4o-mini'  # Commented out - focusing on Omni models
         ],
-        'ANTHROPIC': [
-            # Only Omni 5 is available and recommended
+        'ANTHROPIC_DIRECT': [
+            'anthropic/claude-3-5-sonnet-latest',  # Omni 4 - Direct Anthropic API (Recommended)
+        ],
+        'ANTHROPIC_BEDROCK': [
             'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0',  # Omni 5 - AWS Bedrock
-            # 'anthropic/claude-sonnet-4-20250514',  # Legacy direct API - Commented out
-            # 'anthropic/claude-3-5-sonnet-latest'  # Commented out - only Omni 5 is active
         ],
         'OPENROUTER': [
-            # 'openrouter/google/gemini-2.5-pro-preview', 'openrouter/deepseek/deepseek-chat-v3-0324:free', 'openrouter/openai/gpt-4o-2024-11-20'  # Commented out - only Omni 5 is active
+            # 'openrouter/google/gemini-2.5-pro-preview', 'openrouter/deepseek/deepseek-chat-v3-0324:free', 'openrouter/openai/gpt-4o-2024-11-20'  # Commented out
         ],
     }
     
     for provider in selected_providers:
-        print_info(f"\nConfiguring {provider}")
+        print_info(f"\nConfiguring {provider.replace('_', ' ')}")
         
-        # OpenAI provider commented out - only Omni 5 is active
-        # if provider == 'OPENAI':
-        #     while True:
-        #         api_key = input("Enter your OpenAI API key: ")
-        #         if validate_api_key(api_key):
-        #             api_keys['OPENAI_API_KEY'] = api_key
-        #             
-        #             # Recommend default model
-        #             print(f"\n{Colors.CYAN}Recommended OpenAI models:{Colors.ENDC}")
-        #             for i, model in enumerate(model_aliases['OPENAI'], 1):
-        #                 print(f"{Colors.CYAN}[{i}] {Colors.GREEN}{model}{Colors.ENDC}")
-        #             
-        #             model_choice = input("Select default model (1-4) or press Enter for gpt-4o: ").strip()
-        #             if not model_choice:
-        #                 model_info['default_model'] = 'openai/gpt-4o'
-        #             elif model_choice.isdigit() and 1 <= int(model_choice) <= len(model_aliases['OPENAI']):
-        #                 model_info['default_model'] = model_aliases['OPENAI'][int(model_choice) - 1]
-        #             else:
-        #                 model_info['default_model'] = 'openai/gpt-4o'
-        #                 print_warning(f"Invalid selection, using default: openai/gpt-4o")
-        #             break
-        #         print_error("Invalid API key format. It should be at least 10 characters long.")
+        if provider == 'ANTHROPIC_DIRECT':
+            print_info("Direct Anthropic API provides access to Omni 4 - the recommended model")
+            print_info("This is the preferred option for most users")
+            
+            while True:
+                api_key = input("Enter your Anthropic API key: ")
+                if validate_api_key(api_key):
+                    api_keys['ANTHROPIC_API_KEY'] = api_key
+                    
+                    # Set Omni 4 as default
+                    print(f"\n{Colors.CYAN}Available Anthropic model:{Colors.ENDC}")
+                    print(f"{Colors.CYAN}[1] {Colors.GREEN}Omni 4 (anthropic/claude-3-5-sonnet-latest){Colors.ENDC} {Colors.CYAN}[Recommended]{Colors.ENDC}")
+                    print_info("Omni 4 will be set as the default model")
+                    
+                    model_info['default_model'] = 'anthropic/claude-3-5-sonnet-latest'
+                    break
+                print_error("Invalid API key format. It should be at least 10 characters long.")
         
-        if provider == 'ANTHROPIC':
-            print_info("For Anthropic provider, you need AWS Bedrock credentials for Omni 5 access")
-            print_info("This provides access to Omni 5 - the latest and most advanced model")
+        elif provider == 'ANTHROPIC_BEDROCK':
+            print_info("AWS Bedrock provides access to Omni 5 - the latest model")
+            print_info("This requires AWS credentials and Bedrock access")
             
             while True:
                 aws_access_key = input("Enter your AWS Access Key ID: ")
@@ -348,66 +336,70 @@ def collect_llm_api_keys():
                     api_keys['AWS_ACCESS_KEY_ID'] = aws_access_key
                     break
                 print_error("Invalid AWS Access Key ID format. It should be at least 10 characters long.")
-            
+        
             while True:
                 aws_secret_key = input("Enter your AWS Secret Access Key: ")
                 if validate_api_key(aws_secret_key):
                     api_keys['AWS_SECRET_ACCESS_KEY'] = aws_secret_key
                     break
                 print_error("Invalid AWS Secret Access Key format. It should be at least 10 characters long.")
-            
+        
             # Set AWS region for Bedrock
             aws_region = input("Enter your AWS region (press Enter for us-east-1): ").strip()
             if not aws_region:
                 aws_region = "us-east-1"
             api_keys['AWS_REGION_NAME'] = aws_region
             
-            # Only Omni 5 is available
-            print(f"\n{Colors.CYAN}Available Anthropic model:{Colors.ENDC}")
-            print(f"{Colors.CYAN}[1] {Colors.GREEN}Omni 5 (bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0){Colors.ENDC}")
-            print_info("Omni 5 is the only available model and will be set as default")
-            
-            model_info['default_model'] = 'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0'
+            # Set Omni 5 as default if this is the only provider
+            if len(selected_providers) == 1:
+                print(f"\n{Colors.CYAN}Available Anthropic model:{Colors.ENDC}")
+                print(f"{Colors.CYAN}[1] {Colors.GREEN}Omni 5 (bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0){Colors.ENDC}")
+                print_info("Omni 5 will be set as the default model")
+                
+                model_info['default_model'] = 'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0'
         
-        # OpenRouter provider commented out - only Omni 5 is active
+        # OpenAI and OpenRouter providers remain commented out
+        # elif provider == 'OPENAI':
+        #     while True:
+        #         api_key = input("Enter your OpenAI API key: ")
+        #         if validate_api_key(api_key):
+        #             api_keys['OPENAI_API_KEY'] = api_key
+        #             # Model selection code...
+        #             break
+        #         print_error("Invalid API key format. It should be at least 10 characters long.")
+        
         # elif provider == 'OPENROUTER':
         #     while True:
         #         api_key = input("Enter your OpenRouter API key: ")
         #         if validate_api_key(api_key):
         #             api_keys['OPENROUTER_API_KEY'] = api_key
         #             api_keys['OPENROUTER_API_BASE'] = 'https://openrouter.ai/api/v1'
-        #
-        #             # Recommend default model
-        #             print(f"\n{Colors.CYAN}Recommended OpenRouter models:{Colors.ENDC}")
-        #             for i, model in enumerate(model_aliases['OPENROUTER'], 1):
-        #                 print(f"{Colors.CYAN}[{i}] {Colors.GREEN}{model}{Colors.ENDC}")
-        #             
-        #             model_choice = input("Select default model (1-3) or press Enter for gemini-2.5-flash: ").strip()
-        #             if not model_choice or model_choice == '1':
-        #                 model_info['default_model'] = 'openrouter/google/gemini-2.5-flash-preview'
-        #             elif model_choice.isdigit() and 1 <= int(model_choice) <= len(model_aliases['OPENROUTER']):
-        #                 model_info['default_model'] = model_aliases['OPENROUTER'][int(model_choice) - 1]
-        #             else:
-        #                 model_info['default_model'] = 'openrouter/google/gemini-2.5-flash-preview'
-        #                 print_warning(f"Invalid selection, using default: openrouter/google/gemini-2.5-flash-preview")
+        #             # Model selection code...
         #             break
         #         print_error("Invalid API key format. It should be at least 10 characters long.")
         
-    # If no default model has been set, check which provider was selected and set an appropriate default
+    # Set default model based on configuration
     if 'default_model' not in model_info:
-        if 'AWS_ACCESS_KEY_ID' in api_keys:  # AWS Bedrock for Omni 5
+        if 'ANTHROPIC_API_KEY' in api_keys:
+            # Omni 4 is the preferred default
+            model_info['default_model'] = 'anthropic/claude-3-5-sonnet-latest'
+            print_info("Set Omni 4 as the default model")
+        elif 'AWS_ACCESS_KEY_ID' in api_keys:
+            # Omni 5 as fallback
             model_info['default_model'] = 'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0'
-        # elif 'OPENAI_API_KEY' in api_keys:  # OpenAI commented out - only Omni 5 is active
+            print_info("Set Omni 5 as the default model")
+        # elif 'OPENAI_API_KEY' in api_keys:  # Commented out
         #     model_info['default_model'] = 'openai/gpt-4o'
-        # elif 'OPENROUTER_API_KEY' in api_keys:  # OpenRouter commented out - only Omni 5 is active
+        # elif 'OPENROUTER_API_KEY' in api_keys:  # Commented out
         #     model_info['default_model'] = 'openrouter/google/gemini-2.5-flash-preview'
+        
+    print_info(f"\nConfiguration complete! Default model: {model_info.get('default_model', 'Not set')}")
     
-    print_success(f"Using {model_info['default_model']} as the default model")
+    # Add the default model to the API keys dictionary for environment configuration
+    if 'default_model' in model_info:
+        api_keys['MODEL_TO_USE'] = model_info['default_model']
     
-    # Add the default model to the API keys dictionary
-    api_keys['MODEL_TO_USE'] = model_info['default_model']
-    
-    return api_keys
+    return api_keys, model_info
 
 def collect_search_api_keys():
     """Collect search API keys (now required, not optional)"""
@@ -907,7 +899,7 @@ def main():
 
     if current_step <= 4:
         print_step(current_step, total_steps, "Collecting LLM API keys")
-        env_vars['llm'] = collect_llm_api_keys()
+        env_vars['llm'], model_info = collect_llm_api_keys()
         save_env_data(env_vars)
         save_progress(current_step)
         current_step += 1
