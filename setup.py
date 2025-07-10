@@ -256,14 +256,14 @@ def collect_daytona_info():
 
 def collect_llm_api_keys():
     """Collect LLM API keys for various providers"""
-    print_info("Suna now supports both Omni 4 and Omni 5 - advanced AI models")
+    print_info("Suna now supports Omni 4, Omni 3.5, and Omni 5 - advanced AI models")
     print_info("Choose your preferred provider configuration:")
     
     # Available providers - Both Anthropic direct API and AWS Bedrock
     print(f"\n{Colors.CYAN}Available LLM providers:{Colors.ENDC}")
-    print(f"{Colors.CYAN}[1] {Colors.GREEN}Anthropic Direct API{Colors.ENDC} {Colors.CYAN}- Omni 4 access (Recommended){Colors.ENDC}")
-    print(f"{Colors.CYAN}[2] {Colors.GREEN}Anthropic (AWS Bedrock){Colors.ENDC} {Colors.CYAN}- Omni 5 access{Colors.ENDC}")
-    print(f"{Colors.CYAN}[3] {Colors.GREEN}Both Providers{Colors.ENDC} {Colors.CYAN}- Access to both Omni 4 and Omni 5{Colors.ENDC}")
+    print(f"{Colors.CYAN}[1] {Colors.GREEN}Anthropic Direct API{Colors.ENDC} {Colors.CYAN}- Omni 4 (Claude 4) access (Recommended){Colors.ENDC}")
+    print(f"{Colors.CYAN}[2] {Colors.GREEN}Anthropic (AWS Bedrock){Colors.ENDC} {Colors.CYAN}- Omni 3.5 & Omni 5 access{Colors.ENDC}")
+    print(f"{Colors.CYAN}[3] {Colors.GREEN}Both Providers{Colors.ENDC} {Colors.CYAN}- Access to all Omni models{Colors.ENDC}")
     
     # Get user selection
     while True:
@@ -272,11 +272,11 @@ def collect_llm_api_keys():
         
         if not providers_input or providers_input == '1':
             selected_providers = ['ANTHROPIC_DIRECT']
-            print_info("Selected: Anthropic Direct API for Omni 4 access")
+            print_info("Selected: Anthropic Direct API for Omni 4 (Claude 4) access")
             break
         elif providers_input == '2':
             selected_providers = ['ANTHROPIC_BEDROCK']
-            print_info("Selected: AWS Bedrock for Omni 5 access")
+            print_info("Selected: AWS Bedrock for Omni 3.5 & Omni 5 access")
             break
         elif providers_input == '3':
             selected_providers = ['ANTHROPIC_DIRECT', 'ANTHROPIC_BEDROCK']
@@ -289,16 +289,17 @@ def collect_llm_api_keys():
     api_keys = {}
     model_info = {}
     
-    # Model aliases for reference - Both Omni 4 and Omni 5 available
+    # Model aliases for reference - All Omni models available
     model_aliases = {
         'OPENAI': [
             # 'openai/gpt-4o', 'openai/gpt-4o-mini'  # Commented out - focusing on Omni models
         ],
         'ANTHROPIC_DIRECT': [
-            'anthropic/claude-3-5-sonnet-latest',  # Omni 4 - Direct Anthropic API (Recommended)
+            'anthropic/claude-sonnet-4-20250514',  # Omni 4 - Claude 4 Direct Anthropic API (Recommended)
         ],
         'ANTHROPIC_BEDROCK': [
-            'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0',  # Omni 5 - AWS Bedrock
+            'bedrock/us.anthropic.claude-3-5-sonnet-20240620-v1:0',  # Omni 3.5 - Claude 3.5 AWS Bedrock
+            'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0',  # Omni 5 - Claude 4 AWS Bedrock
         ],
         'OPENROUTER': [
             # 'openrouter/google/gemini-2.5-pro-preview', 'openrouter/deepseek/deepseek-chat-v3-0324:free', 'openrouter/openai/gpt-4o-2024-11-20'  # Commented out
@@ -309,7 +310,7 @@ def collect_llm_api_keys():
         print_info(f"\nConfiguring {provider.replace('_', ' ')}")
         
         if provider == 'ANTHROPIC_DIRECT':
-            print_info("Direct Anthropic API provides access to Omni 4 - the recommended model")
+            print_info("Direct Anthropic API provides access to Omni 4 (Claude 4) - the recommended model")
             print_info("This is the preferred option for most users")
             
             while True:
@@ -319,15 +320,15 @@ def collect_llm_api_keys():
                     
                     # Set Omni 4 as default
                     print(f"\n{Colors.CYAN}Available Anthropic model:{Colors.ENDC}")
-                    print(f"{Colors.CYAN}[1] {Colors.GREEN}Omni 4 (anthropic/claude-3-5-sonnet-latest){Colors.ENDC} {Colors.CYAN}[Recommended]{Colors.ENDC}")
-                    print_info("Omni 4 will be set as the default model")
+                    print(f"{Colors.CYAN}[1] {Colors.GREEN}Omni 4 (anthropic/claude-sonnet-4-20250514){Colors.ENDC} {Colors.CYAN}[Recommended]{Colors.ENDC}")
+                    print_info("Omni 4 (Claude 4) will be set as the default model")
                     
-                    model_info['default_model'] = 'anthropic/claude-3-5-sonnet-latest'
+                    model_info['default_model'] = 'anthropic/claude-sonnet-4-20250514'
                     break
                 print_error("Invalid API key format. It should be at least 10 characters long.")
         
         elif provider == 'ANTHROPIC_BEDROCK':
-            print_info("AWS Bedrock provides access to Omni 5 - the latest model")
+            print_info("AWS Bedrock provides access to Omni 3.5 (Claude 3.5) and Omni 5 (Claude 4)")
             print_info("This requires AWS credentials and Bedrock access")
             
             while True:
@@ -350,13 +351,22 @@ def collect_llm_api_keys():
                 aws_region = "us-east-1"
             api_keys['AWS_REGION_NAME'] = aws_region
             
-            # Set Omni 5 as default if this is the only provider
+            # Set default model if this is the only provider
             if len(selected_providers) == 1:
-                print(f"\n{Colors.CYAN}Available Anthropic model:{Colors.ENDC}")
-                print(f"{Colors.CYAN}[1] {Colors.GREEN}Omni 5 (bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0){Colors.ENDC}")
-                print_info("Omni 5 will be set as the default model")
+                print(f"\n{Colors.CYAN}Available Anthropic models:{Colors.ENDC}")
+                print(f"{Colors.CYAN}[1] {Colors.GREEN}Omni 3.5 (bedrock/us.anthropic.claude-3-5-sonnet-20240620-v1:0){Colors.ENDC}")
+                print(f"{Colors.CYAN}[2] {Colors.GREEN}Omni 5 (bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0){Colors.ENDC}")
                 
-                model_info['default_model'] = 'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0'
+                model_choice = input("Select default model (1-2, or press Enter for Omni 3.5): ").strip()
+                if not model_choice or model_choice == '1':
+                    model_info['default_model'] = 'bedrock/us.anthropic.claude-3-5-sonnet-20240620-v1:0'
+                    print_info("Omni 3.5 (Claude 3.5) will be set as the default model")
+                elif model_choice == '2':
+                    model_info['default_model'] = 'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0'
+                    print_info("Omni 5 (Claude 4) will be set as the default model")
+                else:
+                    model_info['default_model'] = 'bedrock/us.anthropic.claude-3-5-sonnet-20240620-v1:0'
+                    print_info("Invalid selection, using Omni 3.5 as default")
         
         # OpenAI and OpenRouter providers remain commented out
         # elif provider == 'OPENAI':
@@ -381,13 +391,13 @@ def collect_llm_api_keys():
     # Set default model based on configuration
     if 'default_model' not in model_info:
         if 'ANTHROPIC_API_KEY' in api_keys:
-            # Omni 4 is the preferred default
-            model_info['default_model'] = 'anthropic/claude-3-5-sonnet-latest'
-            print_info("Set Omni 4 as the default model")
+            # Omni 4 (Claude 4) is the preferred default
+            model_info['default_model'] = 'anthropic/claude-sonnet-4-20250514'
+            print_info("Set Omni 4 (Claude 4) as the default model")
         elif 'AWS_ACCESS_KEY_ID' in api_keys:
-            # Omni 5 as fallback
-            model_info['default_model'] = 'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0'
-            print_info("Set Omni 5 as the default model")
+            # Omni 3.5 (Claude 3.5) as fallback
+            model_info['default_model'] = 'bedrock/us.anthropic.claude-3-5-sonnet-20240620-v1:0'
+            print_info("Set Omni 3.5 (Claude 3.5) as the default model")
         # elif 'OPENAI_API_KEY' in api_keys:  # Commented out
         #     model_info['default_model'] = 'openai/gpt-4o'
         # elif 'OPENROUTER_API_KEY' in api_keys:  # Commented out
