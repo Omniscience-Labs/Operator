@@ -601,13 +601,15 @@ ${meeting.transcript || '(No transcript available)'}`;
                     {/* Line 2: I'm [Agent Selector] */}
                     <div className="flex items-center justify-center w-full">
                       {customAgentEnabled ? (
-                        <div className="flex items-center gap-1 justify-center">
+                        <div className="flex items-center gap-1 justify-center flex-wrap text-center">
                           <span className="tracking-tight text-4xl text-muted-foreground leading-tight">I'm</span>
-                          <AgentSelector
-                            selectedAgentId={selectedAgentId}
-                            onAgentSelect={setSelectedAgentId}
-                            variant="heading"
-                          />
+                          <div className="max-w-full">
+                            <AgentSelector
+                              selectedAgentId={selectedAgentId}
+                              onAgentSelect={setSelectedAgentId}
+                              variant="heading"
+                            />
+                          </div>
                         </div>
                       ) : (
                         <GradientText
