@@ -1999,36 +1999,39 @@ def detect_form_fields_advanced(page):
                             }})
         
         # Detect drawing elements (lines, rectangles that could be form fields)
-        drawings = page.get_drawings()
-        
-        # Find underlines and boxes that might indicate input areas
         input_areas = []
-        for drawing in drawings:
-            for item in drawing["items"]:
-                if item[0] == "l":  # Line
-                    x1, y1, x2, y2 = item[1:]
-                    # Horizontal lines could be underlines for text fields
-                    if abs(y1 - y2) < 2 and abs(x2 - x1) > 20:  # Horizontal line
-                        input_areas.append({{
-                            "type": "underline",
-                            "bbox": [min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)],
-                            "width": abs(x2 - x1)
-                        }})
-                elif item[0] == "re":  # Rectangle
-                    x1, y1, x2, y2 = item[1:5]
-                    # Small rectangles could be checkboxes
-                    if abs(x2 - x1) < 30 and abs(y2 - y1) < 30:
-                        input_areas.append({{
-                            "type": "checkbox",
-                            "bbox": [min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)]
-                        }})
-                    # Larger rectangles could be text input areas
-                    elif abs(x2 - x1) > 50:
-                        input_areas.append({{
-                            "type": "text_box",
-                            "bbox": [min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)],
-                            "width": abs(x2 - x1)
-                        }})
+        try:
+            drawings = page.get_drawings()
+            
+            # Find underlines and boxes that might indicate input areas
+            for drawing in drawings:
+                for item in drawing["items"]:
+                    if item[0] == "l":  # Line
+                        x1, y1, x2, y2 = item[1:]
+                        # Horizontal lines could be underlines for text fields
+                        if abs(y1 - y2) < 2 and abs(x2 - x1) > 20:  # Horizontal line
+                            input_areas.append({{
+                                "type": "underline",
+                                "bbox": [min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)],
+                                "width": abs(x2 - x1)
+                            }})
+                    elif item[0] == "re":  # Rectangle
+                        x1, y1, x2, y2 = item[1:5]
+                        # Small rectangles could be checkboxes
+                        if abs(x2 - x1) < 30 and abs(y2 - y1) < 30:
+                            input_areas.append({{
+                                "type": "checkbox",
+                                "bbox": [min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)]
+                            }})
+                        # Larger rectangles could be text input areas
+                        elif abs(x2 - x1) > 50:
+                            input_areas.append({{
+                                "type": "text_box",
+                                "bbox": [min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)],
+                                "width": abs(x2 - x1)
+                            }})
+        except Exception as e:
+            print(f"Warning: Could not detect drawings: {{e}}")
         
         # Enhanced field indicators
         field_indicators = [
@@ -2050,26 +2053,29 @@ def detect_form_fields_advanced(page):
             is_label = False
             field_type = None
             
-            # Direct colon detection
+            # Method 1: Direct colon detection
             if text.endswith(":"):
                 is_label = True
                 field_type = text.rstrip(":").strip()
             
-            # Check for field indicators
-            for indicator in field_indicators:
-                if indicator in text and len(text) < 50:
-                    is_label = True
-                    field_type = indicator
-                    break
+            # Method 2: Check for field indicators in the text
+            if not is_label:
+                for indicator in field_indicators:
+                    if indicator in text and len(text) < 80:  # Increased length limit
+                        is_label = True
+                        field_type = indicator
+                        break
             
-            # Look for parentheses indicating input areas
-            if "(" in text and ")" in text and text.count("(") <= 2:
+            # Method 3: Look for parentheses indicating input areas
+            if not is_label and "(" in text and ")" in text and text.count("(") <= 2:
                 is_label = True
                 if not field_type:
                     field_type = text.split("(")[0].strip().rstrip(":")
+                if not field_type or len(field_type) < 2:
+                    field_type = "input_field"
             
-            # Look for underscores indicating blank spaces
-            if "_" in text and len(text) > 3:
+            # Method 4: Look for underscores indicating blank spaces
+            if not is_label and "_" in text and len(text) > 3:
                 underscore_count = text.count("_")
                 if underscore_count > 2:  # Likely a blank field
                     is_label = True
@@ -2077,60 +2083,87 @@ def detect_form_fields_advanced(page):
                     for other_element in text_elements:
                         other_bbox = other_element["bbox"]
                         # Check if there's a label to the left or above
-                        if (other_bbox[2] <= bbox[0] and abs(other_bbox[3] - bbox[3]) < 10) or \
-                           (other_bbox[3] <= bbox[1] and abs(other_bbox[0] - bbox[0]) < 50):
+                        if (other_bbox[2] <= bbox[0] + 20 and abs(other_bbox[3] - bbox[3]) < 15) or \
+                           (other_bbox[3] <= bbox[1] + 10 and abs(other_bbox[0] - bbox[0]) < 100):
                             potential_label = other_element["text"].lower().strip().rstrip(":")
-                            if any(ind in potential_label for ind in field_indicators):
-                                field_type = potential_label
+                            if any(ind in potential_label for ind in field_indicators) or len(potential_label) > 2:
+                                field_type = potential_label if potential_label else "text_field"
                                 break
                     if not field_type:
                         field_type = "text_field"
+            
+            # Method 5: Text patterns that suggest form fields (more permissive)
+            if not is_label:
+                # Common form patterns
+                form_patterns = [
+                    r'^\w+\s*:\s*$',  # Word followed by colon
+                    r'^\w+\s+\w+\s*:\s*$',  # Two words followed by colon
+                    r'^\w+\s*\(\s*\)\s*$',  # Word followed by parentheses
+                    r'^\w+.*\s+name\s*:?\s*$',  # Anything with "name"
+                    r'^\w+.*\s+address\s*:?\s*$',  # Anything with "address"
+                ]
+                
+                import re
+                for pattern in form_patterns:
+                    if re.match(pattern, text, re.IGNORECASE):
+                        is_label = True
+                        field_type = text.lower().strip().rstrip(":")
+                        break
+            
+            # Method 6: Fallback - any short text that might be a label
+            if not is_label and len(text) > 2 and len(text) < 30:
+                # Check if this could be a standalone label
+                if any(char.isalpha() for char in text) and not text.isdigit():
+                    # More permissive - consider it a potential field
+                    is_label = True
+                    field_type = text.lower().strip().rstrip(":")
             
             if is_label and field_type:
                 # Enhanced positioning logic
                 input_position = None
                 
                 # Method 1: Look for nearby input areas (underlines, boxes)
-                best_input_area = None
-                min_distance = float('inf')
-                
-                for input_area in input_areas:
-                    area_bbox = input_area["bbox"]
-                    # Calculate distance from label to input area
-                    label_center_x = (bbox[0] + bbox[2]) / 2
-                    label_center_y = (bbox[1] + bbox[3]) / 2
-                    area_center_x = (area_bbox[0] + area_bbox[2]) / 2
-                    area_center_y = (area_bbox[1] + area_bbox[3]) / 2
+                if input_areas:
+                    best_input_area = None
+                    min_distance = float('inf')
                     
-                    distance = ((label_center_x - area_center_x)**2 + (label_center_y - area_center_y)**2)**0.5
+                    for input_area in input_areas:
+                        area_bbox = input_area["bbox"]
+                        # Calculate distance from label to input area
+                        label_center_x = (bbox[0] + bbox[2]) / 2
+                        label_center_y = (bbox[1] + bbox[3]) / 2
+                        area_center_x = (area_bbox[0] + area_bbox[2]) / 2
+                        area_center_y = (area_bbox[1] + area_bbox[3]) / 2
+                        
+                        distance = ((label_center_x - area_center_x)**2 + (label_center_y - area_center_y)**2)**0.5
+                        
+                        # Input area should be reasonably close and in the right direction
+                        if distance < 150 and distance < min_distance:
+                            # Check if input area is to the right or below the label
+                            if area_center_x > label_center_x - 50 and area_center_y > label_center_y - 20:
+                                best_input_area = input_area
+                                min_distance = distance
                     
-                    # Input area should be reasonably close and in the right direction
-                    if distance < 150 and distance < min_distance:
-                        # Check if input area is to the right or below the label
-                        if area_center_x > label_center_x - 50 and area_center_y > label_center_y - 20:
-                            best_input_area = input_area
-                            min_distance = distance
-                
-                if best_input_area:
-                    area_bbox = best_input_area["bbox"]
-                    if best_input_area["type"] == "underline":
-                        # Place text just above the underline
-                        input_position = {{
-                            "x": area_bbox[0] + 5,
-                            "y": area_bbox[1] - 2
-                        }}
-                    elif best_input_area["type"] == "text_box":
-                        # Place text inside the box
-                        input_position = {{
-                            "x": area_bbox[0] + 5,
-                            "y": area_bbox[1] + (area_bbox[3] - area_bbox[1]) * 0.7
-                        }}
-                    elif best_input_area["type"] == "checkbox":
-                        # Place checkmark in the center of the box
-                        input_position = {{
-                            "x": area_bbox[0] + (area_bbox[2] - area_bbox[0]) / 2,
-                            "y": area_bbox[1] + (area_bbox[3] - area_bbox[1]) * 0.7
-                        }}
+                    if best_input_area:
+                        area_bbox = best_input_area["bbox"]
+                        if best_input_area["type"] == "underline":
+                            # Place text just above the underline
+                            input_position = {{
+                                "x": area_bbox[0] + 5,
+                                "y": area_bbox[1] - 2
+                            }}
+                        elif best_input_area["type"] == "text_box":
+                            # Place text inside the box
+                            input_position = {{
+                                "x": area_bbox[0] + 5,
+                                "y": area_bbox[1] + (area_bbox[3] - area_bbox[1]) * 0.7
+                            }}
+                        elif best_input_area["type"] == "checkbox":
+                            # Place checkmark in the center of the box
+                            input_position = {{
+                                "x": area_bbox[0] + (area_bbox[2] - area_bbox[0]) / 2,
+                                "y": area_bbox[1] + (area_bbox[3] - area_bbox[1]) * 0.7
+                            }}
                 
                 # Method 2: Smart positioning based on text layout
                 if not input_position:
@@ -2141,41 +2174,48 @@ def detect_form_fields_advanced(page):
                     
                     # Look for space to the right
                     space_to_right = True
+                    min_distance_right = float('inf')
+                    
                     for other_element in text_elements:
                         other_bbox = other_element["bbox"]
                         # Check if there's text immediately to the right
-                        if (other_bbox[0] < label_right + 100 and 
-                            other_bbox[0] > label_right and
-                            abs(other_bbox[3] - label_bottom) < 10):
-                            space_to_right = False
-                            break
+                        if (other_bbox[0] > label_right and 
+                            other_bbox[0] < label_right + 200 and  # Increased search range
+                            abs(other_bbox[3] - label_bottom) < 15):  # More tolerant vertical alignment
+                            distance = other_bbox[0] - label_right
+                            if distance < min_distance_right:
+                                min_distance_right = distance
+                            if distance < 50:  # Too close
+                                space_to_right = False
+                                break
                     
                     if space_to_right:
                         # Place text to the right of the label
+                        offset = min(30, max(10, min_distance_right // 2)) if min_distance_right != float('inf') else 15
                         input_position = {{
-                            "x": label_right + 10,
+                            "x": label_right + offset,
                             "y": label_top + (label_bottom - label_top) * 0.7
                         }}
                     else:
                         # Look for space below the label
                         next_line_y = label_bottom + 15
                         input_position = {{
-                            "x": bbox[0] + 10,
+                            "x": bbox[0] + 20,
                             "y": next_line_y
                         }}
                 
-                # Method 3: Column-aware positioning
+                # Method 3: Column-aware positioning (fallback)
                 if not input_position:
-                    # Determine which column we're in
+                    # Determine which column we're in based on page layout
                     if bbox[0] < page_width / 3:
                         # Left column
-                        input_position = {{"x": bbox[0] + 120, "y": bbox[1] + (bbox[3] - bbox[1]) * 0.7}}
+                        input_position = {{"x": bbox[2] + 20, "y": bbox[1] + (bbox[3] - bbox[1]) * 0.7}}
                     elif bbox[0] < 2 * page_width / 3:
                         # Middle column
-                        input_position = {{"x": bbox[0] + 100, "y": bbox[1] + (bbox[3] - bbox[1]) * 0.7}}
+                        input_position = {{"x": bbox[2] + 15, "y": bbox[1] + (bbox[3] - bbox[1]) * 0.7}}
                     else:
                         # Right column
-                        input_position = {{"x": bbox[0] + 80, "y": bbox[1] + (bbox[3] - bbox[1]) * 0.7}}
+                        input_position = {{"x": bbox[2] + 10, "y": bbox[1] + (bbox[3] - bbox[1]) * 0.7}}
                 
                 # Validate and adjust position
                 if input_position:
@@ -2185,20 +2225,25 @@ def detect_form_fields_advanced(page):
                 potential_fields.append({{
                     "label": element["text"],
                     "field_type": field_type,
-                    "input_position": input_position or {{"x": bbox[2] + 10, "y": bbox[1] + (bbox[3] - bbox[1]) * 0.7}},
+                    "input_position": input_position or {{"x": bbox[2] + 15, "y": bbox[1] + (bbox[3] - bbox[1]) * 0.7}},
                     "label_bbox": bbox,
                     "confidence": 0.8
                 }})
         
+        print(f"Debug: Found {{len(potential_fields)}} potential fields on page")
         return potential_fields
     except Exception as e:
         print(f"Error in enhanced field detection: {{e}}")
+        import traceback
+        traceback.print_exc()
         return []
 
 def match_form_data_to_fields(form_data, detected_fields):
-    '''Intelligently match form data keys to detected fields'''
+    '''Intelligently match form data keys to detected fields with enhanced matching'''
     matches = []
     used_fields = set()
+    
+    print(f"Debug: Matching {{len(form_data)}} data fields to {{len(detected_fields)}} detected fields")
     
     for data_key, data_value in form_data.items():
         if not data_value or data_value == "":
@@ -2208,45 +2253,102 @@ def match_form_data_to_fields(form_data, detected_fields):
         best_score = 0
         
         data_key_clean = data_key.lower().replace("_", " ").strip()
+        data_key_parts = data_key_clean.split()
         
         for i, field in enumerate(detected_fields):
             if i in used_fields:
                 continue
                 
             field_type = field["field_type"].lower().strip()
+            field_label = field.get("label", "").lower().strip()
             
-            # Direct match
-            if data_key_clean == field_type:
-                best_match = field
-                best_score = 1.0
-                used_fields.add(i)
-                break
+            # Multiple matching strategies with different weights
+            total_score = 0
             
-            # Enhanced fuzzy matching
-            similarity = difflib.SequenceMatcher(None, data_key_clean, field_type).ratio()
+            # Strategy 1: Exact match (highest weight)
+            if data_key_clean == field_type or data_key_clean == field_label:
+                total_score = 1.0
             
-            # Keyword matching with weights
-            keyword_boost = 0
-            data_words = data_key_clean.split()
-            field_words = field_type.split()
+            # Strategy 2: Direct keyword matching
+            elif any(part in field_type or part in field_label for part in data_key_parts):
+                # Count how many parts match
+                matches_count = sum(1 for part in data_key_parts if part in field_type or part in field_label)
+                total_score = 0.7 + (matches_count * 0.1)
             
-            for data_word in data_words:
-                for field_word in field_words:
-                    if data_word in field_word or field_word in data_word:
+            # Strategy 3: Fuzzy string matching
+            else:
+                # Compare with field type
+                similarity1 = difflib.SequenceMatcher(None, data_key_clean, field_type).ratio()
+                # Compare with field label
+                similarity2 = difflib.SequenceMatcher(None, data_key_clean, field_label).ratio()
+                base_similarity = max(similarity1, similarity2)
+                
+                # Enhanced keyword matching with partial matches
+                keyword_boost = 0
+                
+                # Check each data key part against field text
+                for data_part in data_key_parts:
+                    # Exact word match
+                    if data_part in field_type.split() or data_part in field_label.split():
                         keyword_boost += 0.3
-                        break
+                    # Partial word match
+                    elif any(data_part in word or word in data_part for word in field_type.split() + field_label.split()):
+                        keyword_boost += 0.2
+                    # Substring match
+                    elif data_part in field_type or data_part in field_label:
+                        keyword_boost += 0.15
+                
+                # Special matching for common business form fields
+                business_mappings = {{
+                    'business': ['company', 'corp', 'llc', 'inc', 'business', 'name'],
+                    'trade': ['trade', 'dba', 'doing'],
+                    'legal': ['legal', 'official', 'registered'],
+                    'billing': ['billing', 'bill', 'invoice'],
+                    'shipping': ['shipping', 'ship', 'delivery'],
+                    'phone': ['phone', 'telephone', 'tel', 'number'],
+                    'email': ['email', 'e-mail', 'electronic'],
+                    'address': ['address', 'street', 'location'],
+                    'city': ['city', 'town'],
+                    'state': ['state', 'province'],
+                    'zip': ['zip', 'postal', 'code'],
+                    'federal': ['federal', 'tax', 'ein', 'fein'],
+                    'president': ['president', 'ceo', 'chief'],
+                    'vice': ['vice', 'vp', 'assistant'],
+                    'secretary': ['secretary', 'sec'],
+                    'treasurer': ['treasurer', 'cfo', 'financial'],
+                    'bank': ['bank', 'banking', 'financial'],
+                    'account': ['account', 'acct', 'number'],
+                    'reference': ['reference', 'ref', 'contact'],
+                    'signature': ['signature', 'sign', 'signed'],
+                    'date': ['date', 'dated', 'day'],
+                    'ssn': ['ssn', 'social', 'security']
+                }}
+                
+                # Apply business field mappings
+                for data_part in data_key_parts:
+                    if data_part in business_mappings:
+                        mapping_words = business_mappings[data_part]
+                        if any(word in field_type or word in field_label for word in mapping_words):
+                            keyword_boost += 0.4
+                
+                # Apply positional context boost
+                # If field contains numbers or special characters, it might be an input field
+                if any(char.isdigit() or char in '_()[]' for char in field_type + field_label):
+                    keyword_boost += 0.1
+                
+                total_score = base_similarity + keyword_boost
             
-            # Partial match bonus
-            if any(word in field_type for word in data_words):
-                keyword_boost += 0.2
+            # Apply confidence boost for high-confidence detections
+            if field.get("confidence", 0) > 0.8:
+                total_score += 0.05
             
-            total_score = similarity + keyword_boost
-            
-            if total_score > best_score and total_score > 0.5:  # Lower threshold for better matching
+            # Update best match if this score is better
+            if total_score > best_score and total_score > 0.3:  # Lower threshold for matching
                 best_match = field
                 best_score = total_score
         
         if best_match:
+            print(f"Debug: Matched '{{data_key}}' to '{{best_match['field_type']}}' (score: {{best_score:.2f}})")
             matches.append({{
                 "data_key": data_key,
                 "data_value": str(data_value),
@@ -2258,7 +2360,10 @@ def match_form_data_to_fields(form_data, detected_fields):
                 if field == best_match:
                     used_fields.add(i)
                     break
+        else:
+            print(f"Debug: No match found for '{{data_key}}'")
     
+    print(f"Debug: Successfully matched {{len(matches)}} fields")
     return matches
 
 def smart_fill_pdf(pdf_path, form_data, output_path):
