@@ -72,6 +72,7 @@ export function DashboardContent() {
   const [showChatInput, setShowChatInput] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const [greetingComplete, setGreetingComplete] = useState(false);
+  const [showSecondText, setShowSecondText] = useState(false);
   
   // State to store pending meeting file until ChatInput is rendered
   const [pendingMeetingFile, setPendingMeetingFile] = useState<File | null>(null);
@@ -116,12 +117,17 @@ export function DashboardContent() {
     if (!isLoadingUserName) {
       // Calculate total greeting animation time
       const firstTextLength = `Hey ${userName || 'there'}`.length;
-      const secondTextLength = `What would you like to do this ${getTimeBasedGreeting()}?`.length;
+      const typingAnimationTime = 200 + (firstTextLength * 60); // delay + duration per char for typing
       
-      const firstAnimationTime = 200 + (firstTextLength * 60); // delay + duration per char for typing
-      const secondAnimationTime = firstAnimationTime + 400; // start right after first animation + fast blur duration
+      // Start second text animation right after typing finishes
+      const secondTextTimer = setTimeout(() => {
+        setShowSecondText(true);
+      }, typingAnimationTime);
       
-      const totalGreetingTime = Math.max(firstAnimationTime, secondAnimationTime) + 100; // Reduced buffer from 200 to 100
+      // Calculate when second animation completes
+      const secondAnimationTime = typingAnimationTime + 600; // typing duration + blur animation duration
+      
+      const totalGreetingTime = secondAnimationTime + 100; // Small buffer
       
       const timer = setTimeout(() => {
         setGreetingComplete(true);
@@ -137,7 +143,10 @@ export function DashboardContent() {
         }, 100); // Reduced from 200 to 100
       }, totalGreetingTime);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(secondTextTimer);
+      };
     }
   }, [isLoadingUserName, userName]);
 
@@ -613,13 +622,16 @@ ${meeting.transcript || '(No transcript available)'}`;
                     
                     {/* Line 3: What would you like to do this [time]? */}
                     <div className="flex items-center justify-center w-full min-h-[2.5rem]">
-                      <BlurText
-                        text={`What would you like to do this ${getTimeBasedGreeting()}?`}
-                        className="tracking-tight text-3xl font-normal text-muted-foreground/80 text-center"
-                        delay={200 + (`Hey ${userName || 'there'}`.length * 60)} // Start right after typing finishes
-                        animateBy="words"
-                        direction="bottom"
-                      />
+                      {showSecondText && (
+                        <BlurText
+                          text={`What would you like to do this ${getTimeBasedGreeting()}?`}
+                          className="tracking-tight text-3xl font-normal text-muted-foreground/80 text-center"
+                          delay={50} // Delay between each word in milliseconds
+                          stepDuration={0.2} // Duration for each word to animate (faster)
+                          animateBy="words"
+                          direction="bottom"
+                        />
+                      )}
                     </div>
                     
                     {/* Name editing section for users without a name */}
