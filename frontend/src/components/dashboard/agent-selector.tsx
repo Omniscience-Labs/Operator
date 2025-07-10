@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { CreateAgentDialog } from '@/app/(dashboard)/agents/_components/create-agent-dialog';
 import { useFeatureFlags } from '@/lib/feature-flags';
 import { useCurrentAccount } from '@/hooks/use-current-account';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 
 interface AgentSelectorProps {
   onAgentSelect?: (agentId: string | undefined) => void;
@@ -85,9 +86,11 @@ export function AgentSelector({
     if (variant === 'heading') {
       return (
         <div className={cn("flex items-center", className)}>
-          <span className="tracking-tight text-4xl font-semibold leading-tight text-primary">
-            Operator
-          </span>
+          <GradientText
+            text="Operator"
+            className="tracking-tight text-4xl font-semibold leading-tight"
+            gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+          />
         </div>
       );
     }
@@ -124,12 +127,16 @@ export function AgentSelector({
                 variant="ghost"
                 className="flex items-center gap-0 px-0 py-0 h-auto hover:bg-transparent hover:text-primary transition-colors group"
               >
-                <span className="underline decoration-dashed underline-offset-6 decoration-muted-foreground/50 tracking-tight text-4xl font-semibold leading-tight text-primary">
-                  {displayName}
+                <div className="underline decoration-dashed underline-offset-6 decoration-muted-foreground/50">
+                  <GradientText
+                    text={displayName}
+                    className="tracking-tight text-4xl font-semibold leading-tight"
+                    gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                  />
                   <span className="text-muted-foreground ml-2">
                     {agentAvatar && agentAvatar}
                   </span>
-                </span>
+                </div>
                 <div className="flex items-center opacity-60 group-hover:opacity-100 transition-opacity ml-1">
                   <ChevronDown className="h-5 w-5 text-muted-foreground" />
                   <Edit className="h-4 w-4 text-muted-foreground ml-1" />

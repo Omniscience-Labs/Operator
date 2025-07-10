@@ -610,12 +610,10 @@ ${meeting.transcript || '(No transcript available)'}`;
                           />
                         </div>
                       ) : (
-                        <BlurText
+                        <GradientText
                           text="I'm Operator"
                           className="tracking-tight text-4xl text-muted-foreground leading-tight text-center"
-                          delay={600}
-                          animateBy="words"
-                          direction="bottom"
+                          gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
                         />
                       )}
                     </div>
