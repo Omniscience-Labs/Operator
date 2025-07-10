@@ -294,7 +294,10 @@ export const useModelSelection = () => {
           label: 'Omni 5', 
           requiresSubscription: false,
           description: MODELS[DEFAULT_FREE_MODEL_ID]?.description || MODEL_TIERS.free.baseDescription,
-          priority: MODELS[DEFAULT_FREE_MODEL_ID]?.priority || 100
+          priority: MODELS[DEFAULT_FREE_MODEL_ID]?.priority || 100,
+          recommended: MODELS[DEFAULT_FREE_MODEL_ID]?.recommended || false,
+          lowQuality: MODELS[DEFAULT_FREE_MODEL_ID]?.lowQuality || false,
+          top: (MODELS[DEFAULT_FREE_MODEL_ID]?.priority || 100) >= 90
         },
         // Only one model needed since free and premium are the same (Omni 5)
         // { 
