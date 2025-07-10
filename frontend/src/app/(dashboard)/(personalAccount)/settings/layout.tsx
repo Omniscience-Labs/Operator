@@ -15,7 +15,7 @@ export default function PersonalAccountSettingsPage({
     { name: "Account", href: "/settings" },
     { name: "Personalization", href: "/settings/personalization" },
     // { name: "Teams", href: "/settings/teams" },
-    { name: "Usage", href: "/settings/billing" },
+    { name: "Billing", href: "/settings/billing" },
   ];
   return (
     <>

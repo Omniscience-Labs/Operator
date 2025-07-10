@@ -72,6 +72,7 @@ export function DashboardContent() {
   const [showChatInput, setShowChatInput] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const [greetingComplete, setGreetingComplete] = useState(false);
+  const [showSecondText, setShowSecondText] = useState(false);
   
   // State to store pending meeting file until ChatInput is rendered
   const [pendingMeetingFile, setPendingMeetingFile] = useState<File | null>(null);
@@ -115,13 +116,18 @@ export function DashboardContent() {
   useEffect(() => {
     if (!isLoadingUserName) {
       // Calculate total greeting animation time
-      const firstTextLength = `Hey ${userName || 'there'}, I'm`.length;
-      const secondTextLength = `What would you like to do this ${getTimeBasedGreeting()}?`.length;
+      const firstTextLength = `Hey ${userName || 'there'}`.length;
+      const typingAnimationTime = 200 + (firstTextLength * 60); // delay + duration per char for typing
       
-      const firstAnimationTime = 400 + (firstTextLength * 50); // delay + duration per char
-      const secondAnimationTime = 2000 + (secondTextLength * 80); // delay + duration per char
+      // Start second text animation right after typing finishes
+      const secondTextTimer = setTimeout(() => {
+        setShowSecondText(true);
+      }, typingAnimationTime);
       
-      const totalGreetingTime = Math.max(firstAnimationTime, secondAnimationTime) + 500; // Add buffer
+      // Calculate when second animation completes
+      const secondAnimationTime = typingAnimationTime + 600; // typing duration + blur animation duration
+      
+      const totalGreetingTime = secondAnimationTime + 100; // Small buffer
       
       const timer = setTimeout(() => {
         setGreetingComplete(true);
@@ -133,11 +139,14 @@ export function DashboardContent() {
           // Cascade examples after chat input
           setTimeout(() => {
             setShowExamples(true);
-          }, 400); // Stagger for cascade effect
-        }, 300); // Small delay after greeting
+          }, 200); // Reduced from 300 to 150
+        }, 150); // Reduced from 200 to 100
       }, totalGreetingTime);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(secondTextTimer);
+      };
     }
   }, [isLoadingUserName, userName]);
 
@@ -581,45 +590,48 @@ ${meeting.transcript || '(No transcript available)'}`;
                                     <div className="flex flex-col items-center gap-3 justify-center w-full max-w-2xl mx-auto">
                     {/* Line 1: Hey [name] */}
                     <div className="flex items-center justify-center w-full">
-                      <BlurText
+                      <TypingText
                         text={`Hey ${userName || 'there'}`}
                         className="tracking-tight text-4xl text-muted-foreground leading-tight text-center"
-                        delay={200}
-                        animateBy="words"
-                        direction="bottom"
+                        duration={60} // Animation speed: milliseconds per character for typing effect
+                        delay={200} // Wait time: milliseconds before starting the typing animation
                       />
                     </div>
                     
                     {/* Line 2: I'm [Agent Selector] */}
                     <div className="flex items-center justify-center w-full">
                       {customAgentEnabled ? (
-                        <div className="flex items-center gap-1 justify-center">
+                        <div className="flex items-center gap-1 justify-center flex-wrap text-center">
                           <span className="tracking-tight text-4xl text-muted-foreground leading-tight">I'm</span>
-                          <AgentSelector
-                            selectedAgentId={selectedAgentId}
-                            onAgentSelect={setSelectedAgentId}
-                            variant="heading"
-                          />
+                          <div className="max-w-full">
+                            <AgentSelector
+                              selectedAgentId={selectedAgentId}
+                              onAgentSelect={setSelectedAgentId}
+                              variant="heading"
+                            />
+                          </div>
                         </div>
                       ) : (
-                        <BlurText
+                        <GradientText
                           text="I'm Operator"
                           className="tracking-tight text-4xl text-muted-foreground leading-tight text-center"
-                          delay={600}
-                          animateBy="words"
-                          direction="bottom"
+                          gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
                         />
                       )}
                     </div>
                     
                     {/* Line 3: What would you like to do this [time]? */}
                     <div className="flex items-center justify-center w-full min-h-[2.5rem]">
-                      <TypingText
-                        text={`What would you like to do this ${getTimeBasedGreeting()}?`}
-                        className="tracking-tight text-3xl font-normal text-muted-foreground/80 text-center"
-                        duration={60} // Animation speed: milliseconds per character for typing effect
-                        delay={1500} // Wait time: milliseconds before starting the typing animation
-                      />
+                      {showSecondText && (
+                        <BlurText
+                          text={`What would you like to do this ${getTimeBasedGreeting()}?`}
+                          className="tracking-tight text-3xl font-normal text-muted-foreground/80 text-center"
+                          delay={50} // Delay between each word in milliseconds
+                          stepDuration={0.2} // Duration for each word to animate (faster)
+                          animateBy="words"
+                          direction="bottom"
+                        />
+                      )}
                     </div>
                     
                     {/* Name editing section for users without a name */}

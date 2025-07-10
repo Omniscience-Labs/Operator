@@ -160,13 +160,17 @@ def prepare_params(
     if model_name.startswith("bedrock/"):
         logger.debug(f"Preparing AWS Bedrock parameters for model: {model_name}")
 
-        if not model_id and "anthropic.claude-3-7-sonnet" in model_name:
+        if not model_id and "us.anthropic.claude-3-7-sonnet" in model_name:
             params["model_id"] = "arn:aws:bedrock:us-east-1:869935064486:inference-profile/us.anthropic.claude-3-7-sonnet-20250219-v1:0"
             logger.debug(f"Auto-set model_id for Claude 3.7 Sonnet: {params['model_id']}")
         
-        if not model_id and "anthropic.claude-sonnet-4" in model_name:
+        if not model_id and "us.anthropic.claude-sonnet-4" in model_name:
             params["model_id"] = "arn:aws:bedrock:us-east-1:869935064486:inference-profile/us.anthropic.claude-sonnet-4-20250514-v1:0"
             logger.debug(f"Auto-set model_id for Claude Sonnet 4: {params['model_id']}")
+
+        if not model_id and "us.anthropic.claude-3-5-sonnet" in model_name:
+            params["model_id"] = "arn:aws:bedrock:us-east-1:869935064486:inference-profile/us.anthropic.claude-3-5-sonnet-20240620-v1:0"
+            logger.debug(f"Auto-set model_id for Claude 3.5 Sonnet: {params['model_id']}")
 
     # Apply Anthropic prompt caching (minimal implementation)
     # Check model name *after* potential modifications (like adding bedrock/ prefix)
@@ -400,7 +404,7 @@ async def test_bedrock():
 
     try:
         response = await make_llm_api_call(
-            model_name="bedrock/anthropic.claude-sonnet-4-20250514-v1:0",
+            model_name="bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0",
             model_id="arn:aws:bedrock:us-east-1:869935064486:inference-profile/us.anthropic.claude-sonnet-4-20250514-v1:0",
             messages=test_messages,
             temperature=0.7,

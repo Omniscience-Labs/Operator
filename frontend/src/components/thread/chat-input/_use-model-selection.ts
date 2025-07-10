@@ -7,8 +7,8 @@ import { useAvailableModels } from '@/hooks/react-query/subscriptions/use-model'
 
 export const STORAGE_KEY_MODEL = 'operator-preferred-model';
 export const STORAGE_KEY_CUSTOM_MODELS = 'customModels';
-export const DEFAULT_FREE_MODEL_ID = 'claude-sonnet-4';
-export const DEFAULT_PREMIUM_MODEL_ID = 'claude-sonnet-4';
+export const DEFAULT_FREE_MODEL_ID = 'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0';
+export const DEFAULT_PREMIUM_MODEL_ID = 'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0';
 
 export type SubscriptionStatus = 'no_subscription' | 'active';
 
@@ -20,6 +20,8 @@ export interface ModelOption {
   top?: boolean;
   isCustom?: boolean;
   priority?: number;
+  recommended?: boolean; // Added missing recommended field
+  lowQuality?: boolean;  // Added missing lowQuality field for completeness
 }
 
 export interface CustomModel {
@@ -29,14 +31,34 @@ export interface CustomModel {
 
 // SINGLE SOURCE OF TRUTH for all model data
 export const MODELS = {
-  // Premium high-priority models
-  'claude-sonnet-4': { 
+  // Premium high-priority models - Omni 5 is the only active recommended model
+  'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0': { 
     tier: 'free',
     priority: 100, 
     recommended: true,
     lowQuality: false,
-    description: 'Omni 4 - Advanced AI assistant with cutting-edge capabilities'
+    description: 'Omni 5 - Advanced AI assistant with cutting-edge capabilities'
   },
+  
+  // All other models are commented out but preserved for future use
+  
+  // // Omni 4 with AWS Bedrock format - Commented out
+  // 'bedrock/us.anthropic.claude-3-5-sonnet-20240620-v1:0': { 
+  //   tier: 'free',
+  //   priority: 95, 
+  //   recommended: false,
+  //   lowQuality: false,
+  //   description: 'Omni 4 - Advanced AI assistant with cutting-edge capabilities'
+  // },
+  
+  // // Legacy Omni 4 (keep for backward compatibility) - Commented out
+  // 'claude-sonnet-4': { 
+  //   tier: 'free',
+  //   priority: 90, 
+  //   recommended: false,
+  //   lowQuality: false,
+  //   description: 'Omni 4 (Legacy) - Advanced AI assistant with cutting-edge capabilities'
+  // },
   
   // 'claude-sonnet-3.7': { 
   //   tier: 'premium', 
@@ -124,7 +146,7 @@ export const MODELS = {
   //   description: 'DeepSeek Chat - Advanced AI assistant with strong reasoning'
   // },
   
-  // Free tier models
+  // Free tier models - All commented out
   // 'deepseek-r1': { 
   //   tier: 'free', 
   //   priority: 60,
@@ -266,23 +288,27 @@ export const useModelSelection = () => {
   const MODEL_OPTIONS = useMemo(() => {
     let models = [];
     
-    // Default models if API data not available
+    // Default models if API data not available - Only Omni 5 is active
     if (!modelsData?.models || isLoadingModels) {
       models = [
         { 
           id: DEFAULT_FREE_MODEL_ID, 
-          label: 'Omni 4', 
+          label: 'Omni 5', 
           requiresSubscription: false,
           description: MODELS[DEFAULT_FREE_MODEL_ID]?.description || MODEL_TIERS.free.baseDescription,
-          priority: MODELS[DEFAULT_FREE_MODEL_ID]?.priority || 50
+          priority: MODELS[DEFAULT_FREE_MODEL_ID]?.priority || 100,
+          recommended: MODELS[DEFAULT_FREE_MODEL_ID]?.recommended ?? false,
+          lowQuality: MODELS[DEFAULT_FREE_MODEL_ID]?.lowQuality || false,
+          top: (MODELS[DEFAULT_FREE_MODEL_ID]?.priority || 100) >= 90
         },
-        { 
-          id: DEFAULT_PREMIUM_MODEL_ID, 
-          label: 'Omni 4', 
-          requiresSubscription: false, 
-          description: MODELS[DEFAULT_PREMIUM_MODEL_ID]?.description || MODEL_TIERS.premium.baseDescription,
-          priority: MODELS[DEFAULT_PREMIUM_MODEL_ID]?.priority || 100
-        },
+        // Only one model needed since free and premium are the same (Omni 5)
+        // { 
+        //   id: DEFAULT_PREMIUM_MODEL_ID, 
+        //   label: 'Omni 5', 
+        //   requiresSubscription: false, 
+        //   description: MODELS[DEFAULT_PREMIUM_MODEL_ID]?.description || MODEL_TIERS.premium.baseDescription,
+        //   priority: MODELS[DEFAULT_PREMIUM_MODEL_ID]?.priority || 100
+        // },
       ];
     } else {
       // Process API-provided models
@@ -292,25 +318,21 @@ export const useModelSelection = () => {
         
         // NEW: Override display name for our custom model, otherwise use API display name
         let cleanLabel;
-        if (shortName === 'claude-sonnet-4') {
-          // Use our custom name for Claude Sonnet 4
-          cleanLabel = 'Omni 4';
-        } else {
-          // OLD LOGIC: Use API display name and format it
-          // const displayName = model.display_name || shortName;
-          // cleanLabel = displayName;
-          // if (cleanLabel.includes('/')) {
-          //   cleanLabel = cleanLabel.split('/').pop() || cleanLabel;
-          // }
-          // cleanLabel = cleanLabel
-          //   .replace(/-/g, ' ')
-          //   .split(' ')
-          //   .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          //   .join(' ');
-          
-          // NEW: Since we only have one model now, this shouldn't be reached
-          const displayName = model.display_name || shortName;
-          cleanLabel = displayName;
+        if (model.id === 'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0') {
+          // Use our custom name for Bedrock Claude Sonnet 4 (Omni 5) - Active model
+          cleanLabel = 'Omni 5';
+        } 
+        // All other custom model mappings are commented out since only Omni 5 is active
+        // else if (model.id === 'bedrock/us.anthropic.claude-3-5-sonnet-20240620-v1:0') {
+        //   // Use our custom name for Omni 4 (Bedrock) - Commented out
+        //   cleanLabel = 'Omni 4';
+        // } else if (model.id === 'claude-sonnet-4') {
+        //   // Use our custom name for Claude Sonnet 4 (Legacy) - Commented out
+        //   cleanLabel = 'Omni 4 (Legacy)';
+        // } 
+        else {
+          // Use API display name if available, otherwise format the short name
+          cleanLabel = model.display_name || shortName;
           if (cleanLabel.includes('/')) {
             cleanLabel = cleanLabel.split('/').pop() || cleanLabel;
           }
@@ -321,20 +343,28 @@ export const useModelSelection = () => {
             .join(' ');
         }
         
-        // Get model data from our central MODELS constant
-        const modelData = MODELS[shortName] || {};
+        // Get model data from our central MODELS constant using the model ID
+        const modelData = MODELS[model.id] || {};
         const isPremium = model?.requires_subscription || modelData.tier === 'premium' || false;
         
+        // ROBUST FIX: Ensure recommended flag is preserved for our main model
+        // If this is our main Omni 5 model, ensure it's marked as recommended
+        let isRecommended = modelData.recommended || false;
+        if (model.id === DEFAULT_FREE_MODEL_ID || model.id === DEFAULT_PREMIUM_MODEL_ID) {
+          // For our main model, always mark as recommended regardless of API data
+          isRecommended = true;
+        }
+        
         return {
-          id: shortName,
+          id: model.id, // Use the full model ID, not shortName
           label: cleanLabel,
           requiresSubscription: isPremium,
           description: modelData.description || 
             (isPremium ? MODEL_TIERS.premium.baseDescription : MODEL_TIERS.free.baseDescription),
-          top: modelData.priority >= 90, // Mark high-priority models as "top"
+          top: (modelData.priority || 0) >= 90, // Mark high-priority models as "top"
           priority: modelData.priority || 0,
           lowQuality: modelData.lowQuality || false,
-          recommended: modelData.recommended || false
+          recommended: isRecommended
         };
       });
     }
