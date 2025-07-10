@@ -121,8 +121,30 @@ def prepare_params(
             logger.debug(f"Skipping max_tokens for Claude 3.7 model: {model_name}")
             # Do not add any max_tokens parameter for Claude 3.7
         else:
+            # Set appropriate max_tokens based on model capabilities
+            model_max_tokens = max_tokens
+            
+            # Claude 3.5 models (both direct API and Bedrock) have 8192 token limit
+            if ("claude-3-5-sonnet" in model_name or "claude-3.5-sonnet" in model_name):
+                model_max_tokens = min(max_tokens, 8192)
+                if max_tokens > 8192:
+                    logger.warning(f"Reducing max_tokens from {max_tokens} to 8192 for Claude 3.5 model: {model_name}")
+            
+            # Claude 4 models have higher limits but still need to be capped
+            elif ("claude-sonnet-4" in model_name or "claude-4" in model_name):
+                model_max_tokens = min(max_tokens, 32768)  # Claude 4 supports up to 32K output tokens
+                if max_tokens > 32768:
+                    logger.warning(f"Reducing max_tokens from {max_tokens} to 32768 for Claude 4 model: {model_name}")
+            
+            # Other Claude models - use conservative limit
+            elif ("claude" in model_name.lower() or "anthropic" in model_name.lower()):
+                model_max_tokens = min(max_tokens, 8192)
+                if max_tokens > 8192:
+                    logger.warning(f"Reducing max_tokens from {max_tokens} to 8192 for Claude model: {model_name}")
+            
             param_name = "max_completion_tokens" if 'o1' in model_name else "max_tokens"
-            params[param_name] = max_tokens
+            params[param_name] = model_max_tokens
+            logger.debug(f"Set {param_name} to {model_max_tokens} for model: {model_name}")
 
     # Add tools if provided
     if tools:
