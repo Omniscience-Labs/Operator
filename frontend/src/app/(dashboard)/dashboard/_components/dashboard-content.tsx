@@ -139,8 +139,8 @@ export function DashboardContent() {
           // Cascade examples after chat input
           setTimeout(() => {
             setShowExamples(true);
-          }, 150); // Reduced from 300 to 150
-        }, 100); // Reduced from 200 to 100
+          }, 200); // Reduced from 300 to 150
+        }, 150); // Reduced from 200 to 100
       }, totalGreetingTime);
 
       return () => {
