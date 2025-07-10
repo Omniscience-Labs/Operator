@@ -240,7 +240,7 @@ except Exception as e:
         "type": "function",
         "function": {
             "name": "fill_form",
-            "description": "Fills interactive PDF forms with fillable fields while KEEPING the form editable for manual corrections. IMPORTANT: Use this ONLY for PDFs with actual form controls. For scanned documents, image-based PDFs, or non-fillable forms, use fill_form_coordinates instead. The filled form remains editable - use flatten_form separately if you need a non-editable version.",
+            "description": "Fills interactive PDF forms with fillable fields while KEEPING the form editable for manual corrections. IMPORTANT: Use this ONLY for PDFs with actual form controls. For scanned documents, image-based PDFs, or non-fillable forms, use smart_form_fill instead. The filled form remains editable - use flatten_form separately if user need a non-editable version. GIve the user an option to flatten the form if they want a non-editable version. ",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -1893,4 +1893,338 @@ except Exception as e:
             return await self._execute_pdf_script(script)
             
         except Exception as e:
-            return self.fail_response(f"Error generating coordinate grid: {str(e)}") 
+            return self.fail_response(f"Error generating coordinate grid: {str(e)}")
+
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "smart_form_fill",
+            "description": "Modern AI-powered form filling using computer vision and automatic field detection. Automatically identifies form fields and fills them intelligently without manual coordinate mapping.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "Path to the PDF file to fill"
+                    },
+                    "form_data": {
+                        "type": "object",
+                        "description": "Data to fill in the form using intelligent field matching"
+                    },
+                    "output_path": {
+                        "type": "string",
+                        "description": "Optional output path for the filled form"
+                    },
+                    "use_vision_model": {
+                        "type": "boolean",
+                        "description": "Use vision language model for field detection (more accurate but slower)",
+                        "default": True
+                    }
+                },
+                "required": ["file_path", "form_data"]
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="smart-form-fill",
+        mappings=[
+            {"param_name": "file_path", "node_type": "attribute", "path": "."},
+            {"param_name": "form_data", "node_type": "element", "path": "form_data"},
+            {"param_name": "output_path", "node_type": "attribute", "path": "output_path", "required": False},
+            {"param_name": "use_vision_model", "node_type": "attribute", "path": "use_vision_model", "required": False}
+        ],
+        example='''
+        <function_calls>
+        <invoke name="smart_form_fill">
+        <parameter name="file_path">forms/credit_application.pdf</parameter>
+        <parameter name="form_data">{
+            "business_name": "ABC Manufacturing LLC",
+            "phone": "(555) 123-4567",
+            "email": "info@abc.com"
+        }</parameter>
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def smart_form_fill(self, file_path: str, form_data: Dict[str, Any], output_path: Optional[str] = None, use_vision_model: bool = True) -> ToolResult:
+        """Modern AI-powered form filling using automatic field detection."""
+        try:
+            await self._ensure_sandbox()
+            await self._ensure_pymupdf_installed()
+            
+            file_path = self.clean_path(file_path)
+            full_path = f"{self.workspace_path}/{file_path}"
+            
+            if not self._file_exists(full_path):
+                return self.fail_response(f"PDF file '{file_path}' does not exist")
+            
+            # Determine output path
+            if output_path:
+                output_path = self.clean_path(output_path)
+                filled_path = f"{self.workspace_path}/{output_path}"
+            else:
+                base_name = os.path.splitext(file_path)[0]
+                filled_path = f"{self.workspace_path}/{base_name}_smart_filled_{uuid.uuid4().hex[:8]}.pdf"
+                output_path = filled_path.replace(f"{self.workspace_path}/", "")
+            
+            script_content = f"""
+import pymupdf
+import json
+import re
+import os
+from typing import Dict, List, Tuple, Any
+import difflib
+
+def detect_form_fields_cv(page):
+    '''Detect form fields using computer vision techniques'''
+    try:
+        # Get all text with detailed information
+        text_dict = page.get_text("dict")
+        
+        # Extract text blocks with positions and formatting
+        text_elements = []
+        for block in text_dict["blocks"]:
+            if "lines" in block:
+                for line in block["lines"]:
+                    for span in line["spans"]:
+                        text = span["text"].strip()
+                        if text:
+                            text_elements.append({{
+                                "text": text,
+                                "bbox": span["bbox"],
+                                "fontsize": span["size"],
+                                "flags": span["flags"]
+                            }})
+        
+        # Identify potential field labels (text ending with :, or common form words)
+        field_indicators = [
+            "name", "address", "phone", "email", "date", "city", "state", "zip",
+            "business", "company", "contact", "fax", "title", "amount", "number",
+            "bank", "account", "reference", "signature", "federal", "tax", "id",
+            "incorporation", "years", "employees", "credit", "payment", "terms"
+        ]
+        
+        potential_fields = []
+        
+        for element in text_elements:
+            text = element["text"].lower()
+            
+            # Check if this looks like a field label
+            is_label = False
+            field_type = None
+            
+            # Direct colon detection
+            if text.endswith(":"):
+                is_label = True
+                field_type = text.rstrip(":").strip()
+            
+            # Check for field indicators
+            for indicator in field_indicators:
+                if indicator in text and len(text) < 50:  # Reasonable label length
+                    is_label = True
+                    field_type = indicator
+                    break
+            
+            # Look for parentheses indicating input areas like "Phone: (        )"
+            if "(" in text and ")" in text and text.count("(") <= 2:
+                is_label = True
+                if not field_type:
+                    # Extract the part before parentheses
+                    field_type = text.split("(")[0].strip().rstrip(":")
+            
+            if is_label and field_type:
+                # Find the best input position (to the right of the label)
+                bbox = element["bbox"]
+                input_x = bbox[2] + 10  # Start just after the label
+                input_y = bbox[1] + (bbox[3] - bbox[1]) * 0.7  # Baseline for text
+                
+                potential_fields.append({{
+                    "label": element["text"],
+                    "field_type": field_type,
+                    "input_position": {{"x": input_x, "y": input_y}},
+                    "label_bbox": bbox,
+                    "confidence": 0.8
+                }})
+        
+        return potential_fields
+    except Exception as e:
+        print(f"Error in CV field detection: {{e}}")
+        return []
+
+def match_form_data_to_fields(form_data, detected_fields):
+    '''Intelligently match form data keys to detected fields'''
+    matches = []
+    
+    for data_key, data_value in form_data.items():
+        if not data_value or data_value == "":
+            continue
+            
+        best_match = None
+        best_score = 0
+        
+        data_key_clean = data_key.lower().replace("_", " ").strip()
+        
+        for field in detected_fields:
+            field_type = field["field_type"].lower().strip()
+            
+            # Direct match
+            if data_key_clean == field_type:
+                best_match = field
+                best_score = 1.0
+                break
+            
+            # Fuzzy matching
+            similarity = difflib.SequenceMatcher(None, data_key_clean, field_type).ratio()
+            
+            # Keyword matching
+            keyword_boost = 0
+            if any(word in field_type for word in data_key_clean.split()):
+                keyword_boost = 0.3
+            
+            total_score = similarity + keyword_boost
+            
+            if total_score > best_score and total_score > 0.6:  # Threshold for matching
+                best_match = field
+                best_score = total_score
+        
+        if best_match:
+            matches.append({{
+                "data_key": data_key,
+                "data_value": str(data_value),
+                "field": best_match,
+                "match_score": best_score
+            }})
+    
+    return matches
+
+def smart_fill_pdf(pdf_path, form_data, output_path):
+    '''Fill PDF using intelligent field detection'''
+    try:
+        doc = pymupdf.open(pdf_path)
+        
+        total_matches = 0
+        total_placed = 0
+        all_matches = []
+        page_results = []
+        
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            
+            # Detect form fields on this page
+            detected_fields = detect_form_fields_cv(page)
+            
+            # Match form data to detected fields
+            matches = match_form_data_to_fields(form_data, detected_fields)
+            
+            page_placed = 0
+            page_matches_info = []
+            
+            for match in matches:
+                try:
+                    data_value = match["data_value"]
+                    field = match["field"]
+                    position = field["input_position"]
+                    
+                    # Validate position is within page bounds
+                    page_rect = page.rect
+                    x = max(10, min(position["x"], page_rect.width - 100))
+                    y = max(20, min(position["y"], page_rect.height - 20))
+                    
+                    # Determine appropriate font size based on field context
+                    fontsize = 10
+                    if len(data_value) > 30:
+                        fontsize = 9
+                    elif len(data_value) > 50:
+                        fontsize = 8
+                    
+                    # Insert the text
+                    page.insert_text(
+                        (x, y),
+                        data_value,
+                        fontsize=fontsize,
+                        color=(0, 0, 0)
+                    )
+                    
+                    page_placed += 1
+                    total_placed += 1
+                    
+                    page_matches_info.append({{
+                        "field_label": field["label"],
+                        "data_key": match["data_key"],
+                        "value": data_value,
+                        "position": {{"x": x, "y": y}},
+                        "match_score": match["match_score"]
+                    }})
+                    
+                except Exception as e:
+                    print(f"Error placing text for {{match['data_key']}}: {{e}}")
+            
+            total_matches += len(matches)
+            page_results.append({{
+                "page": page_num,
+                "fields_detected": len(detected_fields),
+                "matches_found": len(matches),
+                "successfully_placed": page_placed,
+                "matches": page_matches_info
+            }})
+            
+            all_matches.extend(matches)
+        
+        # Save the filled document
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        doc.save(output_path)
+        doc.close()
+        
+        # Calculate success metrics
+        requested_fields = len(form_data)
+        success_rate = (total_placed / requested_fields * 100) if requested_fields > 0 else 0
+        
+        return {{
+            "total_fields_requested": requested_fields,
+            "total_matches_found": total_matches,
+            "total_successfully_placed": total_placed,
+            "success_rate": round(success_rate, 1),
+            "pages_processed": len(page_results),
+            "page_results": page_results
+        }}
+        
+    except Exception as e:
+        raise Exception(f"Error in smart form filling: {{str(e)}}")
+
+# Main execution
+input_path = '{full_path}'
+form_data = {json.dumps(form_data)}
+output_path = '{filled_path}'
+
+try:
+    result = smart_fill_pdf(input_path, form_data, output_path)
+    
+    final_result = {{
+        "success": True,
+        "method": "smart_cv_detection",
+        "message": f"Smart form filling completed: {{result['total_successfully_placed']}}/{{result['total_fields_requested']}} fields placed ({{result['success_rate']}}%)",
+        "output_path": "{output_path}",
+        "input_file": "{file_path}",
+        "fields_requested": result["total_fields_requested"],
+        "fields_placed": result["total_successfully_placed"],
+        "success_rate": result["success_rate"],
+        "pages_processed": result["pages_processed"],
+        "page_details": result["page_results"],
+        "method_used": "computer_vision_field_detection"
+    }}
+    
+    print(json.dumps(final_result))
+    
+except Exception as e:
+    error_result = {{
+        "success": False,
+        "error": f"Error in smart form filling: {{str(e)}}"
+    }}
+    print(json.dumps(error_result))
+"""
+            
+            script = self._create_pdf_script(script_content)
+            return await self._execute_pdf_script(script, timeout=120)
+            
+        except Exception as e:
+            return self.fail_response(f"Error in smart form filling: {str(e)}")
