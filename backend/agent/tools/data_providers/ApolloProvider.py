@@ -15,7 +15,7 @@ class ApolloProvider:
     
     def __init__(self):
         self.base_url = "https://api.apollo.io/api/v1"
-        self.api_key = config.get("APOLLO_API_KEY")
+        self.api_key = config.APOLLO_API_KEY
         
         if not self.api_key:
             raise ValueError("APOLLO_API_KEY not found in configuration")
