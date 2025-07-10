@@ -115,7 +115,7 @@ As part of the setup, you'll need to:
 1. Create a Daytona account
 2. Generate an API key
 3. Create a Docker image:
-   - Image name: `kortix/suna:0.1.3`
+   - Image name: ``
    - Entrypoint: `/usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf`
 
 ## Manual Configuration

@@ -318,34 +318,21 @@ export const useModelSelection = () => {
         
         // NEW: Override display name for our custom model, otherwise use API display name
         let cleanLabel;
-        if (shortName === 'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0') {
+        if (model.id === 'bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0') {
           // Use our custom name for Bedrock Claude Sonnet 4 (Omni 5) - Active model
           cleanLabel = 'Omni 5';
         } 
         // All other custom model mappings are commented out since only Omni 5 is active
-        // else if (shortName === 'bedrock/us.anthropic.claude-3-5-sonnet-20240620-v1:0') {
+        // else if (model.id === 'bedrock/us.anthropic.claude-3-5-sonnet-20240620-v1:0') {
         //   // Use our custom name for Omni 4 (Bedrock) - Commented out
         //   cleanLabel = 'Omni 4';
-        // } else if (shortName === 'claude-sonnet-4') {
+        // } else if (model.id === 'claude-sonnet-4') {
         //   // Use our custom name for Claude Sonnet 4 (Legacy) - Commented out
         //   cleanLabel = 'Omni 4 (Legacy)';
         // } 
         else {
-          // OLD LOGIC: Use API display name and format it
-          // const displayName = model.display_name || shortName;
-          // cleanLabel = displayName;
-          // if (cleanLabel.includes('/')) {
-          //   cleanLabel = cleanLabel.split('/').pop() || cleanLabel;
-          // }
-          // cleanLabel = cleanLabel
-          //   .replace(/-/g, ' ')
-          //   .split(' ')
-          //   .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          //   .join(' ');
-          
-          // NEW: Since we only have one model now, this shouldn't be reached
-          const displayName = model.display_name || shortName;
-          cleanLabel = displayName;
+          // Use API display name if available, otherwise format the short name
+          cleanLabel = model.display_name || shortName;
           if (cleanLabel.includes('/')) {
             cleanLabel = cleanLabel.split('/').pop() || cleanLabel;
           }
@@ -356,20 +343,20 @@ export const useModelSelection = () => {
             .join(' ');
         }
         
-        // Get model data from our central MODELS constant
-        const modelData = MODELS[shortName] || {};
+        // Get model data from our central MODELS constant using the model ID
+        const modelData = MODELS[model.id] || {};
         const isPremium = model?.requires_subscription || modelData.tier === 'premium' || false;
         
         // ROBUST FIX: Ensure recommended flag is preserved for our main model
         // If this is our main Omni 5 model, ensure it's marked as recommended
         let isRecommended = modelData.recommended || false;
-        if (shortName === DEFAULT_FREE_MODEL_ID || shortName === DEFAULT_PREMIUM_MODEL_ID) {
+        if (model.id === DEFAULT_FREE_MODEL_ID || model.id === DEFAULT_PREMIUM_MODEL_ID) {
           // For our main model, always mark as recommended regardless of API data
           isRecommended = true;
         }
         
         return {
-          id: shortName,
+          id: model.id, // Use the full model ID, not shortName
           label: cleanLabel,
           requiresSubscription: isPremium,
           description: modelData.description || 
