@@ -2873,11 +2873,16 @@ async def create_agent_share_link(
         
         share = result.data[0]
         
-        # Override placeholder URL with proper frontend URL
-        if request:
+        # Generate proper frontend URL for sharing
+        from utils.config import config
+        frontend_url = config.NEXT_PUBLIC_URL
+        if frontend_url:
+            proper_share_url = f"{frontend_url}/shared-agents/{share['token']}"
+        elif request:
+            # Fallback: try to construct frontend URL from request
             proper_share_url = f"{request.url.scheme}://{request.url.netloc}/shared-agents/{share['token']}"
         else:
-            proper_share_url = share['share_url']  # Fallback to database URL
+            proper_share_url = share['share_url']  # Final fallback to database URL
         
         logger.info(f"Successfully created share link {share['share_id']} for agent {agent_id}")
         return AgentShareResponse(
@@ -2919,8 +2924,15 @@ async def get_agent_share_links(
         shares_result = await client.table('agent_shares').select('*').eq('agent_id', agent_id).eq('creator_account_id', user_id).execute()
         
         shares = []
+        from utils.config import config
+        frontend_url = config.NEXT_PUBLIC_URL
         for share in shares_result.data or []:
-            share_url = f"{request.url.scheme}://{request.url.netloc}/shared-agents/{share['token']}"
+            if frontend_url:
+                share_url = f"{frontend_url}/shared-agents/{share['token']}"
+            elif request:
+                share_url = f"{request.url.scheme}://{request.url.netloc}/shared-agents/{share['token']}"
+            else:
+                share_url = f"https://placeholder.com/shared-agents/{share['token']}"
             shares.append(AgentShareResponse(
                 share_id=share['id'],
                 token=share['token'],
