@@ -426,18 +426,32 @@ async def start_agent(
             
             # Check access: owner, public agent, team member, or agent in user's library
             has_access = False
-            if agent_data['account_id'] == user_id:
+            agent_account_id = agent_data.get('account_id')
+            
+            if not agent_account_id:
+                logger.error(f"Agent {effective_agent_id} has no account_id set")
+                has_access = False
+            elif agent_account_id == user_id:
                 # User owns the agent (personal account case)
                 has_access = True
+                logger.info(f"User {user_id} owns agent {effective_agent_id}")
             elif agent_data.get('is_public', False):
                 # Public agent
                 has_access = True
+                logger.info(f"Agent {effective_agent_id} is public")
             else:
                 # Check if user is a member of the team account that owns the agent
-                team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_data['account_id']).execute()
-                if team_access_check.data and len(team_access_check.data) > 0:
-                    has_access = True
-                else:
+                try:
+                    team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_account_id).execute()
+                    if team_access_check.data and len(team_access_check.data) > 0:
+                        has_access = True
+                        logger.info(f"User {user_id} has access to agent {effective_agent_id} via team membership in {agent_account_id}")
+                    else:
+                        logger.info(f"User {user_id} is not a member of team {agent_account_id} that owns agent {effective_agent_id}")
+                except Exception as e:
+                    logger.error(f"Error checking team membership for user {user_id} in account {agent_account_id}: {str(e)}")
+                
+                if not has_access:
                     # Check if user has this agent in their library (either managed or copied)
                     library_check = await client.table('user_agent_library').select('*').eq(
                         'user_account_id', user_id
@@ -1342,18 +1356,32 @@ async def initiate_agent_with_files(
         
         # Check access: owner, public agent, team member, or agent in user's library
         has_access = False
-        if agent_data['account_id'] == user_id:
+        agent_account_id = agent_data.get('account_id')
+        
+        if not agent_account_id:
+            logger.error(f"Agent {agent_id} has no account_id set")
+            has_access = False
+        elif agent_account_id == user_id:
             # User owns the agent (personal account case)
             has_access = True
+            logger.info(f"User {user_id} owns agent {agent_id}")
         elif agent_data.get('is_public', False):
             # Public agent
             has_access = True
+            logger.info(f"Agent {agent_id} is public")
         else:
             # Check if user is a member of the team account that owns the agent
-            team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_data['account_id']).execute()
-            if team_access_check.data and len(team_access_check.data) > 0:
-                has_access = True
-            else:
+            try:
+                team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_account_id).execute()
+                if team_access_check.data and len(team_access_check.data) > 0:
+                    has_access = True
+                    logger.info(f"User {user_id} has access to agent {agent_id} via team membership in {agent_account_id}")
+                else:
+                    logger.info(f"User {user_id} is not a member of team {agent_account_id} that owns agent {agent_id}")
+            except Exception as e:
+                logger.error(f"Error checking team membership for user {user_id} in account {agent_account_id}: {str(e)}")
+            
+            if not has_access:
                 # Check if user has this agent in their library (either managed or copied)
                 library_check = await client.table('user_agent_library').select('*').eq(
                     'user_account_id', user_id
@@ -1880,19 +1908,35 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
         is_managed_by_user = False
         
         # Check access: owner, public agent, team member, or managed agent in user's library
-        if agent_data['account_id'] == user_id:
+        agent_account_id = agent_data.get('account_id')
+        
+        if not agent_account_id:
+            logger.error(f"Agent {agent_id} has no account_id set")
+            raise HTTPException(status_code=500, detail="Agent configuration error")
+        elif agent_account_id == user_id:
             # User owns the agent (personal account case)
+            logger.info(f"User {user_id} owns agent {agent_id}")
             pass
         elif agent_data.get('is_public', False):
             # Public agent
+            logger.info(f"Agent {agent_id} is public")
             pass
         else:
             # Check if user is a member of the team account that owns the agent
-            team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_data['account_id']).execute()
-            if team_access_check.data and len(team_access_check.data) > 0:
-                # User has access via team membership
-                pass
-            else:
+            has_team_access = False
+            try:
+                team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_account_id).execute()
+                if team_access_check.data and len(team_access_check.data) > 0:
+                    # User has access via team membership
+                    logger.info(f"User {user_id} has access to agent {agent_id} via team membership in {agent_account_id}")
+                    has_team_access = True
+                else:
+                    logger.info(f"User {user_id} is not a member of team {agent_account_id} that owns agent {agent_id}")
+            except Exception as e:
+                logger.error(f"Error checking team membership for user {user_id} in account {agent_account_id}: {str(e)}")
+            
+            # If no team access, check library access
+            if not has_team_access:
                 # Check if user has this agent in their library (either managed or copied)
                 library_check = await client.table('user_agent_library').select('*').eq(
                     'user_account_id', user_id
