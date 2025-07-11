@@ -36,6 +36,9 @@ export function PublishAgentDialog({
   const [includeCustomMcpTools, setIncludeCustomMcpTools] = useState(true);
   const [managedAgent, setManagedAgent] = useState(false);
   const publishAgentMutation = usePublishAgent();
+  
+  // Check if agent is currently shared with teams
+  const isSharedWithTeams = agent.visibility === 'teams';
 
   const handlePublish = async () => {
     try {
@@ -69,12 +72,37 @@ export function PublishAgentDialog({
 
         <ScrollArea className="flex-1 overflow-y-auto">
           <div className="space-y-4 px-1 pb-4">
+            {/* Team sharing warning */}
+            {isSharedWithTeams && (
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <div className="flex items-start gap-3">
+                  <Globe className="h-5 w-5 text-amber-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-amber-800 dark:text-amber-200">Team Sharing Conflict</h4>
+                    <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                      This agent is currently shared with specific teams only. Publishing to the marketplace will make it 
+                      <strong> publicly visible to everyone</strong>, overriding the team-only visibility.
+                    </p>
+                    <p className="text-sm text-amber-700 dark:text-amber-300 mt-2">
+                      <strong>Consider:</strong> Unshare from teams first if you want marketplace-only distribution, 
+                      or keep it team-only to maintain exclusivity.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
               <Globe className="h-5 w-5 mt-1 text-green-600" />
               <div className="flex-1">
                 <div className="font-medium">Public Marketplace</div>
                 <p className="text-sm text-muted-foreground">
                   Your agent will be discoverable by all users and can be added to their library.
+                  {isSharedWithTeams && (
+                    <span className="block mt-1 text-amber-600 dark:text-amber-400 font-medium">
+                      ⚠️ This will override current team-only sharing.
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -178,6 +206,7 @@ export function PublishAgentDialog({
           <Button
             onClick={handlePublish}
             disabled={publishAgentMutation.isPending}
+            variant={isSharedWithTeams ? "destructive" : "default"}
           >
             {publishAgentMutation.isPending ? (
               <>
@@ -187,7 +216,7 @@ export function PublishAgentDialog({
             ) : (
               <>
                 <Check className="h-4 w-4 mr-2" />
-                Publish to Marketplace
+                {isSharedWithTeams ? "Publish & Override Team Sharing" : "Publish to Marketplace"}
               </>
             )}
           </Button>

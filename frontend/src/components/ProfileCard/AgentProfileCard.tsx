@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useCurrentAccount } from '@/hooks/use-current-account';
+import { useAccounts } from '@/hooks/use-accounts';
 import './AgentProfileCard.css';
 
 // Simple Agent interface matching existing codebase
@@ -19,6 +21,7 @@ interface Agent {
   is_public?: boolean;
   is_managed?: boolean;
   is_owned?: boolean;
+  visibility?: 'public' | 'teams' | 'private';
   download_count?: number;
   tags?: string[];
   avatar?: string;
@@ -124,6 +127,36 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
   const cardRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  
+  // Team context and permissions
+  const currentAccount = useCurrentAccount();
+  const { data: accounts } = useAccounts();
+  
+  // Determine user permissions based on team context
+  const permissions = useMemo(() => {
+    // If not in team context, user has full permissions (personal account)
+    if (!currentAccount?.is_team_context) {
+      return {
+        canEdit: !agent.is_managed && agent.is_owned,
+        canPublish: !agent.is_managed && agent.is_owned,
+        canShare: !agent.is_managed && agent.is_owned,
+        canDelete: !agent.is_managed && agent.is_owned && !agent.is_default,
+      };
+    }
+    
+    // In team context - check if user is admin/owner of the team
+    const currentTeamAccount = accounts?.find(acc => 
+      acc.account_id === currentAccount.account_id && !acc.personal_account
+    );
+    const isTeamAdmin = (currentTeamAccount as any)?.account_role === 'owner';
+    
+    return {
+      canEdit: isTeamAdmin && !agent.is_managed && agent.is_owned,
+      canPublish: false, // No publishing to marketplace in team context
+      canShare: false,   // No sharing in team context
+      canDelete: isTeamAdmin && !agent.is_managed && agent.is_owned && !agent.is_default,
+    };
+  }, [currentAccount, accounts, agent]);
 
   // Get agent styling
   const agentStyling = useMemo(() => {
@@ -360,10 +393,17 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                     Default
                   </Badge>
                 )}
-                {agent.is_public && (
+                {/* Visibility badges - mutually exclusive */}
+                {(agent.is_public || agent.visibility === 'public') && (
                   <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30 transition-all duration-300 group-hover:bg-green-500/30">
                     <Globe className="h-3 w-3 mr-1" />
                     Public
+                  </Badge>
+                )}
+                {agent.visibility === 'teams' && !agent.is_public && (
+                  <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30 transition-all duration-300 group-hover:bg-purple-500/30">
+                    <Bot className="h-3 w-3 mr-1" />
+                    Teams
                   </Badge>
                 )}
                 {(agent.is_managed || (mode === 'marketplace' && agent.sharing_preferences?.managed_agent)) && (
@@ -386,7 +426,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
             )}
             
             {/* Delete/Remove from Library button for library mode */}
-            {mode === 'library' && !agent.is_default && (
+            {mode === 'library' && permissions.canDelete && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
@@ -615,7 +655,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                 <span className="truncate">Chat</span>
               </Button>
               
-              {!agent.is_managed && (
+              {permissions.canEdit && (
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -631,7 +671,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               )}
               
               {/* Publish/Make Private Button with confirmation for managed agents */}
-              {!agent.is_managed && agent.is_owned && (
+              {permissions.canPublish && (
                 agent.is_public || agent.marketplace_published_at ? (
                   agent.sharing_preferences?.managed_agent ? (
                     <AlertDialog>
@@ -702,7 +742,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               )}
               
               {/* Share Button */}
-              {!agent.is_managed && agent.is_owned && (
+              {permissions.canShare && (
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
