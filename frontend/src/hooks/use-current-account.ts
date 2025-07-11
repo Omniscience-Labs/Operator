@@ -53,9 +53,11 @@ export function useCurrentAccount(): CurrentAccount | null {
     const teamSlug = teamMatch?.[1];
 
     // Skip if it's a known non-team route
-    const nonTeamRoutes = ['agents', 'projects', 'settings', 'marketplace', 'meetings', 'api', 'auth', 'legal', 'share', 'invitation', 'monitoring'];
+    const contextAwareRoutes = ['agents', 'projects', 'settings', 'marketplace', 'meetings', 'dashboard']; // Routes that should respect team context
+    const nonTeamRoutes = ['api', 'auth', 'legal', 'share', 'invitation', 'monitoring'];
+    
     if (!teamSlug || nonTeamRoutes.includes(teamSlug)) {
-      // Default to personal account for non-team routes
+      // Default to personal account for pure non-team routes
       const personalAccount = accounts.find((account) => account.personal_account);
       
       if (personalAccount) {
@@ -70,8 +72,8 @@ export function useCurrentAccount(): CurrentAccount | null {
       return null;
     }
 
-    // Special case: if someone is on /dashboard, check for recent team context
-    if (teamSlug === 'dashboard') {
+    // For context-aware routes (agents, dashboard, etc.), check for stored team context
+    if (contextAwareRoutes.includes(teamSlug)) {
       try {
         const storedContext = sessionStorage.getItem(TEAM_CONTEXT_KEY);
         if (storedContext) {
@@ -96,11 +98,10 @@ export function useCurrentAccount(): CurrentAccount | null {
           }
         }
       } catch (error) {
-        // Ignore sessionStorage errors
         console.warn('Failed to read team context from sessionStorage:', error);
       }
       
-      // Default to personal account for /dashboard if no recent team context
+      // Default to personal account if no recent team context
       const personalAccount = accounts.find((account) => account.personal_account);
       
       if (personalAccount) {
@@ -114,6 +115,8 @@ export function useCurrentAccount(): CurrentAccount | null {
       }
       return null;
     }
+
+
 
     // Check if this slug matches a team account
     const teamAccount = accounts.find(

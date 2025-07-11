@@ -224,7 +224,7 @@ export function SidebarLeft({
         </motion.div>
       </SidebarHeader>
       <SidebarContent className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] relative z-10">
-        {!flagsLoading && (showAgentPlayground || marketplaceEnabled) && (
+        {!flagsLoading && (showAgentPlayground || (marketplaceEnabled && !currentAccount?.is_team_context)) && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -246,7 +246,7 @@ export function SidebarLeft({
                     )}>
                       <Bot className="h-4 w-4 mr-2" />
                       <span className="flex items-center justify-between w-full">
-                        Agents
+                        {currentAccount?.is_team_context ? 'Team Agents' : 'Agents'}
                         <Badge variant="new">
                           New
                         </Badge>
@@ -255,7 +255,7 @@ export function SidebarLeft({
                   </motion.div>
                 </Link>
               )}
-              {marketplaceEnabled && (
+              {marketplaceEnabled && !currentAccount?.is_team_context && (
                 <Link href="/marketplace">
                   <motion.div
                     whileHover={{ scale: 1.02, x: 4 }}

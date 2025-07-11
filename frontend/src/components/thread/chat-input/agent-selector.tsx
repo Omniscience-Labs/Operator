@@ -18,6 +18,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useAgents } from '@/hooks/react-query/agents/use-agents';
+import { useCurrentAccount } from '@/hooks/use-current-account';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { GradientText } from '@/components/animate-ui/text/gradient';
@@ -37,11 +38,13 @@ export function AgentSelector({
 }: AgentSelectorProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const currentAccount = useCurrentAccount();
   
   const { data: agentsResponse, isLoading } = useAgents({
     limit: 100,
     sort_by: 'name',
-    sort_order: 'asc'
+    sort_order: 'asc',
+    account_id: currentAccount?.account_id
   });
   
   const agents = agentsResponse?.agents || [];

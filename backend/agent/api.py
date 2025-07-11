@@ -424,32 +424,66 @@ async def start_agent(
         else:
             agent_data = agent_result.data[0]
             
-            # Check access: owner, public agent, or agent in user's library
+            # Check access: owner, public agent, team member, or agent in user's library
             has_access = False
-            if agent_data['account_id'] == user_id:
-                # User owns the agent
+            agent_account_id = agent_data.get('account_id')
+            
+            if not agent_account_id:
+                logger.error(f"Agent {effective_agent_id} has no account_id set")
+                has_access = False
+            elif agent_account_id == user_id:
+                # User owns the agent (personal account case)
                 has_access = True
+                logger.info(f"User {user_id} owns agent {effective_agent_id}")
             elif agent_data.get('is_public', False):
                 # Public agent
                 has_access = True
+                logger.info(f"Agent {effective_agent_id} is public")
             else:
-                # Check if user has this agent in their library (either managed or copied)
-                library_check = await client.table('user_agent_library').select('*').eq(
-                    'user_account_id', user_id
-                ).eq('agent_id', effective_agent_id).execute()
+                # Check if user is a member of the team account that owns the agent
+                try:
+                    team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_account_id).execute()
+                    if team_access_check.data and len(team_access_check.data) > 0:
+                        has_access = True
+                        logger.info(f"User {user_id} has access to agent {effective_agent_id} via team membership in {agent_account_id}")
+                    else:
+                        logger.info(f"User {user_id} is not a member of team {agent_account_id} that owns agent {effective_agent_id}")
+                except Exception as e:
+                    logger.error(f"Error checking team membership for user {user_id} in account {agent_account_id}: {str(e)}")
                 
-                if library_check.data:
-                    has_access = True
-                    # Apply sharing preferences filtering for managed agents
-                    library_entry = library_check.data[0]
-                    is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
-                    if is_managed_by_user:
-                        sharing_prefs = agent_data.get('sharing_preferences', {})
-                        if not sharing_prefs.get('include_knowledge_bases', True):
-                            agent_data['knowledge_bases'] = []
-                        if not sharing_prefs.get('include_custom_mcp_tools', True):
-                            agent_data['configured_mcps'] = []
-                            agent_data['custom_mcps'] = []
+                # Also check if agent is shared with any teams the user belongs to
+                if not has_access:
+                    try:
+                        # Get all teams the user is a member of
+                        user_teams = await client.schema('basejump').from_('account_user').select('account_id').eq('user_id', user_id).execute()
+                        if user_teams.data:
+                            user_team_ids = [team['account_id'] for team in user_teams.data]
+                            # Check if agent is shared with any of these teams
+                            shared_check = await client.table('team_agents').select('*').eq('agent_id', effective_agent_id).in_('team_account_id', user_team_ids).execute()
+                            if shared_check.data:
+                                has_access = True
+                                logger.info(f"User {user_id} has access to agent {effective_agent_id} via team sharing")
+                    except Exception as e:
+                        logger.error(f"Error checking team sharing for user {user_id} and agent {effective_agent_id}: {str(e)}")
+                
+                if not has_access:
+                    # Check if user has this agent in their library (either managed or copied)
+                    library_check = await client.table('user_agent_library').select('*').eq(
+                        'user_account_id', user_id
+                    ).eq('agent_id', effective_agent_id).execute()
+                    
+                    if library_check.data:
+                        has_access = True
+                        # Apply sharing preferences filtering for managed agents
+                        library_entry = library_check.data[0]
+                        is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
+                        if is_managed_by_user:
+                            sharing_prefs = agent_data.get('sharing_preferences', {})
+                            if not sharing_prefs.get('include_knowledge_bases', True):
+                                agent_data['knowledge_bases'] = []
+                            if not sharing_prefs.get('include_custom_mcp_tools', True):
+                                agent_data['configured_mcps'] = []
+                                agent_data['custom_mcps'] = []
             
             if not has_access:
                 if body.agent_id:
@@ -1335,32 +1369,66 @@ async def initiate_agent_with_files(
             
         agent_data = agent_result.data[0]
         
-        # Check access: owner, public agent, or agent in user's library
+        # Check access: owner, public agent, team member, or agent in user's library
         has_access = False
-        if agent_data['account_id'] == user_id:
-            # User owns the agent
+        agent_account_id = agent_data.get('account_id')
+        
+        if not agent_account_id:
+            logger.error(f"Agent {agent_id} has no account_id set")
+            has_access = False
+        elif agent_account_id == user_id:
+            # User owns the agent (personal account case)
             has_access = True
+            logger.info(f"User {user_id} owns agent {agent_id}")
         elif agent_data.get('is_public', False):
             # Public agent
             has_access = True
+            logger.info(f"Agent {agent_id} is public")
         else:
-            # Check if user has this agent in their library (either managed or copied)
-            library_check = await client.table('user_agent_library').select('*').eq(
-                'user_account_id', user_id
-            ).eq('agent_id', agent_id).execute()
+            # Check if user is a member of the team account that owns the agent
+            try:
+                team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_account_id).execute()
+                if team_access_check.data and len(team_access_check.data) > 0:
+                    has_access = True
+                    logger.info(f"User {user_id} has access to agent {agent_id} via team membership in {agent_account_id}")
+                else:
+                    logger.info(f"User {user_id} is not a member of team {agent_account_id} that owns agent {agent_id}")
+            except Exception as e:
+                logger.error(f"Error checking team membership for user {user_id} in account {agent_account_id}: {str(e)}")
             
-            if library_check.data:
-                has_access = True
-                # Apply sharing preferences filtering for managed agents
-                library_entry = library_check.data[0]
-                is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
-                if is_managed_by_user:
-                    sharing_prefs = agent_data.get('sharing_preferences', {})
-                    if not sharing_prefs.get('include_knowledge_bases', True):
-                        agent_data['knowledge_bases'] = []
-                    if not sharing_prefs.get('include_custom_mcp_tools', True):
-                        agent_data['configured_mcps'] = []
-                        agent_data['custom_mcps'] = []
+            # Also check if agent is shared with any teams the user belongs to
+            if not has_access:
+                try:
+                    # Get all teams the user is a member of
+                    user_teams = await client.schema('basejump').from_('account_user').select('account_id').eq('user_id', user_id).execute()
+                    if user_teams.data:
+                        user_team_ids = [team['account_id'] for team in user_teams.data]
+                        # Check if agent is shared with any of these teams
+                        shared_check = await client.table('team_agents').select('*').eq('agent_id', agent_id).in_('team_account_id', user_team_ids).execute()
+                        if shared_check.data:
+                            has_access = True
+                            logger.info(f"User {user_id} has access to agent {agent_id} via team sharing")
+                except Exception as e:
+                    logger.error(f"Error checking team sharing for user {user_id} and agent {agent_id}: {str(e)}")
+            
+            if not has_access:
+                # Check if user has this agent in their library (either managed or copied)
+                library_check = await client.table('user_agent_library').select('*').eq(
+                    'user_account_id', user_id
+                ).eq('agent_id', agent_id).execute()
+                
+                if library_check.data:
+                    has_access = True
+                    # Apply sharing preferences filtering for managed agents
+                    library_entry = library_check.data[0]
+                    is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
+                    if is_managed_by_user:
+                        sharing_prefs = agent_data.get('sharing_preferences', {})
+                        if not sharing_prefs.get('include_knowledge_bases', True):
+                            agent_data['knowledge_bases'] = []
+                        if not sharing_prefs.get('include_custom_mcp_tools', True):
+                            agent_data['configured_mcps'] = []
+                            agent_data['custom_mcps'] = []
         
         if not has_access:
             raise HTTPException(status_code=404, detail="Agent not found or access denied")
@@ -1611,7 +1679,8 @@ async def get_agents(
             status_code=403, 
             detail="Custom agents currently disabled. This feature is not available at the moment."
         )
-    logger.info(f"Fetching agents for user: {user_id} with page={page}, limit={limit}, search='{search}', sort_by={sort_by}, sort_order={sort_order}")
+    logger.info(f"Fetching agents for user: {user_id} with page={page}, limit={limit}, search='{search}', sort_by={sort_by}, sort_order={sort_order}, account_id={account_id}")
+    logger.info(f"Backend debug: user_id={user_id}, account_id={account_id}, using_team_context={account_id is not None and account_id != user_id}")
     client = await db.client
     
     try:
@@ -1632,6 +1701,7 @@ async def get_agents(
             # For team accounts, use the database function that handles complex visibility logic
             # This includes: owned agents, team-shared agents, and public agents
             # Get a larger set first to allow for post-processing filters
+            logger.info(f"Calling get_marketplace_agents with account_id={account_id}")
             marketplace_result = await client.rpc('get_marketplace_agents', {
                 'p_limit': limit * 3,  # Get more than needed for post-processing
                 'p_offset': 0,  # Always start from beginning for filtering
@@ -1639,6 +1709,7 @@ async def get_agents(
                 'p_tags': None,
                 'p_account_id': account_id
             }).execute()
+            logger.info(f"get_marketplace_agents returned {len(marketplace_result.data or [])} agents")
             
             if not marketplace_result.data:
                 marketplace_result.data = []
@@ -1866,25 +1937,62 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
         agent_data = agent.data[0]
         is_managed_by_user = False
         
-        # Check access: owner, public agent, or managed agent in user's library
-        if agent_data['account_id'] == user_id:
-            # User owns the agent
+        # Check access: owner, public agent, team member, or managed agent in user's library
+        agent_account_id = agent_data.get('account_id')
+        
+        if not agent_account_id:
+            logger.error(f"Agent {agent_id} has no account_id set")
+            raise HTTPException(status_code=500, detail="Agent configuration error")
+        elif agent_account_id == user_id:
+            # User owns the agent (personal account case)
+            logger.info(f"User {user_id} owns agent {agent_id}")
             pass
         elif agent_data.get('is_public', False):
             # Public agent
+            logger.info(f"Agent {agent_id} is public")
             pass
         else:
-            # Check if user has this agent in their library (either managed or copied)
-            library_check = await client.table('user_agent_library').select('*').eq(
-                'user_account_id', user_id
-            ).eq('agent_id', agent_id).execute()
+            # Check if user is a member of the team account that owns the agent
+            has_team_access = False
+            try:
+                team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_account_id).execute()
+                if team_access_check.data and len(team_access_check.data) > 0:
+                    # User has access via team membership
+                    logger.info(f"User {user_id} has access to agent {agent_id} via team membership in {agent_account_id}")
+                    has_team_access = True
+                else:
+                    logger.info(f"User {user_id} is not a member of team {agent_account_id} that owns agent {agent_id}")
+            except Exception as e:
+                logger.error(f"Error checking team membership for user {user_id} in account {agent_account_id}: {str(e)}")
             
-            if library_check.data:
-                # Check if it's a managed agent (agent_id == original_agent_id)
-                library_entry = library_check.data[0]
-                is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
-            else:
-                raise HTTPException(status_code=403, detail="Access denied")
+            # Also check if agent is shared with any teams the user belongs to
+            if not has_team_access:
+                try:
+                    # Get all teams the user is a member of
+                    user_teams = await client.schema('basejump').from_('account_user').select('account_id').eq('user_id', user_id).execute()
+                    if user_teams.data:
+                        user_team_ids = [team['account_id'] for team in user_teams.data]
+                        # Check if agent is shared with any of these teams
+                        shared_check = await client.table('team_agents').select('*').eq('agent_id', agent_id).in_('team_account_id', user_team_ids).execute()
+                        if shared_check.data:
+                            has_team_access = True
+                            logger.info(f"User {user_id} has access to agent {agent_id} via team sharing")
+                except Exception as e:
+                    logger.error(f"Error checking team sharing for user {user_id} and agent {agent_id}: {str(e)}")
+            
+            # If no team access, check library access
+            if not has_team_access:
+                # Check if user has this agent in their library (either managed or copied)
+                library_check = await client.table('user_agent_library').select('*').eq(
+                    'user_account_id', user_id
+                ).eq('agent_id', agent_id).execute()
+                
+                if library_check.data:
+                    # Check if it's a managed agent (agent_id == original_agent_id)
+                    library_entry = library_check.data[0]
+                    is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
+                else:
+                    raise HTTPException(status_code=403, detail="Access denied")
         
         # Apply sharing preferences filtering for managed agents
         if is_managed_by_user:
@@ -2522,6 +2630,118 @@ async def add_agent_to_library(
         else:
             raise HTTPException(status_code=500, detail="Internal server error")
 
+@router.post("/shared-agents/{token}/add-to-library")
+async def add_shared_agent_to_library(
+    token: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Add a shared agent to user's library using the share token."""
+    if not await is_enabled("agent_marketplace"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Agent sharing currently disabled. This feature is not available at the moment."
+        )
+
+    logger.info(f"Adding shared agent with token {token} to user {user_id} library")
+    client = await db.client
+    
+    try:
+        # First, get the shared agent data to validate the token and get agent_id
+        shared_result = await client.rpc('get_shared_agent', {
+            'p_token': token
+        }).execute()
+        
+        if not shared_result.data:
+            raise HTTPException(status_code=404, detail="Share link not found, expired, or exceeded usage limit")
+        
+        shared_data = shared_result.data[0]
+        agent_data = shared_data['agent_data']
+        agent_id = agent_data['agent_id']
+        
+        logger.info(f"Found shared agent {agent_id} for token {token}")
+        
+        # Check if agent is already in user's library
+        existing_library_entry = await client.table('user_agent_library').select('*').eq(
+            'user_account_id', user_id
+        ).eq('original_agent_id', agent_id).execute()
+        
+        if existing_library_entry.data:
+            raise HTTPException(status_code=409, detail="Agent already in your library")
+        
+        # Create the library entry using a modified version of the add_agent_to_library function
+        # For shared agents, we need to handle them differently since they might not be public
+        sharing_preferences = shared_data.get('sharing_preferences', {})
+        
+        # Check if this is a managed agent
+        is_managed_agent = sharing_preferences.get('managed_agent', False)
+        
+        if is_managed_agent:
+            # For managed agents, store a reference (same as original)
+            await client.table('user_agent_library').insert({
+                'user_account_id': user_id,
+                'original_agent_id': agent_id,
+                'agent_id': agent_id  # Same ID = reference
+            }).execute()
+            
+            new_agent_id = agent_id
+        else:
+            # For copied agents, create a new agent copy
+            # Apply sharing preferences
+            knowledge_bases = agent_data.get('knowledge_bases', []) if sharing_preferences.get('include_knowledge_bases', True) else []
+            configured_mcps = agent_data.get('configured_mcps', []) if sharing_preferences.get('include_custom_mcp_tools', True) else []
+            custom_mcps = agent_data.get('custom_mcps', []) if sharing_preferences.get('include_custom_mcp_tools', True) else []
+            
+            # Create the new agent
+            new_agent_result = await client.table('agents').insert({
+                'account_id': user_id,
+                'name': agent_data['name'] + ' (from share)',
+                'description': agent_data.get('description'),
+                'system_prompt': agent_data['system_prompt'],
+                'configured_mcps': configured_mcps,
+                'custom_mcps': custom_mcps,
+                'agentpress_tools': agent_data.get('agentpress_tools', {}),
+                'knowledge_bases': knowledge_bases,
+                'is_default': False,
+                'is_public': False,
+                'visibility': 'private',
+                'tags': agent_data.get('tags', []),
+                'avatar': agent_data.get('avatar'),
+                'avatar_color': agent_data.get('avatar_color'),
+                'sharing_preferences': {
+                    'disable_customization': sharing_preferences.get('disable_customization', False),
+                    'original_agent_id': agent_id,
+                    'is_shared_agent': True,
+                    'include_knowledge_bases': sharing_preferences.get('include_knowledge_bases', True),
+                    'include_custom_mcp_tools': sharing_preferences.get('include_custom_mcp_tools', True)
+                }
+            }).execute()
+            
+            if not new_agent_result.data:
+                raise HTTPException(status_code=500, detail="Failed to create agent copy")
+            
+            new_agent_id = new_agent_result.data[0]['agent_id']
+            
+            # Add to library
+            await client.table('user_agent_library').insert({
+                'user_account_id': user_id,
+                'original_agent_id': agent_id,
+                'agent_id': new_agent_id
+            }).execute()
+        
+        # Increment download count for the original agent
+        await client.table('agents').update({
+            'download_count': (agent_data.get('download_count', 0) + 1)
+        }).eq('agent_id', agent_id).execute()
+        
+        logger.info(f"Successfully added shared agent {agent_id} to user {user_id} library as {new_agent_id}")
+        return {"message": "Agent added to library successfully", "new_agent_id": new_agent_id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding shared agent {token} to library: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @router.get("/user/agent-library")
 async def get_user_agent_library(user_id: str = Depends(get_current_user_id_from_jwt)):
     """Get user's agent library (agents added from marketplace)."""
@@ -2714,7 +2934,8 @@ class SharedAgentResponse(BaseModel):
 async def create_agent_share_link(
     agent_id: str,
     share_data: CreateAgentShareRequest,
-    user_id: str = Depends(get_current_user_id_from_jwt)
+    user_id: str = Depends(get_current_user_id_from_jwt),
+    request: Request = None
 ):
     """Create a share link for an agent."""
     if not await is_enabled("agent_marketplace"):
@@ -2764,11 +2985,22 @@ async def create_agent_share_link(
         
         share = result.data[0]
         
+        # Generate proper frontend URL for sharing
+        from utils.config import config
+        frontend_url = config.NEXT_PUBLIC_URL
+        if frontend_url:
+            proper_share_url = f"{frontend_url}/shared-agents/{share['token']}"
+        elif request:
+            # Fallback: try to construct frontend URL from request
+            proper_share_url = f"{request.url.scheme}://{request.url.netloc}/shared-agents/{share['token']}"
+        else:
+            proper_share_url = share['share_url']  # Final fallback to database URL
+        
         logger.info(f"Successfully created share link {share['share_id']} for agent {agent_id}")
         return AgentShareResponse(
             share_id=share['share_id'],
             token=share['token'],
-            share_url=share['share_url'],
+            share_url=proper_share_url,
             expires_at=share['expires_at'],
             access_count=0,
             sharing_preferences=share.get('sharing_preferences', {})
@@ -2804,8 +3036,15 @@ async def get_agent_share_links(
         shares_result = await client.table('agent_shares').select('*').eq('agent_id', agent_id).eq('creator_account_id', user_id).execute()
         
         shares = []
+        from utils.config import config
+        frontend_url = config.NEXT_PUBLIC_URL
         for share in shares_result.data or []:
-            share_url = f"{request.url.scheme}://{request.url.netloc}/shared-agents/{share['token']}"
+            if frontend_url:
+                share_url = f"{frontend_url}/shared-agents/{share['token']}"
+            elif request:
+                share_url = f"{request.url.scheme}://{request.url.netloc}/shared-agents/{share['token']}"
+            else:
+                share_url = f"https://placeholder.com/shared-agents/{share['token']}"
             shares.append(AgentShareResponse(
                 share_id=share['id'],
                 token=share['token'],

@@ -32,6 +32,9 @@ import {
 import { useAccounts } from '@/hooks/use-accounts';
 import { toast } from 'sonner';
 import { Agent } from '@/hooks/react-query/agents/utils';
+import { createClient } from '@/lib/supabase/client';
+
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
 interface ShareAgentDialogProps {
   agent: Agent;
@@ -64,7 +67,7 @@ export function ShareAgentDialog({
   const [includeKnowledgeBases, setIncludeKnowledgeBases] = useState(true);
   const [includeCustomMcpTools, setIncludeCustomMcpTools] = useState(true);
   const [managedAgent, setManagedAgent] = useState(false);
-  const [linkType, setLinkType] = useState<'persistent' | 'ephemeral'>('persistent');
+  const [linkType, setLinkType] = useState<'persistent' | 'temporary'>('persistent');
   const [expiresInHours, setExpiresInHours] = useState(24);
   const [shareLinks, setShareLinks] = useState<ShareLink[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -92,15 +95,32 @@ export function ShareAgentDialog({
   const loadShareLinks = async () => {
     setLoadingShareLinks(true);
     try {
-      const response = await fetch(`/api/agents/${agent.agent_id}/shares`, {
-        credentials: 'include',
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('You must be logged in to load share links');
+      }
+
+      const response = await fetch(`${API_URL}/agents/${agent.agent_id}/shares`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
       });
       
       if (response.ok) {
         const data = await response.json();
         setShareLinks(data.shares || []);
       } else {
-        throw new Error('Failed to load share links');
+        let errorMessage = 'Failed to load share links';
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || error.message || errorMessage;
+        } catch (jsonError) {
+          // Response doesn't contain valid JSON, use default message
+          errorMessage = `Failed to load share links: ${response.statusText} (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error loading share links:', error);
@@ -118,19 +138,34 @@ export function ShareAgentDialog({
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/agents/${agent.agent_id}/publish`, {
+      const requestBody = {
+        visibility: 'teams',
+        team_ids: Array.from(selectedTeams),
+        include_knowledge_bases: includeKnowledgeBases,
+        include_custom_mcp_tools: includeCustomMcpTools,
+        managed_agent: managedAgent,
+      };
+      
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('You must be logged in to share agents');
+      }
+
+      console.log('Sharing agent to teams:', {
+        agentId: agent.agent_id,
+        url: `${API_URL}/agents/${agent.agent_id}/publish`,
+        requestBody
+      });
+      
+      const response = await fetch(`${API_URL}/agents/${agent.agent_id}/publish`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
-        credentials: 'include',
-        body: JSON.stringify({
-          visibility: 'teams',
-          team_ids: Array.from(selectedTeams),
-          include_knowledge_bases: includeKnowledgeBases,
-          include_custom_mcp_tools: includeCustomMcpTools,
-          managed_agent: managedAgent,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
@@ -138,8 +173,30 @@ export function ShareAgentDialog({
         onSuccess?.();
         onClose();
       } else {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to share agent');
+        console.error('Team sharing failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url,
+          headers: Object.fromEntries(response.headers.entries())
+        });
+        
+        let errorMessage = 'Failed to share agent';
+        try {
+          const error = await response.json();
+          console.error('Error response body:', error);
+          errorMessage = error.detail || error.message || errorMessage;
+        } catch (jsonError) {
+          // Response doesn't contain valid JSON, use response text instead
+          try {
+            const errorText = await response.text();
+            console.error('Error response text:', errorText);
+            errorMessage = errorText || `Error sharing agent: ${response.statusText} (${response.status})`;
+          } catch (textError) {
+            console.error('Could not read error response:', textError);
+            errorMessage = `Error sharing agent: ${response.statusText} (${response.status})`;
+          }
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error sharing agent:', error);
@@ -152,15 +209,22 @@ export function ShareAgentDialog({
   const handleCreateShareLink = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/agents/${agent.agent_id}/share`, {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('You must be logged in to create share links');
+      }
+
+      const response = await fetch(`${API_URL}/agents/${agent.agent_id}/share`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
-        credentials: 'include',
         body: JSON.stringify({
           share_type: linkType,
-          expires_in_hours: linkType === 'ephemeral' ? expiresInHours : null,
+          expires_in_hours: linkType === 'temporary' ? expiresInHours : null,
           include_knowledge_bases: includeKnowledgeBases,
           include_custom_mcp_tools: includeCustomMcpTools,
           managed_agent: managedAgent,
@@ -176,8 +240,15 @@ export function ShareAgentDialog({
         await navigator.clipboard.writeText(newLink.share_url);
         toast.success('Link copied to clipboard');
       } else {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to create share link');
+        let errorMessage = 'Failed to create share link';
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || error.message || errorMessage;
+        } catch (jsonError) {
+          // Response doesn't contain valid JSON, use default message
+          errorMessage = `Failed to create share link: ${response.statusText} (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error creating share link:', error);
@@ -198,9 +269,18 @@ export function ShareAgentDialog({
 
   const handleRevokeLink = async (shareId: string) => {
     try {
-      const response = await fetch(`/api/agents/${agent.agent_id}/shares/${shareId}`, {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('You must be logged in to revoke share links');
+      }
+
+      const response = await fetch(`${API_URL}/agents/${agent.agent_id}/shares/${shareId}`, {
         method: 'DELETE',
-        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
       });
 
       if (response.ok) {
@@ -218,9 +298,18 @@ export function ShareAgentDialog({
   const handleUnshareManaged = async () => {
     setIsUnsharing(true);
     try {
-      const response = await fetch(`/api/agents/${agent.agent_id}/unshare-managed`, {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('You must be logged in to unshare managed agents');
+      }
+
+      const response = await fetch(`${API_URL}/agents/${agent.agent_id}/unshare-managed`, {
         method: 'POST',
-        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
       });
 
       if (response.ok) {
@@ -235,8 +324,15 @@ export function ShareAgentDialog({
         onSuccess?.();
         onClose();
       } else {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to unshare managed agent');
+        let errorMessage = 'Failed to unshare managed agent';
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || error.message || errorMessage;
+        } catch (jsonError) {
+          // Response doesn't contain valid JSON, use default message
+          errorMessage = `Failed to unshare managed agent: ${response.statusText} (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error unsharing managed agent:', error);
@@ -408,13 +504,13 @@ export function ShareAgentDialog({
                       <Label htmlFor="persistent" className="text-sm">Persistent (never expires)</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="ephemeral" id="ephemeral" />
-                      <Label htmlFor="ephemeral" className="text-sm">Ephemeral (expires after time)</Label>
+                      <RadioGroupItem value="temporary" id="temporary" />
+                      <Label htmlFor="temporary" className="text-sm">Temporary (expires after time)</Label>
                     </div>
                   </RadioGroup>
                 </div>
 
-                {linkType === 'ephemeral' && (
+                {linkType === 'temporary' && (
                   <div className="space-y-2">
                     <Label htmlFor="expiry" className="text-sm font-medium">Expires in hours:</Label>
                     <Input
@@ -447,7 +543,7 @@ export function ShareAgentDialog({
                             <div className="flex items-center gap-2">
                               <Link className="h-4 w-4" />
                               <span className="text-sm font-medium">
-                                {link.expires_at ? 'Ephemeral' : 'Persistent'}
+                                {link.expires_at ? 'Temporary' : 'Persistent'}
                               </span>
                             </div>
                             <div className="flex gap-1">

@@ -156,6 +156,12 @@ class ApolloProvider:
         # Prepare the request payload
         request_data = {}
         
+        # Handle None or invalid payload
+        if payload is None:
+            payload = {}
+        elif not isinstance(payload, dict):
+            raise ValueError(f"Invalid payload type: expected dict, got {type(payload)}")
+        
         if payload:
             # Handle array parameters for Apollo API
             for key, value in payload.items():
@@ -211,7 +217,13 @@ class ApolloProvider:
             
             # Try to parse JSON response
             try:
-                return response.json()
+                json_response = response.json()
+                
+                # Handle case where API returns valid JSON null
+                if json_response is None:
+                    raise ValueError("Apollo API returned null response")
+                
+                return json_response
             except ValueError as e:
                 raise ValueError(f"Invalid JSON response from Apollo API: {e}")
                 
@@ -232,6 +244,12 @@ class ApolloProvider:
         Raises:
             ValueError: If no search criteria are provided
         """
+        # Handle None or empty request_data
+        if request_data is None:
+            request_data = {}
+            
+        if not isinstance(request_data, dict):
+            raise ValueError(f"Invalid request_data type: expected dict, got {type(request_data)}")
         # Define search criteria fields for each endpoint
         people_search_criteria = [
             "person_titles[]", "person_locations[]", "person_seniorities[]",

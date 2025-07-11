@@ -1,10 +1,12 @@
 import React, { useRef, useCallback, useMemo, useState, useEffect } from 'react';
-import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, User, Calendar, Tags, Sparkles, Zap, BookOpen, Share2 } from 'lucide-react';
+import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, User, Calendar, Tags, Sparkles, Zap, BookOpen, Share2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useCurrentAccount } from '@/hooks/use-current-account';
+import { useAccounts } from '@/hooks/use-accounts';
 import './AgentProfileCard.css';
 
 // Simple Agent interface matching existing codebase
@@ -19,6 +21,7 @@ interface Agent {
   is_public?: boolean;
   is_managed?: boolean;
   is_owned?: boolean;
+  visibility?: 'public' | 'teams' | 'private';
   download_count?: number;
   tags?: string[];
   avatar?: string;
@@ -51,6 +54,7 @@ interface AgentProfileCardProps {
   enableTilt?: boolean;
   isHighlighted?: boolean;
   onHighlightChange?: (agentId: string | null) => void;
+  isAddedToLibrary?: boolean;
 }
 
 const getAgentAvatar = (agentId: string) => {
@@ -120,10 +124,41 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
   enableTilt = true,
   isHighlighted = false,
   onHighlightChange,
+  isAddedToLibrary = false,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  
+  // Team context and permissions
+  const currentAccount = useCurrentAccount();
+  const { data: accounts } = useAccounts();
+  
+  // Determine user permissions based on team context
+  const permissions = useMemo(() => {
+    // If not in team context, user has full permissions (personal account)
+    if (!currentAccount?.is_team_context) {
+      return {
+        canEdit: !agent.is_managed && agent.is_owned,
+        canPublish: !agent.is_managed && agent.is_owned,
+        canShare: !agent.is_managed && agent.is_owned,
+        canDelete: !agent.is_managed && agent.is_owned && !agent.is_default,
+      };
+    }
+    
+    // In team context - check if user is admin/owner of the team
+    const currentTeamAccount = accounts?.find(acc => 
+      acc.account_id === currentAccount.account_id && !acc.personal_account
+    );
+    const isTeamAdmin = (currentTeamAccount as any)?.account_role === 'owner';
+    
+    return {
+      canEdit: isTeamAdmin && !agent.is_managed && agent.is_owned,
+      canPublish: false, // No publishing to marketplace in team context
+      canShare: false,   // No sharing in team context
+      canDelete: isTeamAdmin && !agent.is_managed && agent.is_owned && !agent.is_default,
+    };
+  }, [currentAccount, accounts, agent]);
 
   // Get agent styling
   const agentStyling = useMemo(() => {
@@ -329,8 +364,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
       
       {/* Content */}
       <div className="relative h-full flex flex-col p-6 z-10">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div 
               className={cn(
@@ -360,10 +397,17 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                     Default
                   </Badge>
                 )}
-                {agent.is_public && (
+                {/* Visibility badges - mutually exclusive */}
+                {(agent.is_public || agent.visibility === 'public') && (
                   <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30 transition-all duration-300 group-hover:bg-green-500/30">
                     <Globe className="h-3 w-3 mr-1" />
                     Public
+                  </Badge>
+                )}
+                {agent.visibility === 'teams' && !agent.is_public && (
+                  <Badge variant="secondary" className="text-xs bg-purple-500/20 text-purple-600 dark:text-purple-400 border-purple-500/30 transition-all duration-300 group-hover:bg-purple-500/30">
+                    <Bot className="h-3 w-3 mr-1" />
+                    Teams
                   </Badge>
                 )}
                 {(agent.is_managed || (mode === 'marketplace' && agent.sharing_preferences?.managed_agent)) && (
@@ -386,7 +430,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
             )}
             
             {/* Delete/Remove from Library button for library mode */}
-            {mode === 'library' && !agent.is_default && (
+            {mode === 'library' && permissions.canDelete && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
@@ -570,34 +614,52 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
             </div>
           )}
         </div>
+        </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2 mt-auto flex-wrap">
+        <div className={cn(
+          "flex pt-6 mt-auto",
+          mode === 'marketplace' ? "justify-center" : "gap-2 flex-wrap"
+        )}>
           {mode === 'marketplace' ? (
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onAddToLibrary?.(agent.agent_id);
-              }}
-              disabled={isLoading}
-              size="sm"
-              className="flex-1 min-w-0 bg-background/10 hover:bg-background/25 text-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
-              style={{
-                boxShadow: `0 4px 15px ${agentStyling.color}10`,
-              }}
-            >
-              {isLoading ? (
-                <>
-                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-foreground border-t-transparent mr-2 flex-shrink-0" />
-                  <span className="truncate">Adding...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <span className="truncate">Add to Library</span>
-                </>
-              )}
-            </Button>
+            isAddedToLibrary ? (
+              <Button
+                disabled
+                size="sm"
+                className="min-w-[160px] bg-green-500/20 hover:bg-green-500/25 text-green-700 dark:text-green-400 border-green-500/30 backdrop-blur-sm transition-all duration-300"
+                style={{
+                  boxShadow: `0 4px 15px ${agentStyling.color}10`,
+                }}
+              >
+                <CheckCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Added to Library</span>
+              </Button>
+            ) : (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToLibrary?.(agent.agent_id);
+                }}
+                disabled={isLoading}
+                size="sm"
+                className="min-w-[160px] bg-background/10 hover:bg-background/25 text-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+                style={{
+                  boxShadow: `0 4px 15px ${agentStyling.color}10`,
+                }}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-foreground border-t-transparent mr-2 flex-shrink-0" />
+                    <span className="truncate">Adding...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">Add to Library</span>
+                  </>
+                )}
+              </Button>
+            )
           ) : (
             <>
               <Button
@@ -615,7 +677,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
                 <span className="truncate">Chat</span>
               </Button>
               
-              {!agent.is_managed && (
+              {permissions.canEdit && (
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -631,7 +693,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               )}
               
               {/* Publish/Make Private Button with confirmation for managed agents */}
-              {!agent.is_managed && agent.is_owned && (
+              {permissions.canPublish && (
                 agent.is_public || agent.marketplace_published_at ? (
                   agent.sharing_preferences?.managed_agent ? (
                     <AlertDialog>
@@ -702,7 +764,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
               )}
               
               {/* Share Button */}
-              {!agent.is_managed && agent.is_owned && (
+              {permissions.canShare && (
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();

@@ -240,7 +240,7 @@ except Exception as e:
         "type": "function",
         "function": {
             "name": "fill_form",
-            "description": "Fills interactive PDF forms with fillable fields while KEEPING the form editable for manual corrections. IMPORTANT: Use this ONLY for PDFs with actual form controls. For scanned documents, image-based PDFs, or non-fillable forms, use fill_form_coordinates instead. The filled form remains editable - use flatten_form separately if you need a non-editable version.",
+            "description": "Fills interactive PDF forms with fillable fields while KEEPING the form editable for manual corrections. IMPORTANT: Use this ONLY for PDFs with actual form controls. For scanned documents, image-based PDFs, or non-fillable forms, use smart_form_fill instead. The filled form remains editable - use flatten_form separately if user need a non-editable version. GIve the user an option to flatten the form if they want a non-editable version. ",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -1893,4 +1893,709 @@ except Exception as e:
             return await self._execute_pdf_script(script)
             
         except Exception as e:
-            return self.fail_response(f"Error generating coordinate grid: {str(e)}") 
+            return self.fail_response(f"Error generating coordinate grid: {str(e)}")
+
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "smart_form_fill",
+            "description": "Modern AI-powered form filling using computer vision and automatic field detection. Automatically identifies form fields and fills them intelligently without manual coordinate mapping.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "Path to the PDF file to fill"
+                    },
+                    "form_data": {
+                        "type": "object",
+                        "description": "Data to fill in the form using intelligent field matching"
+                    },
+                    "output_path": {
+                        "type": "string",
+                        "description": "Optional output path for the filled form"
+                    },
+                    "use_vision_model": {
+                        "type": "boolean",
+                        "description": "Use vision language model for field detection (more accurate but slower)",
+                        "default": True
+                    }
+                },
+                "required": ["file_path", "form_data"]
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="smart-form-fill",
+        mappings=[
+            {"param_name": "file_path", "node_type": "attribute", "path": "."},
+            {"param_name": "form_data", "node_type": "element", "path": "form_data"},
+            {"param_name": "output_path", "node_type": "attribute", "path": "output_path", "required": False},
+            {"param_name": "use_vision_model", "node_type": "attribute", "path": "use_vision_model", "required": False}
+        ],
+        example='''
+        <function_calls>
+        <invoke name="smart_form_fill">
+        <parameter name="file_path">forms/credit_application.pdf</parameter>
+        <parameter name="form_data">{
+            "business_name": "ABC Manufacturing LLC",
+            "phone": "(555) 123-4567",
+            "email": "info@abc.com"
+        }</parameter>
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def smart_form_fill(self, file_path: str, form_data: Dict[str, Any], output_path: Optional[str] = None, use_vision_model: bool = True) -> ToolResult:
+        """Modern AI-powered form filling using automatic field detection."""
+        try:
+            await self._ensure_sandbox()
+            await self._ensure_pymupdf_installed()
+            
+            file_path = self.clean_path(file_path)
+            full_path = f"{self.workspace_path}/{file_path}"
+            
+            if not self._file_exists(full_path):
+                return self.fail_response(f"PDF file '{file_path}' does not exist")
+            
+            # Determine output path
+            if output_path:
+                output_path = self.clean_path(output_path)
+                # Ensure Final_filled_ prefix
+                path_parts = output_path.split('/')
+                filename = path_parts[-1]
+                if not filename.startswith("Final_filled_"):
+                    filename = f"Final_filled_{filename}"
+                    path_parts[-1] = filename
+                    output_path = '/'.join(path_parts)
+                filled_path = f"{self.workspace_path}/{output_path}"
+            else:
+                base_name = os.path.splitext(file_path)[0]
+                filename = os.path.basename(base_name)
+                filled_path = f"{self.workspace_path}/Final_filled_{filename}_{uuid.uuid4().hex[:8]}.pdf"
+                output_path = filled_path.replace(f"{self.workspace_path}/", "")
+            
+            script_content = f"""
+import pymupdf
+import json
+import re
+import os
+from typing import Dict, List, Tuple, Any
+import difflib
+
+def detect_form_fields_advanced(page):
+    '''Enhanced form field detection with better positioning analysis'''
+    try:
+        # Get all text with detailed information
+        text_dict = page.get_text("dict")
+        page_width = page.rect.width
+        page_height = page.rect.height
+        
+        # Extract all text elements with positions
+        text_elements = []
+        for block in text_dict["blocks"]:
+            if "lines" in block:
+                for line in block["lines"]:
+                    for span in line["spans"]:
+                        text = span["text"].strip()
+                        if text:
+                            text_elements.append({{
+                                "text": text,
+                                "bbox": span["bbox"],
+                                "fontsize": span["size"],
+                                "flags": span["flags"]
+                            }})
+        
+        # Detect drawing elements (lines, rectangles that could be form fields)
+        input_areas = []
+        try:
+            drawings = page.get_drawings()
+            
+            # Find underlines and boxes that might indicate input areas
+            for drawing in drawings:
+                for item in drawing["items"]:
+                    if item[0] == "l":  # Line
+                        x1, y1, x2, y2 = item[1:]
+                        # Horizontal lines could be underlines for text fields
+                        if abs(y1 - y2) < 2 and abs(x2 - x1) > 20:  # Horizontal line
+                            input_areas.append({{
+                                "type": "underline",
+                                "bbox": [min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)],
+                                "width": abs(x2 - x1)
+                            }})
+                    elif item[0] == "re":  # Rectangle
+                        x1, y1, x2, y2 = item[1:5]
+                        # Small rectangles could be checkboxes
+                        if abs(x2 - x1) < 30 and abs(y2 - y1) < 30:
+                            input_areas.append({{
+                                "type": "checkbox",
+                                "bbox": [min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)]
+                            }})
+                        # Larger rectangles could be text input areas
+                        elif abs(x2 - x1) > 50:
+                            input_areas.append({{
+                                "type": "text_box",
+                                "bbox": [min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2)],
+                                "width": abs(x2 - x1)
+                            }})
+        except Exception as e:
+            print(f"Warning: Could not detect drawings: {{e}}")
+        
+        # Enhanced field indicators
+        field_indicators = [
+            "name", "address", "phone", "email", "date", "city", "state", "zip",
+            "business", "company", "contact", "fax", "title", "amount", "number",
+            "bank", "account", "reference", "signature", "federal", "tax", "id",
+            "incorporation", "years", "employees", "credit", "payment", "terms",
+            "president", "vice", "secretary", "treasurer", "ssn", "dob", "billing",
+            "legal", "trade", "service", "individual", "partner", "corp", "llc"
+        ]
+        
+        potential_fields = []
+        
+        for element in text_elements:
+            text = element["text"].lower()
+            bbox = element["bbox"]
+            
+            # Check if this looks like a field label
+            is_label = False
+            field_type = None
+            
+            # Method 1: Direct colon detection
+            if text.endswith(":"):
+                is_label = True
+                field_type = text.rstrip(":").strip()
+            
+            # Method 2: Check for field indicators in the text
+            if not is_label:
+                for indicator in field_indicators:
+                    if indicator in text and len(text) < 80:  # Increased length limit
+                        is_label = True
+                        field_type = indicator
+                        break
+            
+            # Method 3: Look for parentheses indicating input areas
+            if not is_label and "(" in text and ")" in text and text.count("(") <= 2:
+                is_label = True
+                if not field_type:
+                    field_type = text.split("(")[0].strip().rstrip(":")
+                if not field_type or len(field_type) < 2:
+                    field_type = "input_field"
+            
+            # Method 4: Look for underscores indicating blank spaces
+            if not is_label and "_" in text and len(text) > 3:
+                underscore_count = text.count("_")
+                if underscore_count > 2:  # Likely a blank field
+                    is_label = True
+                    # Try to find a label nearby
+                    for other_element in text_elements:
+                        other_bbox = other_element["bbox"]
+                        # Check if there's a label to the left or above
+                        if (other_bbox[2] <= bbox[0] + 20 and abs(other_bbox[3] - bbox[3]) < 15) or \
+                           (other_bbox[3] <= bbox[1] + 10 and abs(other_bbox[0] - bbox[0]) < 100):
+                            potential_label = other_element["text"].lower().strip().rstrip(":")
+                            if any(ind in potential_label for ind in field_indicators) or len(potential_label) > 2:
+                                field_type = potential_label if potential_label else "text_field"
+                                break
+                    if not field_type:
+                        field_type = "text_field"
+            
+            # Method 5: Text patterns that suggest form fields (more permissive)
+            if not is_label:
+                # Common form patterns
+                form_patterns = [
+                    r'^\w+\s*:\s*$',  # Word followed by colon
+                    r'^\w+\s+\w+\s*:\s*$',  # Two words followed by colon
+                    r'^\w+\s*\(\s*\)\s*$',  # Word followed by parentheses
+                    r'^\w+.*\s+name\s*:?\s*$',  # Anything with "name"
+                    r'^\w+.*\s+address\s*:?\s*$',  # Anything with "address"
+                ]
+                
+                import re
+                for pattern in form_patterns:
+                    if re.match(pattern, text, re.IGNORECASE):
+                        is_label = True
+                        field_type = text.lower().strip().rstrip(":")
+                        break
+            
+            # Method 6: Fallback - any short text that might be a label
+            if not is_label and len(text) > 2 and len(text) < 30:
+                # Check if this could be a standalone label
+                if any(char.isalpha() for char in text) and not text.isdigit():
+                    # More permissive - consider it a potential field
+                    is_label = True
+                    field_type = text.lower().strip().rstrip(":")
+            
+            if is_label and field_type:
+                # Enhanced positioning logic
+                input_position = None
+                
+                # Method 1: Look for nearby input areas (underlines, boxes)
+                if input_areas:
+                    best_input_area = None
+                    min_distance = float('inf')
+                    
+                    for input_area in input_areas:
+                        area_bbox = input_area["bbox"]
+                        # Calculate distance from label to input area
+                        label_center_x = (bbox[0] + bbox[2]) / 2
+                        label_center_y = (bbox[1] + bbox[3]) / 2
+                        area_center_x = (area_bbox[0] + area_bbox[2]) / 2
+                        area_center_y = (area_bbox[1] + area_bbox[3]) / 2
+                        
+                        distance = ((label_center_x - area_center_x)**2 + (label_center_y - area_center_y)**2)**0.5
+                        
+                        # Input area should be reasonably close and in the right direction
+                        if distance < 150 and distance < min_distance:
+                            # Check if input area is to the right or below the label
+                            if area_center_x > label_center_x - 50 and area_center_y > label_center_y - 20:
+                                best_input_area = input_area
+                                min_distance = distance
+                    
+                    if best_input_area:
+                        area_bbox = best_input_area["bbox"]
+                        if best_input_area["type"] == "underline":
+                            # Place text just above the underline
+                            input_position = {{
+                                "x": area_bbox[0] + 5,
+                                "y": area_bbox[1] - 2
+                            }}
+                        elif best_input_area["type"] == "text_box":
+                            # Place text inside the box
+                            input_position = {{
+                                "x": area_bbox[0] + 5,
+                                "y": area_bbox[1] + (area_bbox[3] - area_bbox[1]) * 0.7
+                            }}
+                        elif best_input_area["type"] == "checkbox":
+                            # Place checkmark in the center of the box
+                            input_position = {{
+                                "x": area_bbox[0] + (area_bbox[2] - area_bbox[0]) / 2,
+                                "y": area_bbox[1] + (area_bbox[3] - area_bbox[1]) * 0.7
+                            }}
+                
+                # Method 2: Smart positioning based on text layout
+                if not input_position:
+                    # Analyze the layout around the label
+                    label_right = bbox[2]
+                    label_bottom = bbox[3]
+                    label_top = bbox[1]
+                    
+                    # Look for space to the right
+                    space_to_right = True
+                    min_distance_right = float('inf')
+                    
+                    for other_element in text_elements:
+                        other_bbox = other_element["bbox"]
+                        # Check if there's text immediately to the right
+                        if (other_bbox[0] > label_right and 
+                            other_bbox[0] < label_right + 200 and  # Increased search range
+                            abs(other_bbox[3] - label_bottom) < 15):  # More tolerant vertical alignment
+                            distance = other_bbox[0] - label_right
+                            if distance < min_distance_right:
+                                min_distance_right = distance
+                            if distance < 50:  # Too close
+                                space_to_right = False
+                                break
+                    
+                    if space_to_right:
+                        # Place text to the right of the label
+                        offset = min(30, max(10, min_distance_right // 2)) if min_distance_right != float('inf') else 15
+                        input_position = {{
+                            "x": label_right + offset,
+                            "y": label_top + (label_bottom - label_top) * 0.7
+                        }}
+                    else:
+                        # Look for space below the label
+                        next_line_y = label_bottom + 15
+                        input_position = {{
+                            "x": bbox[0] + 20,
+                            "y": next_line_y
+                        }}
+                
+                # Method 3: Column-aware positioning (fallback)
+                if not input_position:
+                    # Determine which column we're in based on page layout
+                    if bbox[0] < page_width / 3:
+                        # Left column
+                        input_position = {{"x": bbox[2] + 20, "y": bbox[1] + (bbox[3] - bbox[1]) * 0.7}}
+                    elif bbox[0] < 2 * page_width / 3:
+                        # Middle column
+                        input_position = {{"x": bbox[2] + 15, "y": bbox[1] + (bbox[3] - bbox[1]) * 0.7}}
+                    else:
+                        # Right column
+                        input_position = {{"x": bbox[2] + 10, "y": bbox[1] + (bbox[3] - bbox[1]) * 0.7}}
+                
+                # Validate and adjust position
+                if input_position:
+                    input_position["x"] = max(10, min(input_position["x"], page_width - 100))
+                    input_position["y"] = max(20, min(input_position["y"], page_height - 20))
+                
+                potential_fields.append({{
+                    "label": element["text"],
+                    "field_type": field_type,
+                    "input_position": input_position or {{"x": bbox[2] + 15, "y": bbox[1] + (bbox[3] - bbox[1]) * 0.7}},
+                    "label_bbox": bbox,
+                    "confidence": 0.8
+                }})
+        
+        print(f"Debug: Found {{len(potential_fields)}} potential fields on page")
+        return potential_fields
+    except Exception as e:
+        print(f"Error in enhanced field detection: {{e}}")
+        import traceback
+        traceback.print_exc()
+        return []
+
+def match_form_data_to_fields(form_data, detected_fields):
+    '''Intelligently match form data keys to detected fields with enhanced matching'''
+    matches = []
+    used_fields = set()
+    
+    print(f"Debug: Matching {{len(form_data)}} data fields to {{len(detected_fields)}} detected fields")
+    
+    for data_key, data_value in form_data.items():
+        if not data_value or data_value == "":
+            continue
+            
+        best_match = None
+        best_score = 0
+        
+        data_key_clean = data_key.lower().replace("_", " ").strip()
+        data_key_parts = data_key_clean.split()
+        
+        for i, field in enumerate(detected_fields):
+            if i in used_fields:
+                continue
+                
+            field_type = field["field_type"].lower().strip()
+            field_label = field.get("label", "").lower().strip()
+            
+            # Multiple matching strategies with different weights
+            total_score = 0
+            
+            # Strategy 1: Exact match (highest weight)
+            if data_key_clean == field_type or data_key_clean == field_label:
+                total_score = 1.0
+            
+            # Strategy 2: Direct keyword matching
+            elif any(part in field_type or part in field_label for part in data_key_parts):
+                # Count how many parts match
+                matches_count = sum(1 for part in data_key_parts if part in field_type or part in field_label)
+                total_score = 0.7 + (matches_count * 0.1)
+            
+            # Strategy 3: Fuzzy string matching
+            else:
+                # Compare with field type
+                similarity1 = difflib.SequenceMatcher(None, data_key_clean, field_type).ratio()
+                # Compare with field label
+                similarity2 = difflib.SequenceMatcher(None, data_key_clean, field_label).ratio()
+                base_similarity = max(similarity1, similarity2)
+                
+                # Enhanced keyword matching with partial matches
+                keyword_boost = 0
+                
+                # Check each data key part against field text
+                for data_part in data_key_parts:
+                    # Exact word match
+                    if data_part in field_type.split() or data_part in field_label.split():
+                        keyword_boost += 0.3
+                    # Partial word match
+                    elif any(data_part in word or word in data_part for word in field_type.split() + field_label.split()):
+                        keyword_boost += 0.2
+                    # Substring match
+                    elif data_part in field_type or data_part in field_label:
+                        keyword_boost += 0.15
+                
+                # Special matching for common business form fields
+                business_mappings = {{
+                    'business': ['company', 'corp', 'llc', 'inc', 'business', 'name'],
+                    'trade': ['trade', 'dba', 'doing'],
+                    'legal': ['legal', 'official', 'registered'],
+                    'billing': ['billing', 'bill', 'invoice'],
+                    'shipping': ['shipping', 'ship', 'delivery'],
+                    'phone': ['phone', 'telephone', 'tel', 'number'],
+                    'email': ['email', 'e-mail', 'electronic'],
+                    'address': ['address', 'street', 'location'],
+                    'city': ['city', 'town'],
+                    'state': ['state', 'province'],
+                    'zip': ['zip', 'postal', 'code'],
+                    'federal': ['federal', 'tax', 'ein', 'fein'],
+                    'president': ['president', 'ceo', 'chief'],
+                    'vice': ['vice', 'vp', 'assistant'],
+                    'secretary': ['secretary', 'sec'],
+                    'treasurer': ['treasurer', 'cfo', 'financial'],
+                    'bank': ['bank', 'banking', 'financial'],
+                    'account': ['account', 'acct', 'number'],
+                    'reference': ['reference', 'ref', 'contact'],
+                    'signature': ['signature', 'sign', 'signed'],
+                    'date': ['date', 'dated', 'day'],
+                    'ssn': ['ssn', 'social', 'security']
+                }}
+                
+                # Apply business field mappings
+                for data_part in data_key_parts:
+                    if data_part in business_mappings:
+                        mapping_words = business_mappings[data_part]
+                        if any(word in field_type or word in field_label for word in mapping_words):
+                            keyword_boost += 0.4
+                
+                # Apply positional context boost
+                # If field contains numbers or special characters, it might be an input field
+                if any(char.isdigit() or char in '_()[]' for char in field_type + field_label):
+                    keyword_boost += 0.1
+                
+                total_score = base_similarity + keyword_boost
+            
+            # Apply confidence boost for high-confidence detections
+            if field.get("confidence", 0) > 0.8:
+                total_score += 0.05
+            
+            # Update best match if this score is better
+            if total_score > best_score and total_score > 0.3:  # Lower threshold for matching
+                best_match = field
+                best_score = total_score
+        
+        if best_match:
+            print(f"Debug: Matched '{{data_key}}' to '{{best_match['field_type']}}' (score: {{best_score:.2f}})")
+            matches.append({{
+                "data_key": data_key,
+                "data_value": str(data_value),
+                "field": best_match,
+                "match_score": best_score
+            }})
+            # Mark this field as used
+            for i, field in enumerate(detected_fields):
+                if field == best_match:
+                    used_fields.add(i)
+                    break
+        else:
+            print(f"Debug: No match found for '{{data_key}}'")
+    
+    print(f"Debug: Successfully matched {{len(matches)}} fields")
+    return matches
+
+def smart_fill_pdf(pdf_path, form_data, output_path):
+    '''Fill PDF using enhanced intelligent field detection with automatic overlap removal'''
+    try:
+        doc = pymupdf.open(pdf_path)
+        
+        total_matches = 0
+        total_placed = 0
+        total_removed_overlaps = 0
+        all_matches = []
+        page_results = []
+        
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            
+            # Use enhanced field detection
+            detected_fields = detect_form_fields_advanced(page)
+            
+            # Match form data to detected fields
+            matches = match_form_data_to_fields(form_data, detected_fields)
+            
+            page_placed = 0
+            page_overlaps_removed = 0
+            page_matches_info = []
+            placed_text_positions = []
+            
+            # Get existing text on the page for overlap detection
+            existing_text_dict = page.get_text("dict")
+            existing_words = []
+            for block in existing_text_dict["blocks"]:
+                if "lines" in block:
+                    for line in block["lines"]:
+                        for span in line["spans"]:
+                            text = span["text"].strip()
+                            if text and len(text) > 1:  # Ignore single characters
+                                existing_words.append({{
+                                    "text": text,
+                                    "bbox": span["bbox"]
+                                }})
+            
+            for match in matches:
+                try:
+                    data_value = match["data_value"]
+                    field = match["field"]
+                    position = field["input_position"]
+                    
+                    # Validate position is within page bounds
+                    page_rect = page.rect
+                    x = max(10, min(position["x"], page_rect.width - 100))
+                    y = max(20, min(position["y"], page_rect.height - 20))
+                    
+                    # Determine appropriate font size
+                    fontsize = 9
+                    if len(data_value) > 40:
+                        fontsize = 8
+                    elif len(data_value) > 60:
+                        fontsize = 7
+                    
+                    # Calculate bounding box for the text we're about to place
+                    # Rough estimation: character width ≈ fontsize * 0.6, height ≈ fontsize * 1.2
+                    text_width = len(data_value) * fontsize * 0.6
+                    text_height = fontsize * 1.2
+                    new_text_bbox = [x, y - text_height, x + text_width, y]
+                    
+                    # Check for overlap with existing text
+                    has_significant_overlap = False
+                    overlapping_text = ""
+                    
+                    for existing_word in existing_words:
+                        existing_bbox = existing_word["bbox"]
+                        
+                        # Calculate overlap percentage
+                        overlap_area = max(0, min(new_text_bbox[2], existing_bbox[2]) - max(new_text_bbox[0], existing_bbox[0])) * \
+                                     max(0, min(new_text_bbox[3], existing_bbox[3]) - max(new_text_bbox[1], existing_bbox[1]))
+                        
+                        new_text_area = (new_text_bbox[2] - new_text_bbox[0]) * (new_text_bbox[3] - new_text_bbox[1])
+                        existing_area = (existing_bbox[2] - existing_bbox[0]) * (existing_bbox[3] - existing_bbox[1])
+                        
+                        if new_text_area > 0 and existing_area > 0:
+                            overlap_percentage_new = (overlap_area / new_text_area) * 100
+                            overlap_percentage_existing = (overlap_area / existing_area) * 100
+                            
+                            # If either overlap is > 20%, consider it significant
+                            if overlap_percentage_new > 20 or overlap_percentage_existing > 20:
+                                has_significant_overlap = True
+                                overlapping_text = existing_word["text"]
+                                break
+                    
+                    # Also check for overlap with previously placed text on this page
+                    for placed_pos in placed_text_positions:
+                        placed_bbox = placed_pos["bbox"]
+                        
+                        overlap_area = max(0, min(new_text_bbox[2], placed_bbox[2]) - max(new_text_bbox[0], placed_bbox[0])) * \
+                                     max(0, min(new_text_bbox[3], placed_bbox[3]) - max(new_text_bbox[1], placed_bbox[1]))
+                        
+                        new_text_area = (new_text_bbox[2] - new_text_bbox[0]) * (new_text_bbox[3] - new_text_bbox[1])
+                        placed_area = (placed_bbox[2] - placed_bbox[0]) * (placed_bbox[3] - placed_bbox[1])
+                        
+                        if new_text_area > 0 and placed_area > 0:
+                            overlap_percentage = (overlap_area / min(new_text_area, placed_area)) * 100
+                            
+                            if overlap_percentage > 20:
+                                has_significant_overlap = True
+                                overlapping_text = placed_pos["text"]
+                                break
+                    
+                    # Only place text if no significant overlap
+                    if not has_significant_overlap:
+                        # Insert the text
+                        page.insert_text(
+                            (x, y),
+                            data_value,
+                            fontsize=fontsize,
+                            color=(0, 0, 0)
+                        )
+                        
+                        page_placed += 1
+                        total_placed += 1
+                        
+                        # Track placed text for future overlap detection
+                        placed_text_positions.append({{
+                            "text": data_value,
+                            "bbox": new_text_bbox
+                        }})
+                        
+                        page_matches_info.append({{
+                            "field_label": field["label"],
+                            "data_key": match["data_key"],
+                            "value": data_value,
+                            "position": {{"x": x, "y": y}},
+                            "match_score": match["match_score"],
+                            "status": "placed"
+                        }})
+                    else:
+                        page_overlaps_removed += 1
+                        total_removed_overlaps += 1
+                        
+                        page_matches_info.append({{
+                            "field_label": field["label"],
+                            "data_key": match["data_key"],
+                            "value": data_value,
+                            "position": {{"x": x, "y": y}},
+                            "match_score": match["match_score"],
+                            "status": "removed_overlap",
+                            "overlapping_with": overlapping_text[:30]
+                        }})
+                        
+                        print(f"Removed overlap: '{{match['data_key']}}' would overlap with '{{overlapping_text[:30]}}'")
+                    
+                except Exception as e:
+                    print(f"Error processing {{match['data_key']}}: {{e}}")
+            
+            total_matches += len(matches)
+            page_results.append({{
+                "page": page_num,
+                "fields_detected": len(detected_fields),
+                "matches_found": len(matches),
+                "successfully_placed": page_placed,
+                "overlaps_removed": page_overlaps_removed,
+                "matches": page_matches_info
+            }})
+            
+            all_matches.extend(matches)
+        
+        # Save the filled document
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        doc.save(output_path)
+        doc.close()
+        
+        # Calculate success metrics
+        requested_fields = len(form_data)
+        success_rate = (total_placed / requested_fields * 100) if requested_fields > 0 else 0
+        
+        return {{
+            "total_fields_requested": requested_fields,
+            "total_matches_found": total_matches,
+            "total_successfully_placed": total_placed,
+            "total_overlaps_removed": total_removed_overlaps,
+            "success_rate": round(success_rate, 1),
+            "pages_processed": len(page_results),
+            "page_results": page_results
+        }}
+        
+    except Exception as e:
+        raise Exception(f"Error in smart form filling: {{str(e)}}")
+
+# Main execution
+input_path = '{full_path}'
+form_data = {json.dumps(form_data)}
+output_path = '{filled_path}'
+
+try:
+    result = smart_fill_pdf(input_path, form_data, output_path)
+    
+    final_result = {{
+        "success": True,
+        "method": "enhanced_smart_cv_detection_with_overlap_removal",
+        "message": f"Smart form filling completed with automatic overlap removal: {{result['total_successfully_placed']}}/{{result['total_fields_requested']}} fields placed ({{result['success_rate']}}%), {{result.get('total_overlaps_removed', 0)}} overlaps removed",
+        "output_path": "{output_path}",
+        "input_file": "{file_path}",
+        "fields_requested": result["total_fields_requested"],
+        "fields_placed": result["total_successfully_placed"],
+        "overlaps_removed": result.get("total_overlaps_removed", 0),
+        "success_rate": result["success_rate"],
+        "pages_processed": result["pages_processed"],
+        "page_details": result["page_results"],
+        "method_used": "enhanced_computer_vision_with_overlap_detection",
+        "final_output": True,
+        "overlap_threshold": "20%"
+    }}
+    
+    print(json.dumps(final_result))
+    
+except Exception as e:
+    error_result = {{
+        "success": False,
+        "error": f"Error in enhanced smart form filling: {{str(e)}}"
+    }}
+    print(json.dumps(error_result))
+"""
+            
+            script = self._create_pdf_script(script_content)
+            return await self._execute_pdf_script(script, timeout=120)
+            
+        except Exception as e:
+            return self.fail_response(f"Error in smart form filling: {str(e)}")
