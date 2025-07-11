@@ -32,6 +32,7 @@ import {
 import { useAccounts } from '@/hooks/use-accounts';
 import { toast } from 'sonner';
 import { Agent } from '@/hooks/react-query/agents/utils';
+import { createClient } from '@/lib/supabase/client';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
@@ -94,8 +95,17 @@ export function ShareAgentDialog({
   const loadShareLinks = async () => {
     setLoadingShareLinks(true);
     try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('You must be logged in to load share links');
+      }
+
       const response = await fetch(`${API_URL}/agents/${agent.agent_id}/shares`, {
-        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
       });
       
       if (response.ok) {
@@ -136,6 +146,13 @@ export function ShareAgentDialog({
         managed_agent: managedAgent,
       };
       
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('You must be logged in to share agents');
+      }
+
       console.log('Sharing agent to teams:', {
         agentId: agent.agent_id,
         url: `${API_URL}/agents/${agent.agent_id}/publish`,
@@ -146,8 +163,8 @@ export function ShareAgentDialog({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
-        credentials: 'include',
         body: JSON.stringify(requestBody),
       });
 
@@ -192,12 +209,19 @@ export function ShareAgentDialog({
   const handleCreateShareLink = async () => {
     setIsLoading(true);
     try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('You must be logged in to create share links');
+      }
+
       const response = await fetch(`${API_URL}/agents/${agent.agent_id}/share`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
-        credentials: 'include',
         body: JSON.stringify({
           share_type: linkType,
           expires_in_hours: linkType === 'ephemeral' ? expiresInHours : null,
@@ -245,9 +269,18 @@ export function ShareAgentDialog({
 
   const handleRevokeLink = async (shareId: string) => {
     try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('You must be logged in to revoke share links');
+      }
+
       const response = await fetch(`${API_URL}/agents/${agent.agent_id}/shares/${shareId}`, {
         method: 'DELETE',
-        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
       });
 
       if (response.ok) {
@@ -265,9 +298,18 @@ export function ShareAgentDialog({
   const handleUnshareManaged = async () => {
     setIsUnsharing(true);
     try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('You must be logged in to unshare managed agents');
+      }
+
       const response = await fetch(`${API_URL}/agents/${agent.agent_id}/unshare-managed`, {
         method: 'POST',
-        credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
       });
 
       if (response.ok) {
