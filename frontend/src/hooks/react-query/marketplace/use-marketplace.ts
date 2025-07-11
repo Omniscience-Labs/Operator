@@ -151,6 +151,52 @@ export function useAddAgentToLibrary() {
   });
 }
 
+export function useAddSharedAgentToLibrary() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (shareToken: string): Promise<string> => {
+      try {
+        const marketplaceEnabled = await isFlagEnabled('agent_marketplace');
+        if (!marketplaceEnabled) {
+          throw new Error('Agent sharing is not enabled');
+        }
+        
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+          throw new Error('You must be logged in to add agents to your library');
+        }
+
+        const response = await fetch(`${API_URL}/shared-agents/${shareToken}/add-to-library`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+          throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return data.new_agent_id;
+      } catch (err) {
+        console.error('Error adding shared agent to library:', err);
+        throw err;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
+      queryClient.invalidateQueries({ queryKey: ['marketplace-agents'] });
+      queryClient.invalidateQueries({ queryKey: ['user-agent-library'] });
+    },
+  });
+}
+
 export function usePublishAgent() {
   const queryClient = useQueryClient();
 

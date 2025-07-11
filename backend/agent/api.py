@@ -2630,6 +2630,118 @@ async def add_agent_to_library(
         else:
             raise HTTPException(status_code=500, detail="Internal server error")
 
+@router.post("/shared-agents/{token}/add-to-library")
+async def add_shared_agent_to_library(
+    token: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Add a shared agent to user's library using the share token."""
+    if not await is_enabled("agent_marketplace"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Agent sharing currently disabled. This feature is not available at the moment."
+        )
+
+    logger.info(f"Adding shared agent with token {token} to user {user_id} library")
+    client = await db.client
+    
+    try:
+        # First, get the shared agent data to validate the token and get agent_id
+        shared_result = await client.rpc('get_shared_agent', {
+            'p_token': token
+        }).execute()
+        
+        if not shared_result.data:
+            raise HTTPException(status_code=404, detail="Share link not found, expired, or exceeded usage limit")
+        
+        shared_data = shared_result.data[0]
+        agent_data = shared_data['agent_data']
+        agent_id = agent_data['agent_id']
+        
+        logger.info(f"Found shared agent {agent_id} for token {token}")
+        
+        # Check if agent is already in user's library
+        existing_library_entry = await client.table('user_agent_library').select('*').eq(
+            'user_account_id', user_id
+        ).eq('original_agent_id', agent_id).execute()
+        
+        if existing_library_entry.data:
+            raise HTTPException(status_code=409, detail="Agent already in your library")
+        
+        # Create the library entry using a modified version of the add_agent_to_library function
+        # For shared agents, we need to handle them differently since they might not be public
+        sharing_preferences = shared_data.get('sharing_preferences', {})
+        
+        # Check if this is a managed agent
+        is_managed_agent = sharing_preferences.get('managed_agent', False)
+        
+        if is_managed_agent:
+            # For managed agents, store a reference (same as original)
+            await client.table('user_agent_library').insert({
+                'user_account_id': user_id,
+                'original_agent_id': agent_id,
+                'agent_id': agent_id  # Same ID = reference
+            }).execute()
+            
+            new_agent_id = agent_id
+        else:
+            # For copied agents, create a new agent copy
+            # Apply sharing preferences
+            knowledge_bases = agent_data.get('knowledge_bases', []) if sharing_preferences.get('include_knowledge_bases', True) else []
+            configured_mcps = agent_data.get('configured_mcps', []) if sharing_preferences.get('include_custom_mcp_tools', True) else []
+            custom_mcps = agent_data.get('custom_mcps', []) if sharing_preferences.get('include_custom_mcp_tools', True) else []
+            
+            # Create the new agent
+            new_agent_result = await client.table('agents').insert({
+                'account_id': user_id,
+                'name': agent_data['name'] + ' (from share)',
+                'description': agent_data.get('description'),
+                'system_prompt': agent_data['system_prompt'],
+                'configured_mcps': configured_mcps,
+                'custom_mcps': custom_mcps,
+                'agentpress_tools': agent_data.get('agentpress_tools', {}),
+                'knowledge_bases': knowledge_bases,
+                'is_default': False,
+                'is_public': False,
+                'visibility': 'private',
+                'tags': agent_data.get('tags', []),
+                'avatar': agent_data.get('avatar'),
+                'avatar_color': agent_data.get('avatar_color'),
+                'sharing_preferences': {
+                    'disable_customization': sharing_preferences.get('disable_customization', False),
+                    'original_agent_id': agent_id,
+                    'is_shared_agent': True,
+                    'include_knowledge_bases': sharing_preferences.get('include_knowledge_bases', True),
+                    'include_custom_mcp_tools': sharing_preferences.get('include_custom_mcp_tools', True)
+                }
+            }).execute()
+            
+            if not new_agent_result.data:
+                raise HTTPException(status_code=500, detail="Failed to create agent copy")
+            
+            new_agent_id = new_agent_result.data[0]['agent_id']
+            
+            # Add to library
+            await client.table('user_agent_library').insert({
+                'user_account_id': user_id,
+                'original_agent_id': agent_id,
+                'agent_id': new_agent_id
+            }).execute()
+        
+        # Increment download count for the original agent
+        await client.table('agents').update({
+            'download_count': (agent_data.get('download_count', 0) + 1)
+        }).eq('agent_id', agent_id).execute()
+        
+        logger.info(f"Successfully added shared agent {agent_id} to user {user_id} library as {new_agent_id}")
+        return {"message": "Agent added to library successfully", "new_agent_id": new_agent_id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding shared agent {token} to library: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @router.get("/user/agent-library")
 async def get_user_agent_library(user_id: str = Depends(get_current_user_id_from_jwt)):
     """Get user's agent library (agents added from marketplace)."""

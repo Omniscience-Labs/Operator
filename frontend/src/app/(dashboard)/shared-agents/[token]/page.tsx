@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
-import { useAddAgentToLibrary } from '@/hooks/react-query/marketplace/use-marketplace';
+import { useAddSharedAgentToLibrary } from '@/hooks/react-query/marketplace/use-marketplace';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
@@ -52,7 +52,7 @@ export default function SharedAgentPage() {
   const [error, setError] = useState<string | null>(null);
   const [hasAddedToLibrary, setHasAddedToLibrary] = useState(false);
   
-  const addToLibraryMutation = useAddAgentToLibrary();
+  const addToLibraryMutation = useAddSharedAgentToLibrary();
 
   useEffect(() => {
     const fetchSharedAgent = async () => {
@@ -98,7 +98,7 @@ export default function SharedAgentPage() {
     if (!sharedAgent) return;
 
     try {
-      await addToLibraryMutation.mutateAsync(sharedAgent.agent.agent_id);
+      await addToLibraryMutation.mutateAsync(token);
       setHasAddedToLibrary(true);
       toast.success(`"${sharedAgent.agent.name}" added to your library!`);
     } catch (error) {
