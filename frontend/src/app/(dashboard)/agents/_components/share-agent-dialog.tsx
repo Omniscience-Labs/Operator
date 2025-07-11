@@ -33,6 +33,8 @@ import { useAccounts } from '@/hooks/use-accounts';
 import { toast } from 'sonner';
 import { Agent } from '@/hooks/react-query/agents/utils';
 
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+
 interface ShareAgentDialogProps {
   agent: Agent;
   isOpen: boolean;
@@ -92,7 +94,7 @@ export function ShareAgentDialog({
   const loadShareLinks = async () => {
     setLoadingShareLinks(true);
     try {
-      const response = await fetch(`/api/agents/${agent.agent_id}/shares`, {
+      const response = await fetch(`${API_URL}/agents/${agent.agent_id}/shares`, {
         credentials: 'include',
       });
       
@@ -126,19 +128,27 @@ export function ShareAgentDialog({
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/agents/${agent.agent_id}/publish`, {
+      const requestBody = {
+        visibility: 'teams',
+        team_ids: Array.from(selectedTeams),
+        include_knowledge_bases: includeKnowledgeBases,
+        include_custom_mcp_tools: includeCustomMcpTools,
+        managed_agent: managedAgent,
+      };
+      
+      console.log('Sharing agent to teams:', {
+        agentId: agent.agent_id,
+        url: `${API_URL}/agents/${agent.agent_id}/publish`,
+        requestBody
+      });
+      
+      const response = await fetch(`${API_URL}/agents/${agent.agent_id}/publish`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({
-          visibility: 'teams',
-          team_ids: Array.from(selectedTeams),
-          include_knowledge_bases: includeKnowledgeBases,
-          include_custom_mcp_tools: includeCustomMcpTools,
-          managed_agent: managedAgent,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
@@ -146,16 +156,26 @@ export function ShareAgentDialog({
         onSuccess?.();
         onClose();
       } else {
+        console.error('Team sharing failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url,
+          headers: Object.fromEntries(response.headers.entries())
+        });
+        
         let errorMessage = 'Failed to share agent';
         try {
           const error = await response.json();
+          console.error('Error response body:', error);
           errorMessage = error.detail || error.message || errorMessage;
         } catch (jsonError) {
           // Response doesn't contain valid JSON, use response text instead
           try {
             const errorText = await response.text();
+            console.error('Error response text:', errorText);
             errorMessage = errorText || `Error sharing agent: ${response.statusText} (${response.status})`;
           } catch (textError) {
+            console.error('Could not read error response:', textError);
             errorMessage = `Error sharing agent: ${response.statusText} (${response.status})`;
           }
         }
@@ -172,7 +192,7 @@ export function ShareAgentDialog({
   const handleCreateShareLink = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/agents/${agent.agent_id}/share`, {
+      const response = await fetch(`${API_URL}/agents/${agent.agent_id}/share`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -225,7 +245,7 @@ export function ShareAgentDialog({
 
   const handleRevokeLink = async (shareId: string) => {
     try {
-      const response = await fetch(`/api/agents/${agent.agent_id}/shares/${shareId}`, {
+      const response = await fetch(`${API_URL}/agents/${agent.agent_id}/shares/${shareId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -245,7 +265,7 @@ export function ShareAgentDialog({
   const handleUnshareManaged = async () => {
     setIsUnsharing(true);
     try {
-      const response = await fetch(`/api/agents/${agent.agent_id}/unshare-managed`, {
+      const response = await fetch(`${API_URL}/agents/${agent.agent_id}/unshare-managed`, {
         method: 'POST',
         credentials: 'include',
       });
