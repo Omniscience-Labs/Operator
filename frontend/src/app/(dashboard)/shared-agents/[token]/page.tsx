@@ -100,7 +100,12 @@ export default function SharedAgentPage() {
     try {
       await addToLibraryMutation.mutateAsync(token);
       setHasAddedToLibrary(true);
-      toast.success(`"${sharedAgent.agent.name}" added to your library!`);
+      toast.success(`"${sharedAgent.agent.name}" added to your library!`, {
+        action: {
+          label: 'View in Library',
+          onClick: () => router.push('/agents')
+        }
+      });
     } catch (error) {
       console.error('Error adding agent to library:', error);
       toast.error('Failed to add agent to library');
@@ -198,119 +203,119 @@ export default function SharedAgentPage() {
                 onAddToLibrary={handleAddToLibrary}
                 isLoading={addToLibraryMutation.isPending}
                 enableTilt={false}
+                isAddedToLibrary={hasAddedToLibrary}
               />
             </div>
           </div>
 
-          {/* Right: Share Info and Agent Details */}
-          <div className="space-y-6">
-            {/* Share Info */}
+          {/* Right: Combined Share Info and Agent Details */}
+          <div>
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Share Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={share_info.share_type === 'persistent' ? 'default' : 'secondary'}>
-                      {share_info.share_type === 'persistent' ? 'Persistent' : 'Temporary'}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {share_info.share_type === 'persistent' ? 'Never expires' : 'Time-limited'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      {share_info.access_count} view{share_info.access_count !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-
-                  {expiryInfo && (
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className={`text-sm ${expiryInfo.isExpired ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {expiryInfo.isExpired ? 'Expired' : 'Expires'}: {expiryInfo.formatted}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {expiryInfo?.isExpired && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Link Expired</AlertTitle>
-                    <AlertDescription>
-                      This share link has expired and the agent can no longer be added to your library.
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Agent Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Agent Details</CardTitle>
+                <CardTitle className="text-lg">Share Information & Agent Details</CardTitle>
                 <CardDescription>
                   What's included when you add this agent to your library
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1">
-                      {agent.sharing_preferences?.managed_agent ? (
-                        <Badge variant="default">Managed Agent</Badge>
-                      ) : (
-                        <Badge variant="secondary">Copied Agent</Badge>
-                      )}
+              <CardContent className="space-y-6">
+                {/* Share Information Section */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-base">Share Information</h4>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={share_info.share_type === 'persistent' ? 'default' : 'secondary'}>
+                        {share_info.share_type === 'persistent' ? 'Persistent' : 'Temporary'}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {share_info.share_type === 'persistent' ? 'Never expires' : 'Time-limited'}
+                      </span>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-muted-foreground">
-                        {agent.sharing_preferences?.managed_agent 
-                          ? 'You\'ll get a live reference to this agent. Updates from the creator will automatically appear in your library.'
-                          : 'You\'ll get your own copy of this agent that you can customize and modify.'
-                        }
-                      </p>
+                    
+                    <div className="flex items-center gap-2">
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        {share_info.access_count} view{share_info.access_count !== 1 ? 's' : ''}
+                      </span>
                     </div>
+
+                    {expiryInfo && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className={`text-sm ${expiryInfo.isExpired ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {expiryInfo.isExpired ? 'Expired' : 'Expires'}: {expiryInfo.formatted}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  <Separator />
+                  {expiryInfo?.isExpired && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Link Expired</AlertTitle>
+                      <AlertDescription>
+                        This share link has expired and the agent can no longer be added to your library.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
 
-                  <div className="space-y-2">
-                    <h4 className="font-medium">What's included:</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span>System prompt and instructions</span>
+                <Separator />
+
+                {/* Agent Details Section */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-base">Agent Details</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1">
+                        {agent.sharing_preferences?.managed_agent ? (
+                          <Badge variant="default">Managed Agent</Badge>
+                        ) : (
+                          <Badge variant="secondary">Copied Agent</Badge>
+                        )}
                       </div>
-                      
-                      {agent.sharing_preferences?.include_knowledge_bases !== false && agent.knowledge_bases && agent.knowledge_bases.length > 0 && (
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span>{agent.knowledge_bases.length} knowledge base{agent.knowledge_bases.length !== 1 ? 's' : ''}</span>
-                        </div>
-                      )}
-                      
-                      {agent.sharing_preferences?.include_custom_mcp_tools !== false && ((agent.configured_mcps && agent.configured_mcps.length > 0) || (agent.custom_mcps && agent.custom_mcps.length > 0)) && (
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span>
-                            {(agent.configured_mcps?.length || 0) + (agent.custom_mcps?.length || 0)} custom MCP tool{((agent.configured_mcps?.length || 0) + (agent.custom_mcps?.length || 0)) !== 1 ? 's' : ''}
-                          </span>
-                        </div>
-                      )}
+                      <div className="flex-1">
+                        <p className="text-sm text-muted-foreground">
+                          {agent.sharing_preferences?.managed_agent 
+                            ? 'You\'ll get a live reference to this agent. Updates from the creator will automatically appear in your library.'
+                            : 'You\'ll get your own copy of this agent that you can customize and modify.'
+                          }
+                        </p>
+                      </div>
+                    </div>
 
-                      {Object.values(agent.agentpress_tools || {}).some(tool => tool && typeof tool === 'object' && tool.enabled) && (
+                    <div className="space-y-2">
+                      <h5 className="font-medium">What's included:</h5>
+                      <div className="space-y-2 text-sm">
                         <div className="flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span>
-                            {Object.values(agent.agentpress_tools || {}).filter(tool => tool && typeof tool === 'object' && tool.enabled).length} AgentPress tool{Object.values(agent.agentpress_tools || {}).filter(tool => tool && typeof tool === 'object' && tool.enabled).length !== 1 ? 's' : ''}
-                          </span>
+                          <span>System prompt and instructions</span>
                         </div>
-                      )}
+                        
+                        {agent.sharing_preferences?.include_knowledge_bases !== false && agent.knowledge_bases && agent.knowledge_bases.length > 0 && (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <span>{agent.knowledge_bases.length} knowledge base{agent.knowledge_bases.length !== 1 ? 's' : ''}</span>
+                          </div>
+                        )}
+                        
+                        {agent.sharing_preferences?.include_custom_mcp_tools !== false && ((agent.configured_mcps && agent.configured_mcps.length > 0) || (agent.custom_mcps && agent.custom_mcps.length > 0)) && (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <span>
+                              {(agent.configured_mcps?.length || 0) + (agent.custom_mcps?.length || 0)} custom MCP tool{((agent.configured_mcps?.length || 0) + (agent.custom_mcps?.length || 0)) !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        )}
+
+                        {Object.values(agent.agentpress_tools || {}).some(tool => tool && typeof tool === 'object' && tool.enabled) && (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <span>
+                              {Object.values(agent.agentpress_tools || {}).filter(tool => tool && typeof tool === 'object' && tool.enabled).length} AgentPress tool{Object.values(agent.agentpress_tools || {}).filter(tool => tool && typeof tool === 'object' && tool.enabled).length !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -319,50 +324,7 @@ export default function SharedAgentPage() {
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          {hasAddedToLibrary ? (
-            <div className="text-center space-y-2">
-              <div className="flex items-center justify-center gap-2 text-green-600">
-                <CheckCircle className="h-5 w-5" />
-                <span className="font-medium">Added to your library!</span>
-              </div>
-              <div className="space-x-2">
-                <Button 
-                  onClick={() => router.push('/agents')}
-                  variant="default"
-                >
-                  View in Library
-                </Button>
-                <Button 
-                  onClick={() => router.push(`/dashboard?agent_id=${agent.agent_id}`)}
-                  variant="outline"
-                >
-                  Start Chat
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button
-              onClick={handleAddToLibrary}
-              disabled={addToLibraryMutation.isPending || (expiryInfo?.isExpired ?? false)}
-              size="lg"
-              className="min-w-[200px]"
-            >
-              {addToLibraryMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Adding to Library...
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Add to Library
-                </>
-              )}
-            </Button>
-          )}
-        </div>
+
       </div>
     </div>
   );

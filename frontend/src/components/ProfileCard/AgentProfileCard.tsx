@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useMemo, useState, useEffect } from 'react';
-import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, User, Calendar, Tags, Sparkles, Zap, BookOpen, Share2 } from 'lucide-react';
+import { Settings, Trash2, Star, MessageCircle, Wrench, Globe, Download, Bot, User, Calendar, Tags, Sparkles, Zap, BookOpen, Share2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -54,6 +54,7 @@ interface AgentProfileCardProps {
   enableTilt?: boolean;
   isHighlighted?: boolean;
   onHighlightChange?: (agentId: string | null) => void;
+  isAddedToLibrary?: boolean;
 }
 
 const getAgentAvatar = (agentId: string) => {
@@ -123,6 +124,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
   enableTilt = true,
   isHighlighted = false,
   onHighlightChange,
+  isAddedToLibrary = false,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -612,32 +614,49 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2 mt-auto flex-wrap">
+        <div className={cn(
+          "flex pt-4 mt-auto",
+          mode === 'marketplace' ? "justify-center" : "gap-2 flex-wrap"
+        )}>
           {mode === 'marketplace' ? (
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onAddToLibrary?.(agent.agent_id);
-              }}
-              disabled={isLoading}
-              size="sm"
-              className="flex-1 min-w-0 bg-background/10 hover:bg-background/25 text-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
-              style={{
-                boxShadow: `0 4px 15px ${agentStyling.color}10`,
-              }}
-            >
-              {isLoading ? (
-                <>
-                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-foreground border-t-transparent mr-2 flex-shrink-0" />
-                  <span className="truncate">Adding...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <span className="truncate">Add to Library</span>
-                </>
-              )}
-            </Button>
+            isAddedToLibrary ? (
+              <Button
+                disabled
+                size="sm"
+                className="min-w-[160px] bg-green-500/20 hover:bg-green-500/25 text-green-700 dark:text-green-400 border-green-500/30 backdrop-blur-sm transition-all duration-300"
+                style={{
+                  boxShadow: `0 4px 15px ${agentStyling.color}10`,
+                }}
+              >
+                <CheckCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Added to Library</span>
+              </Button>
+            ) : (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddToLibrary?.(agent.agent_id);
+                }}
+                disabled={isLoading}
+                size="sm"
+                className="min-w-[160px] bg-background/10 hover:bg-background/25 text-foreground border-border/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg"
+                style={{
+                  boxShadow: `0 4px 15px ${agentStyling.color}10`,
+                }}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-foreground border-t-transparent mr-2 flex-shrink-0" />
+                    <span className="truncate">Adding...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">Add to Library</span>
+                  </>
+                )}
+              </Button>
+            )
           ) : (
             <>
               <Button
