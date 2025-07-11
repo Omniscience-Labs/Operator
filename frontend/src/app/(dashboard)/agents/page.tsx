@@ -23,6 +23,7 @@ import { useFeatureFlags } from '@/lib/feature-flags';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSidebar } from '@/components/ui/sidebar';
+import { useCurrentAccount } from '@/hooks/use-current-account';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ViewMode = 'grid' | 'list';
@@ -40,6 +41,7 @@ export default function AgentsPage() {
   const router = useRouter();
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
+  const currentAccount = useCurrentAccount();
 
   const [publishDialogAgent, setPublishDialogAgent] = useState<any>(null);
   const [shareDialogAgent, setShareDialogAgent] = useState<any>(null);
@@ -67,6 +69,7 @@ export default function AgentsPage() {
       search: searchQuery || undefined,
       sort_by: sortBy,
       sort_order: sortOrder,
+      account_id: currentAccount?.account_id, // Pass current account ID to filter agents
     };
 
     if (filters.hasDefaultAgent) {
@@ -83,7 +86,7 @@ export default function AgentsPage() {
     }
 
     return params;
-  }, [page, searchQuery, sortBy, sortOrder, filters]);
+  }, [page, searchQuery, sortBy, sortOrder, filters, currentAccount?.account_id]);
 
   const { 
     data: agentsResponse, 
@@ -269,10 +272,13 @@ export default function AgentsPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-8 sm:mt-0">
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              Your Agents
+              {currentAccount?.is_team_context ? `${currentAccount.name} Agents` : 'Your Agents'}
             </h1>
             <p className="text-md text-muted-foreground max-w-2xl">
-              Create and manage your AI agents with custom instructions and tools
+              {currentAccount?.is_team_context 
+                ? 'Agents shared with your team and available for collaboration'
+                : 'Create and manage your AI agents with custom instructions and tools'
+              }
             </p>
           </div>
           <Button 
