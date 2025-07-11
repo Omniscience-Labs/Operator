@@ -67,7 +67,7 @@ export function ShareAgentDialog({
   const [includeKnowledgeBases, setIncludeKnowledgeBases] = useState(true);
   const [includeCustomMcpTools, setIncludeCustomMcpTools] = useState(true);
   const [managedAgent, setManagedAgent] = useState(false);
-  const [linkType, setLinkType] = useState<'persistent' | 'ephemeral'>('persistent');
+  const [linkType, setLinkType] = useState<'persistent' | 'temporary'>('persistent');
   const [expiresInHours, setExpiresInHours] = useState(24);
   const [shareLinks, setShareLinks] = useState<ShareLink[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -224,7 +224,7 @@ export function ShareAgentDialog({
         },
         body: JSON.stringify({
           share_type: linkType,
-          expires_in_hours: linkType === 'ephemeral' ? expiresInHours : null,
+          expires_in_hours: linkType === 'temporary' ? expiresInHours : null,
           include_knowledge_bases: includeKnowledgeBases,
           include_custom_mcp_tools: includeCustomMcpTools,
           managed_agent: managedAgent,
@@ -504,13 +504,13 @@ export function ShareAgentDialog({
                       <Label htmlFor="persistent" className="text-sm">Persistent (never expires)</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="ephemeral" id="ephemeral" />
-                      <Label htmlFor="ephemeral" className="text-sm">Ephemeral (expires after time)</Label>
+                      <RadioGroupItem value="temporary" id="temporary" />
+                      <Label htmlFor="temporary" className="text-sm">Temporary (expires after time)</Label>
                     </div>
                   </RadioGroup>
                 </div>
 
-                {linkType === 'ephemeral' && (
+                {linkType === 'temporary' && (
                   <div className="space-y-2">
                     <Label htmlFor="expiry" className="text-sm font-medium">Expires in hours:</Label>
                     <Input
@@ -543,7 +543,7 @@ export function ShareAgentDialog({
                             <div className="flex items-center gap-2">
                               <Link className="h-4 w-4" />
                               <span className="text-sm font-medium">
-                                {link.expires_at ? 'Ephemeral' : 'Persistent'}
+                                {link.expires_at ? 'Temporary' : 'Persistent'}
                               </span>
                             </div>
                             <div className="flex gap-1">
