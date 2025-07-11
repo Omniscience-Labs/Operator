@@ -206,8 +206,15 @@ export const CustomMCPDialog: React.FC<CustomMCPDialogProps> = ({
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to connect to the service. Please check your configuration.');
+        let errorMessage = 'Failed to connect to the service. Please check your configuration.';
+        try {
+          const error = await response.json();
+          errorMessage = error.message || error.detail || errorMessage;
+        } catch (jsonError) {
+          // Response doesn't contain valid JSON, use default message
+          errorMessage = `Failed to connect to the service: ${response.statusText} (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();

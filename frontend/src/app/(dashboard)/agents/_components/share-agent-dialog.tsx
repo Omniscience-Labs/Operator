@@ -100,7 +100,15 @@ export function ShareAgentDialog({
         const data = await response.json();
         setShareLinks(data.shares || []);
       } else {
-        throw new Error('Failed to load share links');
+        let errorMessage = 'Failed to load share links';
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || error.message || errorMessage;
+        } catch (jsonError) {
+          // Response doesn't contain valid JSON, use default message
+          errorMessage = `Failed to load share links: ${response.statusText} (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error loading share links:', error);
@@ -138,8 +146,20 @@ export function ShareAgentDialog({
         onSuccess?.();
         onClose();
       } else {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to share agent');
+        let errorMessage = 'Failed to share agent';
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || error.message || errorMessage;
+        } catch (jsonError) {
+          // Response doesn't contain valid JSON, use response text instead
+          try {
+            const errorText = await response.text();
+            errorMessage = errorText || `Error sharing agent: ${response.statusText} (${response.status})`;
+          } catch (textError) {
+            errorMessage = `Error sharing agent: ${response.statusText} (${response.status})`;
+          }
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error sharing agent:', error);
@@ -176,8 +196,15 @@ export function ShareAgentDialog({
         await navigator.clipboard.writeText(newLink.share_url);
         toast.success('Link copied to clipboard');
       } else {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to create share link');
+        let errorMessage = 'Failed to create share link';
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || error.message || errorMessage;
+        } catch (jsonError) {
+          // Response doesn't contain valid JSON, use default message
+          errorMessage = `Failed to create share link: ${response.statusText} (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error creating share link:', error);
@@ -235,8 +262,15 @@ export function ShareAgentDialog({
         onSuccess?.();
         onClose();
       } else {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to unshare managed agent');
+        let errorMessage = 'Failed to unshare managed agent';
+        try {
+          const error = await response.json();
+          errorMessage = error.detail || error.message || errorMessage;
+        } catch (jsonError) {
+          // Response doesn't contain valid JSON, use default message
+          errorMessage = `Failed to unshare managed agent: ${response.statusText} (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error unsharing managed agent:', error);
