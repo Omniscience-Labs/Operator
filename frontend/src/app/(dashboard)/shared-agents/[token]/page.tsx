@@ -94,10 +94,11 @@ export default function SharedAgentPage() {
     }
   }, [token]);
 
-  const handleAddToLibrary = async () => {
+  const handleAddToLibrary = async (agentId?: string) => {
     if (!sharedAgent) return;
 
     try {
+      // Always use the token for shared agents, ignore the agentId parameter
       await addToLibraryMutation.mutateAsync(token);
       setHasAddedToLibrary(true);
       toast.success(`"${sharedAgent.agent.name}" added to your library!`, {
