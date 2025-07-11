@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
 import { useAddAgentToLibrary } from '@/hooks/react-query/marketplace/use-marketplace';
+import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
 interface SharedAgent {
@@ -56,8 +57,17 @@ export default function SharedAgentPage() {
   useEffect(() => {
     const fetchSharedAgent = async () => {
       try {
-        const response = await fetch(`/api/shared-agents/${token}`, {
-          credentials: 'include',
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.access_token) {
+          throw new Error('You must be logged in to view shared agents.');
+        }
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/shared-agents/${token}`, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
         });
 
         if (!response.ok) {
