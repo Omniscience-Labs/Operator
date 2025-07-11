@@ -424,32 +424,37 @@ async def start_agent(
         else:
             agent_data = agent_result.data[0]
             
-            # Check access: owner, public agent, or agent in user's library
+            # Check access: owner, public agent, team member, or agent in user's library
             has_access = False
             if agent_data['account_id'] == user_id:
-                # User owns the agent
+                # User owns the agent (personal account case)
                 has_access = True
             elif agent_data.get('is_public', False):
                 # Public agent
                 has_access = True
             else:
-                # Check if user has this agent in their library (either managed or copied)
-                library_check = await client.table('user_agent_library').select('*').eq(
-                    'user_account_id', user_id
-                ).eq('agent_id', effective_agent_id).execute()
-                
-                if library_check.data:
+                # Check if user is a member of the team account that owns the agent
+                team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_data['account_id']).execute()
+                if team_access_check.data and len(team_access_check.data) > 0:
                     has_access = True
-                    # Apply sharing preferences filtering for managed agents
-                    library_entry = library_check.data[0]
-                    is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
-                    if is_managed_by_user:
-                        sharing_prefs = agent_data.get('sharing_preferences', {})
-                        if not sharing_prefs.get('include_knowledge_bases', True):
-                            agent_data['knowledge_bases'] = []
-                        if not sharing_prefs.get('include_custom_mcp_tools', True):
-                            agent_data['configured_mcps'] = []
-                            agent_data['custom_mcps'] = []
+                else:
+                    # Check if user has this agent in their library (either managed or copied)
+                    library_check = await client.table('user_agent_library').select('*').eq(
+                        'user_account_id', user_id
+                    ).eq('agent_id', effective_agent_id).execute()
+                    
+                    if library_check.data:
+                        has_access = True
+                        # Apply sharing preferences filtering for managed agents
+                        library_entry = library_check.data[0]
+                        is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
+                        if is_managed_by_user:
+                            sharing_prefs = agent_data.get('sharing_preferences', {})
+                            if not sharing_prefs.get('include_knowledge_bases', True):
+                                agent_data['knowledge_bases'] = []
+                            if not sharing_prefs.get('include_custom_mcp_tools', True):
+                                agent_data['configured_mcps'] = []
+                                agent_data['custom_mcps'] = []
             
             if not has_access:
                 if body.agent_id:
@@ -1335,32 +1340,37 @@ async def initiate_agent_with_files(
             
         agent_data = agent_result.data[0]
         
-        # Check access: owner, public agent, or agent in user's library
+        # Check access: owner, public agent, team member, or agent in user's library
         has_access = False
         if agent_data['account_id'] == user_id:
-            # User owns the agent
+            # User owns the agent (personal account case)
             has_access = True
         elif agent_data.get('is_public', False):
             # Public agent
             has_access = True
         else:
-            # Check if user has this agent in their library (either managed or copied)
-            library_check = await client.table('user_agent_library').select('*').eq(
-                'user_account_id', user_id
-            ).eq('agent_id', agent_id).execute()
-            
-            if library_check.data:
+            # Check if user is a member of the team account that owns the agent
+            team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_data['account_id']).execute()
+            if team_access_check.data and len(team_access_check.data) > 0:
                 has_access = True
-                # Apply sharing preferences filtering for managed agents
-                library_entry = library_check.data[0]
-                is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
-                if is_managed_by_user:
-                    sharing_prefs = agent_data.get('sharing_preferences', {})
-                    if not sharing_prefs.get('include_knowledge_bases', True):
-                        agent_data['knowledge_bases'] = []
-                    if not sharing_prefs.get('include_custom_mcp_tools', True):
-                        agent_data['configured_mcps'] = []
-                        agent_data['custom_mcps'] = []
+            else:
+                # Check if user has this agent in their library (either managed or copied)
+                library_check = await client.table('user_agent_library').select('*').eq(
+                    'user_account_id', user_id
+                ).eq('agent_id', agent_id).execute()
+                
+                if library_check.data:
+                    has_access = True
+                    # Apply sharing preferences filtering for managed agents
+                    library_entry = library_check.data[0]
+                    is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
+                    if is_managed_by_user:
+                        sharing_prefs = agent_data.get('sharing_preferences', {})
+                        if not sharing_prefs.get('include_knowledge_bases', True):
+                            agent_data['knowledge_bases'] = []
+                        if not sharing_prefs.get('include_custom_mcp_tools', True):
+                            agent_data['configured_mcps'] = []
+                            agent_data['custom_mcps'] = []
         
         if not has_access:
             raise HTTPException(status_code=404, detail="Agent not found or access denied")
@@ -1869,25 +1879,31 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
         agent_data = agent.data[0]
         is_managed_by_user = False
         
-        # Check access: owner, public agent, or managed agent in user's library
+        # Check access: owner, public agent, team member, or managed agent in user's library
         if agent_data['account_id'] == user_id:
-            # User owns the agent
+            # User owns the agent (personal account case)
             pass
         elif agent_data.get('is_public', False):
             # Public agent
             pass
         else:
-            # Check if user has this agent in their library (either managed or copied)
-            library_check = await client.table('user_agent_library').select('*').eq(
-                'user_account_id', user_id
-            ).eq('agent_id', agent_id).execute()
-            
-            if library_check.data:
-                # Check if it's a managed agent (agent_id == original_agent_id)
-                library_entry = library_check.data[0]
-                is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
+            # Check if user is a member of the team account that owns the agent
+            team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_data['account_id']).execute()
+            if team_access_check.data and len(team_access_check.data) > 0:
+                # User has access via team membership
+                pass
             else:
-                raise HTTPException(status_code=403, detail="Access denied")
+                # Check if user has this agent in their library (either managed or copied)
+                library_check = await client.table('user_agent_library').select('*').eq(
+                    'user_account_id', user_id
+                ).eq('agent_id', agent_id).execute()
+                
+                if library_check.data:
+                    # Check if it's a managed agent (agent_id == original_agent_id)
+                    library_entry = library_check.data[0]
+                    is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
+                else:
+                    raise HTTPException(status_code=403, detail="Access denied")
         
         # Apply sharing preferences filtering for managed agents
         if is_managed_by_user:
