@@ -451,6 +451,21 @@ async def start_agent(
                 except Exception as e:
                     logger.error(f"Error checking team membership for user {user_id} in account {agent_account_id}: {str(e)}")
                 
+                # Also check if agent is shared with any teams the user belongs to
+                if not has_access:
+                    try:
+                        # Get all teams the user is a member of
+                        user_teams = await client.schema('basejump').from_('account_user').select('account_id').eq('user_id', user_id).execute()
+                        if user_teams.data:
+                            user_team_ids = [team['account_id'] for team in user_teams.data]
+                            # Check if agent is shared with any of these teams
+                            shared_check = await client.table('team_agents').select('*').eq('agent_id', effective_agent_id).in_('team_account_id', user_team_ids).execute()
+                            if shared_check.data:
+                                has_access = True
+                                logger.info(f"User {user_id} has access to agent {effective_agent_id} via team sharing")
+                    except Exception as e:
+                        logger.error(f"Error checking team sharing for user {user_id} and agent {effective_agent_id}: {str(e)}")
+                
                 if not has_access:
                     # Check if user has this agent in their library (either managed or copied)
                     library_check = await client.table('user_agent_library').select('*').eq(
@@ -1381,6 +1396,21 @@ async def initiate_agent_with_files(
             except Exception as e:
                 logger.error(f"Error checking team membership for user {user_id} in account {agent_account_id}: {str(e)}")
             
+            # Also check if agent is shared with any teams the user belongs to
+            if not has_access:
+                try:
+                    # Get all teams the user is a member of
+                    user_teams = await client.schema('basejump').from_('account_user').select('account_id').eq('user_id', user_id).execute()
+                    if user_teams.data:
+                        user_team_ids = [team['account_id'] for team in user_teams.data]
+                        # Check if agent is shared with any of these teams
+                        shared_check = await client.table('team_agents').select('*').eq('agent_id', agent_id).in_('team_account_id', user_team_ids).execute()
+                        if shared_check.data:
+                            has_access = True
+                            logger.info(f"User {user_id} has access to agent {agent_id} via team sharing")
+                except Exception as e:
+                    logger.error(f"Error checking team sharing for user {user_id} and agent {agent_id}: {str(e)}")
+            
             if not has_access:
                 # Check if user has this agent in their library (either managed or copied)
                 library_check = await client.table('user_agent_library').select('*').eq(
@@ -1934,6 +1964,21 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
                     logger.info(f"User {user_id} is not a member of team {agent_account_id} that owns agent {agent_id}")
             except Exception as e:
                 logger.error(f"Error checking team membership for user {user_id} in account {agent_account_id}: {str(e)}")
+            
+            # Also check if agent is shared with any teams the user belongs to
+            if not has_team_access:
+                try:
+                    # Get all teams the user is a member of
+                    user_teams = await client.schema('basejump').from_('account_user').select('account_id').eq('user_id', user_id).execute()
+                    if user_teams.data:
+                        user_team_ids = [team['account_id'] for team in user_teams.data]
+                        # Check if agent is shared with any of these teams
+                        shared_check = await client.table('team_agents').select('*').eq('agent_id', agent_id).in_('team_account_id', user_team_ids).execute()
+                        if shared_check.data:
+                            has_team_access = True
+                            logger.info(f"User {user_id} has access to agent {agent_id} via team sharing")
+                except Exception as e:
+                    logger.error(f"Error checking team sharing for user {user_id} and agent {agent_id}: {str(e)}")
             
             # If no team access, check library access
             if not has_team_access:
