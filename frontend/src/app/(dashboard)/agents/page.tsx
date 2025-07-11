@@ -72,13 +72,7 @@ export default function AgentsPage() {
       account_id: currentAccount?.account_id, // Pass current account ID to filter agents
     };
 
-    // Debug logging
-    console.log('🔍 Agents page debug:', {
-      currentAccount,
-      account_id: currentAccount?.account_id,
-      is_team_context: currentAccount?.is_team_context,
-      queryParams: params
-    });
+
 
     if (filters.hasDefaultAgent) {
       params.has_default = true;

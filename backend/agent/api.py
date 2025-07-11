@@ -1612,7 +1612,7 @@ async def get_agents(
             detail="Custom agents currently disabled. This feature is not available at the moment."
         )
     logger.info(f"Fetching agents for user: {user_id} with page={page}, limit={limit}, search='{search}', sort_by={sort_by}, sort_order={sort_order}, account_id={account_id}")
-    logger.info(f"🔍 Backend debug: user_id={user_id}, account_id={account_id}, using_team_context={account_id is not None and account_id != user_id}")
+    logger.info(f"Backend debug: user_id={user_id}, account_id={account_id}, using_team_context={account_id is not None and account_id != user_id}")
     client = await db.client
     
     try:
@@ -1633,7 +1633,7 @@ async def get_agents(
             # For team accounts, use the database function that handles complex visibility logic
             # This includes: owned agents, team-shared agents, and public agents
             # Get a larger set first to allow for post-processing filters
-            logger.info(f"🔍 Calling get_marketplace_agents with account_id={account_id}")
+            logger.info(f"Calling get_marketplace_agents with account_id={account_id}")
             marketplace_result = await client.rpc('get_marketplace_agents', {
                 'p_limit': limit * 3,  # Get more than needed for post-processing
                 'p_offset': 0,  # Always start from beginning for filtering
@@ -1641,7 +1641,7 @@ async def get_agents(
                 'p_tags': None,
                 'p_account_id': account_id
             }).execute()
-            logger.info(f"🔍 get_marketplace_agents returned {len(marketplace_result.data or [])} agents")
+            logger.info(f"get_marketplace_agents returned {len(marketplace_result.data or [])} agents")
             
             if not marketplace_result.data:
                 marketplace_result.data = []
@@ -1650,14 +1650,9 @@ async def get_agents(
             agents_data = marketplace_result.data
             total_count = len(agents_data)  # This will be recalculated after filters
             
-            logger.info(f"🔍 Raw marketplace data: {len(agents_data)} agents")
-            if agents_data:
-                logger.info(f"🔍 First agent sample: {agents_data[0]}")
-            
             # Apply additional filters and sorting as needed
             if has_default is not None:
                 agents_data = [a for a in agents_data if a.get('is_default') == has_default]
-                logger.info(f"🔍 After has_default filter: {len(agents_data)} agents")
             
             # The rest of the filtering will be handled by the existing post-processing logic
             # Skip the normal query execution for team accounts
@@ -1837,9 +1832,6 @@ async def get_agents(
         
         total_pages = (total_count + limit - 1) // limit
         
-        logger.info(f"🔍 Final result: {len(agent_list)} agents for user: {user_id} (page {page}/{total_pages})")
-        if agent_list:
-            logger.info(f"🔍 Final agent sample: {agent_list[0].name} (visibility: {agent_list[0].visibility})")
         logger.info(f"Found {len(agent_list)} agents for user: {user_id} (page {page}/{total_pages})")
         return {
             "agents": agent_list,
