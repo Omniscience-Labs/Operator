@@ -8,7 +8,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerClose } from '@/components/ui/drawer';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAgent, useUpdateAgent } from '@/hooks/react-query/agents/use-agents';
 import { AgentMCPConfiguration } from '../../_components/agent-mcp-configuration';
 import { toast } from 'sonner';
@@ -20,8 +19,6 @@ import { EditableText } from '@/components/ui/editable';
 import { StylePicker } from '../../_components/style-picker';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { AgentBuilderChat } from '../../_components/agent-builder-chat';
-import { useFeatureAlertHelpers } from '@/hooks/use-feature-alerts';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -55,7 +52,6 @@ export default function AgentConfigurationPage() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('agent-builder');
   const accordionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -84,7 +80,6 @@ export default function AgentConfigurationPage() {
       originalDataRef.current = { ...initialData };
     }
   }, [agent]);
-
 
   useEffect(() => {
     if (error) {
@@ -213,16 +208,6 @@ export default function AgentConfigurationPage() {
     return getAgentAvatar(agentId);
   }, [formData.avatar, formData.avatar_color, agentId]);
 
-  const memoizedAgentBuilderChat = useMemo(() => (
-    <AgentBuilderChat
-      agentId={agentId}
-      formData={formData}
-      handleFieldChange={handleFieldChange}
-      handleStyleChange={handleStyleChange}
-      currentStyle={currentStyle}
-    />
-  ), [agentId, formData, handleFieldChange, handleStyleChange, currentStyle]);
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const getSaveStatusBadge = () => {
     const showSaved = saveStatus === 'idle' && !hasDataChanged(formData, originalDataRef.current);
@@ -300,21 +285,14 @@ export default function AgentConfigurationPage() {
           </Drawer>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden">
           <div className='w-full flex items-center justify-center flex-shrink-0 px-4 md:px-12 md:mt-10'>
             <div className='w-auto flex items-center gap-2'>
-              <TabsList className="grid h-auto w-full grid-cols-2 bg-muted-foreground/10">
-                <TabsTrigger value="agent-builder" className="w-48 flex items-center gap-1.5 px-2">
-                  <span className="truncate">Agent Builder</span>
-                  <Badge variant="beta">
-                    Beta
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger value="manual">Manual</TabsTrigger>
-              </TabsList>
+              <h1 className="text-xl font-semibold">Agent Editor</h1>
             </div>
           </div>
-          <TabsContent value="manual" className="mt-0 flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-12 pb-4 md:pb-12 scrollbar-hide">
+          
+          <div className="mt-0 flex-1 overflow-y-auto overflow-x-hidden px-4 md:px-12 pb-4 md:pb-12 scrollbar-hide">
             <div className="max-w-full">
               <div className="hidden md:flex justify-end mb-4 mt-4">
                 {getSaveStatusBadge()}
@@ -419,27 +397,20 @@ export default function AgentConfigurationPage() {
                 </Accordion>
               </div>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="agent-builder" className="mt-0 flex-1 flex flex-col overflow-hidden">
-            {memoizedAgentBuilderChat}
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     );
   }, [
-    activeTab,
     agentId,
     agent,
     formData,
     currentStyle,
     isPreviewOpen,
-    memoizedAgentBuilderChat,
     handleFieldChange,
     handleStyleChange,
     setOpenMobile,
     setIsPreviewOpen,
-    setActiveTab,
     scrollToAccordion,
     getSaveStatusBadge,
     handleBatchMCPChange
