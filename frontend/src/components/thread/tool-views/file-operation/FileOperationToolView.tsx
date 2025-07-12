@@ -199,7 +199,7 @@ export function FileOperationToolView({
     return (
       <div className="p-4">
         <div className='w-full h-full bg-muted/20 border rounded-xl px-4 py-2 pb-6'>
-          <pre className="text-sm font-mono text-zinc-800 dark:text-zinc-300 whitespace-pre-wrap break-words">
+          <pre className="text-sm font-mono text-zinc-800 dark:text-zinc-300 whitespace-pre overflow-x-auto">
             {processUnicodeContent(fileContent)}
           </pre>
         </div>
@@ -272,7 +272,7 @@ export function FileOperationToolView({
             <div className="table-cell text-right pr-3 pl-6 py-0.5 text-xs font-mono text-zinc-500 dark:text-zinc-500 select-none w-12 border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
               {idx + 1}
             </div>
-            <div className="table-cell pl-3 py-0.5 pr-4 text-xs font-mono whitespace-pre-wrap text-zinc-800 dark:text-zinc-300">
+            <div className="table-cell pl-3 py-0.5 pr-4 text-xs font-mono whitespace-pre text-zinc-800 dark:text-zinc-300">
               {processUnicodeContent(line) || ' '}
             </div>
           </div>

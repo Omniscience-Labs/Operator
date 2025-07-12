@@ -297,7 +297,7 @@ export function WebCrawlToolView({
 
                     {/* Content Body */}
                     <div className="p-4 max-h-96 overflow-auto">
-                      <pre className="text-xs font-mono text-zinc-800 dark:text-zinc-300 whitespace-pre-wrap leading-relaxed">
+                      <pre className="text-xs font-mono text-zinc-800 dark:text-zinc-300 whitespace-pre leading-relaxed overflow-x-auto">
                         {webpageContent.text}
                       </pre>
                     </div>

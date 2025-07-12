@@ -230,7 +230,7 @@ export function DeployToolView({
                                                 </span>
                                             </div>
                                             <div className="p-4 max-h-96 overflow-auto scrollbar-hide">
-                                                <pre className="text-xs text-zinc-600 dark:text-zinc-300 font-mono whitespace-pre-wrap break-all">
+                                                <pre className="text-xs text-zinc-600 dark:text-zinc-300 font-mono whitespace-pre overflow-x-auto">
                                                     {cleanOutput.map((line, index) => (
                                                         <div key={index} className="py-0.5">
                                                             {line || ' '}
@@ -266,7 +266,7 @@ export function DeployToolView({
                                                 </span>
                                             </div>
                                             <div className="p-4 max-h-96 overflow-auto scrollbar-hide">
-                                                <pre className="text-xs text-zinc-600 dark:text-zinc-300 font-mono whitespace-pre-wrap break-all">
+                                                <pre className="text-xs text-zinc-600 dark:text-zinc-300 font-mono whitespace-pre overflow-x-auto">
                                                     {rawContent}
                                                 </pre>
                                             </div>
