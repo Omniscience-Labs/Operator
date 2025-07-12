@@ -159,7 +159,7 @@ export function SidebarLeft({
       </div>
       <SidebarHeader className="px-2 py-2 relative z-10">
         <motion.div 
-          className="flex h-[40px] items-center px-1 relative"
+          className="flex h-[40px] items-center px-2 relative"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
