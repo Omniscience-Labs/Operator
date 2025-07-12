@@ -21,6 +21,7 @@ import { AgentLoader } from './loader';
 import { parseXmlToolCalls, isNewXmlFormat, extractToolNameFromStream } from '@/components/thread/tool-views/xml-parser';
 import { parseToolResult } from '@/components/thread/tool-views/tool-result-parser';
 import { ReasoningDisplay } from './ReasoningDisplay';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 
 
 // Define the set of  tags whose raw XML should be hidden during streaming
@@ -878,12 +879,12 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                                 <div className="flex flex-col gap-2">
                                                     {/* Logo positioned above the message content - ONLY ONCE PER GROUP */}
                                                     <div className="flex items-center">
-                                                        <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
-                                                            <div className="flex items-center gap-0.5">
-                                                                <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse" />
-                                                                <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-150" />
-                                                                <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-300" />
-                                                            </div>
+                                                        <div className="px-3 py-1 rounded-full bg-muted/50 border border-muted-foreground/10">
+                                                            <GradientText
+                                                                text={agentName ? agentName : 'Operator'}
+                                                                className="text-sm font-medium"
+                                                                gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                                            />
                                                         </div>
                                                     </div>
                                                     
@@ -1185,12 +1186,12 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                     <div className="flex flex-col gap-2">
                                         {/* Logo positioned above the tool call */}
                                         <div className="flex justify-start">
-                                            <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
-                                                <div className="flex items-center gap-0.5">
-                                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse" />
-                                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-150" />
-                                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-300" />
-                                                </div>
+                                            <div className="px-3 py-1 rounded-full bg-muted/50 border border-muted-foreground/10">
+                                                <GradientText
+                                                    text={agentName ? agentName : 'Operator'}
+                                                    className="text-sm font-medium"
+                                                    gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                                />
                                             </div>
                                         </div>
                                         
@@ -1213,12 +1214,12 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                     <div className="flex flex-col gap-2">
                                         {/* Logo positioned above the streaming indicator */}
                                         <div className="flex justify-start">
-                                            <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
-                                                <div className="flex items-center gap-0.5">
-                                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse" />
-                                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-150" />
-                                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-300" />
-                                                </div>
+                                            <div className="px-3 py-1 rounded-full bg-muted/50 border border-muted-foreground/10">
+                                                <GradientText
+                                                    text={agentName ? agentName : 'Operator'}
+                                                    className="text-sm font-medium"
+                                                    gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                                />
                                             </div>
                                         </div>
                                         
