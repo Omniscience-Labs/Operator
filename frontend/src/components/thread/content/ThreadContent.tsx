@@ -878,17 +878,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                             <div key={group.key} ref={groupIndex === groupedMessages.length - 1 ? latestMessageRef : null}>
                                                 <div className="flex flex-col gap-2">
                                                     {/* Agent name with ThreeSpinner and gradient text */}
-                                    <div className="flex items-center">
-                                        <div className="w-8 h-8 rounded-full bg-muted-foreground/10 flex items-center justify-center">
-                                            <ThreeSpinner size={24} color="currentColor" />
-                                        </div>
-                                        <div className="ml-2">
-                                            <GradientText
-                                                text={agentName ? agentName : 'Operator'}
-                                                className="text-sm text-muted-foreground"
-                                                gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
-                                            />
-                                        </div>
+                                    <div className="flex items-center gap-2">
+                                        <ThreeSpinner size={24} color="currentColor" />
+                                        <GradientText
+                                            text={agentName ? agentName : 'Operator'}
+                                            className="text-sm text-muted-foreground"
+                                            gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                        />
                                     </div>
                                                     
                                                     {/* Reasoning content - show first if present */}
@@ -1188,17 +1184,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 <div ref={latestMessageRef}>
                                     <div className="flex flex-col gap-2">
                                         {/* Agent name with ThreeSpinner and gradient text */}
-                                        <div className="flex items-center">
-                                            <div className="w-8 h-8 rounded-full bg-muted-foreground/10 flex items-center justify-center">
-                                                <ThreeSpinner size={24} color="currentColor" />
-                                            </div>
-                                            <div className="ml-2">
-                                                <GradientText
-                                                    text={agentName ? agentName : 'Operator'}
-                                                    className="text-sm text-muted-foreground"
-                                                    gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
-                                                />
-                                            </div>
+                                        <div className="flex items-center gap-2">
+                                            <ThreeSpinner size={24} color="currentColor" />
+                                            <GradientText
+                                                text={agentName ? agentName : 'Operator'}
+                                                className="text-sm text-muted-foreground"
+                                                gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                            />
                                         </div>
                                         
                                         {/* Tool call content */}
@@ -1219,17 +1211,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 <div ref={latestMessageRef}>
                                     <div className="flex flex-col gap-2">
                                         {/* Agent name with ThreeSpinner and gradient text */}
-                                        <div className="flex items-center">
-                                            <div className="w-8 h-8 rounded-full bg-muted-foreground/10 flex items-center justify-center">
-                                                <ThreeSpinner size={24} color="currentColor" />
-                                            </div>
-                                            <div className="ml-2">
-                                                <GradientText
-                                                    text={agentName ? agentName : 'Operator'}
-                                                    className="text-sm text-muted-foreground"
-                                                    gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
-                                                />
-                                            </div>
+                                        <div className="flex items-center gap-2">
+                                            <ThreeSpinner size={24} color="currentColor" />
+                                            <GradientText
+                                                text={agentName ? agentName : 'Operator'}
+                                                className="text-sm text-muted-foreground"
+                                                gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                            />
                                         </div>
                                         
                                         {/* Streaming indicator content */}
@@ -1296,12 +1284,14 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 whileHover={{ scale: 1.01 }}
                                 whileTap={{ scale: 0.99 }}
                                 onClick={() => scrollToBottom('smooth')}
-                                className="w-16 h-16 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center hover:bg-accent transition-all duration-200"
+                                className="w-20 h-20 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center hover:bg-accent transition-all duration-200"
                                 color="hsl(var(--primary))"
                                 speed="4s"
                                 thickness={1}
                             >
-                                <ThreeSpinner size={48} color="currentColor" />
+                                <div className="flex items-center justify-center w-full h-full">
+                                    <ThreeSpinner size={56} color="currentColor" />
+                                </div>
                             </StarBorder>
                         )}
                         {showScrollButton && !(agentStatus === 'running' || agentStatus === 'connecting') && (
@@ -1336,7 +1326,9 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 speed="6s"
                                 thickness={1}
                             >
-                                <ArrowDown className="h-4 w-4" />
+                                <div className="flex items-center justify-center w-full h-full">
+                                    <ArrowDown className="h-4 w-4" />
+                                </div>
                             </StarBorder>
                         )}
                     </AnimatePresence>
