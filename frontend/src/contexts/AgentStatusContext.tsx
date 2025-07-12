@@ -1,106 +1,136 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createClient } from '@/lib/supabase/client';
+import { useCurrentAccount } from '@/hooks/use-current-account';
 
 export type AgentStatus = 'idle' | 'running' | 'connecting' | 'completed' | 'error';
 
 interface ThreadStatus {
-  threadId: string;
-  status: AgentStatus;
-  completedAt?: Date;
-  hasBeenViewed?: boolean;
+  thread_id: string;
+  has_completed_agent_run: boolean;
+  latest_completion_at?: string;
+  last_viewed_at?: string;
+  has_unread_completion: boolean;
 }
 
 interface AgentStatusContextType {
-  threadStatuses: Map<string, ThreadStatus>;
+  // Real-time status tracking (memory-based for current session)
+  currentSessionStatuses: Map<string, AgentStatus>;
   updateThreadStatus: (threadId: string, status: AgentStatus) => void;
+  
+  // Persistent status tracking (database-based)
+  threadStatuses: ThreadStatus[];
   markThreadAsViewed: (threadId: string) => void;
-  getThreadStatus: (threadId: string) => ThreadStatus | undefined;
   isThreadCompleted: (threadId: string) => boolean;
   isThreadRunning: (threadId: string) => boolean;
   hasUnreadCompletedStatus: (threadId: string) => boolean;
+  
+  // Loading state
+  isLoading: boolean;
 }
 
 const AgentStatusContext = createContext<AgentStatusContextType | undefined>(undefined);
 
 export function AgentStatusProvider({ children }: { children: React.ReactNode }) {
-  const [threadStatuses, setThreadStatuses] = useState<Map<string, ThreadStatus>>(new Map());
+  // Real-time session status (for showing spinners during current session)
+  const [currentSessionStatuses, setCurrentSessionStatuses] = useState<Map<string, AgentStatus>>(new Map());
+  
+  const currentAccount = useCurrentAccount();
+  const queryClient = useQueryClient();
 
-  const updateThreadStatus = useCallback((threadId: string, status: AgentStatus) => {
-    setThreadStatuses(prev => {
-      const newMap = new Map(prev);
-      const existingStatus = newMap.get(threadId);
+  // Fetch thread statuses from database
+  const { data: threadStatuses = [], isLoading } = useQuery({
+    queryKey: ['thread-statuses', currentAccount?.account_id],
+    queryFn: async () => {
+      if (!currentAccount?.account_id) return [];
       
-      // If status is changing from running/connecting to completed, mark completion time
-      const completedAt = (status === 'completed' && 
-        existingStatus?.status && 
-        ['running', 'connecting'].includes(existingStatus.status)) 
-        ? new Date() 
-        : existingStatus?.completedAt;
-
-      // If status is changing from completed to something else, reset viewed status
-      const hasBeenViewed = status === 'completed' ? existingStatus?.hasBeenViewed : false;
-
-      newMap.set(threadId, {
-        threadId,
-        status,
-        completedAt,
-        hasBeenViewed,
+      const supabase = createClient();
+      const { data, error } = await supabase.rpc('get_thread_statuses_for_account', {
+        p_account_id: currentAccount.account_id
       });
       
-      return newMap;
-    });
-  }, []);
-
-  const markThreadAsViewed = useCallback((threadId: string) => {
-    setThreadStatuses(prev => {
-      const newMap = new Map(prev);
-      const existingStatus = newMap.get(threadId);
-      
-      if (existingStatus) {
-        newMap.set(threadId, {
-          ...existingStatus,
-          hasBeenViewed: true,
-        });
+      if (error) {
+        console.error('Error fetching thread statuses:', error);
+        return [];
       }
       
+      return data as ThreadStatus[];
+    },
+    enabled: !!currentAccount?.account_id,
+    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: 60 * 1000, // Refetch every minute
+  });
+
+  // Mark thread as viewed mutation
+  const markAsViewedMutation = useMutation({
+    mutationFn: async (threadId: string) => {
+      if (!currentAccount?.account_id) throw new Error('No account ID');
+      
+      const supabase = createClient();
+      const { error } = await supabase.rpc('mark_thread_as_viewed', {
+        p_thread_id: threadId,
+        p_account_id: currentAccount.account_id
+      });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch thread statuses
+      queryClient.invalidateQueries({ queryKey: ['thread-statuses', currentAccount?.account_id] });
+    },
+  });
+
+  // Update real-time session status
+  const updateThreadStatus = useCallback((threadId: string, status: AgentStatus) => {
+    setCurrentSessionStatuses(prev => {
+      const newMap = new Map(prev);
+      newMap.set(threadId, status);
       return newMap;
     });
-  }, []);
 
-  const getThreadStatus = useCallback((threadId: string): ThreadStatus | undefined => {
-    return threadStatuses.get(threadId);
-  }, [threadStatuses]);
+    // If status changes to completed, invalidate the query to fetch updated data
+    if (status === 'completed') {
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['thread-statuses', currentAccount?.account_id] });
+      }, 2000); // Small delay to ensure backend has processed the completion
+    }
+  }, [queryClient, currentAccount?.account_id]);
 
+  // Mark thread as viewed
+  const markThreadAsViewed = useCallback((threadId: string) => {
+    markAsViewedMutation.mutate(threadId);
+  }, [markAsViewedMutation]);
+
+  // Check if thread is completed (from database)
   const isThreadCompleted = useCallback((threadId: string): boolean => {
-    const status = threadStatuses.get(threadId);
-    return status?.status === 'completed';
+    const dbStatus = threadStatuses.find(s => s.thread_id === threadId);
+    return dbStatus?.has_completed_agent_run || false;
   }, [threadStatuses]);
 
+  // Check if thread is currently running (from current session)
   const isThreadRunning = useCallback((threadId: string): boolean => {
-    const status = threadStatuses.get(threadId);
-    return status?.status === 'running' || status?.status === 'connecting';
-  }, [threadStatuses]);
+    const sessionStatus = currentSessionStatuses.get(threadId);
+    return sessionStatus === 'running' || sessionStatus === 'connecting';
+  }, [currentSessionStatuses]);
 
+  // Check if thread has unread completion
   const hasUnreadCompletedStatus = useCallback((threadId: string): boolean => {
-    const status = threadStatuses.get(threadId);
-    return status?.status === 'completed' && !status?.hasBeenViewed;
+    const dbStatus = threadStatuses.find(s => s.thread_id === threadId);
+    return dbStatus?.has_unread_completion || false;
   }, [threadStatuses]);
 
-  // Clean up old statuses after 24 hours
+  // Clean up old session statuses
   useEffect(() => {
     const cleanup = setInterval(() => {
-      const now = new Date();
-      const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      
-      setThreadStatuses(prev => {
+      setCurrentSessionStatuses(prev => {
         const newMap = new Map(prev);
+        // Remove idle statuses older than 1 hour
+        const hourAgo = Date.now() - 60 * 60 * 1000;
         
         for (const [threadId, status] of newMap.entries()) {
-          // Remove completed statuses that are older than 24 hours
-          if (status.status === 'completed' && 
-              status.completedAt && 
-              status.completedAt < dayAgo) {
+          if (status === 'idle') {
             newMap.delete(threadId);
           }
         }
@@ -113,13 +143,14 @@ export function AgentStatusProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const value: AgentStatusContextType = {
-    threadStatuses,
+    currentSessionStatuses,
     updateThreadStatus,
+    threadStatuses,
     markThreadAsViewed,
-    getThreadStatus,
     isThreadCompleted,
     isThreadRunning,
     hasUnreadCompletedStatus,
+    isLoading,
   };
 
   return (
