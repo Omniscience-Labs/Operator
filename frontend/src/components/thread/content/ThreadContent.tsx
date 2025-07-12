@@ -21,7 +21,7 @@ import { AgentLoader } from './loader';
 import { parseXmlToolCalls, isNewXmlFormat, extractToolNameFromStream } from '@/components/thread/tool-views/xml-parser';
 import { parseToolResult } from '@/components/thread/tool-views/tool-result-parser';
 import { ReasoningDisplay } from './ReasoningDisplay';
-import StarBorder from '@/Animations/StarBorder/StarBorder';
+
 
 // Define the set of  tags whose raw XML should be hidden during streaming
 const HIDE_STREAMING_XML_TAGS = new Set([
@@ -878,10 +878,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                                 <div className="flex flex-col gap-2">
                                                     {/* Logo positioned above the message content - ONLY ONCE PER GROUP */}
                                                     <div className="flex items-center">
-                                                        <div className="rounded-md flex items-center justify-center">
-                                                            {agentAvatar}
+                                                        <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
+                                                            <div className="flex items-center gap-0.5">
+                                                                <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse" />
+                                                                <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-150" />
+                                                                <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-300" />
+                                                            </div>
                                                         </div>
-                                                        <p className='ml-2 text-sm text-muted-foreground'>{agentName ? agentName : 'Operator'}</p>
                                                     </div>
                                                     
                                                     {/* Reasoning content - show first if present */}
@@ -1182,10 +1185,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                     <div className="flex flex-col gap-2">
                                         {/* Logo positioned above the tool call */}
                                         <div className="flex justify-start">
-                                            <div className="rounded-md flex items-center justify-center">
-                                                {agentAvatar}
+                                            <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
+                                                <div className="flex items-center gap-0.5">
+                                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse" />
+                                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-150" />
+                                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-300" />
+                                                </div>
                                             </div>
-                                            <p className='ml-2 text-sm text-muted-foreground'>{agentName}</p>
                                         </div>
                                         
                                         {/* Tool call content */}
@@ -1207,10 +1213,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                     <div className="flex flex-col gap-2">
                                         {/* Logo positioned above the streaming indicator */}
                                         <div className="flex justify-start">
-                                            <div className="rounded-md flex items-center justify-center">
-                                                {agentAvatar}
+                                            <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
+                                                <div className="flex items-center gap-0.5">
+                                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse" />
+                                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-150" />
+                                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-300" />
+                                                </div>
                                             </div>
-                                            <p className='ml-2 text-sm text-muted-foreground'>{agentName}</p>
                                         </div>
                                         
                                         {/* Streaming indicator content */}
@@ -1254,7 +1263,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                 }`}>
                     <AnimatePresence mode="wait">
                         {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
-                            <motion.div
+                            <motion.button
                                 key="working"
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ 
@@ -1273,30 +1282,17 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                         ease: [0.25, 0.46, 0.45, 0.94]
                                     } 
                                 }}
-                                className="relative"
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.99 }}
+                                onClick={() => scrollToBottom('smooth')}
+                                className="w-10 h-10 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center transition-all duration-200 hover:bg-accent"
                             >
-                                {/* Floating spinner positioned above the text container */}
-                                <div 
-                                    className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-3/5 z-10 cursor-pointer"
-                                    onClick={() => scrollToBottom('smooth')}
-                                >
-                                    <ThreeSpinner size={64} color="currentColor" />
+                                <div className="flex items-center gap-0.5">
+                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse" />
+                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-150" />
+                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-300" />
                                 </div>
-                                
-                                {/* Text container */}
-                                <StarBorder
-                                    as={motion.button}
-                                    whileHover={{ scale: 1.01 }}
-                                    whileTap={{ scale: 0.99 }}
-                                    onClick={() => scrollToBottom('smooth')}
-                                    className="backdrop-blur-sm border border-primary/20 shadow-lg rounded-full px-4 py-2 text-sm font-medium text-primary transition-all duration-200"
-                                    color="hsl(var(--primary))"
-                                    speed="4s"
-                                    thickness={1}
-                                >
-                                    <span>{agentName ? `${agentName} is working...` : 'Operator is working...'}</span>
-                                </StarBorder>
-                            </motion.div>
+                            </motion.button>
                         )}
                         {showScrollButton && !(agentStatus === 'running' || agentStatus === 'connecting') && (
                             <motion.button
@@ -1324,10 +1320,9 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 whileHover={{ scale: 1.01 }}
                                 whileTap={{ scale: 0.99 }}
                                 onClick={() => scrollToBottom('smooth')}
-                                className="flex items-center gap-2 bg-background/95 backdrop-blur-sm border border-border shadow-lg rounded-full px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200"
+                                className="w-10 h-10 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center transition-all duration-200 hover:bg-accent"
                             >
                                 <ArrowDown className="h-4 w-4" />
-                                <span>Scroll to latest</span>
                             </motion.button>
                         )}
                     </AnimatePresence>
