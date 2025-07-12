@@ -250,6 +250,7 @@ class ApolloProvider:
             
         if not isinstance(request_data, dict):
             raise ValueError(f"Invalid request_data type: expected dict, got {type(request_data)}")
+        
         # Define search criteria fields for each endpoint
         people_search_criteria = [
             "person_titles[]", "person_locations[]", "person_seniorities[]",
