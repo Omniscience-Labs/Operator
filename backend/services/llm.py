@@ -197,7 +197,27 @@ def prepare_params(
     # Apply Anthropic prompt caching (minimal implementation)
     # Check model name *after* potential modifications (like adding bedrock/ prefix)
     effective_model_name = params.get("model", model_name) # Use model from params if set, else original
-    if "claude" in effective_model_name.lower() or "anthropic" in effective_model_name.lower():
+
+    supported_caching_models = [
+        'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
+        'us.anthropic.claude-3-5-haiku-20241022-v1:0',
+        'us.anthropic.claude-3-5-sonnet-20241022-v2:0',  # Preview
+        'us.anthropic.claude-opus-4-20250514-v1:0',
+        'us.anthropic.claude-sonnet-4-20250514-v1:0',
+        'amazon.nova-micro-v1:0',
+        'amazon.nova-lite-v1:0',
+        'amazon.nova-pro-v1:0',
+        'claude-3-5-sonnet-20240620',
+        'claude-3-5-sonnet-20241022',
+        'claude-3-5-haiku-20241022',
+        'claude-3-7-sonnet-20250219',
+        'claude-opus-4-20250514',
+        'claude-sonnet-4-20250514',
+    ]
+
+    if ("claude" in effective_model_name.lower() or "anthropic" in effective_model_name.lower()) and \
+       any(model in effective_model_name for model in supported_caching_models):
+        logger.debug(f"Applying prompt caching for supported model: {effective_model_name}")
         messages = params["messages"] # Direct reference, modification affects params
 
         # Ensure messages is a list
@@ -265,16 +285,37 @@ def prepare_params(
         apply_cache_control(last_user_idx, "last user")
         apply_cache_control(second_last_user_idx, "second last user")
         apply_cache_control(last_assistant_idx, "last assistant")
+    else:
+        if "claude" in effective_model_name.lower() or "anthropic" in effective_model_name.lower():
+            logger.debug(f"Skipping prompt caching for unsupported model: {effective_model_name}")
 
     # Add reasoning_effort for Anthropic models if enabled
     use_thinking = enable_thinking if enable_thinking is not None else False
-    is_anthropic = "anthropic" in effective_model_name.lower() or "claude" in effective_model_name.lower()
+    # Add supported reasoning models (primarily Anthropic)
+    supported_reasoning_models = [
+        'claude-3-5-sonnet-20240620',
+        'claude-3-5-sonnet-20241022',
+        'claude-3-5-haiku-20241022',
+        'claude-3-7-sonnet-20250219',
+        'claude-opus-4-20250514',
+        'claude-sonnet-4-20250514',
+        # Bedrock versions
+        'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
+        'us.anthropic.claude-3-5-haiku-20241022-v1:0',
+        'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
+        'us.anthropic.claude-opus-4-20250514-v1:0',
+        'us.anthropic.claude-sonnet-4-20250514-v1:0',
+        # Add more if other providers/models support similar features
+    ]
 
-    if is_anthropic and use_thinking:
+    if use_thinking and any(model in effective_model_name for model in supported_reasoning_models):
         effort_level = reasoning_effort if reasoning_effort else 'low'
         params["reasoning_effort"] = effort_level
-        params["temperature"] = 1.0 # Required by Anthropic when reasoning_effort is used
-        logger.info(f"Anthropic thinking enabled with reasoning_effort='{effort_level}'")
+        params["temperature"] = 1.0  # Required for reasoning
+        logger.info(f"Thinking enabled with reasoning_effort='{effort_level}' for model: {effective_model_name}")
+    else:
+        if use_thinking:
+            logger.debug(f"Skipping reasoning for unsupported model: {effective_model_name}")
 
     return params
 
