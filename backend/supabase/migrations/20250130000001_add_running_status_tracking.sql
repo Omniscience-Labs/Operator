@@ -1,6 +1,9 @@
 BEGIN;
 
--- Update the function to also track running/connecting states
+-- Drop the existing function first to change return type
+DROP FUNCTION IF EXISTS get_thread_statuses_for_account(UUID);
+
+-- Create the updated function to also track running/connecting states
 CREATE OR REPLACE FUNCTION get_thread_statuses_for_account(p_account_id UUID)
 RETURNS TABLE (
     thread_id UUID,
