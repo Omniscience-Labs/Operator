@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Markdown } from '@/components/ui/markdown';
 import { ThreeSpinner } from '@/components/ui/three-spinner';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 import { UnifiedMessage, ParsedContent, ParsedMetadata } from '@/components/thread/types';
 import { FileAttachmentGrid } from '@/components/thread/file-attachment';
 import { useFilePreloader, FileCache } from '@/hooks/react-query/files';
@@ -21,8 +22,7 @@ import { AgentLoader } from './loader';
 import { parseXmlToolCalls, isNewXmlFormat, extractToolNameFromStream } from '@/components/thread/tool-views/xml-parser';
 import { parseToolResult } from '@/components/thread/tool-views/tool-result-parser';
 import { ReasoningDisplay } from './ReasoningDisplay';
-import { GradientText } from '@/components/animate-ui/text/gradient';
-
+import StarBorder from '@/Animations/StarBorder/StarBorder';
 
 // Define the set of  tags whose raw XML should be hidden during streaming
 const HIDE_STREAMING_XML_TAGS = new Set([
@@ -877,16 +877,19 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                         return (
                                             <div key={group.key} ref={groupIndex === groupedMessages.length - 1 ? latestMessageRef : null}>
                                                 <div className="flex flex-col gap-2">
-                                                    {/* Logo positioned above the message content - ONLY ONCE PER GROUP */}
-                                                    <div className="flex items-center">
-                                                        <div className="px-3 py-1 rounded-full bg-muted/50 border border-muted-foreground/10">
-                                                            <GradientText
-                                                                text={agentName ? agentName : 'Operator'}
-                                                                className="text-sm font-medium"
-                                                                gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
-                                                            />
-                                                        </div>
-                                                    </div>
+                                                    {/* Agent name with ThreeSpinner and gradient text */}
+                                    <div className="flex items-center">
+                                        <div className="w-8 h-8 rounded-full bg-muted-foreground/10 flex items-center justify-center">
+                                            <ThreeSpinner size={24} color="currentColor" />
+                                        </div>
+                                        <div className="ml-2">
+                                            <GradientText
+                                                text={agentName ? agentName : 'Operator'}
+                                                className="text-sm text-muted-foreground"
+                                                gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                            />
+                                        </div>
+                                    </div>
                                                     
                                                     {/* Reasoning content - show first if present */}
                                                     {(() => {
@@ -1184,12 +1187,15 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                             {readOnly && currentToolCall && (
                                 <div ref={latestMessageRef}>
                                     <div className="flex flex-col gap-2">
-                                        {/* Logo positioned above the tool call */}
-                                        <div className="flex justify-start">
-                                            <div className="px-3 py-1 rounded-full bg-muted/50 border border-muted-foreground/10">
+                                        {/* Agent name with ThreeSpinner and gradient text */}
+                                        <div className="flex items-center">
+                                            <div className="w-8 h-8 rounded-full bg-muted-foreground/10 flex items-center justify-center">
+                                                <ThreeSpinner size={24} color="currentColor" />
+                                            </div>
+                                            <div className="ml-2">
                                                 <GradientText
                                                     text={agentName ? agentName : 'Operator'}
-                                                    className="text-sm font-medium"
+                                                    className="text-sm text-muted-foreground"
                                                     gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
                                                 />
                                             </div>
@@ -1212,12 +1218,15 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                             {readOnly && visibleMessages && visibleMessages.length === 0 && isStreamingText && (
                                 <div ref={latestMessageRef}>
                                     <div className="flex flex-col gap-2">
-                                        {/* Logo positioned above the streaming indicator */}
-                                        <div className="flex justify-start">
-                                            <div className="px-3 py-1 rounded-full bg-muted/50 border border-muted-foreground/10">
+                                        {/* Agent name with ThreeSpinner and gradient text */}
+                                        <div className="flex items-center">
+                                            <div className="w-8 h-8 rounded-full bg-muted-foreground/10 flex items-center justify-center">
+                                                <ThreeSpinner size={24} color="currentColor" />
+                                            </div>
+                                            <div className="ml-2">
                                                 <GradientText
                                                     text={agentName ? agentName : 'Operator'}
-                                                    className="text-sm font-medium"
+                                                    className="text-sm text-muted-foreground"
                                                     gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
                                                 />
                                             </div>
@@ -1264,7 +1273,8 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                 }`}>
                     <AnimatePresence mode="wait">
                         {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
-                            <motion.button
+                            <StarBorder
+                                as={motion.button}
                                 key="working"
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ 
@@ -1286,17 +1296,17 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 whileHover={{ scale: 1.01 }}
                                 whileTap={{ scale: 0.99 }}
                                 onClick={() => scrollToBottom('smooth')}
-                                className="w-10 h-10 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center transition-all duration-200 hover:bg-accent"
+                                className="w-16 h-16 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center hover:bg-accent transition-all duration-200"
+                                color="hsl(var(--primary))"
+                                speed="4s"
+                                thickness={1}
                             >
-                                <div className="flex items-center gap-0.5">
-                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse" />
-                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-150" />
-                                    <div className="w-1 h-1 rounded-full bg-muted-foreground/60 animate-pulse delay-300" />
-                                </div>
-                            </motion.button>
+                                <ThreeSpinner size={48} color="currentColor" />
+                            </StarBorder>
                         )}
                         {showScrollButton && !(agentStatus === 'running' || agentStatus === 'connecting') && (
-                            <motion.button
+                            <StarBorder
+                                as={motion.button}
                                 key="scroll"
                                 initial={{ 
                                     opacity: 0,
@@ -1321,10 +1331,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 whileHover={{ scale: 1.01 }}
                                 whileTap={{ scale: 0.99 }}
                                 onClick={() => scrollToBottom('smooth')}
-                                className="w-10 h-10 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center transition-all duration-200 hover:bg-accent"
+                                className="w-10 h-10 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center hover:bg-accent transition-all duration-200"
+                                color="hsl(var(--primary))"
+                                speed="6s"
+                                thickness={1}
                             >
                                 <ArrowDown className="h-4 w-4" />
-                            </motion.button>
+                            </StarBorder>
                         )}
                     </AnimatePresence>
                 </div>
