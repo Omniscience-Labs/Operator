@@ -281,6 +281,10 @@ class ApolloProvider:
         # Skip validation for non-search endpoints (pagination params only are ok)
         excluded_keys = {"api_key", "page", "per_page", "sort_ascending", "reveal_personal_emails", "reveal_phone_number", "webhook_url", "details", "reveal_emails", "reveal_phone_numbers", "domains", "organization_names", "organization_ids"}
         
+        search_keys = [k for k in request_data if k not in excluded_keys]
+        if not search_keys:
+            raise ValueError("No search criteria provided after excluding pagination keys")
+
         if route == "people_search":
             # Check if any people search criteria are provided
             has_criteria = any(

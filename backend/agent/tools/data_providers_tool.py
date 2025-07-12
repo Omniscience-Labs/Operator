@@ -270,7 +270,7 @@ Use this tool when you need to discover what endpoints are available.
                 "provider_metadata": {
                     "service_name": service_name,
                     "endpoint_route": route,
-                    "request_timestamp": logger.info.__defaults__[0] if hasattr(logger.info, '__defaults__') else "N/A"
+                    "request_timestamp": logger.info.__defaults__[0] if hasattr(logger.info, '__defaults__') and logger.info.__defaults__ is not None else "N/A"
                 }
             }
             

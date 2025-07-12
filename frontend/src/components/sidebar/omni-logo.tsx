@@ -13,13 +13,13 @@ export function OmniLogo() {
 
   // Don't render anything until mounted to avoid hydration mismatch
   if (!mounted) {
-    return <div className="h-8 w-8" />;
+    return <div className="h-10 w-10" />;
   }
 
   return (
-    <div className="flex h-8 w-8 items-center justify-center flex-shrink-0">
+    <div className="flex h-10 w-10 items-center justify-center flex-shrink-0">
       <ThreeSpinner 
-        size={24} 
+        size={32} 
         color="currentColor"
         className="flex-shrink-0"
       />
