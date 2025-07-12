@@ -1284,13 +1284,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 whileHover={{ scale: 1.01 }}
                                 whileTap={{ scale: 0.99 }}
                                 onClick={() => scrollToBottom('smooth')}
-                                className="w-20 h-20 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center hover:bg-accent transition-all duration-200"
+                                className="w-16 h-16 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg hover:bg-accent transition-all duration-200 relative overflow-hidden"
                                 color="hsl(var(--primary))"
                                 speed="4s"
                                 thickness={1}
                             >
-                                <div className="flex items-center justify-center w-full h-full">
-                                    <ThreeSpinner size={56} color="currentColor" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <ThreeSpinner size={80} color="currentColor" />
                                 </div>
                             </StarBorder>
                         )}
@@ -1321,13 +1321,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 whileHover={{ scale: 1.01 }}
                                 whileTap={{ scale: 0.99 }}
                                 onClick={() => scrollToBottom('smooth')}
-                                className="w-10 h-10 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center hover:bg-accent transition-all duration-200"
+                                className="w-12 h-12 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg hover:bg-accent transition-all duration-200 relative overflow-hidden"
                                 color="hsl(var(--primary))"
                                 speed="6s"
                                 thickness={1}
                             >
-                                <div className="flex items-center justify-center w-full h-full">
-                                    <ArrowDown className="h-4 w-4" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <ArrowDown className="h-5 w-5 text-foreground" />
                                 </div>
                             </StarBorder>
                         )}
