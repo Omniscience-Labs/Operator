@@ -64,8 +64,10 @@ export function AgentStatusProvider({ children }: { children: React.ReactNode })
       return data as ThreadStatus[];
     },
     enabled: !!currentAccount?.account_id,
-    staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 60 * 1000, // Refetch every minute
+    staleTime: 10 * 1000, // 10 seconds (reduced from 30)
+    refetchInterval: 30 * 1000, // Refetch every 30 seconds (reduced from 60)
+    refetchOnWindowFocus: true, // Enable refetch on window focus
+    refetchOnReconnect: true, // Enable refetch on reconnect
   });
 
   // Mark thread as viewed mutation
@@ -97,9 +99,12 @@ export function AgentStatusProvider({ children }: { children: React.ReactNode })
 
     // If status changes to completed, invalidate the query to fetch updated data
     if (status === 'completed') {
+      // Immediate invalidation without delay
+      queryClient.invalidateQueries({ queryKey: ['thread-statuses', currentAccount?.account_id] });
+      // Also refetch immediately to ensure fresh data
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['thread-statuses', currentAccount?.account_id] });
-      }, 2000); // Small delay to ensure backend has processed the completion
+        queryClient.refetchQueries({ queryKey: ['thread-statuses', currentAccount?.account_id] });
+      }, 1000); // Small delay to ensure backend has processed the completion
     }
   }, [queryClient, currentAccount?.account_id]);
 
@@ -169,7 +174,10 @@ export function AgentStatusProvider({ children }: { children: React.ReactNode })
         },
         (payload) => {
           console.log('Agent run change detected:', payload);
-          queryClient.invalidateQueries({ queryKey: ['thread-statuses', currentAccount.account_id] });
+          // Small delay to ensure transaction is committed
+          setTimeout(() => {
+            queryClient.refetchQueries({ queryKey: ['thread-statuses', currentAccount.account_id] });
+          }, 500);
         }
       )
       .subscribe();
@@ -187,7 +195,7 @@ export function AgentStatusProvider({ children }: { children: React.ReactNode })
         },
         (payload) => {
           console.log('Thread view change detected:', payload);
-          queryClient.invalidateQueries({ queryKey: ['thread-statuses', currentAccount.account_id] });
+          queryClient.refetchQueries({ queryKey: ['thread-statuses', currentAccount.account_id] });
         }
       )
       .subscribe();
@@ -204,7 +212,7 @@ export function AgentStatusProvider({ children }: { children: React.ReactNode })
         },
         (payload) => {
           console.log('Thread change detected:', payload);
-          queryClient.invalidateQueries({ queryKey: ['thread-statuses', currentAccount.account_id] });
+          queryClient.refetchQueries({ queryKey: ['thread-statuses', currentAccount.account_id] });
         }
       )
       .subscribe();
