@@ -20,6 +20,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { agentKeys } from '@/hooks/react-query/agents/keys';
 import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
+import { useAgentStatus } from '@/contexts/AgentStatusContext';
 
 interface AgentBuilderChatProps {
   agentId: string;
@@ -79,6 +80,7 @@ export const AgentBuilderChat = React.memo(function AgentBuilderChat({
   const stopAgentMutation = useStopAgentMutation();
   const chatHistoryQuery = useAgentBuilderChatHistory(agentId);
   const queryClient = useQueryClient();
+  const { updateThreadStatus } = useAgentStatus();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -153,29 +155,38 @@ export const AgentBuilderChat = React.memo(function AgentBuilderChat({
   const handleStreamStatusChange = useCallback((status: string) => {
     switch (status) {
       case 'idle':
+        setAgentStatus('idle');
+        setAgentRunId(null);
+        if (threadId) updateThreadStatus(threadId, 'idle');
+        break;
       case 'completed':
+        setAgentStatus('idle');
+        setAgentRunId(null);
+        if (threadId) updateThreadStatus(threadId, 'completed');
+        setSaveStatus('saved');
+        queryClient.invalidateQueries({ queryKey: agentKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: agentKeys.detail(agentId) });
+        queryClient.invalidateQueries({ queryKey: agentKeys.builderChatHistory(agentId) });
+        setTimeout(() => setSaveStatus('idle'), 2000);
+        break;
       case 'stopped':
       case 'agent_not_running':
       case 'error':
       case 'failed':
         setAgentStatus('idle');
         setAgentRunId(null);
-        if (status === 'completed') {
-          setSaveStatus('saved');
-          queryClient.invalidateQueries({ queryKey: agentKeys.lists() });
-          queryClient.invalidateQueries({ queryKey: agentKeys.detail(agentId) });
-          queryClient.invalidateQueries({ queryKey: agentKeys.builderChatHistory(agentId) });
-          setTimeout(() => setSaveStatus('idle'), 2000);
-        }
+        if (threadId) updateThreadStatus(threadId, 'idle');
         break;
       case 'connecting':
         setAgentStatus('connecting');
+        if (threadId) updateThreadStatus(threadId, 'connecting');
         break;
       case 'streaming':
         setAgentStatus('running');
+        if (threadId) updateThreadStatus(threadId, 'running');
         break;
     }
-  }, []);
+  }, [threadId, updateThreadStatus, agentId, queryClient]);
 
   const handleStreamError = useCallback((errorMessage: string) => {
     if (!errorMessage.toLowerCase().includes('not found') &&
