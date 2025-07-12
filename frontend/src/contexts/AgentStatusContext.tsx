@@ -13,6 +13,8 @@ interface ThreadStatus {
   latest_completion_at?: string;
   last_viewed_at?: string;
   has_unread_completion: boolean;
+  is_currently_running: boolean;
+  current_agent_status?: string;
 }
 
 interface AgentStatusContextType {
@@ -109,11 +111,18 @@ export function AgentStatusProvider({ children }: { children: React.ReactNode })
     return dbStatus?.has_completed_agent_run || false;
   }, [threadStatuses]);
 
-  // Check if thread is currently running (from current session)
+  // Check if thread is currently running (from current session OR database)
   const isThreadRunning = useCallback((threadId: string): boolean => {
+    // First check current session for real-time updates
     const sessionStatus = currentSessionStatuses.get(threadId);
-    return sessionStatus === 'running' || sessionStatus === 'connecting';
-  }, [currentSessionStatuses]);
+    if (sessionStatus === 'running' || sessionStatus === 'connecting') {
+      return true;
+    }
+    
+    // If no session status, check database for persistence across tabs/refreshes
+    const dbStatus = threadStatuses.find(s => s.thread_id === threadId);
+    return dbStatus?.is_currently_running || false;
+  }, [currentSessionStatuses, threadStatuses]);
 
   // Check if thread has unread completion
   const hasUnreadCompletedStatus = useCallback((threadId: string): boolean => {
