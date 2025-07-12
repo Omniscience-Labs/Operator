@@ -192,9 +192,27 @@ export function AgentStatusProvider({ children }: { children: React.ReactNode })
       )
       .subscribe();
 
+    // Subscribe to threads changes to catch new thread creation
+    const threadsChannel: RealtimeChannel = supabase
+      .channel('threads_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'threads',
+        },
+        (payload) => {
+          console.log('Thread change detected:', payload);
+          queryClient.invalidateQueries({ queryKey: ['thread-statuses', currentAccount.account_id] });
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(agentRunsChannel);
       supabase.removeChannel(threadViewsChannel);
+      supabase.removeChannel(threadsChannel);
     };
   }, [currentAccount?.account_id, queryClient]);
 
