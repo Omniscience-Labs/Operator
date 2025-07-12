@@ -1300,35 +1300,42 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 key="scroll"
                                 initial={{ 
                                     opacity: 0,
-                                    y: 10
+                                    y: 10,
+                                    scale: 0.95
                                 }}
                                 animate={{ 
                                     opacity: 1,
                                     y: 0,
+                                    scale: 1,
                                     transition: { 
-                                        duration: 0.3, 
+                                        duration: 0.4, 
                                         ease: [0.25, 0.46, 0.45, 0.94]
                                     }
                                 }}
                                 exit={{ 
                                     opacity: 0,
                                     y: 10,
+                                    scale: 0.95,
                                     transition: { 
-                                        duration: 0.2, 
+                                        duration: 0.3, 
                                         ease: [0.25, 0.46, 0.45, 0.94]
                                     }
                                 }}
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
+                                whileHover={{ 
+                                    scale: 1.05,
+                                    transition: { duration: 0.15, ease: "easeOut" }
+                                }}
+                                whileTap={{ 
+                                    scale: 0.95,
+                                    transition: { duration: 0.1, ease: "easeOut" }
+                                }}
                                 onClick={() => scrollToBottom('smooth')}
-                                className="w-12 h-12 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg hover:bg-accent transition-all duration-200 relative overflow-hidden"
+                                className="w-12 h-12 rounded-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-12 [&_.inner-content]:!h-12 [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
                                 color="hsl(var(--primary))"
                                 speed="6s"
                                 thickness={1}
                             >
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <ArrowDown className="h-5 w-5 text-foreground" />
-                                </div>
+                                <ArrowDown className="h-5 w-5 text-foreground" />
                             </StarBorder>
                         )}
                     </AnimatePresence>
