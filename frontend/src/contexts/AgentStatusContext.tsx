@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { useCurrentAccount } from '@/hooks/use-current-account';
 
 export type AgentStatus = 'idle' | 'running' | 'connecting' | 'completed' | 'error';
@@ -41,6 +42,8 @@ export function AgentStatusProvider({ children }: { children: React.ReactNode })
   
   const currentAccount = useCurrentAccount();
   const queryClient = useQueryClient();
+
+  const supabase = createClient();
 
   // Fetch thread statuses from database
   const { data: threadStatuses = [], isLoading } = useQuery({
@@ -150,6 +153,50 @@ export function AgentStatusProvider({ children }: { children: React.ReactNode })
 
     return () => clearInterval(cleanup);
   }, []);
+
+  useEffect(() => {
+    if (!currentAccount?.account_id) return;
+
+    // Subscribe to agent_runs changes
+    const agentRunsChannel: RealtimeChannel = supabase
+      .channel('agent_runs_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'agent_runs',
+        },
+        (payload) => {
+          console.log('Agent run change detected:', payload);
+          queryClient.invalidateQueries({ queryKey: ['thread-statuses', currentAccount.account_id] });
+        }
+      )
+      .subscribe();
+
+    // Subscribe to thread_views changes
+    const threadViewsChannel: RealtimeChannel = supabase
+      .channel('thread_views_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'thread_views',
+          filter: `account_id=eq.${currentAccount.account_id}`,
+        },
+        (payload) => {
+          console.log('Thread view change detected:', payload);
+          queryClient.invalidateQueries({ queryKey: ['thread-statuses', currentAccount.account_id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(agentRunsChannel);
+      supabase.removeChannel(threadViewsChannel);
+    };
+  }, [currentAccount?.account_id, queryClient]);
 
   const value: AgentStatusContextType = {
     currentSessionStatuses,
