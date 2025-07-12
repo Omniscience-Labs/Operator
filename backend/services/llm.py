@@ -293,16 +293,11 @@ def prepare_params(
     use_thinking = enable_thinking if enable_thinking is not None else False
     # Add supported reasoning models (primarily Anthropic)
     supported_reasoning_models = [
-        'claude-3-5-sonnet-20240620',
-        'claude-3-5-sonnet-20241022',
-        'claude-3-5-haiku-20241022',
         'claude-3-7-sonnet-20250219',
         'claude-opus-4-20250514',
         'claude-sonnet-4-20250514',
         # Bedrock versions
         'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
-        'us.anthropic.claude-3-5-haiku-20241022-v1:0',
-        'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
         'us.anthropic.claude-opus-4-20250514-v1:0',
         'us.anthropic.claude-sonnet-4-20250514-v1:0',
         # Add more if other providers/models support similar features
