@@ -439,7 +439,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
         if (messagesEndRef.current) {
             autoScrollingRef.current = true;
-            messagesEndRef.current.scrollIntoView({ behavior });
+            messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
             
             // Only reset position state, but let user scroll state be handled by scroll detection
             if (behavior === 'smooth') {
