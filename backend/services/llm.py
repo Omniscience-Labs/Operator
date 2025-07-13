@@ -198,7 +198,7 @@ def prepare_params(
     # Check model name *after* potential modifications (like adding bedrock/ prefix)
     effective_model_name = params.get("model", model_name) # Use model from params if set, else original
 
-    supported_caching_models = [
+    bedrock_supported_caching = [
         'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
         'us.anthropic.claude-3-5-haiku-20241022-v1:0',
         'us.anthropic.claude-3-5-sonnet-20241022-v2:0',  # Preview
@@ -207,6 +207,9 @@ def prepare_params(
         'amazon.nova-micro-v1:0',
         'amazon.nova-lite-v1:0',
         'amazon.nova-pro-v1:0',
+    ]
+
+    direct_supported_caching = [
         'claude-3-5-sonnet-20240620',
         'claude-3-5-sonnet-20241022',
         'claude-3-5-haiku-20241022',
@@ -215,78 +218,86 @@ def prepare_params(
         'claude-sonnet-4-20250514',
     ]
 
-    if ("claude" in effective_model_name.lower() or "anthropic" in effective_model_name.lower()) and \
-       any(model in effective_model_name for model in supported_caching_models):
-        logger.debug(f"Applying prompt caching for supported model: {effective_model_name}")
-        messages = params["messages"] # Direct reference, modification affects params
+    is_anthropic = "claude" in effective_model_name.lower() or "anthropic" in effective_model_name.lower()
+    is_bedrock = effective_model_name.startswith("bedrock/")
 
-        # Ensure messages is a list
-        if not isinstance(messages, list):
-            return params # Return early if messages format is unexpected
+    if is_anthropic:
+        supports_caching = False
+        if is_bedrock:
+            supports_caching = any(effective_model_name.endswith(model) for model in bedrock_supported_caching)
+        else:
+            supports_caching = any(model in effective_model_name for model in direct_supported_caching)
+        
+        if supports_caching:
+            logger.debug(f"Applying prompt caching for supported model: {effective_model_name}")
+            messages = params["messages"] # Direct reference, modification affects params
 
-        # 1. Process the first message if it's a system prompt with string content
-        if messages and messages[0].get("role") == "system":
-            content = messages[0].get("content")
-            if isinstance(content, str):
-                # Wrap the string content in the required list structure
-                messages[0]["content"] = [
-                    {"type": "text", "text": content, "cache_control": {"type": "ephemeral"}}
-                ]
-            elif isinstance(content, list):
-                 # If content is already a list, check if the first text block needs cache_control
-                 for item in content:
-                     if isinstance(item, dict) and item.get("type") == "text":
-                         if "cache_control" not in item:
-                             item["cache_control"] = {"type": "ephemeral"}
-                             break # Apply to the first text block only for system prompt
+            # Ensure messages is a list
+            if not isinstance(messages, list):
+                return params # Return early if messages format is unexpected
 
-        # 2. Find and process relevant user and assistant messages (limit to 4 max)
-        last_user_idx = -1
-        second_last_user_idx = -1
-        last_assistant_idx = -1
+            # 1. Process the first message if it's a system prompt with string content
+            if messages and messages[0].get("role") == "system":
+                content = messages[0].get("content")
+                if isinstance(content, str):
+                    # Wrap the string content in the required list structure
+                    messages[0]["content"] = [
+                        {"type": "text", "text": content, "cache_control": {"type": "ephemeral"}}
+                    ]
+                elif isinstance(content, list):
+                     # If content is already a list, check if the first text block needs cache_control
+                     for item in content:
+                         if isinstance(item, dict) and item.get("type") == "text":
+                             if "cache_control" not in item:
+                                 item["cache_control"] = {"type": "ephemeral"}
+                                 break # Apply to the first text block only for system prompt
 
-        for i in range(len(messages) - 1, -1, -1):
-            role = messages[i].get("role")
-            if role == "user":
-                if last_user_idx == -1:
-                    last_user_idx = i
-                elif second_last_user_idx == -1:
-                    second_last_user_idx = i
-            elif role == "assistant":
-                if last_assistant_idx == -1:
-                    last_assistant_idx = i
+            # 2. Find and process relevant user and assistant messages (limit to 4 max)
+            last_user_idx = -1
+            second_last_user_idx = -1
+            last_assistant_idx = -1
 
-            # Stop searching if we've found all needed messages (system, last user, second last user, last assistant)
-            found_count = sum(idx != -1 for idx in [last_user_idx, second_last_user_idx, last_assistant_idx])
-            if found_count >= 3:
-                break
+            for i in range(len(messages) - 1, -1, -1):
+                role = messages[i].get("role")
+                if role == "user":
+                    if last_user_idx == -1:
+                        last_user_idx = i
+                    elif second_last_user_idx == -1:
+                        second_last_user_idx = i
+                elif role == "assistant":
+                    if last_assistant_idx == -1:
+                        last_assistant_idx = i
 
-        # Helper function to apply cache control
-        def apply_cache_control(message_idx: int, message_role: str):
-            if message_idx == -1:
-                return
+                # Stop searching if we've found all needed messages (system, last user, second last user, last assistant)
+                found_count = sum(idx != -1 for idx in [last_user_idx, second_last_user_idx, last_assistant_idx])
+                if found_count >= 3:
+                    break
 
-            message = messages[message_idx]
-            content = message.get("content")
+            # Helper function to apply cache control
+            def apply_cache_control(message_idx: int, message_role: str):
+                if message_idx == -1:
+                    return
 
-            if isinstance(content, str):
-                message["content"] = [
-                    {"type": "text", "text": content, "cache_control": {"type": "ephemeral"}}
-                ]
-            elif isinstance(content, list):
-                for item in content:
-                    if isinstance(item, dict) and item.get("type") == "text":
-                        if "cache_control" not in item:
-                           item["cache_control"] = {"type": "ephemeral"}
+                message = messages[message_idx]
+                content = message.get("content")
 
-        # Apply cache control to the identified messages (max 4: system, last user, second last user, last assistant)
-        # System message is always at index 0 if present
-        apply_cache_control(0, "system")
-        apply_cache_control(last_user_idx, "last user")
-        apply_cache_control(second_last_user_idx, "second last user")
-        apply_cache_control(last_assistant_idx, "last assistant")
-    else:
-        if "claude" in effective_model_name.lower() or "anthropic" in effective_model_name.lower():
+                if isinstance(content, str):
+                    message["content"] = [
+                        {"type": "text", "text": content, "cache_control": {"type": "ephemeral"}}
+                    ]
+                elif isinstance(content, list):
+                    for item in content:
+                        if isinstance(item, dict) and item.get("type") == "text":
+                            if "cache_control" not in item:
+                               item["cache_control"] = {"type": "ephemeral"}
+
+            # Apply cache control to the identified messages (max 4: system, last user, second last user, last assistant)
+            # System message is always at index 0 if present
+            apply_cache_control(0, "system")
+            apply_cache_control(last_user_idx, "last user")
+            apply_cache_control(second_last_user_idx, "second last user")
+            apply_cache_control(last_assistant_idx, "last assistant")
+        else:
             logger.debug(f"Skipping prompt caching for unsupported model: {effective_model_name}")
 
     # Add reasoning_effort for Anthropic models if enabled
