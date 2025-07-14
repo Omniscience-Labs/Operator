@@ -18,7 +18,6 @@ import {
 import { toast } from "sonner"
 import { usePathname, useRouter } from "next/navigation"
 import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
-import { ThreeSpinner } from '@/components/ui/three-spinner';
 import { useAgentStatus } from '@/contexts/AgentStatusContext';
 
 import {
@@ -466,7 +465,7 @@ export function NavAgents() {
                               {isThreadLoading ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : isAgentRunning ? (
-                                <ThreeSpinner size={16} color="currentColor" />
+                                <Loader2 className="h-4 w-4 animate-spin" />
                               ) : showCompletedDot ? (
                                 <div className="relative">
                                   <MessagesSquare className="h-4 w-4" />
@@ -505,7 +504,7 @@ export function NavAgents() {
                             {isThreadLoading ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : isAgentRunning ? (
-                              <ThreeSpinner size={16} color="currentColor" />
+                              <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                               <>
                                 {/* Main icon - with blue dot for completed status */}
