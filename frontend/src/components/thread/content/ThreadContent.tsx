@@ -1238,109 +1238,117 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
             )}
 
             {/* Unified floating pill - shows either "Working" or "Scroll to latest" */}
-            {((!readOnly && (agentStatus === 'running' || agentStatus === 'connecting')) || showScrollButton) && (
-                <div className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-48'} z-20 transform -translate-x-1/2 transition-all duration-200 ease-in-out ${
-                    (() => {
-                        if (isAgentBuilder) {
-                            // Agent builder mode - center within container
-                            return 'left-1/2';
-                        } else if (isSidePanelOpen && isLeftSidebarOpen) {
-                            // Both sidebars open - center between them
-                            return 'left-[calc(50%-100px)] sm:left-[calc(50%-200px)] md:left-[calc(50%-225px)] lg:left-[calc(50%-250px)] xl:left-[calc(50%-275px)]';
-                        } else if (isSidePanelOpen) {
-                            // Only right side panel open
-                            return 'left-[5%] sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]';
-                        } else if (isLeftSidebarOpen) {
-                            // Only left sidebar open - shift right to account for sidebar width
-                            return 'left-[calc(50%+120px)] sm:left-[calc(50%+130px)] md:left-[calc(50%+140px)] lg:left-[calc(50%+150px)]';
-                        } else {
-                            // No sidebars open - center normally
-                            return 'left-1/2';
-                        }
-                    })()
-                }`}>
-                    <AnimatePresence mode="wait">
-                        {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
-                            <StarBorder
-                                as={motion.button}
-                                key="working"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ 
-                                    opacity: 1,
-                                    y: 0,
-                                    transition: { 
-                                        duration: 0.3, 
-                                        ease: [0.25, 0.46, 0.45, 0.94]
-                                    }
-                                }}
-                                exit={{ 
-                                    opacity: 0,
-                                    y: 10,
-                                    transition: { 
-                                        duration: 0.2, 
-                                        ease: [0.25, 0.46, 0.45, 0.94]
-                                    } 
-                                }}
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                                onClick={() => scrollToBottom('smooth')}
-                                className="w-16 h-16 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg hover:bg-accent transition-all duration-200 relative overflow-hidden"
-                                color="hsl(var(--primary))"
-                                speed="4s"
-                                thickness={1}
-                            >
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <ThreeSpinner size={80} color="currentColor" />
-                                </div>
-                            </StarBorder>
-                        )}
-                        {showScrollButton && !(agentStatus === 'running' || agentStatus === 'connecting') && (
-                            <StarBorder
-                                as={motion.button}
-                                key="scroll"
-                                initial={{ 
-                                    opacity: 0,
-                                    y: 10,
-                                    scale: 0.95
-                                }}
-                                animate={{ 
-                                    opacity: 1,
-                                    y: 0,
-                                    scale: 1,
-                                    transition: { 
-                                        duration: 0.4, 
-                                        ease: [0.25, 0.46, 0.45, 0.94]
-                                    }
-                                }}
-                                exit={{ 
-                                    opacity: 0,
-                                    y: 10,
-                                    scale: 0.95,
-                                    transition: { 
-                                        duration: 0.3, 
-                                        ease: [0.25, 0.46, 0.45, 0.94]
-                                    }
-                                }}
-                                whileHover={{ 
-                                    scale: 1.05,
-                                    transition: { duration: 0.15, ease: "easeOut" }
-                                }}
-                                whileTap={{ 
-                                    scale: 0.95,
-                                    transition: { duration: 0.1, ease: "easeOut" }
-                                }}
-                                onClick={() => scrollToBottom('smooth')}
-                                className="w-12 h-12 rounded-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-12 [&_.inner-content]:!h-12 [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
-                                color="hsl(var(--primary))"
-                                speed="6s"
-                                thickness={1}
-                            >
-                                <ArrowDown className="h-5 w-5 text-foreground" />
-                            </StarBorder>
-                        )}
-                    </AnimatePresence>
-                </div>
-            )}
+            <AnimatePresence>
+                {((!readOnly && (agentStatus === 'running' || agentStatus === 'connecting')) || showScrollButton) && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-48'} z-20 transform -translate-x-1/2 ${
+                            (() => {
+                                if (isAgentBuilder) {
+                                    // Agent builder mode - center within container
+                                    return 'left-1/2';
+                                } else if (isSidePanelOpen && isLeftSidebarOpen) {
+                                    // Both sidebars open - center between them
+                                    return 'left-[calc(50%-100px)] sm:left-[calc(50%-200px)] md:left-[calc(50%-225px)] lg:left-[calc(50%-250px)] xl:left-[calc(50%-275px)]';
+                                } else if (isSidePanelOpen) {
+                                    // Only right side panel open
+                                    return 'left-[5%] sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]';
+                                } else if (isLeftSidebarOpen) {
+                                    // Only left sidebar open - shift right to account for sidebar width
+                                    return 'left-[calc(50%+120px)] sm:left-[calc(50%+130px)] md:left-[calc(50%+140px)] lg:left-[calc(50%+150px)]';
+                                } else {
+                                    // No sidebars open - center normally
+                                    return 'left-1/2';
+                                }
+                            })()
+                        }`}
+                    >
+                        <AnimatePresence mode="wait">
+                            {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
+                                <StarBorder
+                                    as={motion.button}
+                                    key="working"
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ 
+                                        opacity: 1,
+                                        y: 0,
+                                        transition: { 
+                                            duration: 0.3, 
+                                            ease: [0.25, 0.46, 0.45, 0.94]
+                                        }
+                                    }}
+                                    exit={{ 
+                                        opacity: 0,
+                                        y: 10,
+                                        transition: { 
+                                            duration: 0.2, 
+                                            ease: [0.25, 0.46, 0.45, 0.94]
+                                        } 
+                                    }}
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.99 }}
+                                    onClick={() => scrollToBottom('smooth')}
+                                    className="w-16 h-16 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg hover:bg-accent transition-all duration-200 relative overflow-hidden"
+                                    color="hsl(var(--primary))"
+                                    speed="4s"
+                                    thickness={1}
+                                >
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <ThreeSpinner size={80} color="currentColor" />
+                                    </div>
+                                </StarBorder>
+                            )}
+                            {showScrollButton && !(agentStatus === 'running' || agentStatus === 'connecting') && (
+                                <StarBorder
+                                    as={motion.button}
+                                    key="scroll"
+                                    initial={{ 
+                                        opacity: 0,
+                                        y: 10,
+                                        scale: 0.95
+                                    }}
+                                    animate={{ 
+                                        opacity: 1,
+                                        y: 0,
+                                        scale: 1,
+                                        transition: { 
+                                            duration: 0.4, 
+                                            ease: [0.25, 0.46, 0.45, 0.94]
+                                        }
+                                    }}
+                                    exit={{ 
+                                        opacity: 0,
+                                        y: 10,
+                                        scale: 0.95,
+                                        transition: { 
+                                            duration: 0.3, 
+                                            ease: [0.25, 0.46, 0.45, 0.94]
+                                        }
+                                    }}
+                                    whileHover={{ 
+                                        scale: 1.05,
+                                        transition: { duration: 0.15, ease: "easeOut" }
+                                    }}
+                                    whileTap={{ 
+                                        scale: 0.95,
+                                        transition: { duration: 0.1, ease: "easeOut" }
+                                    }}
+                                    onClick={() => scrollToBottom('smooth')}
+                                    className="w-12 h-12 rounded-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-12 [&_.inner-content]:!h-12 [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
+                                    color="hsl(var(--primary))"
+                                    speed="6s"
+                                    thickness={1}
+                                >
+                                    <ArrowDown className="h-5 w-5 text-foreground" />
+                                </StarBorder>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </>
     );
 };
