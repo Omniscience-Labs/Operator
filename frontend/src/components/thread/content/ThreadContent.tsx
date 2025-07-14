@@ -1243,11 +1243,15 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.9 }}
                         transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-32'} z-20 transform ${
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-40'} z-20 transform ${
                             isAgentBuilder 
                                 ? 'left-1/2 -translate-x-1/2' 
+                                : isSidePanelOpen && isLeftSidebarOpen
+                                    ? 'left-1/2 -translate-x-1/2'
                                 : isSidePanelOpen 
                                     ? 'left-1/2 -translate-x-1/4 sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]'
+                                : isLeftSidebarOpen
+                                    ? 'left-1/2 translate-x-1/4 sm:left-[calc(50%+112px)] md:left-[calc(50%+120px)] lg:left-[calc(50%+125px)] xl:left-[calc(50%+130px)]'
                                     : 'left-1/2 -translate-x-1/2'
                         }`}
                     >
@@ -1259,7 +1263,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                             speed="4s"
                             thickness={1}
                         >
-                            <ThreeSpinner size={28} color="currentColor" />
+                            <ThreeSpinner size={32} color="currentColor" />
                         </StarBorder>
                     </motion.div>
                 )}
@@ -1270,11 +1274,15 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.9 }}
                         transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-32'} z-20 transform ${
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-40'} z-20 transform ${
                             isAgentBuilder 
                                 ? 'left-1/2 -translate-x-1/2' 
+                                : isSidePanelOpen && isLeftSidebarOpen
+                                    ? 'left-1/2 -translate-x-1/2'
                                 : isSidePanelOpen 
                                     ? 'left-1/2 -translate-x-1/4 sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]'
+                                : isLeftSidebarOpen
+                                    ? 'left-1/2 translate-x-1/4 sm:left-[calc(50%+112px)] md:left-[calc(50%+120px)] lg:left-[calc(50%+125px)] xl:left-[calc(50%+130px)]'
                                     : 'left-1/2 -translate-x-1/2'
                         }`}
                     >
