@@ -439,7 +439,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
         if (messagesEndRef.current) {
             autoScrollingRef.current = true;
-            messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+            messagesEndRef.current.scrollIntoView({ behavior });
             
             // Only reset position state, but let user scroll state be handled by scroll detection
             if (behavior === 'smooth') {
@@ -477,10 +477,10 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
         const messageCountIncreased = displayMessages.length > previousMessageCount.current;
         previousMessageCount.current = displayMessages.length;
         
-        if (messageCountIncreased && !userHasScrolled && (agentStatus === 'running' || agentStatus === 'connecting')) {
+        if (messageCountIncreased && !userHasScrolled) {
             autoScrollToBottomIfNeeded();
         }
-    }, [displayMessages.length, autoScrollToBottomIfNeeded, userHasScrolled, agentStatus]);
+    }, [displayMessages.length, autoScrollToBottomIfNeeded, userHasScrolled]);
 
     // Auto-scroll when streaming content arrives - but only if user hasn't manually scrolled up AND agent is actively working
     React.useEffect(() => {
