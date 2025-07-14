@@ -405,7 +405,7 @@ export const AgentPreview = ({ agent }: AgentPreviewProps) => {
             isAgentRunning={agentStatus === 'running' || agentStatus === 'connecting'}
             onStopAgent={handleStopAgent}
             agentName={agent.name}
-            hideAttachments={false}
+            hideAttachments={true}
             bgColor='bg-muted-foreground/10'
 
           />
