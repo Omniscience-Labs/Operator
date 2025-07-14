@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowDown, CircleDashed, CheckCircle, AlertTriangle, Copy, Check, Edit, X } from 'lucide-react';
+import { ArrowDown, CircleDashed, CheckCircle, AlertTriangle, Copy, Check, Edit, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Markdown } from '@/components/ui/markdown';
@@ -1241,30 +1241,16 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
             <AnimatePresence>
                 {((!readOnly && (agentStatus === 'running' || agentStatus === 'connecting')) || showScrollButton) && (
                     <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        variants={{
+                            hidden: { opacity: 0, y: 10, scale: 0.95 },
+                            working: { opacity: 1, y: 0, scale: 1, width: 64, height: 64 },
+                            scroll: { opacity: 1, y: 0, scale: 1, width: 48, height: 48 }
+                        }}
+                        initial="hidden"
+                        animate={(!readOnly && (agentStatus === 'running' || agentStatus === 'connecting')) ? 'working' : 'scroll'}
+                        exit="hidden"
                         transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-48'} z-20 transform -translate-x-1/2 ${
-                            (() => {
-                                if (isAgentBuilder) {
-                                    // Agent builder mode - center within container
-                                    return 'left-1/2';
-                                } else if (isSidePanelOpen && isLeftSidebarOpen) {
-                                    // Both sidebars open - center between them
-                                    return 'left-[calc(50%-100px)] sm:left-[calc(50%-200px)] md:left-[calc(50%-225px)] lg:left-[calc(50%-250px)] xl:left-[calc(50%-275px)]';
-                                } else if (isSidePanelOpen) {
-                                    // Only right side panel open
-                                    return 'left-[5%] sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]';
-                                } else if (isLeftSidebarOpen) {
-                                    // Only left sidebar open - shift right to account for sidebar width
-                                    return 'left-[calc(50%+120px)] sm:left-[calc(50%+130px)] md:left-[calc(50%+140px)] lg:left-[calc(50%+150px)]';
-                                } else {
-                                    // No sidebars open - center normally
-                                    return 'left-1/2';
-                                }
-                            })()
-                        }`}
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-48'} z-20 transform -translate-x-1/2 rounded-full`}
                     >
                         <AnimatePresence mode="wait">
                             {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
@@ -1272,32 +1258,19 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                     as={motion.button}
                                     key="working"
                                     initial={{ opacity: 0, y: 10 }}
-                                    animate={{ 
-                                        opacity: 1,
-                                        y: 0,
-                                        transition: { 
-                                            duration: 0.3, 
-                                            ease: [0.25, 0.46, 0.45, 0.94]
-                                        }
-                                    }}
-                                    exit={{ 
-                                        opacity: 0,
-                                        y: 10,
-                                        transition: { 
-                                            duration: 0.2, 
-                                            ease: [0.25, 0.46, 0.45, 0.94]
-                                        } 
-                                    }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                                     whileHover={{ scale: 1.01 }}
                                     whileTap={{ scale: 0.99 }}
                                     onClick={() => scrollToBottom('smooth')}
-                                    className="w-16 h-16 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg hover:bg-accent transition-all duration-200 relative overflow-hidden"
+                                    className="w-full h-full bg-background/95 backdrop-blur-sm border border-border shadow-lg hover:bg-accent transition-all duration-200 relative overflow-hidden"
                                     color="hsl(var(--primary))"
                                     speed="4s"
                                     thickness={1}
                                 >
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <ThreeSpinner size={80} color="currentColor" />
+                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
                                     </div>
                                 </StarBorder>
                             )}
@@ -1305,39 +1278,14 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                 <StarBorder
                                     as={motion.button}
                                     key="scroll"
-                                    initial={{ 
-                                        opacity: 0,
-                                        y: 10,
-                                        scale: 0.95
-                                    }}
-                                    animate={{ 
-                                        opacity: 1,
-                                        y: 0,
-                                        scale: 1,
-                                        transition: { 
-                                            duration: 0.4, 
-                                            ease: [0.25, 0.46, 0.45, 0.94]
-                                        }
-                                    }}
-                                    exit={{ 
-                                        opacity: 0,
-                                        y: 10,
-                                        scale: 0.95,
-                                        transition: { 
-                                            duration: 0.3, 
-                                            ease: [0.25, 0.46, 0.45, 0.94]
-                                        }
-                                    }}
-                                    whileHover={{ 
-                                        scale: 1.05,
-                                        transition: { duration: 0.15, ease: "easeOut" }
-                                    }}
-                                    whileTap={{ 
-                                        scale: 0.95,
-                                        transition: { duration: 0.1, ease: "easeOut" }
-                                    }}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                                    whileHover={{ scale: 1.05, transition: { duration: 0.15, ease: "easeOut" } }}
+                                    whileTap={{ scale: 0.95, transition: { duration: 0.1, ease: "easeOut" } }}
                                     onClick={() => scrollToBottom('smooth')}
-                                    className="w-12 h-12 rounded-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-12 [&_.inner-content]:!h-12 [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
+                                    className="w-full h-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-full [&_.inner-content]:!h-full [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
                                     color="hsl(var(--primary))"
                                     speed="6s"
                                     thickness={1}
