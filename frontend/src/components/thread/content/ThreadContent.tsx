@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Markdown } from '@/components/ui/markdown';
 import { ThreeSpinner } from '@/components/ui/three-spinner';
+import { GradientText } from '@/components/animate-ui/text/gradient';
 import { UnifiedMessage, ParsedContent, ParsedMetadata } from '@/components/thread/types';
 import { FileAttachmentGrid } from '@/components/thread/file-attachment';
 import { useFilePreloader, FileCache } from '@/hooks/react-query/files';
@@ -476,10 +477,10 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
         const messageCountIncreased = displayMessages.length > previousMessageCount.current;
         previousMessageCount.current = displayMessages.length;
         
-        if (messageCountIncreased && !userHasScrolled && (agentStatus === 'running' || agentStatus === 'connecting')) {
+        if (messageCountIncreased && !userHasScrolled) {
             autoScrollToBottomIfNeeded();
         }
-    }, [displayMessages.length, autoScrollToBottomIfNeeded, userHasScrolled, agentStatus]);
+    }, [displayMessages.length, autoScrollToBottomIfNeeded, userHasScrolled]);
 
     // Auto-scroll when streaming content arrives - but only if user hasn't manually scrolled up AND agent is actively working
     React.useEffect(() => {
@@ -876,13 +877,14 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                         return (
                                             <div key={group.key} ref={groupIndex === groupedMessages.length - 1 ? latestMessageRef : null}>
                                                 <div className="flex flex-col gap-2">
-                                                    {/* Logo positioned above the message content - ONLY ONCE PER GROUP */}
-                                                    <div className="flex items-center">
-                                                        <div className="rounded-md flex items-center justify-center">
-                                                            {agentAvatar}
-                                                        </div>
-                                                        <p className='ml-2 text-sm text-muted-foreground'>{agentName ? agentName : 'Operator'}</p>
-                                                    </div>
+                                                    {/* Agent name with gradient text */}
+                                    <div className="flex items-center gap-2">
+                                        <GradientText
+                                            text={agentName ? agentName : 'Operator'}
+                                            className="text-sm text-muted-foreground"
+                                            gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                        />
+                                    </div>
                                                     
                                                     {/* Reasoning content - show first if present */}
                                                     {(() => {
@@ -1180,12 +1182,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                             {readOnly && currentToolCall && (
                                 <div ref={latestMessageRef}>
                                     <div className="flex flex-col gap-2">
-                                        {/* Logo positioned above the tool call */}
-                                        <div className="flex justify-start">
-                                            <div className="rounded-md flex items-center justify-center">
-                                                {agentAvatar}
-                                            </div>
-                                            <p className='ml-2 text-sm text-muted-foreground'>{agentName}</p>
+                                        {/* Agent name with gradient text */}
+                                        <div className="flex items-center gap-2">
+                                            <GradientText
+                                                text={agentName ? agentName : 'Operator'}
+                                                className="text-sm text-muted-foreground"
+                                                gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                            />
                                         </div>
                                         
                                         {/* Tool call content */}
@@ -1205,12 +1208,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                             {readOnly && visibleMessages && visibleMessages.length === 0 && isStreamingText && (
                                 <div ref={latestMessageRef}>
                                     <div className="flex flex-col gap-2">
-                                        {/* Logo positioned above the streaming indicator */}
-                                        <div className="flex justify-start">
-                                            <div className="rounded-md flex items-center justify-center">
-                                                {agentAvatar}
-                                            </div>
-                                            <p className='ml-2 text-sm text-muted-foreground'>{agentName}</p>
+                                        {/* Agent name with gradient text */}
+                                        <div className="flex items-center gap-2">
+                                            <GradientText
+                                                text={agentName ? agentName : 'Operator'}
+                                                className="text-sm text-muted-foreground"
+                                                gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                            />
                                         </div>
                                         
                                         {/* Streaming indicator content */}
@@ -1231,108 +1235,70 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
             )}
 
             {/* Unified floating pill - shows either "Working" or "Scroll to latest" */}
-            {((!readOnly && (agentStatus === 'running' || agentStatus === 'connecting')) || showScrollButton) && (
-                <div className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-48'} z-20 transform -translate-x-1/2 transition-all duration-200 ease-in-out ${
-                    (() => {
-                        if (isAgentBuilder) {
-                            // Agent builder mode - center within container
-                            return 'left-1/2';
-                        } else if (isSidePanelOpen && isLeftSidebarOpen) {
-                            // Both sidebars open - center between them
-                            return 'left-[calc(50%-100px)] sm:left-[calc(50%-200px)] md:left-[calc(50%-225px)] lg:left-[calc(50%-250px)] xl:left-[calc(50%-275px)]';
-                        } else if (isSidePanelOpen) {
-                            // Only right side panel open
-                            return 'left-[5%] sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]';
-                        } else if (isLeftSidebarOpen) {
-                            // Only left sidebar open - shift right to account for sidebar width
-                            return 'left-[calc(50%+120px)] sm:left-[calc(50%+130px)] md:left-[calc(50%+140px)] lg:left-[calc(50%+150px)]';
-                        } else {
-                            // No sidebars open - center normally
-                            return 'left-1/2';
-                        }
-                    })()
-                }`}>
-                    <AnimatePresence mode="wait">
-                        {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
-                            <motion.div
-                                key="working"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ 
-                                    opacity: 1,
-                                    y: 0,
-                                    transition: { 
-                                        duration: 0.3, 
-                                        ease: [0.25, 0.46, 0.45, 0.94]
-                                    }
-                                }}
-                                exit={{ 
-                                    opacity: 0,
-                                    y: 10,
-                                    transition: { 
-                                        duration: 0.2, 
-                                        ease: [0.25, 0.46, 0.45, 0.94]
-                                    } 
-                                }}
-                                className="relative"
-                            >
-                                {/* Floating spinner positioned above the text container */}
-                                <div 
-                                    className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-3/5 z-10 cursor-pointer"
-                                    onClick={() => scrollToBottom('smooth')}
-                                >
-                                    <ThreeSpinner size={64} color="currentColor" />
-                                </div>
-                                
-                                {/* Text container */}
-                                <StarBorder
-                                    as={motion.button}
-                                    whileHover={{ scale: 1.01 }}
-                                    whileTap={{ scale: 0.99 }}
-                                    onClick={() => scrollToBottom('smooth')}
-                                    className="backdrop-blur-sm border border-primary/20 shadow-lg rounded-full px-4 py-2 text-sm font-medium text-primary transition-all duration-200"
-                                    color="hsl(var(--primary))"
-                                    speed="4s"
-                                    thickness={1}
-                                >
-                                    <span>{agentName ? `${agentName} is working...` : 'Operator is working...'}</span>
-                                </StarBorder>
-                            </motion.div>
-                        )}
-                        {showScrollButton && !(agentStatus === 'running' || agentStatus === 'connecting') && (
-                            <motion.button
-                                key="scroll"
-                                initial={{ 
-                                    opacity: 0,
-                                    y: 10
-                                }}
-                                animate={{ 
-                                    opacity: 1,
-                                    y: 0,
-                                    transition: { 
-                                        duration: 0.3, 
-                                        ease: [0.25, 0.46, 0.45, 0.94]
-                                    }
-                                }}
-                                exit={{ 
-                                    opacity: 0,
-                                    y: 10,
-                                    transition: { 
-                                        duration: 0.2, 
-                                        ease: [0.25, 0.46, 0.45, 0.94]
-                                    }
-                                }}
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                                onClick={() => scrollToBottom('smooth')}
-                                className="flex items-center gap-2 bg-background/95 backdrop-blur-sm border border-border shadow-lg rounded-full px-4 py-2 text-sm font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200"
-                            >
-                                <ArrowDown className="h-4 w-4" />
-                                <span>Scroll to latest</span>
-                            </motion.button>
-                        )}
-                    </AnimatePresence>
-                </div>
-            )}
+            <AnimatePresence mode="wait">
+                {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
+                    <motion.div
+                        key="working-pill"
+                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-52'} z-20 transform ${
+                            isAgentBuilder 
+                                ? 'left-1/2 -translate-x-1/2' 
+                                : isSidePanelOpen && isLeftSidebarOpen
+                                    ? 'left-1/2 -translate-x-1/2'
+                                : isSidePanelOpen 
+                                    ? 'left-1/2 -translate-x-1/4 sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]'
+                                : isLeftSidebarOpen
+                                    ? 'left-1/2 translate-x-1/4 sm:left-[calc(50%+112px)] md:left-[calc(50%+120px)] lg:left-[calc(50%+125px)] xl:left-[calc(50%+130px)]'
+                                    : 'left-1/2 -translate-x-1/2'
+                        }`}
+                    >
+                        <StarBorder
+                            as="button"
+                            onClick={() => scrollToBottom('smooth')}
+                            className="w-12 h-12 rounded-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-12 [&_.inner-content]:!h-12 [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
+                            color="hsl(var(--primary))"
+                            speed="4s"
+                            thickness={1}
+                        >
+                            <ThreeSpinner size={44} color="currentColor" />
+                        </StarBorder>
+                    </motion.div>
+                )}
+                {showScrollButton && !(agentStatus === 'running' || agentStatus === 'connecting') && (
+                    <motion.div
+                        key="scroll-pill"
+                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-52'} z-20 transform ${
+                            isAgentBuilder 
+                                ? 'left-1/2 -translate-x-1/2' 
+                                : isSidePanelOpen && isLeftSidebarOpen
+                                    ? 'left-1/2 -translate-x-1/2'
+                                : isSidePanelOpen 
+                                    ? 'left-1/2 -translate-x-1/4 sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]'
+                                : isLeftSidebarOpen
+                                    ? 'left-1/2 translate-x-1/4 sm:left-[calc(50%+112px)] md:left-[calc(50%+120px)] lg:left-[calc(50%+125px)] xl:left-[calc(50%+130px)]'
+                                    : 'left-1/2 -translate-x-1/2'
+                        }`}
+                    >
+                        <StarBorder
+                            as="button"
+                            onClick={() => scrollToBottom('smooth')}
+                            className="w-12 h-12 rounded-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-12 [&_.inner-content]:!h-12 [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
+                            color="hsl(var(--primary))"
+                            speed="6s"
+                            thickness={1}
+                        >
+                            <ArrowDown className="h-5 w-5 text-foreground" />
+                        </StarBorder>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </>
     );
 };

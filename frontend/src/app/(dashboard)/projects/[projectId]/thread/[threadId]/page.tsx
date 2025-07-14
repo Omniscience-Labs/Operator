@@ -29,6 +29,7 @@ import { useThreadData, useToolCalls, useBilling, useKeyboardShortcuts } from '.
 import { ThreadError, UpgradeDialog, ThreadLayout } from '../_components';
 import { useVncPreloader } from '@/hooks/useVncPreloader';
 import { useAgent } from '@/hooks/react-query/agents/use-agents';
+import { useAgentStatus } from '@/contexts/AgentStatusContext';
 
 export default function ThreadPage({
   params,
@@ -127,6 +128,7 @@ export default function ThreadPage({
   const startAgentMutation = useStartAgentMutation();
   const stopAgentMutation = useStopAgentMutation();
   const { data: agent } = useAgent(threadQuery.data?.agent_id);
+  const { updateThreadStatus } = useAgentStatus();
 
   const { data: subscriptionData } = useSubscription();
   const subscriptionStatus: SubscriptionStatus = subscriptionData?.status === 'active'
@@ -179,7 +181,17 @@ export default function ThreadPage({
     console.log(`[PAGE] Hook status changed: ${hookStatus}`);
     switch (hookStatus) {
       case 'idle':
+        setAgentStatus('idle');
+        setAgentRunId(null);
+        setAutoOpenedPanel(false);
+        updateThreadStatus(threadId, 'idle');
+        break;
       case 'completed':
+        setAgentStatus('idle');
+        setAgentRunId(null);
+        setAutoOpenedPanel(false);
+        updateThreadStatus(threadId, 'completed');
+        break;
       case 'stopped':
       case 'agent_not_running':
       case 'error':
@@ -187,18 +199,18 @@ export default function ThreadPage({
         setAgentStatus('idle');
         setAgentRunId(null);
         setAutoOpenedPanel(false);
-
-        // Remove auto-scroll on completion - let ThreadContent handle all scroll behavior
-        // The ThreadContent component now intelligently manages scroll state
+        updateThreadStatus(threadId, 'idle');
         break;
       case 'connecting':
         setAgentStatus('connecting');
+        updateThreadStatus(threadId, 'connecting');
         break;
       case 'streaming':
         setAgentStatus('running');
+        updateThreadStatus(threadId, 'running');
         break;
     }
-  }, [setAgentStatus, setAgentRunId, setAutoOpenedPanel, userHasScrolled]);
+  }, [setAgentStatus, setAgentRunId, setAutoOpenedPanel, updateThreadStatus, threadId]);
 
   const handleStreamError = useCallback((errorMessage: string) => {
     console.error(`[PAGE] Stream hook error: ${errorMessage}`);

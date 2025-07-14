@@ -16,6 +16,7 @@ import { useStartAgentMutation, useStopAgentMutation } from '@/hooks/react-query
 import { BillingError } from '@/lib/api';
 import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
 import { createClient } from '@/lib/supabase/client';
+import { useAgentStatus } from '@/contexts/AgentStatusContext';
 
 interface Agent {
   agent_id: string;
@@ -62,6 +63,7 @@ export const AgentPreview = ({ agent }: AgentPreviewProps) => {
   const addUserMessageMutation = useAddUserMessageMutation();
   const startAgentMutation = useStartAgentMutation();
   const stopAgentMutation = useStopAgentMutation();
+  const { updateThreadStatus } = useAgentStatus();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -88,22 +90,33 @@ export const AgentPreview = ({ agent }: AgentPreviewProps) => {
     console.log(`[PREVIEW] Stream status changed: ${hookStatus}`);
     switch (hookStatus) {
       case 'idle':
+        setAgentStatus('idle');
+        setAgentRunId(null);
+        if (threadId) updateThreadStatus(threadId, 'idle');
+        break;
       case 'completed':
+        setAgentStatus('idle');
+        setAgentRunId(null);
+        if (threadId) updateThreadStatus(threadId, 'completed');
+        break;
       case 'stopped':
       case 'agent_not_running':
       case 'error':
       case 'failed':
         setAgentStatus('idle');
         setAgentRunId(null);
+        if (threadId) updateThreadStatus(threadId, 'idle');
         break;
       case 'connecting':
         setAgentStatus('connecting');
+        if (threadId) updateThreadStatus(threadId, 'connecting');
         break;
       case 'streaming':
         setAgentStatus('running');
+        if (threadId) updateThreadStatus(threadId, 'running');
         break;
     }
-  }, []);
+  }, [threadId, updateThreadStatus]);
 
   const handleStreamError = useCallback((errorMessage: string) => {
     console.error(`[PREVIEW] Stream error: ${errorMessage}`);
@@ -392,7 +405,7 @@ export const AgentPreview = ({ agent }: AgentPreviewProps) => {
             isAgentRunning={agentStatus === 'running' || agentStatus === 'connecting'}
             onStopAgent={handleStopAgent}
             agentName={agent.name}
-            hideAttachments={false}
+            hideAttachments={true}
             bgColor='bg-muted-foreground/10'
 
           />

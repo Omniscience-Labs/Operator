@@ -108,6 +108,63 @@ const formatDate = (dateString?: string) => {
   });
 };
 
+interface DescriptionSectionProps {
+  description?: string;
+  isHighlighted: boolean;
+}
+
+const DescriptionSection: React.FC<DescriptionSectionProps> = ({ description, isHighlighted }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const defaultDescription = "🤖 *Mysterious agent with no description* - What am I? That's for me to know and you to find out!";
+  const displayDescription = description || defaultDescription;
+  const shouldShowReadMore = description && description.length > 120;
+  
+  const truncatedDescription = shouldShowReadMore 
+    ? (() => {
+        const truncated = description.substring(0, 120);
+        const lastSpace = truncated.lastIndexOf(' ');
+        return lastSpace > 0 && lastSpace > 100 
+          ? truncated.substring(0, lastSpace).trim() + '...'
+          : truncated.trim() + '...';
+      })()
+    : displayDescription;
+
+  return (
+    <div className="flex-1 mb-4">
+      <div className={cn(
+        "text-muted-foreground text-sm leading-relaxed transition-colors duration-300 group-hover:text-foreground/85 break-words",
+        isHighlighted && "text-foreground/85"
+      )}>
+        {!isExpanded ? (
+          <p>{truncatedDescription}</p>
+        ) : (
+          <div className="max-h-32 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+            <p>{displayDescription}</p>
+          </div>
+        )}
+        
+        {shouldShowReadMore && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(!isExpanded);
+            }}
+            className={cn(
+              "text-xs font-medium mt-2 transition-colors duration-200 hover:text-foreground/90 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background rounded-sm px-1",
+              isHighlighted 
+                ? "text-foreground/70 hover:text-foreground" 
+                : "text-muted-foreground/80 hover:text-foreground/70"
+            )}
+          >
+            {isExpanded ? 'Read less' : 'Read more'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
   agent,
   mode = 'library',
@@ -499,14 +556,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         </div>
 
         {/* Description */}
-        <div className="flex-1 mb-4 overflow-hidden">
-          <p className={cn(
-            "text-muted-foreground text-sm leading-relaxed transition-colors duration-300 group-hover:text-foreground/85 break-words",
-            isHighlighted && "text-foreground/85"
-          )}>
-            {truncateDescription(agent.description)}
-          </p>
-        </div>
+        <DescriptionSection 
+          description={agent.description} 
+          isHighlighted={isHighlighted}
+        />
 
                   {/* Tools and Info */}
         <div className="space-y-3 mb-4">

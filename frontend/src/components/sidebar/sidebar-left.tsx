@@ -157,9 +157,9 @@ export function SidebarLeft({
           ))}
         </div>
       </div>
-      <SidebarHeader className="px-2 py-2 relative z-10">
+      <SidebarHeader className={cn("py-2 relative z-10", state === 'collapsed' ? 'px-0' : 'px-2')}>
         <motion.div 
-          className="flex h-[40px] items-center px-1 relative"
+          className={cn("flex h-[40px] items-center px-0 relative", state === 'collapsed' ? 'justify-center' : '')}
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -191,36 +191,38 @@ export function SidebarLeft({
               )}
             </motion.div>
           </Link>
-          <div className="ml-auto flex items-center gap-2">
-            {state !== 'collapsed' && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <SidebarTrigger className="h-8 w-8 hover:bg-white/10 dark:hover:bg-black/10 transition-colors duration-200" />
-                  </motion.div>
-                </TooltipTrigger>
-                <TooltipContent>Toggle sidebar (CMD+B)</TooltipContent>
-              </Tooltip>
-            )}
-            {isMobile && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <motion.button
-                    onClick={() => setOpenMobile(true)}
-                    className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-white/10 dark:hover:bg-black/10 transition-colors duration-200"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <Menu className="h-4 w-4" />
-                  </motion.button>
-                </TooltipTrigger>
-                <TooltipContent>Open menu</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
+          {(state !== 'collapsed' || isMobile) && (
+            <div className="ml-auto flex items-center gap-2">
+              {state !== 'collapsed' && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <SidebarTrigger className="h-8 w-8 hover:bg-white/10 dark:hover:bg-black/10 transition-colors duration-200" />
+                    </motion.div>
+                  </TooltipTrigger>
+                  <TooltipContent>Toggle sidebar (CMD+B)</TooltipContent>
+                </Tooltip>
+              )}
+              {isMobile && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <motion.button
+                      onClick={() => setOpenMobile(true)}
+                      className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-white/10 dark:hover:bg-black/10 transition-colors duration-200"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <Menu className="h-4 w-4" />
+                    </motion.button>
+                  </TooltipTrigger>
+                  <TooltipContent>Open menu</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
         </motion.div>
       </SidebarHeader>
       <SidebarContent className="[&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] relative z-10">

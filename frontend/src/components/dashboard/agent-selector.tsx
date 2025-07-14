@@ -207,7 +207,7 @@ export function AgentSelector({
 
                           <DropdownMenuSeparator />
             
-            <DropdownMenuItem onClick={handleCreateAgent} className="cursor-pointer">
+            <DropdownMenuItem onClick={handleManageAgents} className="cursor-pointer">
               <div className="flex items-center justify-between w-full">
                 Agents
                 <Badge variant="new" className="ml-2">
