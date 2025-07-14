@@ -157,9 +157,9 @@ export function SidebarLeft({
           ))}
         </div>
       </div>
-      <SidebarHeader className="px-2 py-2 relative z-10">
+      <SidebarHeader className={cn("py-2 relative z-10", state === 'collapsed' ? 'px-0' : 'px-2')}>
         <motion.div 
-          className="flex h-[40px] items-center px-0 relative"
+          className={cn("flex h-[40px] items-center px-0 relative", state === 'collapsed' ? 'justify-center' : '')}
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
