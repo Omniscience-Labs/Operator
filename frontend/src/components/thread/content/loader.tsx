@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import StarBorder from '@/Animations/StarBorder/StarBorder';
-import { ThreeSpinner } from '@/components/ui/three-spinner';
 import { GradientText } from '@/components/animate-ui/text/gradient';
 
 const items = [
@@ -88,7 +87,6 @@ export const AgentLoader = () => {
 
   return (
     <div className="flex py-2 items-center w-full">
-      <ThreeSpinner size={28} color="currentColor" className="flex-shrink-0 mr-3" />
       <div className="flex-1 relative min-h-[28px] flex items-center">
         <AnimatePresence>
           <motion.div

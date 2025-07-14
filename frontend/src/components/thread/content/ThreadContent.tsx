@@ -877,9 +877,8 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                         return (
                                             <div key={group.key} ref={groupIndex === groupedMessages.length - 1 ? latestMessageRef : null}>
                                                 <div className="flex flex-col gap-2">
-                                                    {/* Agent name with ThreeSpinner and gradient text */}
+                                                    {/* Agent name with gradient text */}
                                     <div className="flex items-center gap-2">
-                                        <ThreeSpinner size={24} color="currentColor" />
                                         <GradientText
                                             text={agentName ? agentName : 'Operator'}
                                             className="text-sm text-muted-foreground"
@@ -1183,9 +1182,8 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                             {readOnly && currentToolCall && (
                                 <div ref={latestMessageRef}>
                                     <div className="flex flex-col gap-2">
-                                        {/* Agent name with ThreeSpinner and gradient text */}
+                                        {/* Agent name with gradient text */}
                                         <div className="flex items-center gap-2">
-                                            <ThreeSpinner size={24} color="currentColor" />
                                             <GradientText
                                                 text={agentName ? agentName : 'Operator'}
                                                 className="text-sm text-muted-foreground"
@@ -1210,9 +1208,8 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                             {readOnly && visibleMessages && visibleMessages.length === 0 && isStreamingText && (
                                 <div ref={latestMessageRef}>
                                     <div className="flex flex-col gap-2">
-                                        {/* Agent name with ThreeSpinner and gradient text */}
+                                        {/* Agent name with gradient text */}
                                         <div className="flex items-center gap-2">
-                                            <ThreeSpinner size={24} color="currentColor" />
                                             <GradientText
                                                 text={agentName ? agentName : 'Operator'}
                                                 className="text-sm text-muted-foreground"
@@ -1246,7 +1243,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.9 }}
                         transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-48'} z-20 transform ${
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-32'} z-20 transform ${
                             isAgentBuilder 
                                 ? 'left-1/2 -translate-x-1/2' 
                                 : isSidePanelOpen 
@@ -1257,12 +1254,12 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                         <StarBorder
                             as="button"
                             onClick={() => scrollToBottom('smooth')}
-                            className="w-12 h-12 rounded-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-12 [&_.inner-content]:!h-12 [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
+                            className="w-14 h-14 rounded-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-14 [&_.inner-content]:!h-14 [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
                             color="hsl(var(--primary))"
                             speed="4s"
                             thickness={1}
                         >
-                            <ThreeSpinner size={20} color="currentColor" />
+                            <ThreeSpinner size={28} color="currentColor" />
                         </StarBorder>
                     </motion.div>
                 )}
@@ -1273,7 +1270,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.9 }}
                         transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-48'} z-20 transform ${
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-32'} z-20 transform ${
                             isAgentBuilder 
                                 ? 'left-1/2 -translate-x-1/2' 
                                 : isSidePanelOpen 
