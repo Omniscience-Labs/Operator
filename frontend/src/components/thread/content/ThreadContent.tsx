@@ -1258,12 +1258,12 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                         <StarBorder
                             as="button"
                             onClick={() => scrollToBottom('smooth')}
-                            className="w-14 h-14 rounded-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-14 [&_.inner-content]:!h-14 [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
+                            className="w-12 h-12 rounded-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-12 [&_.inner-content]:!h-12 [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
                             color="hsl(var(--primary))"
                             speed="4s"
                             thickness={1}
                         >
-                            <ThreeSpinner size={40} color="currentColor" />
+                            <ThreeSpinner size={44} color="currentColor" />
                         </StarBorder>
                     </motion.div>
                 )}
