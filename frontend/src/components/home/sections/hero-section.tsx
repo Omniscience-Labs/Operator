@@ -392,18 +392,6 @@ export function HeroSection() {
     }
   };
 
-  // Check for pending prompt after auth
-  useEffect(() => {
-    if (user && !isLoading) {
-      const pendingPrompt = localStorage.getItem(PENDING_PROMPT_KEY);
-      if (pendingPrompt) {
-        setInputValue(pendingPrompt);
-        localStorage.removeItem(PENDING_PROMPT_KEY);
-        setAuthDialogOpen(false);
-      }
-    }
-  }, [user, isLoading]);
-
   return (
     <section id="hero" className="w-full relative overflow-hidden min-h-[100svh] flex items-center justify-center">
       {/* Immediate inline styles to prevent FOUC */}

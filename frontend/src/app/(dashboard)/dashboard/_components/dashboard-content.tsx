@@ -57,7 +57,6 @@ const getTimeBasedGreeting = () => {
 export function DashboardContent() {
   const [inputValue, setInputValue] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [autoSubmit, setAutoSubmit] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [nameInput, setNameInput] = useState('');
   const [isNameFocused, setIsNameFocused] = useState(false);
@@ -384,7 +383,6 @@ ${meeting.transcript || '(No transcript available)'}`;
 
     try {
       const files = chatInputRef.current?.getPendingFiles() || [];
-      localStorage.removeItem(PENDING_PROMPT_KEY);
 
       const formData = new FormData();
       formData.append('prompt', message);
@@ -443,23 +441,26 @@ ${meeting.transcript || '(No transcript available)'}`;
 
       if (pendingPrompt) {
         setInputValue(pendingPrompt);
-        setAutoSubmit(true);
+        // Remove the pending prompt from localStorage immediately after retrieving it
+        localStorage.removeItem(PENDING_PROMPT_KEY);
+        // Don't auto-submit - let the user decide when to submit
       }
     }, 200);
 
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (autoSubmit && inputValue && !isSubmitting) {
-      const timer = setTimeout(() => {
-        handleSubmit(inputValue);
-        setAutoSubmit(false);
-      }, 500);
+  // This effect is no longer needed since we don't want auto-submit
+  // useEffect(() => {
+  //   if (autoSubmit && inputValue && !isSubmitting) {
+  //     const timer = setTimeout(() => {
+  //       handleSubmit(inputValue);
+  //       setAutoSubmit(false);
+  //     }, 500);
 
-      return () => clearTimeout(timer);
-    }
-  }, [autoSubmit, inputValue, isSubmitting]);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [autoSubmit, inputValue, isSubmitting]);
 
   // Render background based on selection
   const renderBackground = () => {
