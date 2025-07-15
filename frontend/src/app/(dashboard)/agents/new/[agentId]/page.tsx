@@ -21,6 +21,12 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AgentBuilderChat } from '../../_components/agent-builder-chat';
 import { useFeatureFlags } from '@/lib/feature-flags';
+import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
+import { GradientText } from '@/components/animate-ui/text/gradient';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -32,8 +38,8 @@ export default function AgentConfigurationPage() {
   const { data: agent, isLoading, error } = useAgent(agentId);
   const updateAgentMutation = useUpdateAgent();
   const { state, setOpen, setOpenMobile } = useSidebar();
-  const { flags } = useFeatureFlags(['custom_agents', 'agent_builder']);
-  const agentBuilderEnabled = flags.custom_agents && flags.agent_builder;
+  const { flags } = useFeatureFlags(['custom_agents']);
+  const agentBuilderEnabled = flags.custom_agents;
 
   // Ref to track if initial layout has been applied (for sidebar closing)
   const initialLayoutAppliedRef = useRef(false);
@@ -56,6 +62,7 @@ export default function AgentConfigurationPage() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [showOmniGenie, setShowOmniGenie] = useState(false);
   const accordionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -334,7 +341,20 @@ export default function AgentConfigurationPage() {
               </div>
 
               <div className='flex flex-col mt-6 md:mt-8'>
-                <div className='text-sm font-semibold text-muted-foreground mb-2'>Instructions</div>
+                <div className='flex items-center justify-between mb-2'>
+                  <div className='text-sm font-semibold text-muted-foreground'>Instructions</div>
+                  {agentBuilderEnabled && (
+                    <LiquidButton
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowOmniGenie(true)}
+                      className="h-7 px-2.5 gap-1.5"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span className="text-xs">Omni Genie</span>
+                    </LiquidButton>
+                  )}
+                </div>
                 <EditableText
                   value={formData.system_prompt}
                   onSave={(value) => handleFieldChange('system_prompt', value)}
@@ -468,44 +488,107 @@ export default function AgentConfigurationPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      <div className="flex-1 flex overflow-hidden">
-        <div className="hidden md:flex w-full h-full">
-          {agentBuilderEnabled ? (
-            // Three column layout with agent builder chat
-            <>
-              <div className="w-1/3 border-r bg-background h-full flex flex-col">
-                {ConfigurationContent}
+    <>
+      <div className="h-screen flex flex-col">
+        <div className="flex-1 flex overflow-hidden">
+          <div className="hidden md:flex w-full h-full">
+          <div className="w-1/2 border-r bg-background h-full flex flex-col">
+            {ConfigurationContent}
+          </div>
+          <div className="w-1/2 h-full flex flex-col relative">
+            {agentBuilderEnabled && (
+              <div className="absolute top-4 right-4 z-10 bg-background/95 backdrop-blur-sm rounded-lg border p-2 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <Label
+                    htmlFor="view-toggle"
+                    className={cn(
+                      "text-xs font-medium transition-opacity cursor-pointer",
+                      showOmniGenie ? "opacity-50" : "opacity-100"
+                    )}
+                  >
+                    Preview
+                  </Label>
+                  <Switch
+                    id="view-toggle"
+                    checked={showOmniGenie}
+                    onCheckedChange={setShowOmniGenie}
+                    className="h-5 w-9"
+                  />
+                  <Label
+                    htmlFor="view-toggle"
+                    className={cn(
+                      "text-xs font-medium transition-opacity cursor-pointer flex items-center gap-1",
+                      showOmniGenie ? "opacity-100" : "opacity-50"
+                    )}
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    <GradientText
+                      text="Omni Genie"
+                      gradient="linear-gradient(90deg, #8b5cf6 0%, #ec4899 50%, #3b82f6 100%)"
+                      className="text-xs font-semibold"
+                    />
+                  </Label>
+                </div>
               </div>
-              <div className="w-1/3 border-r overflow-y-auto">
-                <AgentPreview agent={{ ...agent, ...formData }} />
-              </div>
-              <div className="w-1/3 overflow-y-auto">
-                <AgentBuilderChat
-                  agentId={agentId}
-                  formData={formData}
-                  handleFieldChange={handleFieldChange}
-                  handleStyleChange={handleStyleChange}
-                  currentStyle={currentStyle}
-                />
-              </div>
-            </>
-          ) : (
-            // Two column layout without agent builder chat
-            <>
-              <div className="w-1/2 border-r bg-background h-full flex flex-col">
-                {ConfigurationContent}
-              </div>
-              <div className="w-1/2 overflow-y-auto">
-                <AgentPreview agent={{ ...agent, ...formData }} />
-              </div>
-            </>
-          )}
+            )}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={showOmniGenie ? 'omni-genie' : 'preview'}
+                initial={{ opacity: 0, x: showOmniGenie ? 20 : -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: showOmniGenie ? -20 : 20 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                className="flex-1 overflow-y-auto h-full"
+              >
+                {showOmniGenie && agentBuilderEnabled ? (
+                  <AgentBuilderChat
+                    agentId={agentId}
+                    formData={formData}
+                    handleFieldChange={handleFieldChange}
+                    handleStyleChange={handleStyleChange}
+                    currentStyle={currentStyle}
+                  />
+                ) : (
+                  <AgentPreview agent={{ ...agent, ...formData }} />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
         <div className="md:hidden w-full h-full flex flex-col">
           {ConfigurationContent}
         </div>
       </div>
     </div>
+    
+    {/* Mobile Omni Genie Drawer */}
+    {agentBuilderEnabled && (
+      <Drawer open={showOmniGenie} onOpenChange={setShowOmniGenie}>
+        <DrawerContent className="h-[90vh] bg-muted/30">
+          <DrawerHeader className="relative">
+            <DrawerTitle className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <Sparkles className="h-4 w-4 text-purple-500" />
+                <GradientText
+                  text="Omni Genie"
+                  gradient="linear-gradient(90deg, #8b5cf6 0%, #ec4899 50%, #3b82f6 100%)"
+                  className="text-lg font-semibold"
+                />
+              </div>
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="flex-1 overflow-hidden">
+            <AgentBuilderChat
+              agentId={agentId}
+              formData={formData}
+              handleFieldChange={handleFieldChange}
+              handleStyleChange={handleStyleChange}
+              currentStyle={currentStyle}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )}
+  </>
   );
 }

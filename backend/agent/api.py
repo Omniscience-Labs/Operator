@@ -2811,11 +2811,6 @@ async def get_agent_builder_chat_history(
             status_code=403, 
             detail="Custom agents currently disabled. This feature is not available at the moment."
         )
-    if not await is_enabled("agent_builder"):
-        raise HTTPException(
-            status_code=403, 
-            detail="Agent builder currently disabled. This feature is not available at the moment."
-        )
     
     logger.info(f"Fetching agent builder chat history for agent: {agent_id}")
     client = await db.client
