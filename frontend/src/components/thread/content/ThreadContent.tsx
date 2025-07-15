@@ -1243,7 +1243,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.9 }}
                         transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-56'} z-20 transform ${
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-54'} z-20 transform ${
                             isAgentBuilder 
                                 ? 'left-1/2 -translate-x-1/2' 
                                 : isSidePanelOpen && isLeftSidebarOpen
@@ -1274,7 +1274,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.9 }}
                         transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-52'} z-20 transform ${
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-54'} z-20 transform ${
                             isAgentBuilder 
                                 ? 'left-1/2 -translate-x-1/2' 
                                 : isSidePanelOpen && isLeftSidebarOpen
