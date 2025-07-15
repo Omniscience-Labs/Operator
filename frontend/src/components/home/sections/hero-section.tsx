@@ -353,7 +353,7 @@ export function HeroSection() {
     }
   };
 
-  const handleSignIn = async (formData: FormData) => {
+  const handleSignIn = async (prevState: any, formData: FormData) => {
     setAuthError(null);
     
     try {
