@@ -36,6 +36,7 @@ import { useAccounts } from '@/hooks/use-accounts';
 import { isLocalMode, config } from '@/lib/config';
 import { toast } from 'sonner';
 import { useModal } from '@/hooks/use-modal-store';
+import { createClient } from '@/lib/supabase/client';
 
 // Custom dialog overlay with blur effect
 const BlurredDialogOverlay = () => (
@@ -360,14 +361,30 @@ export function HeroSection() {
       const email = formData.get('email') as string;
       const password = formData.get('password') as string;
       
-      if (!email || !password) {
-        setAuthError('Please fill in all fields');
+      if (!email || !email.includes('@')) {
+        setAuthError('Please enter a valid email address');
         return;
       }
 
-      // Here you would implement the actual sign in logic
-      // For now, we'll just show an error that this is not implemented
-      setAuthError('Email/password sign in not implemented yet. Please use Google or Microsoft.');
+      if (!password || password.length < 6) {
+        setAuthError('Password must be at least 6 characters');
+        return;
+      }
+
+      const supabase = createClient();
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setAuthError(error.message || 'Could not authenticate user');
+        return;
+      }
+
+      // Authentication successful - the auth state change will be handled by useEffect
+      // and will redirect to dashboard
       
     } catch (error: any) {
       console.error('Sign in error:', error);

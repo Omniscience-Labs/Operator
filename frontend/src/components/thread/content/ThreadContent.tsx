@@ -1243,11 +1243,11 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.9 }}
                         transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-52'} z-20 transform ${
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-56'} z-20 transform ${
                             isAgentBuilder 
                                 ? 'left-1/2 -translate-x-1/2' 
                                 : isSidePanelOpen && isLeftSidebarOpen
-                                    ? 'left-1/2 -translate-x-1/2'
+                                    ? 'left-1/2 translate-x-2 sm:left-[calc(50%-50px)] md:left-[calc(50%-60px)] lg:left-[calc(50%-70px)] xl:left-[calc(50%-80px)]'
                                 : isSidePanelOpen 
                                     ? 'left-1/2 -translate-x-1/4 sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]'
                                 : isLeftSidebarOpen
@@ -1278,7 +1278,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                             isAgentBuilder 
                                 ? 'left-1/2 -translate-x-1/2' 
                                 : isSidePanelOpen && isLeftSidebarOpen
-                                    ? 'left-1/2 -translate-x-1/2'
+                                    ? 'left-1/2 translate-x-2 sm:left-[calc(50%-50px)] md:left-[calc(50%-60px)] lg:left-[calc(50%-70px)] xl:left-[calc(50%-80px)]'
                                 : isSidePanelOpen 
                                     ? 'left-1/2 -translate-x-1/4 sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]'
                                 : isLeftSidebarOpen
