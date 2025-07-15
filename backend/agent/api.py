@@ -498,9 +498,13 @@ async def start_agent(
             source = "request" if body.agent_id else "thread"
             logger.info(f"Using agent from {source}: {agent_config['name']} ({effective_agent_id})")
     
+    # Use same fallback logic as fresh messages: try account_id first, then user_id
+    effective_account_id = account_id if account_id else user_id
+    logger.info(f"Using account_id: {effective_account_id} (thread account_id: {account_id}, user_id: {user_id})")
+
     # If no agent found yet, try to get default agent for the account
     if not agent_config:
-        default_agent_result = await client.table('agents').select('*').eq('account_id', account_id).eq('is_default', True).execute()
+        default_agent_result = await client.table('agents').select('*').eq('account_id', effective_account_id).eq('is_default', True).execute()
         if default_agent_result.data:
             agent_config = default_agent_result.data[0]
             logger.info(f"Using default agent: {agent_config['name']} ({agent_config['agent_id']})")
@@ -513,13 +517,31 @@ async def start_agent(
         except Exception as e:
             logger.warning(f"Failed to update thread agent_id: {e}")
 
-    can_use, model_message, allowed_models = await can_use_model(client, account_id, model_name)
+    can_use, model_message, allowed_models = await can_use_model(client, effective_account_id, model_name)
     if not can_use:
-        raise HTTPException(status_code=403, detail={"message": model_message, "allowed_models": allowed_models})
+        # If thread's account_id fails and it's different from user_id, try user_id as fallback
+        if effective_account_id != user_id:
+            logger.info(f"Model check failed with account_id {effective_account_id}, trying user_id {user_id} as fallback")
+            can_use, model_message, allowed_models = await can_use_model(client, user_id, model_name)
+            if can_use:
+                effective_account_id = user_id
+                logger.info(f"Model check succeeded with user_id fallback")
+        
+        if not can_use:
+            raise HTTPException(status_code=403, detail={"message": model_message, "allowed_models": allowed_models})
 
-    can_run, message, subscription = await check_billing_status(client, account_id)
+    can_run, message, subscription = await check_billing_status(client, effective_account_id)
     if not can_run:
-        raise HTTPException(status_code=402, detail={"message": message, "subscription": subscription})
+        # If thread's account_id fails and it's different from user_id, try user_id as fallback
+        if effective_account_id != user_id:
+            logger.info(f"Billing check failed with account_id {effective_account_id}, trying user_id {user_id} as fallback")
+            can_run, message, subscription = await check_billing_status(client, user_id)
+            if can_run:
+                effective_account_id = user_id
+                logger.info(f"Billing check succeeded with user_id fallback")
+        
+        if not can_run:
+            raise HTTPException(status_code=402, detail={"message": message, "subscription": subscription})
 
     active_run_id = await check_for_active_project_agent_run(client, project_id)
     if active_run_id:
