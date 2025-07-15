@@ -436,7 +436,8 @@ ${meeting.transcript || '(No transcript available)'}`;
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Check for pending prompt only after ChatInput is rendered
+    if (showChatInput) {
       const pendingPrompt = localStorage.getItem(PENDING_PROMPT_KEY);
 
       if (pendingPrompt) {
@@ -445,10 +446,8 @@ ${meeting.transcript || '(No transcript available)'}`;
         localStorage.removeItem(PENDING_PROMPT_KEY);
         // Don't auto-submit - let the user decide when to submit
       }
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [showChatInput]); // Run when showChatInput changes
 
   // This effect is no longer needed since we don't want auto-submit
   // useEffect(() => {

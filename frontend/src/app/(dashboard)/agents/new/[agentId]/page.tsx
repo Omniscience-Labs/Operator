@@ -348,7 +348,7 @@ export default function AgentConfigurationPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => setShowOmniGenie(true)}
-                      className="h-7 px-2.5 gap-1.5"
+                      className="h-7 px-2.5 gap-1.5 text-foreground hover:text-primary-foreground"
                     >
                       <Sparkles className="h-3.5 w-3.5" />
                       <span className="text-xs">Omni Genie</span>
@@ -564,7 +564,7 @@ export default function AgentConfigurationPage() {
     {/* Mobile Omni Genie Drawer */}
     {agentBuilderEnabled && (
       <Drawer open={showOmniGenie} onOpenChange={setShowOmniGenie}>
-        <DrawerContent className="h-[90vh] bg-muted/30">
+        <DrawerContent className="h-[90vh]">
           <DrawerHeader className="relative">
             <DrawerTitle className="flex items-center gap-2">
               <div className="flex items-center gap-1">
