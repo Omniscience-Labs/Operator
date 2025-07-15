@@ -19,6 +19,8 @@ import { EditableText } from '@/components/ui/editable';
 import { StylePicker } from '../../_components/style-picker';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AgentBuilderChat } from '../../_components/agent-builder-chat';
+import { useFeatureFlags } from '@/lib/feature-flags';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -30,6 +32,8 @@ export default function AgentConfigurationPage() {
   const { data: agent, isLoading, error } = useAgent(agentId);
   const updateAgentMutation = useUpdateAgent();
   const { state, setOpen, setOpenMobile } = useSidebar();
+  const { flags } = useFeatureFlags(['custom_agents', 'agent_builder']);
+  const agentBuilderEnabled = flags.custom_agents && flags.agent_builder;
 
   // Ref to track if initial layout has been applied (for sidebar closing)
   const initialLayoutAppliedRef = useRef(false);
@@ -288,7 +292,9 @@ export default function AgentConfigurationPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className='w-full flex items-center justify-center flex-shrink-0 px-4 md:px-12 md:mt-10'>
             <div className='w-auto flex items-center gap-2'>
-              <h1 className="text-xl font-semibold">Agent Editor</h1>
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">
+                {agentBuilderEnabled ? 'Agent Editor' : 'Agent Settings'}
+              </h1>
             </div>
           </div>
           
@@ -465,12 +471,36 @@ export default function AgentConfigurationPage() {
     <div className="h-screen flex flex-col">
       <div className="flex-1 flex overflow-hidden">
         <div className="hidden md:flex w-full h-full">
-          <div className="w-1/2 border-r bg-background h-full flex flex-col">
-            {ConfigurationContent}
-          </div>
-          <div className="w-1/2 overflow-y-auto">
-            <AgentPreview agent={{ ...agent, ...formData }} />
-          </div>
+          {agentBuilderEnabled ? (
+            // Three column layout with agent builder chat
+            <>
+              <div className="w-1/3 border-r bg-background h-full flex flex-col">
+                {ConfigurationContent}
+              </div>
+              <div className="w-1/3 border-r overflow-y-auto">
+                <AgentPreview agent={{ ...agent, ...formData }} />
+              </div>
+              <div className="w-1/3 overflow-y-auto">
+                <AgentBuilderChat
+                  agentId={agentId}
+                  formData={formData}
+                  handleFieldChange={handleFieldChange}
+                  handleStyleChange={handleStyleChange}
+                  currentStyle={currentStyle}
+                />
+              </div>
+            </>
+          ) : (
+            // Two column layout without agent builder chat
+            <>
+              <div className="w-1/2 border-r bg-background h-full flex flex-col">
+                {ConfigurationContent}
+              </div>
+              <div className="w-1/2 overflow-y-auto">
+                <AgentPreview agent={{ ...agent, ...formData }} />
+              </div>
+            </>
+          )}
         </div>
         <div className="md:hidden w-full h-full flex flex-col">
           {ConfigurationContent}
