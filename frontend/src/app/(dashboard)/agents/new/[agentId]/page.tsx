@@ -22,11 +22,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { AgentBuilderChat } from '../../_components/agent-builder-chat';
 import { useFeatureFlags } from '@/lib/feature-flags';
 import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
-import { GradientText } from '@/components/animate-ui/text/gradient';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -348,7 +346,7 @@ export default function AgentConfigurationPage() {
                       size="sm"
                       variant="outline"
                       onClick={() => setShowOmniGenie(true)}
-                      className="h-7 px-2.5 gap-1.5 text-foreground hover:text-primary-foreground"
+                      className="h-7 px-2.5 gap-1.5"
                     >
                       <Sparkles className="h-3.5 w-3.5" />
                       <span className="text-xs">Omni Genie</span>
@@ -362,6 +360,7 @@ export default function AgentConfigurationPage() {
                   placeholder='Click to set instructions...'
                   multiline={true}
                   minHeight="150px"
+                  renderMarkdown={true}
                 />
               </div>
 
@@ -497,13 +496,13 @@ export default function AgentConfigurationPage() {
           </div>
           <div className="w-1/2 h-full flex flex-col relative">
             {agentBuilderEnabled && (
-              <div className="absolute top-4 right-4 z-10 bg-background/95 backdrop-blur-sm rounded-lg border p-2 shadow-lg">
+              <div className="absolute top-8 right-8 z-10 bg-background/95 backdrop-blur-sm rounded-lg border p-3 shadow-sm">
                 <div className="flex items-center gap-3">
                   <Label
                     htmlFor="view-toggle"
                     className={cn(
-                      "text-xs font-medium transition-opacity cursor-pointer",
-                      showOmniGenie ? "opacity-50" : "opacity-100"
+                      "text-sm font-medium transition-colors cursor-pointer",
+                      showOmniGenie ? "text-muted-foreground" : "text-foreground"
                     )}
                   >
                     Preview
@@ -517,78 +516,67 @@ export default function AgentConfigurationPage() {
                   <Label
                     htmlFor="view-toggle"
                     className={cn(
-                      "text-xs font-medium transition-opacity cursor-pointer flex items-center gap-1",
-                      showOmniGenie ? "opacity-100" : "opacity-50"
+                      "text-sm font-medium transition-colors cursor-pointer flex items-center gap-1",
+                      showOmniGenie ? "text-foreground" : "text-muted-foreground"
                     )}
                   >
                     <Sparkles className="h-3 w-3" />
-                    <GradientText
-                      text="Omni Genie"
-                      gradient="linear-gradient(90deg, #8b5cf6 0%, #ec4899 50%, #3b82f6 100%)"
-                      className="text-xs font-semibold"
-                    />
+                    <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-semibold">
+                      Omni Genie
+                    </span>
                   </Label>
                 </div>
               </div>
             )}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={showOmniGenie ? 'omni-genie' : 'preview'}
-                initial={{ opacity: 0, x: showOmniGenie ? 20 : -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: showOmniGenie ? -20 : 20 }}
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
-                className="flex-1 overflow-y-auto h-full"
-              >
-                {showOmniGenie && agentBuilderEnabled ? (
-                  <AgentBuilderChat
-                    agentId={agentId}
-                    formData={formData}
-                    handleFieldChange={handleFieldChange}
-                    handleStyleChange={handleStyleChange}
-                    currentStyle={currentStyle}
-                  />
-                ) : (
-                  <AgentPreview agent={{ ...agent, ...formData }} />
-                )}
-              </motion.div>
-            </AnimatePresence>
+            <div className="flex-1 overflow-y-auto h-full">
+              {showOmniGenie && agentBuilderEnabled ? (
+                <AgentBuilderChat
+                  agentId={agentId}
+                  formData={formData}
+                  handleFieldChange={handleFieldChange}
+                  handleStyleChange={handleStyleChange}
+                  currentStyle={currentStyle}
+                />
+              ) : (
+                <AgentPreview agent={{ ...agent, ...formData }} />
+              )}
+            </div>
           </div>
         </div>
         <div className="md:hidden w-full h-full flex flex-col">
-          {ConfigurationContent}
+          {showOmniGenie && agentBuilderEnabled ? (
+            <div className="h-full">
+              <div className="p-4 border-b bg-background flex items-center justify-between">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    Omni Genie
+                  </span>
+                </h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowOmniGenie(false)}
+                >
+                  Back to Settings
+                </Button>
+              </div>
+              <div className="flex-1">
+                <AgentBuilderChat
+                  agentId={agentId}
+                  formData={formData}
+                  handleFieldChange={handleFieldChange}
+                  handleStyleChange={handleStyleChange}
+                  currentStyle={currentStyle}
+                />
+              </div>
+            </div>
+          ) : (
+            ConfigurationContent
+          )}
         </div>
       </div>
     </div>
-    
-    {/* Mobile Omni Genie Drawer */}
-    {agentBuilderEnabled && (
-      <Drawer open={showOmniGenie} onOpenChange={setShowOmniGenie}>
-        <DrawerContent className="h-[90vh]">
-          <DrawerHeader className="relative">
-            <DrawerTitle className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <Sparkles className="h-4 w-4 text-purple-500" />
-                <GradientText
-                  text="Omni Genie"
-                  gradient="linear-gradient(90deg, #8b5cf6 0%, #ec4899 50%, #3b82f6 100%)"
-                  className="text-lg font-semibold"
-                />
-              </div>
-            </DrawerTitle>
-          </DrawerHeader>
-          <div className="flex-1 overflow-hidden">
-            <AgentBuilderChat
-              agentId={agentId}
-              formData={formData}
-              handleFieldChange={handleFieldChange}
-              handleStyleChange={handleStyleChange}
-              currentStyle={currentStyle}
-            />
-          </div>
-        </DrawerContent>
-      </Drawer>
-    )}
   </>
   );
 }

@@ -4,6 +4,7 @@ import { Input } from "./input";
 import { Button } from "../home/ui/button";
 import { cn } from "@/lib/utils";
 import { Edit2 } from "lucide-react";
+import { Markdown } from "./markdown";
 
 interface EditableTextProps {
     value: string;
@@ -12,6 +13,7 @@ interface EditableTextProps {
     placeholder?: string;
     multiline?: boolean;
     minHeight?: string;
+    renderMarkdown?: boolean;
   }
   
 export const EditableText: React.FC<EditableTextProps> = ({ 
@@ -20,7 +22,8 @@ export const EditableText: React.FC<EditableTextProps> = ({
     className = '', 
     placeholder = 'Click to edit...', 
     multiline = false,
-    minHeight = 'auto'
+    minHeight = 'auto',
+    renderMarkdown = false
   }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(value);
@@ -88,7 +91,17 @@ export const EditableText: React.FC<EditableTextProps> = ({
           value ? '' : 'text-muted-foreground italic',
           multiline && minHeight ? `min-h-[${minHeight}]` : ''
         )} style={multiline && minHeight ? { minHeight } : {}}>
-          {value || placeholder}
+          {value ? (
+            renderMarkdown && multiline ? (
+              <Markdown className="prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                {value}
+              </Markdown>
+            ) : (
+              value
+            )
+          ) : (
+            placeholder
+          )}
         </div>
         <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-50 absolute top-1 right-1 transition-opacity" />
       </div>

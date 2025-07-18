@@ -527,8 +527,8 @@ async def start_agent(
                 effective_account_id = user_id
                 logger.info(f"Model check succeeded with user_id fallback")
         
-        if not can_use:
-            raise HTTPException(status_code=403, detail={"message": model_message, "allowed_models": allowed_models})
+    if not can_use:
+        raise HTTPException(status_code=403, detail={"message": model_message, "allowed_models": allowed_models})
 
     can_run, message, subscription = await check_billing_status(client, effective_account_id)
     if not can_run:
@@ -540,8 +540,8 @@ async def start_agent(
                 effective_account_id = user_id
                 logger.info(f"Billing check succeeded with user_id fallback")
         
-        if not can_run:
-            raise HTTPException(status_code=402, detail={"message": message, "subscription": subscription})
+    if not can_run:
+        raise HTTPException(status_code=402, detail={"message": message, "subscription": subscription})
 
     active_run_id = await check_for_active_project_agent_run(client, project_id)
     if active_run_id:

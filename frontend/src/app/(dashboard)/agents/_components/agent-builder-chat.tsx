@@ -386,7 +386,20 @@ export const AgentBuilderChat = React.memo(function AgentBuilderChat({
 
 
   return (
-    <div className="flex flex-col h-full bg-muted/30">
+    <div className="h-full flex flex-col bg-muted dark:bg-muted/30">
+      <div className="flex-shrink-0 flex items-center gap-3 p-8">
+        <div
+          className="h-10 w-10 flex items-center justify-center rounded-lg text-lg"
+          style={{ backgroundColor: currentStyle.color }}
+        >
+          🧞
+        </div>
+        <div className="flex-1">
+          <h3 className="font-semibold">Omni Genie</h3>
+          <p className="text-sm text-muted-foreground">AI assistant to craft your agent</p>
+        </div>
+        <Badge variant="highlight" className="text-sm">Assistant Mode</Badge>
+      </div>
       <div className="flex-1 overflow-hidden relative">
         <div className="h-full overflow-y-auto scrollbar-hide">
           <ThreadContent
