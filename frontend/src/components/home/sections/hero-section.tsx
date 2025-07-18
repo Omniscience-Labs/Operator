@@ -1,7 +1,7 @@
 'use client';
 import { HeroVideoSection } from '@/components/home/sections/hero-video-section';
 import { siteConfig } from '@/lib/home';
-import { ArrowRight, Github, X, AlertCircle, Sparkles } from 'lucide-react';
+import { ArrowRight, X, AlertCircle, Sparkles } from 'lucide-react';
 import { GradientText } from '@/components/animate-ui/text/gradient';
 import { FlickeringGrid } from '@/components/home/ui/flickering-grid';
 import { LampContainer } from '@/components/ui/lamp';

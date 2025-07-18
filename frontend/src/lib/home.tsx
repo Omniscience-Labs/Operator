@@ -55,12 +55,11 @@ export const siteConfig = {
   description: 'The Generalist AI Agent that works on your behalf.',
   cta: 'Start Free',
   url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
-  keywords: ['AI Agent', 'Generalist AI', 'Open Source AI', 'Autonomous Agent'],
+  keywords: ['AI Agent', 'Generalist AI', 'Enterprise AI', 'Autonomous Agent'],
   links: {
     email: 'support@omni.ai',
     twitter: 'https://x.com/omni_ai',
     discord: 'https://discord.gg/omni-ai',
-    github: 'https://github.com/omni-ai/operator',
     instagram: 'https://instagram.com/omni_ai',
   },
   nav: {
@@ -192,11 +191,11 @@ export const siteConfig = {
         content: (
           <div className="flex flex-col gap-4">
             <div className="text-6xl font-bold text-primary">500+</div>
-            <div className="text-2xl font-semibold">GitHub Stars</div>
+            <div className="text-2xl font-semibold">Enterprise Clients</div>
           </div>
         ),
-        title: 'Open Source Growth',
-        description: 'Our growing GitHub community contributes to continuous improvements and new features that benefit everyone.',
+        title: 'Trusted by Industry',
+        description: 'Leading enterprises trust Operator to automate their most critical workflows and processes.',
       },
       {
         id: 3,
@@ -213,12 +212,12 @@ export const siteConfig = {
         id: 4,
         content: (
           <div className="flex flex-col gap-4">
-            <div className="text-6xl font-bold text-primary">100%</div>
-            <div className="text-2xl font-semibold">Open Source</div>
+            <div className="text-6xl font-bold text-primary">99.9%</div>
+            <div className="text-2xl font-semibold">Uptime</div>
           </div>
         ),
-        title: 'Fully Transparent',
-        description: 'Complete transparency with open source code that you can inspect, modify, and contribute to.',
+        title: 'Enterprise Reliability',
+        description: 'Built for mission-critical operations with enterprise-grade reliability and support.',
       },
     ],
   },
@@ -345,7 +344,7 @@ export const siteConfig = {
   },
   quoteSection: {
     quote:
-      'Operator has transformed how we approach everyday tasks. The level of automation it provides, combined with its open source nature, makes it an invaluable tool for our entire organization.',
+      'Operator has transformed how we approach everyday tasks. The level of automation it provides, combined with its reliability and flexibility, makes it an invaluable tool for our entire organization.',
     author: {
       name: 'Michael Strope',
       role: 'President, MSSC',
@@ -353,9 +352,9 @@ export const siteConfig = {
     },
   },
   pricing: {
-    title: 'Open Source & Free Forever',
+    title: 'Flexible Pricing for Every Scale',
     description:
-      'Operator is 100% open source and free to use. No hidden fees, no premium features locked behind paywalls.',
+      'Start free and scale with usage-based pricing as your needs grow. Enterprise solutions available.',
     pricingItems: [
       {
         name: 'Community',
