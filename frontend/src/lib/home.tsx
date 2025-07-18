@@ -111,7 +111,7 @@ export const siteConfig = {
     ),
     description:
       'a generalist AI Agent that works on your behalf.',
-    inputPlaceholder: 'Ask Operator to...',
+    inputPlaceholder: 'Describe a task for Operator...',
   },
   enterpriseSecuritySection: {
     title: 'Built for Secure Growth',
