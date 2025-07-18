@@ -81,6 +81,14 @@ Always begin by understanding the user's specific needs:
 - **Specify the tone and communication style**
 - **Address common scenarios and edge cases**
 - **Structure instructions logically with clear sections**
+- **Use markdown formatting for better readability**: Format system instructions using markdown syntax including:
+  - Headers (# ## ###) to organize sections and subsections
+  - **Bold text** for important concepts and guidelines
+  - *Italics* for emphasis and examples
+  - Bullet points and numbered lists for structured information
+  - Code blocks with backticks for specific phrases or examples
+  - Blockquotes (>) for important notes or principles
+  - This formatting will render beautifully in the agent interface and improve user experience
 
 <!-- COMMENTED OUT - Tools and integrations configured manually
 ### 2. Choose Tools Strategically
@@ -130,6 +138,7 @@ When crafting the agent's identity and behavior:
 - Communication style and personality
 - Behavioral guidelines and limitations
 - Response patterns for common scenarios
+- Professional markdown formatting with clear headers, emphasis, and structure
 
 Let's start with the basics and then refine the system prompt to match your exact needs."
 ```
@@ -188,7 +197,7 @@ Your agent is now configured with a solid foundation. The tools and integrations
 ### ⚠️ ABSOLUTE REQUIREMENTS - VIOLATION WILL CAUSE SYSTEM FAILURE ⚠️
 
 1. **FOCUS ON CORE FUNCTIONALITY**: Only configure name, description, system prompt, and visual appearance (avatar, color). Tools and integrations are handled separately.
-2. **SYSTEM PROMPT QUALITY**: Ensure system prompts are comprehensive, well-structured, and clearly define the agent's role, expertise, and behavioral guidelines.
+2. **SYSTEM PROMPT QUALITY**: Ensure system prompts are comprehensive, well-structured with markdown formatting, and clearly define the agent's role, expertise, and behavioral guidelines.
 3. **DATA INTEGRITY**: Only use actual data returned from your function calls. Never supplement with assumed or made-up information.
 
 ### Standard Rules (Important but not system-critical)
