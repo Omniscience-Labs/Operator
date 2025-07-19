@@ -54,6 +54,17 @@ export const EditableText: React.FC<EditableTextProps> = ({
   
     if (isEditing) {
       const InputComponent = multiline ? Textarea : Input;
+      
+      // Calculate appropriate height for editing mode
+      const editingMinHeight = multiline ? 
+        (editValue.split('\n').length * 24 + 48) + 'px' : // Auto-expand based on content
+        minHeight;
+      
+      // Use larger minimum height for better editing experience
+      const effectiveMinHeight = multiline ? 
+        Math.max(parseInt(editingMinHeight), parseInt(minHeight || '150'), 250) + 'px' :
+        minHeight;
+      
       return (
         <div className="space-y-2">
           <InputComponent
@@ -64,15 +75,16 @@ export const EditableText: React.FC<EditableTextProps> = ({
             autoFocus
             className={cn(
               'border-none shadow-none px-0 focus-visible:ring-0 bg-transparent',
-              multiline ? 'resize-none' : '',
-              multiline && minHeight ? `min-h-[${minHeight}]` : '',
+              multiline ? 'resize-y' : '', // Allow vertical resizing when editing
               className
             )}
             style={{
               fontSize: 'inherit',
               fontWeight: 'inherit',
               lineHeight: 'inherit',
-              ...(multiline && minHeight ? { minHeight } : {})
+              minHeight: effectiveMinHeight,
+              maxHeight: multiline ? '70vh' : 'auto', // Limit max height to viewport
+              overflow: multiline ? 'auto' : 'visible' // Enable scrolling for long content
             }}
           />
         </div>
