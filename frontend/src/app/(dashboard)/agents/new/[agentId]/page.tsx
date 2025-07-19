@@ -345,11 +345,22 @@ export default function AgentConfigurationPage() {
                     <LiquidButton
                       size="sm"
                       variant="outline"
-                      onClick={() => setShowOmniGenie(true)}
-                      className="h-7 px-2.5 gap-1.5"
+                      onClick={() => setShowOmniGenie(!showOmniGenie)}
+                      className="h-7 px-2.5 gap-1.5 group"
                     >
-                      <Sparkles className="h-3.5 w-3.5" />
-                      <span className="text-xs">Omni Genie</span>
+                      {showOmniGenie ? (
+                        <>
+                          <Eye className="h-3.5 w-3.5 group-hover:text-primary-foreground transition-colors" />
+                          <span className="text-xs group-hover:text-primary-foreground transition-colors">Preview</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-3.5 w-3.5 group-hover:text-primary-foreground transition-colors" />
+                          <span className="text-xs bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent group-hover:text-primary-foreground group-hover:bg-none transition-all">
+                            Omni Genie
+                          </span>
+                        </>
+                      )}
                     </LiquidButton>
                   )}
                 </div>
