@@ -24,13 +24,13 @@ class SandboxDeployTool(SandboxToolsBase):
         "type": "function",
         "function": {
             "name": "deploy",
-            "description": "Deploy a static website (HTML+CSS+JS) from a directory in the sandbox to Cloudflare Pages. Only use this tool when permanent deployment to a production environment is needed. The directory path must be relative to /workspace. The website will be deployed to {name}.omni.cloud.",
+            "description": "Deploy a static website (HTML+CSS+JS) from a directory in the sandbox to Cloudflare Pages. Only use this tool when permanent deployment to a production environment is needed. The directory path must be relative to /workspace. The website will be deployed to a Cloudflare Pages URL (*.pages.dev).",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "name": {
                         "type": "string",
-                        "description": "Name for the deployment, will be used in the URL as {name}.omni.cloud"
+                        "description": "Name for the deployment, will be used in the Cloudflare Pages project name"
                     },
                     "directory_path": {
                         "type": "string",
@@ -70,12 +70,12 @@ class SandboxDeployTool(SandboxToolsBase):
         Only use this tool when permanent deployment to a production environment is needed.
         
         Args:
-            name: Name for the deployment, will be used in the URL as {name}.omni.cloud
+            name: Name for the deployment, will be used in the Cloudflare Pages project name
             directory_path: Path to the directory to deploy, relative to /workspace
             
         Returns:
             ToolResult containing:
-            - Success: Deployment information including URL
+            - Success: Deployment information including the Cloudflare Pages URL (*.pages.dev)
             - Failure: Error message if deployment fails
         """
         try:
