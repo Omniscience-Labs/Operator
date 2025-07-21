@@ -178,6 +178,9 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
                 disabled={loading || (disabled && !isAgentRunning)}
               />
             )}
+            <IntegrationsDropdown
+              disabled={loading || (disabled && !isAgentRunning)}
+            />
           </div>
           {subscriptionStatus === 'no_subscription' && !isLocalMode() &&
             <TooltipProvider>
@@ -199,9 +202,6 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
             </TooltipProvider>
           }
           <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
-            <IntegrationsDropdown
-              disabled={loading || (disabled && !isAgentRunning)}
-            />
             <ModelSelector
               selectedModel={selectedModel}
               onModelChange={onModelChange}
