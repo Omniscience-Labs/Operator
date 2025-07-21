@@ -55,16 +55,16 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'Operator - Open Source Generalist AI Agent',
+    title: 'Operator - Generalist AI Agent for Enterprises',
     description:
-      'The Generalist AI Agent that works on your behalf. Operator is 100% open source and free.',
+      'The Generalist AI Agent that works on your behalf. Start free, scale with flexible pricing.',
     url: '/',
     siteName: 'Operator by OMNI',
     locale: 'en_US',
     type: 'website',
   },
   twitter: {
-    title: 'Operator - Open Source Generalist AI Agent',
+    title: 'Operator - Generalist AI Agent for Enterprises',
     card: 'summary_large_image',
     creator: '@omni_ai',
     site: '@omni_ai',

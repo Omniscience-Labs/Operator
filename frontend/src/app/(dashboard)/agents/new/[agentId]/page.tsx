@@ -21,6 +21,10 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AgentBuilderChat } from '../../_components/agent-builder-chat';
 import { useFeatureFlags } from '@/lib/feature-flags';
+import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -32,8 +36,8 @@ export default function AgentConfigurationPage() {
   const { data: agent, isLoading, error } = useAgent(agentId);
   const updateAgentMutation = useUpdateAgent();
   const { state, setOpen, setOpenMobile } = useSidebar();
-  const { flags } = useFeatureFlags(['custom_agents', 'agent_builder']);
-  const agentBuilderEnabled = flags.custom_agents && flags.agent_builder;
+  const { flags } = useFeatureFlags(['custom_agents']);
+  const agentBuilderEnabled = flags.custom_agents;
 
   // Ref to track if initial layout has been applied (for sidebar closing)
   const initialLayoutAppliedRef = useRef(false);
@@ -56,6 +60,7 @@ export default function AgentConfigurationPage() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [showOmniGenie, setShowOmniGenie] = useState(false);
   const accordionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -334,7 +339,31 @@ export default function AgentConfigurationPage() {
               </div>
 
               <div className='flex flex-col mt-6 md:mt-8'>
-                <div className='text-sm font-semibold text-muted-foreground mb-2'>Instructions</div>
+                <div className='flex items-center justify-between mb-2'>
+                  <div className='text-sm font-semibold text-muted-foreground'>Instructions</div>
+                  {agentBuilderEnabled && (
+                    <LiquidButton
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowOmniGenie(!showOmniGenie)}
+                      className="h-7 px-2.5 gap-1.5 group"
+                    >
+                      {showOmniGenie ? (
+                        <>
+                          <Eye className="h-3.5 w-3.5 group-hover:text-primary-foreground transition-colors" />
+                          <span className="text-xs group-hover:text-primary-foreground transition-colors">Preview</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-3.5 w-3.5 group-hover:text-primary-foreground transition-colors" />
+                          <span className="text-xs bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent group-hover:text-primary-foreground group-hover:bg-none transition-all">
+                            Omni Genie
+                          </span>
+                        </>
+                      )}
+                    </LiquidButton>
+                  )}
+                </div>
                 <EditableText
                   value={formData.system_prompt}
                   onSave={(value) => handleFieldChange('system_prompt', value)}
@@ -342,6 +371,7 @@ export default function AgentConfigurationPage() {
                   placeholder='Click to set instructions...'
                   multiline={true}
                   minHeight="150px"
+                  renderMarkdown={true}
                 />
               </div>
 
@@ -468,19 +498,81 @@ export default function AgentConfigurationPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      <div className="flex-1 flex overflow-hidden">
-        <div className="hidden md:flex w-full h-full">
-          {agentBuilderEnabled ? (
-            // Three column layout with agent builder chat
-            <>
-              <div className="w-1/3 border-r bg-background h-full flex flex-col">
-                {ConfigurationContent}
+    <>
+      <div className="h-screen flex flex-col">
+        <div className="flex-1 flex overflow-hidden">
+          <div className="hidden md:flex w-full h-full">
+          <div className="w-1/2 border-r bg-background h-full flex flex-col">
+            {ConfigurationContent}
+          </div>
+          <div className="w-1/2 h-full flex flex-col relative">
+            {agentBuilderEnabled && (
+              <div className="absolute top-8 right-8 z-10 bg-background/95 backdrop-blur-sm rounded-lg border p-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <Label
+                    htmlFor="view-toggle"
+                    className={cn(
+                      "text-sm font-medium transition-colors cursor-pointer",
+                      showOmniGenie ? "text-muted-foreground" : "text-foreground"
+                    )}
+                  >
+                    Preview
+                  </Label>
+                  <Switch
+                    id="view-toggle"
+                    checked={showOmniGenie}
+                    onCheckedChange={setShowOmniGenie}
+                    className="h-5 w-9"
+                  />
+                  <Label
+                    htmlFor="view-toggle"
+                    className={cn(
+                      "text-sm font-medium transition-colors cursor-pointer flex items-center gap-1",
+                      showOmniGenie ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-semibold">
+                      Omni Genie
+                    </span>
+                  </Label>
+                </div>
               </div>
-              <div className="w-1/3 border-r overflow-y-auto">
+            )}
+            <div className="flex-1 overflow-y-auto h-full">
+              {showOmniGenie && agentBuilderEnabled ? (
+                <AgentBuilderChat
+                  agentId={agentId}
+                  formData={formData}
+                  handleFieldChange={handleFieldChange}
+                  handleStyleChange={handleStyleChange}
+                  currentStyle={currentStyle}
+                />
+              ) : (
                 <AgentPreview agent={{ ...agent, ...formData }} />
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="md:hidden w-full h-full flex flex-col">
+          {showOmniGenie && agentBuilderEnabled ? (
+            <div className="h-full">
+              <div className="p-4 border-b bg-background flex items-center justify-between">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    Omni Genie
+                  </span>
+                </h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowOmniGenie(false)}
+                >
+                  Back to Settings
+                </Button>
               </div>
-              <div className="w-1/3 overflow-y-auto">
+              <div className="flex-1">
                 <AgentBuilderChat
                   agentId={agentId}
                   formData={formData}
@@ -489,23 +581,13 @@ export default function AgentConfigurationPage() {
                   currentStyle={currentStyle}
                 />
               </div>
-            </>
+            </div>
           ) : (
-            // Two column layout without agent builder chat
-            <>
-              <div className="w-1/2 border-r bg-background h-full flex flex-col">
-                {ConfigurationContent}
-              </div>
-              <div className="w-1/2 overflow-y-auto">
-                <AgentPreview agent={{ ...agent, ...formData }} />
-              </div>
-            </>
+            ConfigurationContent
           )}
-        </div>
-        <div className="md:hidden w-full h-full flex flex-col">
-          {ConfigurationContent}
         </div>
       </div>
     </div>
+  </>
   );
 }

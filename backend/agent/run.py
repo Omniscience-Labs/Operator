@@ -106,7 +106,7 @@ async def run_agent(
 
     if enabled_tools is None:
         # No agent specified - register ALL tools for full Suna experience
-        logger.info("No agent specified - registering all tools for full Suna capabilities")
+        logger.info("No agent specified - registering all tools for full Operator capabilities")
         thread_manager.add_tool(SandboxShellTool, project_id=project_id, thread_manager=thread_manager)
         thread_manager.add_tool(SandboxFilesTool, project_id=project_id, thread_manager=thread_manager)
         thread_manager.add_tool(SandboxBrowserTool, project_id=project_id, thread_id=thread_id, thread_manager=thread_manager)
@@ -121,7 +121,7 @@ async def run_agent(
         thread_manager.add_tool(AudioTranscriptionTool, project_id=project_id, thread_manager=thread_manager)
         thread_manager.add_tool(SandboxPodcastTool, project_id=project_id, thread_manager=thread_manager)
         thread_manager.add_tool(MemorySearchTool, thread_manager=thread_manager)
-        thread_manager.add_tool(DateTimeTool)
+        thread_manager.add_tool(DateTimeTool)  # Always enable datetime tool (built-in)
         if config.RAPID_API_KEY:
             thread_manager.add_tool(DataProvidersTool)
     else:
@@ -131,7 +131,7 @@ async def run_agent(
         thread_manager.add_tool(MessageTool)
         # Always enable memory search for custom agents
         thread_manager.add_tool(MemorySearchTool, thread_manager=thread_manager)
-        thread_manager.add_tool(DateTimeTool)  # Always enable datetime tool for custom agents
+        thread_manager.add_tool(DateTimeTool)  # Always enable datetime tool (built-in)
         
         # Register other tools based on configuration
         if enabled_tools.get('sb_shell_tool', {}).get('enabled', False):

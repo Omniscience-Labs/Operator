@@ -589,7 +589,7 @@ export const startAgent = async (
     );
 
     const defaultOptions = {
-      model_name: 'claude-sonnet-4',
+      model_name: 'Omni 4',
       enable_thinking: false,
       reasoning_effort: 'low',
       stream: true,

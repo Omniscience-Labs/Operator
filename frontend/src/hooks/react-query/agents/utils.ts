@@ -373,12 +373,8 @@ export const getThreadAgent = async (threadId: string): Promise<ThreadAgentRespo
 export const getAgentBuilderChatHistory = async (agentId: string): Promise<{messages: any[], thread_id: string | null}> => {
   try {
     const customAgentsEnabled = await isFlagEnabled('custom_agents');
-    const agentBuilderEnabled = await isFlagEnabled('agent_builder');
     if (!customAgentsEnabled) {
       throw new Error('Custom agents is not enabled');
-    }
-    if (!agentBuilderEnabled) {
-      throw new Error('Agent builder is not enabled');
     }
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
@@ -448,12 +444,8 @@ export const startAgentBuilderChat = async (
 ): Promise<void> => {
   try {
     const customAgentsEnabled = await isFlagEnabled('custom_agents');
-    const agentBuilderEnabled = await isFlagEnabled('agent_builder');
     if (!customAgentsEnabled) {
       throw new Error('Custom agents is not enabled');
-    }
-    if (!agentBuilderEnabled) {
-      throw new Error('Agent builder is not enabled');
     }
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
