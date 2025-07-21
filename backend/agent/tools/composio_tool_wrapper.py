@@ -9,7 +9,7 @@ import json
 from typing import Any, Dict, List, Optional
 from agentpress.tool import Tool, ToolResult, openapi_schema, xml_schema
 from utils.logger import logger
-from composio import ComposioToolSet
+from composio_openai import ComposioToolSet
 from services.supabase import DBConnection
 import os
 
@@ -31,7 +31,7 @@ class ComposioToolWrapper(Tool):
         self.account_id = account_id
         self.integration_types = integration_types or []
         self.db = DBConnection()
-        self.toolset = ComposioToolSet(api_key=os.getenv("COMPOSIO_API_KEY", "7b5l47ekblv8mw58a90vz"))
+        self.toolset = ComposioToolSet(api_key=os.getenv("COMPOSIO_API_KEY"))
         self._enabled_integrations = {}
         
     async def _load_enabled_integrations(self):
