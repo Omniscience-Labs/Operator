@@ -105,12 +105,11 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
                   disabled={disabled}
                 >
                   <Plug className="h-4 w-4" />
-                  <span className="text-sm sm:block hidden ml-1">Tools</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-72 p-2">
                 <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                  Connected Tools
+                  Connected Integrations
                 </div>
                 
                 {isLoading ? (
@@ -187,14 +186,14 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
                 <div className="px-2 py-1.5 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
-                    <span>Click + to connect a new tool</span>
+                    <span>Click + to connect a new integration</span>
                   </div>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
           </TooltipTrigger>
           <TooltipContent side="top">
-            <p>Manage connected tools</p>
+            <p>Connected Integrations</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
