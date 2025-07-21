@@ -15,13 +15,23 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { Plus, Plug, Check, Loader2, AlertCircle, Mail, FolderOpen } from 'lucide-react';
+import { Plus, Plug, Check, Loader2, AlertCircle, Mail, FolderOpen, Unlink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { OutlookIntegrationDialog } from './outlook-integration-dialog';
 import { DropboxIntegrationDialog } from './dropbox-integration-dialog';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface IntegrationsDropdownProps {
   disabled?: boolean;
@@ -33,8 +43,10 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
   const [outlookDialogOpen, setOutlookDialogOpen] = useState(false);
   const [dropboxDialogOpen, setDropboxDialogOpen] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
+  const [disconnectDialogOpen, setDisconnectDialogOpen] = useState(false);
+  const [integrationToDisconnect, setIntegrationToDisconnect] = useState<string | null>(null);
   
-  const { integrations, isLoading, toggleIntegration, refreshIntegrations } = useIntegrations();
+  const { integrations, isLoading, toggleIntegration, refreshIntegrations, disconnectIntegration } = useIntegrations();
 
   // Refresh integrations when dropdown opens
   useEffect(() => {
@@ -65,6 +77,20 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
       toast.success(checked ? 'Integration enabled' : 'Integration disabled');
     } catch (error) {
       toast.error('Failed to toggle integration');
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!integrationToDisconnect) return;
+    
+    try {
+      await disconnectIntegration(integrationToDisconnect);
+      toast.success('Integration disconnected successfully');
+      setDisconnectDialogOpen(false);
+      setIntegrationToDisconnect(null);
+      refreshIntegrations();
+    } catch (error) {
+      toast.error('Failed to disconnect integration');
     }
   };
 
@@ -167,14 +193,27 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
                               </p>
                             </div>
                             {isConnected ? (
-                              <Switch
-                                checked={isEnabled}
-                                onCheckedChange={(checked) => {
-                                  handleToggle(integration.type, checked);
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                className="ml-2"
-                              />
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={isEnabled}
+                                  onCheckedChange={(checked) => {
+                                    handleToggle(integration.type, checked);
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIntegrationToDisconnect(integration.type);
+                                    setDisconnectDialogOpen(true);
+                                  }}
+                                >
+                                  <Unlink className="h-4 w-4" />
+                                </Button>
+                              </div>
                             ) : (
                               <Plus className="h-4 w-4 text-muted-foreground" />
                             )}
@@ -225,6 +264,27 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
           setDropboxDialogOpen(false);
         }}
       />
+
+      {/* Disconnect confirmation dialog */}
+      <AlertDialog open={disconnectDialogOpen} onOpenChange={setDisconnectDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect Integration</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to disconnect this integration? This will remove your connection and you'll need to reconnect to use it again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDisconnect}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 } 

@@ -260,6 +260,14 @@ async def list_integrations(
                 "icon": "📧",
                 "status": "not_connected",
                 "is_enabled": False
+            },
+            {
+                "type": "dropbox",
+                "name": "Dropbox",
+                "description": "Connect your Dropbox account to manage files and folders",
+                "icon": "📁",
+                "status": "not_connected",
+                "is_enabled": False
             }
             # Add more integrations here in the future
         ]
@@ -282,4 +290,46 @@ async def list_integrations(
         
     except Exception as e:
         logger.error(f"Failed to list integrations: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/integrations/composio/disconnect")
+async def disconnect_integration(
+    body: InitiateIntegrationRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Disconnect a Composio integration for the user."""
+    try:
+        client = await db.client
+        
+        # Determine the account_id to use
+        effective_account_id = body.account_id if body.account_id else user_id
+        
+        # Verify user has access to the account if different from personal
+        if body.account_id and body.account_id != user_id:
+            # Check if user has access to this account via basejump account_user table
+            account_access = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', body.account_id).execute()
+            if not (account_access.data and len(account_access.data) > 0):
+                logger.warning(f"User {user_id} attempted to access account {body.account_id} without permission")
+                raise HTTPException(status_code=403, detail="Not authorized to access this account")
+        
+        # Check if integration exists
+        existing = await client.table('user_integrations').select('*').eq('account_id', effective_account_id).eq('integration_type', body.integration_type).execute()
+        
+        if not existing.data:
+            raise HTTPException(status_code=404, detail=f"Integration {body.integration_type} not found")
+        
+        # Delete the integration from database
+        await client.table('user_integrations').delete().eq('account_id', effective_account_id).eq('integration_type', body.integration_type).execute()
+        
+        logger.info(f"Successfully disconnected {body.integration_type} integration for account {effective_account_id}")
+        
+        return {
+            "status": "disconnected",
+            "message": f"{body.integration_type} integration disconnected successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to disconnect integration: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) 

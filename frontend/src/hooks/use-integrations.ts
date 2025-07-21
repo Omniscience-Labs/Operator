@@ -140,6 +140,44 @@ export function useIntegrations() {
     }
   }, []);
 
+  const disconnectIntegration = useCallback(async (integrationType: string) => {
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch(`${API_URL}/integrations/composio/disconnect`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          integration_type: integrationType,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to disconnect integration');
+      }
+
+      // Update local state to remove the integration
+      setIntegrations(prev => {
+        const updated = { ...prev };
+        delete updated[integrationType];
+        return updated;
+      });
+      
+      return true;
+    } catch (err) {
+      console.error('Error disconnecting integration:', err);
+      throw err;
+    }
+  }, []);
+
   // Initial fetch
   useEffect(() => {
     fetchIntegrations();
@@ -152,5 +190,6 @@ export function useIntegrations() {
     refreshIntegrations: fetchIntegrations,
     toggleIntegration,
     checkIntegrationStatus,
+    disconnectIntegration,
   };
 } 
