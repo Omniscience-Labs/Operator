@@ -12,6 +12,7 @@ from utils.logger import logger
 from composio_openai import ComposioToolSet
 from services.supabase import DBConnection
 import os
+import asyncio
 
 class ComposioToolWrapper(Tool):
     """
@@ -27,13 +28,31 @@ class ComposioToolWrapper(Tool):
             account_id: The account ID to use for checking enabled integrations
             integration_types: List of integration types to enable (e.g., ['outlook'])
         """
-        super().__init__()
         self.account_id = account_id
         self.integration_types = integration_types or []
         self.db = DBConnection()
         self.toolset = ComposioToolSet(api_key=os.getenv("COMPOSIO_API_KEY"))
         self._enabled_integrations = {}
+        self._initialized = False
         
+                # Initialize parent after setting up instance variables
+        super().__init__()
+        
+        # Try to initialize in background
+        asyncio.create_task(self.initialize())
+    
+    async def initialize(self):
+        """Initialize by checking for enabled integrations."""
+        if self._initialized:
+            return
+            
+        try:
+            await self._load_enabled_integrations()
+            self._initialized = True
+            logger.info(f"ComposioToolWrapper initialized with {len(self._enabled_integrations)} integrations")
+        except Exception as e:
+            logger.error(f"Failed to initialize ComposioToolWrapper: {e}")
+    
     async def _load_enabled_integrations(self):
         """Load enabled integrations from the database"""
         try:
@@ -109,6 +128,10 @@ class ComposioToolWrapper(Tool):
     async def send_outlook_email(self, to: List[str], subject: str, body: str, cc: Optional[List[str]] = None, bcc: Optional[List[str]] = None) -> ToolResult:
         """Send an email using Outlook"""
         try:
+            # Ensure we're initialized
+            if not self._initialized:
+                await self.initialize()
+            
             # Check if Outlook is enabled
             if not self._enabled_integrations:
                 await self._load_enabled_integrations()
@@ -199,6 +222,10 @@ class ComposioToolWrapper(Tool):
     async def read_outlook_emails(self, folder: str = "inbox", limit: int = 10, unread_only: bool = False) -> ToolResult:
         """Read emails from Outlook"""
         try:
+            # Ensure we're initialized
+            if not self._initialized:
+                await self.initialize()
+            
             # Check if Outlook is enabled
             if not self._enabled_integrations:
                 await self._load_enabled_integrations()
