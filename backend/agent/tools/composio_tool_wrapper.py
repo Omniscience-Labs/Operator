@@ -107,7 +107,7 @@ class ComposioToolWrapper(Tool):
         }
     })
     @xml_schema(
-        tag_name="send-outlook-email",
+        tag_name="send_outlook_email",
         mappings=[
             {"param_name": "to", "node_type": "attribute", "path": ".", "required": True},
             {"param_name": "subject", "node_type": "attribute", "path": ".", "required": True},
@@ -117,7 +117,7 @@ class ComposioToolWrapper(Tool):
         ],
         example='''
         <function_calls>
-        <invoke name="send-outlook-email">
+        <invoke name="send_outlook_email">
         <parameter name="to">["recipient@example.com"]</parameter>
         <parameter name="subject">Meeting Tomorrow</parameter>
         <parameter name="body">Hi, confirming our meeting tomorrow at 3 PM.</parameter>
@@ -203,7 +203,7 @@ class ComposioToolWrapper(Tool):
         }
     })
     @xml_schema(
-        tag_name="read-outlook-emails",
+        tag_name="read_outlook_emails",
         mappings=[
             {"param_name": "folder", "node_type": "attribute", "path": ".", "required": False},
             {"param_name": "limit", "node_type": "attribute", "path": ".", "required": False},
@@ -211,7 +211,7 @@ class ComposioToolWrapper(Tool):
         ],
         example='''
         <function_calls>
-        <invoke name="read-outlook-emails">
+        <invoke name="read_outlook_emails">
         <parameter name="folder">inbox</parameter>
         <parameter name="limit">5</parameter>
         <parameter name="unread_only">true</parameter>
