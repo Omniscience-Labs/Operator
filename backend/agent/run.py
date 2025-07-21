@@ -165,18 +165,28 @@ async def run_agent(
         logger.info(f"Registering knowledge search tool with {len(agent_config['knowledge_bases'])} knowledge bases")
         thread_manager.add_tool(KnowledgeSearchTool, thread_manager=thread_manager, knowledge_bases=agent_config['knowledge_bases'])
 
-    # Register MCP tool wrapper if agent has configured MCPs, custom MCPs, or Composio integrations
-    mcp_wrapper_instance = None
-    if agent_config or account_id:
-        # Merge configured_mcps, custom_mcps, and Composio integrations
-        all_mcps = []
-        
+    # Always check for Composio integrations first (for base operator support)
+    all_mcps = []
+    
+    # Add Composio integrations as MCPs (e.g., Outlook) - always check if account_id exists
+    if account_id:
+        try:
+            logger.info(f"Checking Composio integrations for account {account_id}")
+            composio_configs = await ComposioOutlookMCP.get_all_composio_mcp_configs(account_id)
+            if composio_configs:
+                logger.info(f"Adding {len(composio_configs)} Composio MCP configs")
+                all_mcps.extend(composio_configs)
+        except Exception as e:
+            logger.warning(f"Failed to get Composio MCP configs: {str(e)}")
+
+    # Register MCP tool wrapper if agent has configured MCPs or custom MCPs
+    if agent_config:
         # Add standard configured MCPs
-        if agent_config and agent_config.get('configured_mcps'):
+        if agent_config.get('configured_mcps'):
             all_mcps.extend(agent_config['configured_mcps'])
         
         # Add custom MCPs
-        if agent_config and agent_config.get('custom_mcps'):
+        if agent_config.get('custom_mcps'):
             for custom_mcp in agent_config['custom_mcps']:
                 # Transform custom MCP to standard format
                 mcp_config = {
@@ -188,54 +198,46 @@ async def run_agent(
                     'customType': custom_mcp['type']
                 }
                 all_mcps.append(mcp_config)
+    
+    # Register MCP tool wrapper if we have any MCPs (including Composio ones)
+    if all_mcps:
+        custom_count = len(agent_config.get('custom_mcps', [])) if agent_config else 0
+        composio_count = len([mcp for mcp in all_mcps if mcp.get('qualifiedName', '').startswith('custom_http_outlook')])
+        logger.info(f"Registering MCP tool wrapper for {len(all_mcps)} MCP servers (including {custom_count} custom and {composio_count} Composio)")
+        # Register the tool with all MCPs
+        thread_manager.add_tool(MCPToolWrapper, mcp_configs=all_mcps)
         
-        # Add Composio integrations as MCPs (e.g., Outlook)
-        if account_id:
+        # Get the tool instance from the registry
+        # The tool is registered with method names as keys
+        mcp_wrapper_instance = None
+        for tool_name, tool_info in thread_manager.tool_registry.tools.items():
+            if isinstance(tool_info['instance'], MCPToolWrapper):
+                mcp_wrapper_instance = tool_info['instance']
+                break
+        
+        # Initialize the MCP tools asynchronously
+        if mcp_wrapper_instance:
             try:
-                logger.info(f"Checking Composio integrations for account {account_id}")
-                composio_configs = await ComposioOutlookMCP.get_all_composio_mcp_configs(account_id)
-                if composio_configs:
-                    logger.info(f"Adding {len(composio_configs)} Composio MCP configs")
-                    all_mcps.extend(composio_configs)
-            except Exception as e:
-                logger.warning(f"Failed to get Composio MCP configs: {str(e)}")
-        
-        if all_mcps:
-            custom_count = len(agent_config.get('custom_mcps', [])) if agent_config else 0
-            logger.info(f"Registering MCP tool wrapper for {len(all_mcps)} MCP servers (including {custom_count} custom)")
-            # Register the tool with all MCPs
-            thread_manager.add_tool(MCPToolWrapper, mcp_configs=all_mcps)
-            
-            # Get the tool instance from the registry
-            # The tool is registered with method names as keys
-            for tool_name, tool_info in thread_manager.tool_registry.tools.items():
-                if isinstance(tool_info['instance'], MCPToolWrapper):
-                    mcp_wrapper_instance = tool_info['instance']
-                    break
-            
-            # Initialize the MCP tools asynchronously
-            if mcp_wrapper_instance:
-                try:
-                    await mcp_wrapper_instance.initialize_and_register_tools()
-                    logger.info("MCP tools initialized successfully")
-                    
-                    # Re-register the updated schemas with the tool registry
-                    # This ensures the dynamically created tools are available for function calling
-                    updated_schemas = mcp_wrapper_instance.get_schemas()
-                    for method_name, schema_list in updated_schemas.items():
-                        if method_name != 'call_mcp_tool':  # Skip the fallback method
-                            # Register each dynamic tool in the registry
-                            for schema in schema_list:
-                                if schema.schema_type == SchemaType.OPENAPI:
-                                    thread_manager.tool_registry.tools[method_name] = {
-                                        "instance": mcp_wrapper_instance,
-                                        "schema": schema
-                                    }
-                                    logger.debug(f"Registered dynamic MCP tool: {method_name}")
+                await mcp_wrapper_instance.initialize_and_register_tools()
+                logger.info("MCP tools initialized successfully")
                 
-                except Exception as e:
-                    logger.error(f"Failed to initialize MCP tools: {e}")
-                    # Continue without MCP tools if initialization fails
+                # Re-register the updated schemas with the tool registry
+                # This ensures the dynamically created tools are available for function calling
+                updated_schemas = mcp_wrapper_instance.get_schemas()
+                for method_name, schema_list in updated_schemas.items():
+                    if method_name != 'call_mcp_tool':  # Skip the fallback method
+                        # Register each dynamic tool in the registry
+                        for schema in schema_list:
+                            if schema.schema_type == SchemaType.OPENAPI:
+                                thread_manager.tool_registry.tools[method_name] = {
+                                    "instance": mcp_wrapper_instance,
+                                    "schema": schema
+                                }
+                                logger.debug(f"Registered dynamic MCP tool: {method_name}")
+            
+            except Exception as e:
+                logger.error(f"Failed to initialize MCP tools: {e}")
+                # Continue without MCP tools if initialization fails
 
     # Prepare system prompt
     # First, get the default system prompt
