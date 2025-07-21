@@ -11,7 +11,7 @@ from utils.logger import logger
 from services.supabase import DBConnection
 
 # Environment variable for Outlook MCP server URL
-OUTLOOK_MCP_URL = os.getenv("OUTLOOK_MCP_URL", "https://mcp.composio.dev/composio/server/9b3c30e6-93dc-45ef-83d2-49cc7d0ac576/mcp")
+OUTLOOK_MCP_URL = os.getenv("OUTLOOK_MCP_URL")
 
 class ComposioOutlookMCP:
     """
