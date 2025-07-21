@@ -1,286 +1,92 @@
 """
-Composio Tool Wrapper for AgentPress
+Composio MCP Integration for AgentPress
 
-This module provides a tool wrapper that handles Composio integrations,
-starting with Outlook but designed to be extensible for other integrations.
+This module provides first-party MCP integration for Composio services like Outlook.
+It uses the MCP protocol to communicate with Composio's MCP endpoint.
 """
 
-import json
-from typing import Any, Dict, List, Optional
-from agentpress.tool import Tool, ToolResult, openapi_schema, xml_schema
-from utils.logger import logger
-from composio_openai import ComposioToolSet
-from services.supabase import DBConnection
 import os
-import asyncio
+from typing import Dict, List, Optional, Any
+from utils.logger import logger
+from services.supabase import DBConnection
 
-class ComposioToolWrapper(Tool):
+# Environment variable for Outlook MCP server URL
+OUTLOOK_MCP_URL = os.getenv("OUTLOOK_MCP_URL", "https://mcp.composio.dev/composio/server/9b3c30e6-93dc-45ef-83d2-49cc7d0ac576/mcp")
+
+class ComposioOutlookMCP:
     """
-    A tool wrapper that enables agents to use Composio-connected integrations.
-    Initially supports Outlook with extensibility for other integrations.
+    Generates MCP configuration for Outlook integration using Composio's MCP endpoint.
+    This configuration is used by the MCP tool wrapper to handle Outlook tools.
     """
     
-    def __init__(self, account_id: str, integration_types: Optional[List[str]] = None):
+    @staticmethod
+    async def get_mcp_config_for_account(account_id: str) -> Optional[Dict[str, Any]]:
         """
-        Initialize the Composio tool wrapper.
+        Get MCP configuration for Outlook if the account has it enabled.
         
         Args:
-            account_id: The account ID to use for checking enabled integrations
-            integration_types: List of integration types to enable (e.g., ['outlook'])
+            account_id: The account ID to check for Outlook integration
+            
+        Returns:
+            MCP configuration dict or None if not enabled
         """
-        self.account_id = account_id
-        self.integration_types = integration_types or []
-        self.db = DBConnection()
-        self.toolset = ComposioToolSet(api_key=os.getenv("COMPOSIO_API_KEY"))
-        self._enabled_integrations = {}
-        self._initialized = False
-        
-                # Initialize parent after setting up instance variables
-        super().__init__()
-        
-        # Try to initialize in background
-        asyncio.create_task(self.initialize())
-    
-    async def initialize(self):
-        """Initialize by checking for enabled integrations."""
-        if self._initialized:
-            return
-            
         try:
-            await self._load_enabled_integrations()
-            self._initialized = True
-            logger.info(f"ComposioToolWrapper initialized with {len(self._enabled_integrations)} integrations")
-        except Exception as e:
-            logger.error(f"Failed to initialize ComposioToolWrapper: {e}")
-    
-    async def _load_enabled_integrations(self):
-        """Load enabled integrations from the database"""
-        try:
-            client = await self.db.client
-            result = await client.table('user_integrations').select('*').eq('account_id', self.account_id).eq('status', 'connected').eq('is_enabled', True).execute()
+            db = DBConnection()
+            client = await db.client
             
-            self._enabled_integrations = {
-                integration['integration_type']: integration 
-                for integration in result.data
-            }
-            logger.info(f"Loaded {len(self._enabled_integrations)} enabled integrations for account {self.account_id}")
-        except Exception as e:
-            logger.error(f"Failed to load enabled integrations: {str(e)}")
-            self._enabled_integrations = {}
-    
-    @openapi_schema({
-        "type": "function",
-        "function": {
-            "name": "send_outlook_email",
-            "description": "Send an email using the connected Outlook account",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "to": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "List of recipient email addresses"
-                    },
-                    "subject": {
-                        "type": "string",
-                        "description": "Email subject line"
-                    },
-                    "body": {
-                        "type": "string",
-                        "description": "Email body content (HTML supported)"
-                    },
-                    "cc": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "List of CC recipient email addresses",
-                        "required": False
-                    },
-                    "bcc": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "List of BCC recipient email addresses",
-                        "required": False
-                    }
+            # Check if account has Outlook integration enabled
+            result = await client.table('user_integrations').select('*').eq('account_id', account_id).eq('integration_type', 'outlook').eq('status', 'connected').eq('is_enabled', True).single().execute()
+            
+            if not result.data:
+                logger.debug(f"No enabled Outlook integration found for account {account_id}")
+                return None
+            
+            integration = result.data
+            connected_account_id = integration.get('composio_connection_id')
+            
+            if not connected_account_id:
+                logger.warning(f"Outlook integration for account {account_id} missing connected_account_id")
+                return None
+            
+            # Generate MCP configuration for Outlook
+            mcp_config = {
+                'name': 'Outlook',
+                'qualifiedName': 'custom_http_outlook',
+                'config': {
+                    'url': f"{OUTLOOK_MCP_URL}?connected_account_id={connected_account_id}",
+                    'headers': {}
                 },
-                "required": ["to", "subject", "body"]
-            }
-        }
-    })
-    @xml_schema(
-        tag_name="send_outlook_email",
-        mappings=[
-            {"param_name": "to", "node_type": "attribute", "path": ".", "required": True},
-            {"param_name": "subject", "node_type": "attribute", "path": ".", "required": True},
-            {"param_name": "body", "node_type": "content", "path": "."},
-            {"param_name": "cc", "node_type": "attribute", "path": ".", "required": False},
-            {"param_name": "bcc", "node_type": "attribute", "path": ".", "required": False}
-        ],
-        example='''
-        <function_calls>
-        <invoke name="send_outlook_email">
-        <parameter name="to">["recipient@example.com"]</parameter>
-        <parameter name="subject">Meeting Tomorrow</parameter>
-        <parameter name="body">Hi, confirming our meeting tomorrow at 3 PM.</parameter>
-        </invoke>
-        </function_calls>
-        '''
-    )
-    async def send_outlook_email(self, to: List[str], subject: str, body: str, cc: Optional[List[str]] = None, bcc: Optional[List[str]] = None) -> ToolResult:
-        """Send an email using Outlook"""
-        try:
-            # Ensure we're initialized
-            if not self._initialized:
-                await self.initialize()
-            
-            # Check if Outlook is enabled
-            if not self._enabled_integrations:
-                await self._load_enabled_integrations()
-            
-            if 'outlook' not in self._enabled_integrations:
-                return self.fail_response("Outlook integration is not enabled. Please connect and enable Outlook first.")
-            
-            integration = self._enabled_integrations['outlook']
-            entity_id = integration['composio_entity_id']
-            
-            # Prepare email data for Composio
-            email_data = {
-                "to": to,
-                "subject": subject,
-                "body": body,
-                "bodyType": "HTML"  # Support HTML emails
+                'enabledTools': [],  # Empty means all tools are enabled
+                'isCustom': True,
+                'customType': 'http'
             }
             
-            if cc:
-                email_data["cc"] = cc
-            if bcc:
-                email_data["bcc"] = bcc
+            logger.info(f"Generated Outlook MCP config for account {account_id} with connected_account_id {connected_account_id}")
+            return mcp_config
             
-            # Execute the Composio action
-            result = self.toolset.execute_action(
-                action="OUTLOOK_SEND_EMAIL",
-                params=email_data,
-                entity_id=entity_id
-            )
-            
-            if result.get("success"):
-                return self.success_response({
-                    "status": "sent",
-                    "message": f"Email sent successfully to {', '.join(to)}"
-                })
-            else:
-                return self.fail_response(f"Failed to send email: {result.get('error', 'Unknown error')}")
-                
         except Exception as e:
-            logger.error(f"Error sending Outlook email: {str(e)}")
-            return self.fail_response(f"Error sending email: {str(e)}")
+            logger.error(f"Error getting Outlook MCP config for account {account_id}: {str(e)}")
+            return None
     
-    @openapi_schema({
-        "type": "function",
-        "function": {
-            "name": "read_outlook_emails",
-            "description": "Read emails from the connected Outlook account",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "folder": {
-                        "type": "string",
-                        "description": "Email folder to read from (e.g., 'inbox', 'sent')",
-                        "default": "inbox"
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Maximum number of emails to retrieve",
-                        "default": 10
-                    },
-                    "unread_only": {
-                        "type": "boolean",
-                        "description": "Only retrieve unread emails",
-                        "default": False
-                    }
-                },
-                "required": []
-            }
-        }
-    })
-    @xml_schema(
-        tag_name="read_outlook_emails",
-        mappings=[
-            {"param_name": "folder", "node_type": "attribute", "path": ".", "required": False},
-            {"param_name": "limit", "node_type": "attribute", "path": ".", "required": False},
-            {"param_name": "unread_only", "node_type": "attribute", "path": ".", "required": False}
-        ],
-        example='''
-        <function_calls>
-        <invoke name="read_outlook_emails">
-        <parameter name="folder">inbox</parameter>
-        <parameter name="limit">5</parameter>
-        <parameter name="unread_only">true</parameter>
-        </invoke>
-        </function_calls>
-        '''
-    )
-    async def read_outlook_emails(self, folder: str = "inbox", limit: int = 10, unread_only: bool = False) -> ToolResult:
-        """Read emails from Outlook"""
-        try:
-            # Ensure we're initialized
-            if not self._initialized:
-                await self.initialize()
+    @staticmethod
+    async def get_all_composio_mcp_configs(account_id: str) -> List[Dict[str, Any]]:
+        """
+        Get all Composio-based MCP configurations for an account.
+        Currently only supports Outlook, but can be extended for other Composio integrations.
+        
+        Args:
+            account_id: The account ID to get configurations for
             
-            # Check if Outlook is enabled
-            if not self._enabled_integrations:
-                await self._load_enabled_integrations()
-            
-            if 'outlook' not in self._enabled_integrations:
-                return self.fail_response("Outlook integration is not enabled. Please connect and enable Outlook first.")
-            
-            integration = self._enabled_integrations['outlook']
-            entity_id = integration['composio_entity_id']
-            
-            # Prepare parameters for Composio
-            params = {
-                "folder": folder,
-                "limit": limit,
-                "filter": "isRead eq false" if unread_only else None
-            }
-            
-            # Execute the Composio action
-            result = self.toolset.execute_action(
-                action="OUTLOOK_LIST_EMAILS",
-                params=params,
-                entity_id=entity_id
-            )
-            
-            if result.get("success"):
-                emails = result.get("data", {}).get("value", [])
-                formatted_emails = []
-                
-                for email in emails[:limit]:
-                    formatted_emails.append({
-                        "id": email.get("id"),
-                        "subject": email.get("subject"),
-                        "from": email.get("from", {}).get("emailAddress", {}).get("address"),
-                        "to": [r.get("emailAddress", {}).get("address") for r in email.get("toRecipients", [])],
-                        "received": email.get("receivedDateTime"),
-                        "is_read": email.get("isRead", False),
-                        "body_preview": email.get("bodyPreview", "")
-                    })
-                
-                return self.success_response({
-                    "emails": formatted_emails,
-                    "count": len(formatted_emails),
-                    "folder": folder
-                })
-            else:
-                return self.fail_response(f"Failed to read emails: {result.get('error', 'Unknown error')}")
-                
-        except Exception as e:
-            logger.error(f"Error reading Outlook emails: {str(e)}")
-            return self.fail_response(f"Error reading emails: {str(e)}")
-    
-    def get_available_tools(self) -> List[str]:
-        """Get list of available tool names"""
-        # This could be dynamic based on enabled integrations
-        tools = []
-        if 'outlook' in self.integration_types:
-            tools.extend(['send_outlook_email', 'read_outlook_emails'])
-        return tools 
+        Returns:
+            List of MCP configurations
+        """
+        configs = []
+        
+        # Get Outlook configuration if available
+        outlook_config = await ComposioOutlookMCP.get_mcp_config_for_account(account_id)
+        if outlook_config:
+            configs.append(outlook_config)
+        
+        # Future: Add other Composio integrations here (Gmail, Slack, etc.)
+        
+        return configs 

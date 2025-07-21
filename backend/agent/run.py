@@ -32,7 +32,7 @@ from agent.tools.sb_podcast_tool import SandboxPodcastTool
 from agent.tools.memory_search_tool import MemorySearchTool
 from agent.tools.knowledge_search_tool import KnowledgeSearchTool
 from agent.tools.datetime_tool import DateTimeTool
-from agent.tools.composio_tool_wrapper import ComposioToolWrapper
+from agent.tools.composio_tool_wrapper import ComposioOutlookMCP
 
 from services.langfuse import langfuse
 from langfuse.client import StatefulTraceClient
@@ -165,27 +165,18 @@ async def run_agent(
         logger.info(f"Registering knowledge search tool with {len(agent_config['knowledge_bases'])} knowledge bases")
         thread_manager.add_tool(KnowledgeSearchTool, thread_manager=thread_manager, knowledge_bases=agent_config['knowledge_bases'])
 
-    # Register Composio tool wrapper for external integrations (e.g., Outlook)
-    # This is always available for all agents to check if integrations are enabled
-    if account_id:
-        try:
-            logger.info(f"Registering Composio tool wrapper for account {account_id}")
-            thread_manager.add_tool(ComposioToolWrapper, account_id=account_id, integration_types=['outlook'])
-        except Exception as e:
-            logger.warning(f"Failed to register Composio tool wrapper: {str(e)}")
-
-    # Register MCP tool wrapper if agent has configured MCPs or custom MCPs
+    # Register MCP tool wrapper if agent has configured MCPs, custom MCPs, or Composio integrations
     mcp_wrapper_instance = None
-    if agent_config:
-        # Merge configured_mcps and custom_mcps
+    if agent_config or account_id:
+        # Merge configured_mcps, custom_mcps, and Composio integrations
         all_mcps = []
         
         # Add standard configured MCPs
-        if agent_config.get('configured_mcps'):
+        if agent_config and agent_config.get('configured_mcps'):
             all_mcps.extend(agent_config['configured_mcps'])
         
         # Add custom MCPs
-        if agent_config.get('custom_mcps'):
+        if agent_config and agent_config.get('custom_mcps'):
             for custom_mcp in agent_config['custom_mcps']:
                 # Transform custom MCP to standard format
                 mcp_config = {
@@ -198,8 +189,20 @@ async def run_agent(
                 }
                 all_mcps.append(mcp_config)
         
+        # Add Composio integrations as MCPs (e.g., Outlook)
+        if account_id:
+            try:
+                logger.info(f"Checking Composio integrations for account {account_id}")
+                composio_configs = await ComposioOutlookMCP.get_all_composio_mcp_configs(account_id)
+                if composio_configs:
+                    logger.info(f"Adding {len(composio_configs)} Composio MCP configs")
+                    all_mcps.extend(composio_configs)
+            except Exception as e:
+                logger.warning(f"Failed to get Composio MCP configs: {str(e)}")
+        
         if all_mcps:
-            logger.info(f"Registering MCP tool wrapper for {len(all_mcps)} MCP servers (including {len(agent_config.get('custom_mcps', []))} custom)")
+            custom_count = len(agent_config.get('custom_mcps', [])) if agent_config else 0
+            logger.info(f"Registering MCP tool wrapper for {len(all_mcps)} MCP servers (including {custom_count} custom)")
             # Register the tool with all MCPs
             thread_manager.add_tool(MCPToolWrapper, mcp_configs=all_mcps)
             
