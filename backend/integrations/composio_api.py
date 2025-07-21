@@ -16,8 +16,17 @@ db = DBConnection()
 COMPOSIO_API_KEY = os.getenv("COMPOSIO_API_KEY")
 COMPOSIO_API_URL = os.getenv("COMPOSIO_API_URL", "https://backend.composio.dev")
 
-# Composio integration IDs (these are public identifiers, not secrets)
-OUTLOOK_INTEGRATION_ID = "960ed0ed-c8c8-4e86-8234-06382947a497"
+# Composio integration IDs from environment variables (required)
+OUTLOOK_INTEGRATION_ID = os.getenv("COMPOSIO_OUTLOOK_INTEGRATION_ID")
+DROPBOX_INTEGRATION_ID = os.getenv("COMPOSIO_DROPBOX_INTEGRATION_ID")
+
+# Validate required environment variables
+if not COMPOSIO_API_KEY:
+    logger.warning("COMPOSIO_API_KEY not set - Composio integrations will not work")
+if not OUTLOOK_INTEGRATION_ID:
+    logger.warning("COMPOSIO_OUTLOOK_INTEGRATION_ID not set - Outlook integration will not work")
+if not DROPBOX_INTEGRATION_ID:
+    logger.warning("COMPOSIO_DROPBOX_INTEGRATION_ID not set - Dropbox integration will not work")
 
 class InitiateIntegrationRequest(BaseModel):
     integration_type: str
@@ -51,6 +60,8 @@ async def initiate_composio_integration(
         integration_id = None
         if body.integration_type == "outlook":
             integration_id = OUTLOOK_INTEGRATION_ID
+        elif body.integration_type == "dropbox":
+            integration_id = DROPBOX_INTEGRATION_ID
         else:
             raise HTTPException(status_code=400, detail=f"Unsupported integration type: {body.integration_type}")
         

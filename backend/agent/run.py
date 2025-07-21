@@ -32,7 +32,7 @@ from agent.tools.sb_podcast_tool import SandboxPodcastTool
 from agent.tools.memory_search_tool import MemorySearchTool
 from agent.tools.knowledge_search_tool import KnowledgeSearchTool
 from agent.tools.datetime_tool import DateTimeTool
-from agent.tools.composio_tool_wrapper import ComposioOutlookMCP
+from agent.tools.composio_tool_wrapper import ComposioMCP
 
 from services.langfuse import langfuse
 from langfuse.client import StatefulTraceClient
@@ -173,7 +173,7 @@ async def run_agent(
     if account_id:
         try:
             logger.info(f"Checking Composio integrations for account {account_id}")
-            composio_configs = await ComposioOutlookMCP.get_all_composio_mcp_configs(account_id)
+            composio_configs = await ComposioMCP.get_all_composio_mcp_configs(account_id)
             if composio_configs:
                 logger.info(f"Adding {len(composio_configs)} Composio MCP configs")
                 all_mcps.extend(composio_configs)

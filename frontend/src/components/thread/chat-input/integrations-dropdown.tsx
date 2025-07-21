@@ -15,10 +15,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { Plus, Plug, Check, Loader2, AlertCircle, Mail } from 'lucide-react';
+import { Plus, Plug, Check, Loader2, AlertCircle, Mail, FolderOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIntegrations } from '@/hooks/use-integrations';
 import { OutlookIntegrationDialog } from './outlook-integration-dialog';
+import { DropboxIntegrationDialog } from './dropbox-integration-dialog';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 
@@ -30,6 +31,7 @@ interface IntegrationsDropdownProps {
 export function IntegrationsDropdown({ disabled = false, className }: IntegrationsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [outlookDialogOpen, setOutlookDialogOpen] = useState(false);
+  const [dropboxDialogOpen, setDropboxDialogOpen] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
   
   const { integrations, isLoading, toggleIntegration, refreshIntegrations } = useIntegrations();
@@ -50,6 +52,8 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
       setSelectedIntegration(integrationType);
       if (integrationType === 'outlook') {
         setOutlookDialogOpen(true);
+      } else if (integrationType === 'dropbox') {
+        setDropboxDialogOpen(true);
       }
       setIsOpen(false);
     }
@@ -84,6 +88,12 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
       name: 'Microsoft Outlook',
       description: 'Send and manage emails',
       icon: Mail,
+    },
+    {
+      type: 'dropbox',
+      name: 'Dropbox',
+      description: 'Manage files and folders',
+      icon: FolderOpen,
     },
     // Add more integrations here in the future
   ];
@@ -205,6 +215,14 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
         onSuccess={() => {
           refreshIntegrations();
           setOutlookDialogOpen(false);
+        }}
+      />
+      <DropboxIntegrationDialog
+        open={dropboxDialogOpen}
+        onOpenChange={setDropboxDialogOpen}
+        onSuccess={() => {
+          refreshIntegrations();
+          setDropboxDialogOpen(false);
         }}
       />
     </>
