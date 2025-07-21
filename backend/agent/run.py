@@ -32,6 +32,7 @@ from agent.tools.sb_podcast_tool import SandboxPodcastTool
 from agent.tools.memory_search_tool import MemorySearchTool
 from agent.tools.knowledge_search_tool import KnowledgeSearchTool
 from agent.tools.datetime_tool import DateTimeTool
+from agent.tools.composio_tool_wrapper import ComposioToolWrapper
 
 from services.langfuse import langfuse
 from langfuse.client import StatefulTraceClient
@@ -163,6 +164,15 @@ async def run_agent(
     if agent_config and agent_config.get('knowledge_bases'):
         logger.info(f"Registering knowledge search tool with {len(agent_config['knowledge_bases'])} knowledge bases")
         thread_manager.add_tool(KnowledgeSearchTool, thread_manager=thread_manager, knowledge_bases=agent_config['knowledge_bases'])
+
+    # Register Composio tool wrapper for external integrations (e.g., Outlook)
+    # This is always available for all agents to check if integrations are enabled
+    if account_id:
+        try:
+            logger.info(f"Registering Composio tool wrapper for account {account_id}")
+            thread_manager.add_tool(ComposioToolWrapper, account_id=account_id, integration_types=['outlook'])
+        except Exception as e:
+            logger.warning(f"Failed to register Composio tool wrapper: {str(e)}")
 
     # Register MCP tool wrapper if agent has configured MCPs or custom MCPs
     mcp_wrapper_instance = None

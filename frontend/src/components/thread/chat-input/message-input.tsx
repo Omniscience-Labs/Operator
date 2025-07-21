@@ -18,6 +18,7 @@ import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
 import { Crown } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useRouter } from 'next/navigation';
+import { IntegrationsDropdown } from './integrations-dropdown';
 
 interface MessageInputProps {
   value: string;
@@ -198,6 +199,9 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
             </TooltipProvider>
           }
           <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
+            <IntegrationsDropdown
+              disabled={loading || (disabled && !isAgentRunning)}
+            />
             <ModelSelector
               selectedModel={selectedModel}
               onModelChange={onModelChange}

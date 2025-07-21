@@ -26,6 +26,7 @@ from services import transcription as transcription_api
 from services.mcp_custom import discover_custom_tools
 import sys
 from services import email_api
+from integrations import composio_api
 
 
 load_dotenv()
@@ -172,6 +173,9 @@ app.include_router(mcp_api.router, prefix="/api")
 app.include_router(transcription_api.router, prefix="/api")
 
 app.include_router(email_api.router, prefix="/api")
+
+# Include integrations API router
+app.include_router(composio_api.router, prefix="/api")
 
 # Add meetings API endpoints
 from fastapi import WebSocket, WebSocketDisconnect
