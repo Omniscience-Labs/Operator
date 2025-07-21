@@ -167,6 +167,7 @@ async def run_agent(
 
     # Always check for Composio integrations first (for base operator support)
     all_mcps = []
+    has_composio_mcps = False
     
     # Add Composio integrations as MCPs (e.g., Outlook) - always check if account_id exists
     if account_id:
@@ -176,6 +177,7 @@ async def run_agent(
             if composio_configs:
                 logger.info(f"Adding {len(composio_configs)} Composio MCP configs")
                 all_mcps.extend(composio_configs)
+                has_composio_mcps = True
         except Exception as e:
             logger.warning(f"Failed to get Composio MCP configs: {str(e)}")
 
@@ -271,7 +273,14 @@ async def run_agent(
         logger.info("Using default system prompt only")
     
     # Add MCP tool information to system prompt if MCP tools are configured
-    if agent_config and (agent_config.get('configured_mcps') or agent_config.get('custom_mcps')) and mcp_wrapper_instance and mcp_wrapper_instance._initialized:
+    # Check if we have MCP tools from agent config OR from Composio integrations
+    has_mcp_tools = (agent_config and (agent_config.get('configured_mcps') or agent_config.get('custom_mcps'))) or (all_mcps and len(all_mcps) > 0)
+    
+    # Debug logging for base operator
+    if not agent_config and has_composio_mcps:
+        logger.info(f"Base operator with Composio MCPs: has_mcp_tools={has_mcp_tools}, mcp_wrapper_instance={mcp_wrapper_instance is not None}, initialized={mcp_wrapper_instance._initialized if mcp_wrapper_instance else False}")
+    
+    if has_mcp_tools and mcp_wrapper_instance and mcp_wrapper_instance._initialized:
         mcp_info = "\n\n--- MCP Tools Available ---\n"
         mcp_info += "You have access to external MCP (Model Context Protocol) server tools.\n"
         mcp_info += "MCP tools can be called directly using their native function names in the standard function calling format:\n"
