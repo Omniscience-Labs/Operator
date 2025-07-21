@@ -13,11 +13,13 @@ router = APIRouter()
 db = DBConnection()
 
 # Initialize Composio with API key
-COMPOSIO_API_KEY = os.getenv("COMPOSIO_API_KEY", "7b5l47ekblv8mw58a90vz")
+COMPOSIO_API_KEY = os.getenv("COMPOSIO_API_KEY")
+if not COMPOSIO_API_KEY:
+    raise ValueError("COMPOSIO_API_KEY environment variable is required")
 toolset = ComposioToolSet(api_key=COMPOSIO_API_KEY)
 
-# Composio integration IDs (these should be configured per environment)
-OUTLOOK_INTEGRATION_ID = os.getenv("COMPOSIO_OUTLOOK_INTEGRATION_ID", "960ed0ed-c8c8-4e86-8234-06382947a497")
+# Composio integration IDs (these are public identifiers, not secrets)
+OUTLOOK_INTEGRATION_ID = "960ed0ed-c8c8-4e86-8234-06382947a497"
 
 class InitiateIntegrationRequest(BaseModel):
     integration_type: str
