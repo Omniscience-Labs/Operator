@@ -60,8 +60,12 @@ async def initiate_composio_integration(
         integration_id = None
         if body.integration_type == "outlook":
             integration_id = OUTLOOK_INTEGRATION_ID
+            if not integration_id:
+                raise HTTPException(status_code=500, detail="COMPOSIO_OUTLOOK_INTEGRATION_ID environment variable not set")
         elif body.integration_type == "dropbox":
             integration_id = DROPBOX_INTEGRATION_ID
+            if not integration_id:
+                raise HTTPException(status_code=500, detail="COMPOSIO_DROPBOX_INTEGRATION_ID environment variable not set")
         else:
             raise HTTPException(status_code=400, detail=f"Unsupported integration type: {body.integration_type}")
         
@@ -81,14 +85,24 @@ async def initiate_composio_integration(
         if not COMPOSIO_API_KEY:
             raise HTTPException(status_code=500, detail="COMPOSIO_API_KEY not configured")
         
+        # Log the integration details for debugging
+        logger.info(f"Initiating {body.integration_type} integration with ID: {integration_id}")
+        logger.info(f"Using Composio API URL: {COMPOSIO_API_URL}")
+        
         async with httpx.AsyncClient() as http_client:
             # Get integration details
+            integration_url = f"{COMPOSIO_API_URL}/api/v2/integrations/{integration_id}"
+            logger.info(f"Fetching integration from: {integration_url}")
+            
             integration_response = await http_client.get(
-                f"{COMPOSIO_API_URL}/api/v2/integrations/{integration_id}",
+                integration_url,
                 headers={"x-api-key": COMPOSIO_API_KEY}
             )
             
+            logger.info(f"Composio API response status: {integration_response.status_code}")
+            
             if integration_response.status_code != 200:
+                logger.error(f"Failed to get integration details. Status: {integration_response.status_code}, Response: {integration_response.text}")
                 raise HTTPException(status_code=500, detail=f"Failed to get integration details: {integration_response.text}")
             
             integration = integration_response.json()
