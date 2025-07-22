@@ -184,9 +184,6 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <span className="font-medium text-sm">{integration.name}</span>
-                                {isConnected && (
-                                  <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
-                                )}
                               </div>
                               <p className="text-xs text-muted-foreground">
                                 {integration.description}
@@ -194,17 +191,10 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
                             </div>
                             {isConnected ? (
                               <div className="flex items-center gap-2">
-                                <Switch
-                                  checked={isEnabled}
-                                  onCheckedChange={(checked) => {
-                                    handleToggle(integration.type, checked);
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-100 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setIntegrationToDisconnect(integration.type);
@@ -213,6 +203,14 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
                                 >
                                   <Unlink className="h-4 w-4" />
                                 </Button>
+                                <Plug className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                <Switch
+                                  checked={isEnabled}
+                                  onCheckedChange={(checked) => {
+                                    handleToggle(integration.type, checked);
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
                               </div>
                             ) : (
                               <Plus className="h-4 w-4 text-muted-foreground" />

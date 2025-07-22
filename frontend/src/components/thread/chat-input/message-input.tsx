@@ -167,6 +167,9 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
                 messages={messages}
               />
             )}
+            <IntegrationsDropdown
+              disabled={loading || (disabled && !isAgentRunning)}
+            />
             {!hideAttachments && (
               <MeetingRecorder
                 onFileAttached={(file) => setUploadedFiles(prev => [...prev, file])}
@@ -178,9 +181,6 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
                 disabled={loading || (disabled && !isAgentRunning)}
               />
             )}
-            <IntegrationsDropdown
-              disabled={loading || (disabled && !isAgentRunning)}
-            />
           </div>
           {subscriptionStatus === 'no_subscription' && !isLocalMode() &&
             <TooltipProvider>
