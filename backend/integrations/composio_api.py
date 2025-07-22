@@ -154,9 +154,64 @@ async def get_integration_status(
                 composio_entity_id = integration.get('composio_entity_id')
                 
                 if composio_entity_id:
-                    # Check if connection exists using the connection request ID
+                    # Check if connection exists by listing connected accounts for this user
                     try:
-                        # Handle metadata that might be a JSON string
+                        # List all connected accounts for this user
+                        connected_accounts = composio.connected_accounts.list(
+                            user_ids=[composio_entity_id]
+                        )
+                        
+                        # Check if we have any connected accounts
+                        if connected_accounts and hasattr(connected_accounts, 'items') and connected_accounts.items:
+                            for account in connected_accounts.items:
+                                # Check if this account matches our integration and is connected
+                                if (hasattr(account, 'status') and account.status == 'ACTIVE' and 
+                                    hasattr(account, 'toolkit') and hasattr(account.toolkit, 'slug')):
+                                    
+                                    # Map integration type to toolkit slug
+                                    toolkit_slug = None
+                                    if integration_type == 'outlook':
+                                        toolkit_slug = 'outlook'
+                                    elif integration_type == 'gmail':
+                                        toolkit_slug = 'gmail'
+                                    elif integration_type == 'dropbox':
+                                        toolkit_slug = 'dropbox'
+                                    
+                                    # Check if this is the right integration
+                                    if account.toolkit.slug == toolkit_slug:
+                                        # Connection is active! Update the database
+                                        update_data = {
+                                            "status": "connected",
+                                            "connected_at": datetime.now(timezone.utc).isoformat(),
+                                            "updated_at": datetime.now(timezone.utc).isoformat()
+                                        }
+                                        
+                                        # Store the connected account ID if available
+                                        if hasattr(account, 'id'):
+                                            metadata = integration.get('metadata', {})
+                                            if isinstance(metadata, str):
+                                                try:
+                                                    metadata = json.loads(metadata)
+                                                except:
+                                                    metadata = {}
+                                            metadata['connected_account_id'] = account.id
+                                            update_data['metadata'] = metadata
+                                            update_data['composio_connection_id'] = account.id
+                                        
+                                        await client.table('user_integrations').update(update_data).eq('id', integration['id']).execute()
+                                        
+                                        return JSONResponse({"status": "connected", "message": "Successfully connected"})
+                        
+                        # No active connection found yet
+                        logger.debug(f"No active connection found for {integration_type} user {composio_entity_id}")
+                        return JSONResponse({
+                            "status": "pending",
+                            "message": "Waiting for authorization. Please complete the authentication flow."
+                        })
+                        
+                    except Exception as e:
+                        logger.warning(f"Error checking connection for {integration_type}: {str(e)}")
+                        # Fall back to checking if we have a connection request ID
                         metadata = integration.get('metadata', {})
                         if isinstance(metadata, str):
                             try:
@@ -168,67 +223,27 @@ async def get_integration_status(
                         
                         if connection_request_id:
                             try:
-                                # Use wait_for_connection with a short timeout to check status
-                                # This is the recommended way per Composio docs
+                                # Try wait_for_connection as a fallback
                                 connected_account = composio.connected_accounts.wait_for_connection(
                                     connection_request_id=connection_request_id,
-                                    timeout=1  # Short timeout just to check status
+                                    timeout=1
                                 )
                                 
-                                # If we get here, connection is established!
+                                # If successful, update the database
                                 await client.table('user_integrations').update({
                                     "status": "connected",
                                     "connected_at": datetime.now(timezone.utc).isoformat(),
                                     "updated_at": datetime.now(timezone.utc).isoformat(),
-                                    "metadata": {
-                                        **metadata,
-                                        "connected_account_id": connected_account.id if hasattr(connected_account, 'id') else None
-                                    }
+                                    "composio_connection_id": connected_account.id if hasattr(connected_account, 'id') else connection_request_id
                                 }).eq('id', integration['id']).execute()
                                 
                                 return JSONResponse({"status": "connected", "message": "Successfully connected"})
-                                
-                            except TimeoutError:
-                                # Connection not ready yet
-                                logger.debug(f"Connection still pending for {integration_type}")
-                                return JSONResponse({
-                                    "status": "pending",
-                                    "message": "Waiting for authorization. Please complete the authentication flow."
-                                })
-                            except Exception as e:
-                                logger.debug(f"Error checking connection: {str(e)}")
-                                # Try alternative method if wait_for_connection fails
-                                if integration.get('composio_connection_id'):
-                                    try:
-                                        # Fallback to direct get method
-                                        connection = composio.connected_accounts.get(integration.get('composio_connection_id'))
-                                        
-                                        await client.table('user_integrations').update({
-                                            "status": "connected",
-                                            "connected_at": datetime.now(timezone.utc).isoformat(),
-                                            "updated_at": datetime.now(timezone.utc).isoformat()
-                                        }).eq('id', integration['id']).execute()
-                                        
-                                        return JSONResponse({"status": "connected", "message": "Successfully connected"})
-                                    except:
-                                        pass
-                                
-                                return JSONResponse({
-                                    "status": "pending",
-                                    "message": "Still waiting for authorization"
-                                })
-                        else:
-                            # No connection request ID stored
-                            return JSONResponse({
-                                "status": "error",
-                                "message": "No connection request ID found. Please reinitiate the connection."
-                            })
+                            except:
+                                pass
                         
-                    except Exception as e:
-                        logger.warning(f"Error checking connection for {integration_type}: {str(e)}")
                         return JSONResponse({
-                            "status": "error", 
-                            "message": f"Error checking connection: {str(e)}"
+                            "status": "pending",
+                            "message": "Still waiting for authorization"
                         })
                 else:
                     # No entity ID means not properly initialized
