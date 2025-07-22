@@ -124,6 +124,14 @@ async def get_integration_status(
         # Determine the account_id to use
         effective_account_id = account_id if account_id else user_id
         
+        # Verify user has access to the account if different from personal
+        if account_id and account_id != user_id:
+            # Check if user has access to this account via basejump account_user table
+            account_access = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', account_id).execute()
+            if not (account_access.data and len(account_access.data) > 0):
+                logger.warning(f"User {user_id} attempted to access account {account_id} without permission")
+                raise HTTPException(status_code=403, detail="Not authorized to access this account")
+        
         # Get integration record
         result = await client.table('user_integrations').select('*').eq('account_id', effective_account_id).eq('integration_type', integration_type).execute()
         
@@ -136,39 +144,35 @@ async def get_integration_status(
         
         integration = result.data[0]
         
-        # Check if we need to verify the connection status with Composio
-        if integration['status'] == 'pending':
+        # Check if we need to verify Composio connection
+        if integration['status'] == 'pending' and integration.get('composio_connection_id'):
             # Try to verify if the connection is now active
             try:
-                # Get the user ID that was used for this integration
+                # Get the Composio entity ID (user_id in Composio)
                 composio_entity_id = integration.get('composio_entity_id')
+                
                 if composio_entity_id:
-                    # List all connected accounts for this user
-                    connected_accounts = composio.connected_accounts.list(
-                        user_id=composio_entity_id
-                    )
-                    
-                    logger.debug(f"Found {len(connected_accounts)} connected accounts for user {composio_entity_id}")
-                    
-                    # Check if any account matches our integration type
-                    for account in connected_accounts:
-                        logger.debug(f"Checking account: {account.id}, integration_id: {getattr(account, 'integration_id', None)}")
+                    # Try to get the connected account directly
+                    try:
+                        # Get all connected accounts for this entity
+                        connected_accounts = composio.connected_accounts.get(entity_ids=[composio_entity_id])
                         
-                        # Check by matching the integration type
-                        # The account should be for the same integration type (outlook/dropbox)
-                        account_integration = getattr(account, 'integration', None) or getattr(account, 'app', None)
-                        if account_integration:
-                            account_type = getattr(account_integration, 'name', '').lower()
-                            if account_type == integration_type:
-                                logger.info(f"Found matching {integration_type} account for user {composio_entity_id}")
-                                # Found the connected account
+                        # Find the specific connection we're looking for
+                        connection_found = False
+                        for account in connected_accounts:
+                            if account.id == integration.get('composio_connection_id'):
+                                # Connection is established!
                                 await client.table('user_integrations').update({
                                     "status": "connected",
-                                    "connected_at": datetime.now(timezone.utc).isoformat(),
-                                    "composio_connection_id": account.id
+                                    "connected_at": datetime.now(timezone.utc).isoformat()
                                 }).eq('id', integration['id']).execute()
                                 integration['status'] = 'connected'
+                                connection_found = True
                                 break
+                                
+                    except Exception as e:
+                        logger.debug(f"Connection not yet established for {integration_type}: {str(e)}")
+                        # Connection not ready yet, stay pending
             except Exception as e:
                 logger.warning(f"Failed to verify Composio connection: {str(e)}")
         
