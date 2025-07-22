@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request, Body
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import os
-from composio_openai import ComposioToolSet
+from composio_client import Composio
 from services.supabase import DBConnection
 from utils.auth_utils import get_current_user_id_from_jwt
 from utils.logger import logger
@@ -17,7 +17,7 @@ COMPOSIO_API_KEY = os.getenv("COMPOSIO_API_KEY")
 if not COMPOSIO_API_KEY:
     raise ValueError("COMPOSIO_API_KEY environment variable is required")
 
-toolset = ComposioToolSet(api_key=COMPOSIO_API_KEY)
+client = Composio(api_key=COMPOSIO_API_KEY)
 
 # Composio integration IDs (these are public identifiers, not secrets)
 OUTLOOK_INTEGRATION_ID = os.getenv("COMPOSIO_OUTLOOK_INTEGRATION_ID")
