@@ -47,5 +47,5 @@ pydub>=0.25.1
 mem0ai>=0.1
 llama-index-indices-managed-llama-cloud>=0.3.0
 pytz>=2023.3
-composio-client==1.6.0
+composio==1.0.0rc9
 
