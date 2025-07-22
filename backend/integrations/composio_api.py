@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request, Body
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import os
-from composio_openai import App, ComposioToolSet
+from composio_openai import ComposioToolSet
 from services.supabase import DBConnection
 from utils.auth_utils import get_current_user_id_from_jwt
 from utils.logger import logger
