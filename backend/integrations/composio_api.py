@@ -168,11 +168,11 @@ async def get_integration_status(
                         
                         if connection_request_id:
                             try:
-                                # Use wait_for_connection with a short timeout to check status
-                                # This is the recommended way per Composio docs
+                                # Use wait_for_connection with a longer timeout to check status
+                                # Increase timeout to handle OAuth flow delays
                                 connected_account = composio.connected_accounts.wait_for_connection(
                                     connection_request_id=connection_request_id,
-                                    timeout=1  # Short timeout just to check status
+                                    timeout=5  # Increased timeout to handle OAuth delays
                                 )
                                 
                                 # If we get here, connection is established!
@@ -189,11 +189,17 @@ async def get_integration_status(
                                 return JSONResponse({"status": "connected", "message": "Successfully connected"})
                                 
                             except TimeoutError:
-                                # Connection not ready yet
+                                # Connection not ready yet - check metadata for additional info
                                 logger.debug(f"Connection still pending for {integration_type}")
+                                
+                                # Check if OAuth callback has been received
+                                callback_received = metadata.get('oauth_callback_received', False)
+                                
                                 return JSONResponse({
                                     "status": "pending",
-                                    "message": "Waiting for authorization. Please complete the authentication flow."
+                                    "message": "Waiting for authorization. Please complete the authentication flow.",
+                                    "callback_received": callback_received,
+                                    "details": "OAuth flow in progress"
                                 })
                             except Exception as e:
                                 logger.debug(f"Error checking connection: {str(e)}")
@@ -342,6 +348,43 @@ async def list_integrations(
         
     except Exception as e:
         logger.error(f"Failed to list integrations: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/integrations/composio/callback/{integration_type}")
+async def handle_oauth_callback(
+    integration_type: str,
+    connection_id: str = Body(..., embed=True),
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Handle OAuth callback notification"""
+    try:
+        client = await db.client
+        
+        # Update the integration record to indicate callback was received
+        existing = await client.table('user_integrations').select('*').eq('account_id', user_id).eq('integration_type', integration_type).execute()
+        
+        if existing.data:
+            metadata = existing.data[0].get('metadata', {})
+            if isinstance(metadata, str):
+                try:
+                    metadata = json.loads(metadata)
+                except:
+                    metadata = {}
+            
+            metadata['oauth_callback_received'] = True
+            metadata['callback_timestamp'] = datetime.now(timezone.utc).isoformat()
+            
+            await client.table('user_integrations').update({
+                "metadata": metadata,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }).eq('id', existing.data[0]['id']).execute()
+            
+            return {"status": "callback_received"}
+        
+        return {"status": "integration_not_found"}
+        
+    except Exception as e:
+        logger.error(f"Failed to handle OAuth callback: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/integrations/composio/disconnect")

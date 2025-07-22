@@ -33,6 +33,7 @@ export function OutlookIntegrationDialog({
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [checkingStatus, setCheckingStatus] = useState(false);
   const [connectionId, setConnectionId] = useState<string | null>(null);
+  const [pollTimeoutId, setPollTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   const initiateConnection = async () => {
     setIsLoading(true);
@@ -104,9 +105,20 @@ export function OutlookIntegrationDialog({
         },
       });
 
-      if (!response.ok) return false;
+      if (!response.ok) {
+        console.error('Status check failed with status:', response.status);
+        return false;
+      }
 
       const data = await response.json();
+      
+      // Log detailed status for debugging
+      console.log('Connection status check:', {
+        status: data.status,
+        callbackReceived: data.callback_received,
+        details: data.details
+      });
+      
       return data.status === 'connected';
     } catch (err) {
       console.error('Error checking connection status:', err);
@@ -117,26 +129,49 @@ export function OutlookIntegrationDialog({
   const startStatusPolling = () => {
     setCheckingStatus(true);
     
-    const pollInterval = setInterval(async () => {
+    let pollCount = 0;
+    let pollDelay = 1000; // Start with 1 second
+    const maxDelay = 10000; // Max 10 seconds between polls
+    const maxPollTime = 300000; // 5 minutes total
+    const startTime = Date.now();
+    
+    const poll = async () => {
+      // Check if dialog was closed
+      if (!open) {
+        setCheckingStatus(false);
+        return;
+      }
+      
+      // Check if we've exceeded max polling time
+      if (Date.now() - startTime > maxPollTime) {
+        setCheckingStatus(false);
+        if (open) {
+          setError('Connection timeout. Please try again.');
+        }
+        return;
+      }
+      
       const isConnected = await checkConnectionStatus();
       
       if (isConnected) {
-        clearInterval(pollInterval);
         setCheckingStatus(false);
         toast.success('Outlook connected successfully!');
         onSuccess?.();
         onOpenChange(false);
+      } else {
+        // Exponential backoff with max delay
+        pollCount++;
+        pollDelay = Math.min(pollDelay * 1.5, maxDelay);
+        
+        // Schedule next poll
+        const timeoutId = setTimeout(poll, pollDelay);
+        setPollTimeoutId(timeoutId);
       }
-    }, 2000); // Poll every 2 seconds
+    };
     
-    // Stop polling after 5 minutes
-    setTimeout(() => {
-      clearInterval(pollInterval);
-      setCheckingStatus(false);
-      if (open) {
-        setError('Connection timeout. Please try again.');
-      }
-    }, 300000);
+    // Start polling after a short initial delay to allow OAuth callback to process
+    const timeoutId = setTimeout(poll, 2000);
+    setPollTimeoutId(timeoutId);
   };
 
   // Reset state when dialog closes
@@ -147,8 +182,14 @@ export function OutlookIntegrationDialog({
       setRedirectUrl(null);
       setCheckingStatus(false);
       setConnectionId(null);
+      
+      // Clear any pending timeouts
+      if (pollTimeoutId) {
+        clearTimeout(pollTimeoutId);
+        setPollTimeoutId(null);
+      }
     }
-  }, [open]);
+  }, [open, pollTimeoutId]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
