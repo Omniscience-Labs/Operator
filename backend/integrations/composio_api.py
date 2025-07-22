@@ -2,31 +2,26 @@ from fastapi import APIRouter, HTTPException, Depends, Request, Body
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import os
+from composio_openai import ComposioToolSet, App
 from services.supabase import DBConnection
 from utils.auth_utils import get_current_user_id_from_jwt
 from utils.logger import logger
 import uuid
 from datetime import datetime, timezone
-import httpx
 
 router = APIRouter()
 db = DBConnection()
 
-# Composio API configuration
+# Initialize Composio with API key
 COMPOSIO_API_KEY = os.getenv("COMPOSIO_API_KEY")
-COMPOSIO_API_URL = os.getenv("COMPOSIO_API_URL", "https://backend.composio.dev")
+if not COMPOSIO_API_KEY:
+    raise ValueError("COMPOSIO_API_KEY environment variable is required")
 
-# Composio integration IDs from environment variables (required)
+toolset = ComposioToolSet(api_key=COMPOSIO_API_KEY)
+
+# Composio integration IDs (these are public identifiers, not secrets)
 OUTLOOK_INTEGRATION_ID = os.getenv("COMPOSIO_OUTLOOK_INTEGRATION_ID")
 DROPBOX_INTEGRATION_ID = os.getenv("COMPOSIO_DROPBOX_INTEGRATION_ID")
-
-# Validate required environment variables
-if not COMPOSIO_API_KEY:
-    logger.warning("COMPOSIO_API_KEY not set - Composio integrations will not work")
-if not OUTLOOK_INTEGRATION_ID:
-    logger.warning("COMPOSIO_OUTLOOK_INTEGRATION_ID not set - Outlook integration will not work")
-if not DROPBOX_INTEGRATION_ID:
-    logger.warning("COMPOSIO_DROPBOX_INTEGRATION_ID not set - Dropbox integration will not work")
 
 class InitiateIntegrationRequest(BaseModel):
     integration_type: str
@@ -60,14 +55,13 @@ async def initiate_composio_integration(
         integration_id = None
         if body.integration_type == "outlook":
             integration_id = OUTLOOK_INTEGRATION_ID
-            if not integration_id:
-                raise HTTPException(status_code=500, detail="COMPOSIO_OUTLOOK_INTEGRATION_ID environment variable not set")
         elif body.integration_type == "dropbox":
             integration_id = DROPBOX_INTEGRATION_ID
-            if not integration_id:
-                raise HTTPException(status_code=500, detail="COMPOSIO_DROPBOX_INTEGRATION_ID environment variable not set")
         else:
             raise HTTPException(status_code=400, detail=f"Unsupported integration type: {body.integration_type}")
+        
+        # Get the integration details from Composio
+        integration = toolset.get_integration(id=integration_id)
         
         # Use account_id as entity_id for Composio
         entity_id = effective_account_id
@@ -81,46 +75,11 @@ async def initiate_composio_integration(
                 "integration": existing.data[0]
             }
         
-        # Initiate connection with Composio API
-        if not COMPOSIO_API_KEY:
-            raise HTTPException(status_code=500, detail="COMPOSIO_API_KEY not configured")
-        
-        # Log the integration details for debugging
-        logger.info(f"Initiating {body.integration_type} integration with ID: {integration_id}")
-        logger.info(f"Using Composio API URL: {COMPOSIO_API_URL}")
-        
-        async with httpx.AsyncClient() as http_client:
-            # Get integration details
-            integration_url = f"{COMPOSIO_API_URL}/api/v2/integrations/{integration_id}"
-            logger.info(f"Fetching integration from: {integration_url}")
-            
-            integration_response = await http_client.get(
-                integration_url,
-                headers={"x-api-key": COMPOSIO_API_KEY}
-            )
-            
-            logger.info(f"Composio API response status: {integration_response.status_code}")
-            
-            if integration_response.status_code != 200:
-                logger.error(f"Failed to get integration details. Status: {integration_response.status_code}, Response: {integration_response.text}")
-                raise HTTPException(status_code=500, detail=f"Failed to get integration details: {integration_response.text}")
-            
-            integration = integration_response.json()
-            
-            # Initiate connection
-            connection_response = await http_client.post(
-                f"{COMPOSIO_API_URL}/api/v2/integrations/{integration_id}/connections",
-                headers={"x-api-key": COMPOSIO_API_KEY},
-                json={
-                    "entityId": entity_id,
-                    "redirectUri": None  # Let Composio handle the redirect
-                }
-            )
-            
-            if connection_response.status_code != 200:
-                raise HTTPException(status_code=500, detail=f"Failed to initiate connection: {connection_response.text}")
-            
-            connection_request = connection_response.json()
+        # Initiate connection with Composio
+        connection_request = toolset.initiate_connection(
+            integration_id=integration.id,
+            entity_id=entity_id,
+        )
         
         # Store or update integration record
         integration_data = {
@@ -128,12 +87,12 @@ async def initiate_composio_integration(
             "integration_type": body.integration_type,
             "integration_provider": "composio",
             "composio_entity_id": entity_id,
-            "composio_connection_id": connection_request.get('connectedAccountId') or connection_request.get('connectionId'),
+            "composio_connection_id": connection_request.connectedAccountId,
             "integration_id": integration_id,
             "status": "pending",
             "metadata": {
-                "redirect_url": connection_request.get('redirectUrl'),
-                "expected_input_fields": integration.get('expectedInputFields', [])
+                "redirect_url": connection_request.redirectUrl,
+                "expected_input_fields": integration.expectedInputFields
             }
         }
         
@@ -145,8 +104,8 @@ async def initiate_composio_integration(
             result = await client.table('user_integrations').insert(integration_data).execute()
         
         return {
-            "redirect_url": connection_request.get('redirectUrl'),
-            "connected_account_id": connection_request.get('connectedAccountId') or connection_request.get('connectionId'),
+            "redirect_url": connection_request.redirectUrl,
+            "connected_account_id": connection_request.connectedAccountId,
             "integration_id": result.data[0]['id'] if result.data else None
         }
         
@@ -181,23 +140,24 @@ async def get_integration_status(
         
         # Check if we need to verify the connection status with Composio
         if integration['status'] == 'pending' and integration.get('composio_connection_id'):
-            # Try to verify if the connection is now active with Composio API
+            # Try to verify if the connection is now active
             try:
-                if COMPOSIO_API_KEY:
-                    async with httpx.AsyncClient() as http_client:
-                        # Check connection status
-                        verify_response = await http_client.get(
-                            f"{COMPOSIO_API_URL}/api/v2/connected-accounts/{integration['composio_connection_id']}",
-                            headers={"x-api-key": COMPOSIO_API_KEY}
-                        )
-                        
-                        if verify_response.status_code == 200:
-                            # Connection exists, update status to connected
-                            await client.table('user_integrations').update({
-                                "status": "connected",
-                                "connected_at": datetime.now(timezone.utc).isoformat()
-                            }).eq('id', integration['id']).execute()
-                            integration['status'] = 'connected'
+                # Get connected accounts for this entity
+                connected_accounts = toolset.get_entity(id=integration['composio_entity_id']).get_connections()
+                
+                # Check if our connection is in the list
+                is_connected = any(
+                    acc.id == integration['composio_connection_id'] 
+                    for acc in connected_accounts
+                )
+                
+                if is_connected:
+                    # Update status to connected
+                    await client.table('user_integrations').update({
+                        "status": "connected",
+                        "connected_at": datetime.now(timezone.utc).isoformat()
+                    }).eq('id', integration['id']).execute()
+                    integration['status'] = 'connected'
             except Exception as e:
                 logger.warning(f"Failed to verify Composio connection: {str(e)}")
         
