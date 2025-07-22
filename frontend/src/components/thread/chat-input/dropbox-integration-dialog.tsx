@@ -98,7 +98,7 @@ export function DropboxIntegrationDialog({
       
       if (!session) return false;
 
-      const response = await fetch(`${API_URL}/integrations/composio/status?integration_type=dropbox`, {
+      const response = await fetch(`${API_URL}/integrations/composio/status/dropbox`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
@@ -116,8 +116,10 @@ export function DropboxIntegrationDialog({
 
   const startStatusPolling = () => {
     setCheckingStatus(true);
+    
     const pollInterval = setInterval(async () => {
       const isConnected = await checkConnectionStatus();
+      
       if (isConnected) {
         clearInterval(pollInterval);
         setCheckingStatus(false);
@@ -126,19 +128,19 @@ export function DropboxIntegrationDialog({
         onOpenChange(false);
       }
     }, 2000); // Poll every 2 seconds
-
+    
     // Stop polling after 5 minutes
     setTimeout(() => {
       clearInterval(pollInterval);
-      if (checkingStatus) {
-        setCheckingStatus(false);
+      setCheckingStatus(false);
+      if (open) {
         setError('Connection timeout. Please try again.');
       }
     }, 300000);
   };
 
+  // Reset state when dialog closes
   useEffect(() => {
-    // Reset state when dialog closes
     if (!open) {
       setIsLoading(false);
       setError(null);
@@ -150,15 +152,19 @@ export function DropboxIntegrationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[475px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FolderOpen className="h-5 w-5" />
-            Connect Dropbox
-          </DialogTitle>
-          <DialogDescription>
-            Connect your Dropbox account to manage files and folders directly from your conversations.
-          </DialogDescription>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+              <FolderOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <DialogTitle>Connect Dropbox</DialogTitle>
+              <DialogDescription>
+                Connect your Dropbox account to manage files and folders directly from the chat.
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -169,50 +175,57 @@ export function DropboxIntegrationDialog({
             </Alert>
           )}
 
-          {!redirectUrl && !checkingStatus && (
-            <div className="space-y-4">
-              <div className="rounded-lg border p-4 space-y-2">
-                <h4 className="font-medium">What you'll be able to do:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• List and search files</li>
-                  <li>• Upload and download files</li>
-                  <li>• Create and manage folders</li>
-                  <li>• Share files and get links</li>
-                </ul>
+          {checkingStatus ? (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="text-center">
+                <p className="font-medium">Waiting for authorization...</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Please complete the authentication in the popup window
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Secure OAuth Connection</p>
+                    <p className="text-sm text-muted-foreground">
+                      Your credentials are handled securely by Dropbox
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                  <div>
+                    <p className="font-medium">File Management</p>
+                    <p className="text-sm text-muted-foreground">
+                      Upload, download, and organize your files and folders
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Privacy First</p>
+                    <p className="text-sm text-muted-foreground">
+                      Disconnect anytime from the tools dropdown
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  You'll be redirected to Dropbox to authorize access. This is secure and you can revoke access at any time.
+                  A popup window will open for Dropbox authentication. Please make sure popups are allowed for this site.
                 </AlertDescription>
               </Alert>
-            </div>
-          )}
-
-          {checkingStatus && (
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Waiting for authorization...</p>
-                <p className="text-sm text-muted-foreground">
-                  Please complete the authorization in the popup window.
-                </p>
-              </div>
-              {redirectUrl && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(redirectUrl, '_blank')}
-                  className="gap-2"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Reopen Authorization Window
-                </Button>
-              )}
-            </div>
+            </>
           )}
         </div>
 
@@ -224,25 +237,22 @@ export function DropboxIntegrationDialog({
           >
             Cancel
           </Button>
-          {!checkingStatus && (
-            <Button
-              onClick={initiateConnection}
-              disabled={isLoading}
-              className="gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <FolderOpen className="h-4 w-4" />
-                  Connect Dropbox
-                </>
-              )}
-            </Button>
-          )}
+          <Button
+            onClick={initiateConnection}
+            disabled={isLoading || checkingStatus}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              <>
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Connect Dropbox
+              </>
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
