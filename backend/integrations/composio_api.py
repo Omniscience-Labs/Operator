@@ -9,6 +9,7 @@ from utils.auth_utils import get_current_user_id_from_jwt
 from utils.logger import logger
 import uuid
 from datetime import datetime, timezone
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 db = DBConnection()
@@ -152,28 +153,51 @@ async def get_integration_status(
                 composio_entity_id = integration.get('composio_entity_id')
                 
                 if composio_entity_id:
-                    # Try to get the connected account directly
+                    # Check if connection exists by listing all connected accounts for this entity
                     try:
-                        # Get the specific connected account by ID
+                        # The Composio SDK uses a different approach for checking connections
+                        # Instead of connected_accounts.get with entity_ids, we need to check the specific connection
+                        connection_exists = False
+                        
+                        # Try to retrieve the connection request by ID if available
                         if integration.get('composio_connection_id'):
                             try:
-                                # Try to get the specific connected account
-                                connected_account = composio.connected_accounts.get(integration.get('composio_connection_id'))
+                                # This retrieves the connection by its ID
+                                connection = composio.connected_accounts.get(integration.get('composio_connection_id'))
                                 
-                                # If we get here without exception, connection is established!
+                                # If we get here without exception, connection exists!
+                                connection_exists = True
+                                
                                 await client.table('user_integrations').update({
                                     "status": "connected",
-                                    "connected_at": datetime.now(timezone.utc).isoformat()
+                                    "connected_at": datetime.now(timezone.utc).isoformat(),
+                                    "updated_at": datetime.now(timezone.utc).isoformat()
                                 }).eq('id', integration['id']).execute()
-                                integration['status'] = 'connected'
-                                    
-                            except Exception as e:
-                                # If we can't get the specific account, it's not ready yet
-                                logger.debug(f"Connection not yet established for {integration_type}: {str(e)}")
                                 
+                                return JSONResponse({"status": "connected", "message": "Successfully connected"})
+                                
+                            except Exception as check_error:
+                                # Connection not found or not ready yet
+                                logger.debug(f"Connection check failed for {integration_type}: {str(check_error)}")
+                        
+                        # If no connection found, it's still pending
+                        return JSONResponse({
+                            "status": "pending",
+                            "message": "Waiting for authorization. Please complete the authentication flow."
+                        })
+                        
                     except Exception as e:
-                        logger.debug(f"Connection not yet established for {integration_type}: {str(e)}")
-                        # Connection not ready yet, stay pending
+                        logger.warning(f"Error checking connection for {integration_type}: {str(e)}")
+                        return JSONResponse({
+                            "status": "pending", 
+                            "message": "Still waiting for authorization"
+                        })
+                else:
+                    # No entity ID means not properly initialized
+                    return JSONResponse({
+                        "status": "error",
+                        "message": "Integration not properly initialized"
+                    })
             except Exception as e:
                 logger.warning(f"Failed to verify Composio connection: {str(e)}")
         
