@@ -167,20 +167,31 @@ async def get_integration_status(
                     }
                     
                     # Check for connected accounts for this entity
-                    api_url = f"https://backend.composio.dev/api/v1/connectedAccounts"
+                    api_url = f"https://backend.composio.dev/api/v3/connected_accounts"
                     params = {
-                        "user_uuid": composio_entity_id,
-                        "showActiveOnly": "true"
+                        "user_ids": composio_entity_id,
+                        "statuses": "ACTIVE",
+                        "toolkit_slugs": integration_type,
+                        "limit": 100
                     }
                     
                     response = requests.get(api_url, headers=headers, params=params)
                     
+                    logger.info(f"Composio API check - URL: {api_url}, Params: {params}, Status: {response.status_code}")
+                    
                     if response.status_code == 200:
-                        connected_accounts = response.json().get('items', [])
+                        response_data = response.json()
+                        connected_accounts = response_data.get('items', [])
+                        logger.info(f"Found {len(connected_accounts)} connected accounts for entity {composio_entity_id}")
                         
                         # Look for our specific integration
                         for account in connected_accounts:
-                            if account.get('integrationId') == integration_id or account.get('appUniqueId') == integration_type:
+                            # Check if this account matches our integration
+                            toolkit = account.get('toolkit', {})
+                            logger.info(f"Checking account: toolkit slug={toolkit.get('slug')}, status={account.get('status')}, looking for {integration_type}")
+                            
+                            if (toolkit.get('slug', '').lower() == integration_type.lower() and
+                                account.get('status') == 'ACTIVE'):
                                 # Found it! Update the database
                                 metadata = integration.get('metadata', {})
                                 if isinstance(metadata, str):
@@ -202,9 +213,11 @@ async def get_integration_status(
                                 }).eq('id', integration['id']).execute()
                                 
                                 return JSONResponse({"status": "connected", "message": "Successfully connected"})
+                    else:
+                        logger.warning(f"Composio API returned {response.status_code}: {response.text}")
                     
                 except Exception as api_error:
-                    logger.debug(f"Direct API check failed: {str(api_error)}")
+                    logger.error(f"Direct API check failed: {str(api_error)}", exc_info=True)
                 
                 # Fallback to using wait_for_connection
                 metadata = integration.get('metadata', {})
