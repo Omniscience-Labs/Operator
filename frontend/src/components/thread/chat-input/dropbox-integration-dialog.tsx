@@ -90,8 +90,6 @@ export function DropboxIntegrationDialog({
   };
 
   const checkConnectionStatus = async () => {
-    if (!connectionId) return false;
-    
     try {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
@@ -117,7 +115,13 @@ export function DropboxIntegrationDialog({
   const startStatusPolling = () => {
     setCheckingStatus(true);
     
+    let attempts = 0;
+    const maxAttempts = 60; // 2 minutes total (60 * 2 seconds)
+    
     const pollInterval = setInterval(async () => {
+      attempts++;
+      console.log(`Checking Dropbox connection status (attempt ${attempts}/${maxAttempts})...`);
+      
       const isConnected = await checkConnectionStatus();
       
       if (isConnected) {
@@ -126,17 +130,16 @@ export function DropboxIntegrationDialog({
         toast.success('Dropbox connected successfully!');
         onSuccess?.();
         onOpenChange(false);
+      } else if (attempts >= maxAttempts) {
+        clearInterval(pollInterval);
+        setCheckingStatus(false);
+        setError('Connection timeout. Please try again.');
+        toast.error('Connection timeout. Please try again.');
       }
     }, 2000); // Poll every 2 seconds
-    
-    // Stop polling after 5 minutes
-    setTimeout(() => {
-      clearInterval(pollInterval);
-      setCheckingStatus(false);
-      if (open) {
-        setError('Connection timeout. Please try again.');
-      }
-    }, 300000);
+
+    // Clean up interval if dialog is closed
+    return () => clearInterval(pollInterval);
   };
 
   // Reset state when dialog closes
