@@ -77,7 +77,6 @@ async def initiate_composio_integration(
         connection_request = composio.connected_accounts.initiate(
             user_id=user_id,
             auth_config_id=integration_id,
-            config=auth_scheme.oauth2()
         )
         
         # Store or update integration record
