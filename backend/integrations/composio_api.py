@@ -154,21 +154,22 @@ async def get_integration_status(
                 if composio_entity_id:
                     # Try to get the connected account directly
                     try:
-                        # Get all connected accounts for this entity
-                        connected_accounts = composio.connected_accounts.get(entity_ids=[composio_entity_id])
-                        
-                        # Find the specific connection we're looking for
-                        connection_found = False
-                        for account in connected_accounts:
-                            if account.id == integration.get('composio_connection_id'):
-                                # Connection is established!
+                        # Get the specific connected account by ID
+                        if integration.get('composio_connection_id'):
+                            try:
+                                # Try to get the specific connected account
+                                connected_account = composio.connected_accounts.get(integration.get('composio_connection_id'))
+                                
+                                # If we get here without exception, connection is established!
                                 await client.table('user_integrations').update({
                                     "status": "connected",
                                     "connected_at": datetime.now(timezone.utc).isoformat()
                                 }).eq('id', integration['id']).execute()
                                 integration['status'] = 'connected'
-                                connection_found = True
-                                break
+                                    
+                            except Exception as e:
+                                # If we can't get the specific account, it's not ready yet
+                                logger.debug(f"Connection not yet established for {integration_type}: {str(e)}")
                                 
                     except Exception as e:
                         logger.debug(f"Connection not yet established for {integration_type}: {str(e)}")
