@@ -59,6 +59,9 @@ CREATE TRIGGER trigger_thread_views_updated_at
 -- Grant permissions
 GRANT ALL PRIVILEGES ON TABLE thread_views TO authenticated, service_role;
 
+-- Drop the function if it exists to avoid conflicts with different return types
+DROP FUNCTION IF EXISTS get_thread_statuses_for_account(UUID);
+
 -- Function to get thread statuses for a user
 CREATE OR REPLACE FUNCTION get_thread_statuses_for_account(p_account_id UUID)
 RETURNS TABLE (

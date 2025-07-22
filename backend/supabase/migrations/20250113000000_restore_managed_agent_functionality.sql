@@ -153,6 +153,9 @@ $$;
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION add_agent_to_library(UUID, UUID) TO authenticated;
 
+-- Drop the function if it exists to avoid conflicts with different return types
+DROP FUNCTION IF EXISTS get_managed_agents_for_user(UUID);
+
 -- Recreate the helper function that was also removed
 CREATE OR REPLACE FUNCTION get_managed_agents_for_user(p_user_id UUID)
 RETURNS TABLE(agent_id UUID, original_agent_id UUID)

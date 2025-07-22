@@ -21,6 +21,11 @@ CREATE INDEX IF NOT EXISTS idx_team_agents_shared_by ON team_agents(shared_by_ac
 -- Enable RLS on team_agents table
 ALTER TABLE team_agents ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS team_agents_select ON team_agents;
+DROP POLICY IF EXISTS team_agents_insert ON team_agents;
+DROP POLICY IF EXISTS team_agents_delete ON team_agents;
+
 -- Policy for viewing team agents: team members can see agents shared with their team
 CREATE POLICY team_agents_select ON team_agents
     FOR SELECT
