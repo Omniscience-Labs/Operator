@@ -82,8 +82,9 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         title: 'Welcome to Operator! 🚀',
         text: `
           <div class="space-y-3">
-            <p>Welcome to Operator! This is your AI-powered assistant.</p>
-            <p>Click the tour button anytime to get help with features.</p>
+            <p>Hey there! I'm Operator, your AI-powered assistant.</p>
+            <p>I can help you with anything - from analyzing data to creating reports, just describe what you need!</p>
+            <p><strong>💡 Tip:</strong> Click the tour button anytime for help with features.</p>
           </div>
         `,
         buttons: [

@@ -1,40 +1,85 @@
-/* Custom Shepherd.js tour styles for Operator */
+/* Custom Shepherd.js tour styles for Operator - Flag Bubble Design */
 
 .shepherd-theme-arrows {
-  background: hsl(var(--background));
-  border: 1px solid hsl(var(--border));
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  color: hsl(var(--foreground));
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3), 0 4px 16px rgba(139, 92, 246, 0.2);
+  color: white;
   font-family: inherit;
-  max-width: 400px;
+  max-width: 320px;
   padding: 0;
+  position: relative;
+  overflow: hidden;
 }
 
+/* Flag bubble arrow */
+.shepherd-theme-arrows::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 12px solid transparent;
+  z-index: 1;
+}
+
+.shepherd-theme-arrows.shepherd-arrow-top::before {
+  border-bottom-color: #6366f1;
+  top: -24px;
+  left: 20px;
+}
+
+.shepherd-theme-arrows.shepherd-arrow-bottom::before {
+  border-top-color: #6366f1;
+  bottom: -24px;
+  left: 20px;
+}
+
+.shepherd-theme-arrows.shepherd-arrow-left::before {
+  border-right-color: #6366f1;
+  left: -24px;
+  top: 20px;
+}
+
+.shepherd-theme-arrows.shepherd-arrow-right::before {
+  border-left-color: #6366f1;
+  right: -24px;
+  top: 20px;
+}
+
+/* Header styling */
 .shepherd-theme-arrows .shepherd-header {
-  background: hsl(var(--background));
-  border-bottom: 1px solid hsl(var(--border));
-  border-radius: 0.5rem 0.5rem 0 0;
-  padding: 1rem 1.5rem 0.75rem;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px 12px 0 0;
+  padding: 1rem 1.25rem 0.75rem;
+  position: relative;
 }
 
 .shepherd-theme-arrows .shepherd-title {
-  color: hsl(var(--foreground));
+  color: white;
   font-size: 1.125rem;
-  font-weight: 600;
-  line-height: 1.5;
+  font-weight: 700;
+  line-height: 1.4;
   margin: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* Content styling */
 .shepherd-theme-arrows .shepherd-text {
-  color: hsl(var(--muted-foreground));
+  color: rgba(255, 255, 255, 0.95);
   font-size: 0.875rem;
-  line-height: 1.5;
-  padding: 1rem 1.5rem;
+  line-height: 1.6;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .shepherd-theme-arrows .shepherd-text p {
   margin: 0 0 0.75rem 0;
+}
+
+.shepherd-theme-arrows .shepherd-text p:last-child {
+  margin-bottom: 0;
 }
 
 .shepherd-theme-arrows .shepherd-text ul {
@@ -46,73 +91,94 @@
   margin: 0.25rem 0;
 }
 
+/* Footer styling */
 .shepherd-theme-arrows .shepherd-footer {
-  background: hsl(var(--background));
-  border-top: 1px solid hsl(var(--border));
-  border-radius: 0 0 0.5rem 0.5rem;
-  padding: 0.75rem 1.5rem 1rem;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0 0 12px 12px;
+  padding: 0.75rem 1.25rem 1rem;
 }
 
+/* Button styling */
 .shepherd-theme-arrows .shepherd-button {
-  background: hsl(var(--primary));
-  border: 1px solid hsl(var(--primary));
-  border-radius: 0.375rem;
-  color: hsl(var(--primary-foreground));
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
   margin: 0 0.25rem;
-  padding: 0.5rem 1rem;
+  padding: 0.625rem 1.25rem;
   transition: all 0.2s ease-in-out;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .shepherd-theme-arrows .shepherd-button:hover {
-  background: hsl(var(--primary) / 0.9);
-  border-color: hsl(var(--primary) / 0.9);
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.shepherd-theme-arrows .shepherd-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
 .shepherd-theme-arrows .shepherd-button:focus {
-  outline: 2px solid hsl(var(--ring));
+  outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 2px;
 }
 
 .shepherd-theme-arrows .shepherd-button.shepherd-button-secondary {
-  background: hsl(var(--secondary));
-  border-color: hsl(var(--secondary));
-  color: hsl(var(--secondary-foreground));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
 .shepherd-theme-arrows .shepherd-button.shepherd-button-secondary:hover {
-  background: hsl(var(--secondary) / 0.9);
-  border-color: hsl(var(--secondary) / 0.9);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* Close button styling */
 .shepherd-theme-arrows .shepherd-cancel-icon {
-  background: transparent;
-  border: none;
-  color: hsl(var(--muted-foreground));
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 400;
   line-height: 1;
   margin: 0;
-  padding: 0;
-  transition: color 0.2s ease-in-out;
+  padding: 0.25rem;
+  transition: all 0.2s ease-in-out;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .shepherd-theme-arrows .shepherd-cancel-icon:hover {
-  color: hsl(var(--foreground));
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* Arrow styling */
 .shepherd-theme-arrows .shepherd-arrow {
   height: 1rem;
   width: 1rem;
 }
 
 .shepherd-theme-arrows .shepherd-arrow:before {
-  background: hsl(var(--background));
-  border: 1px solid hsl(var(--border));
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: 2px solid rgba(255, 255, 255, 0.1);
   content: '';
   height: 1rem;
   transform: rotate(45deg);
@@ -139,23 +205,26 @@
   border-left: none;
 }
 
-/* Modal overlay */
+/* Modal overlay - subtle background */
 .shepherd-modal-overlay-container {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(1px);
 }
 
-/* Dark mode adjustments */
-@media (prefers-color-scheme: dark) {
-  .shepherd-theme-arrows {
-    background: hsl(var(--background));
-    border-color: hsl(var(--border));
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+/* Animation for flag bubble appearance */
+@keyframes flagBubbleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
   }
-  
-  .shepherd-modal-overlay-container {
-    background: rgba(0, 0, 0, 0.7);
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
   }
+}
+
+.shepherd-theme-arrows {
+  animation: flagBubbleIn 0.3s ease-out;
 }
 
 /* Responsive adjustments */
@@ -171,5 +240,21 @@
   
   .shepherd-theme-arrows .shepherd-footer {
     padding: 0.5rem 1rem 0.75rem;
+  }
+  
+  .shepherd-theme-arrows .shepherd-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .shepherd-theme-arrows {
+    border: 2px solid white;
+  }
+  
+  .shepherd-theme-arrows .shepherd-button {
+    border-width: 2px;
   }
 } 
