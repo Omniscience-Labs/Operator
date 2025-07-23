@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Tour, Step } from 'shepherd.js';
+import { Tour } from 'shepherd.js';
 import 'shepherd.js/dist/css/shepherd.css';
 import './tour-styles.css';
 import './types';
