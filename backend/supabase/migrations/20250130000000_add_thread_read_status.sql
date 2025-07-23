@@ -1,16 +1,40 @@
 BEGIN;
 
 -- Create thread_views table to track when users last viewed threads
-CREATE TABLE IF NOT EXISTS thread_views (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    thread_id UUID NOT NULL REFERENCES threads(thread_id) ON DELETE CASCADE,
-    account_id UUID NOT NULL REFERENCES basejump.accounts(id) ON DELETE CASCADE,
-    last_viewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    
-    UNIQUE(thread_id, account_id)
-);
+-- Check if threads table exists first
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'threads'
+    ) THEN
+        -- Threads table exists, create with foreign key
+        CREATE TABLE IF NOT EXISTS thread_views (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            thread_id UUID NOT NULL REFERENCES threads(thread_id) ON DELETE CASCADE,
+            account_id UUID NOT NULL REFERENCES basejump.accounts(id) ON DELETE CASCADE,
+            last_viewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            
+            UNIQUE(thread_id, account_id)
+        );
+    ELSE
+        -- Threads table doesn't exist yet, create without foreign key
+        CREATE TABLE IF NOT EXISTS thread_views (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            thread_id UUID NOT NULL, -- No foreign key yet
+            account_id UUID NOT NULL REFERENCES basejump.accounts(id) ON DELETE CASCADE,
+            last_viewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            
+            UNIQUE(thread_id, account_id)
+        );
+        RAISE NOTICE 'thread_views table created without thread_id foreign key - will be added when threads table is created';
+    END IF;
+END $$;
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_thread_views_thread_id ON thread_views(thread_id);
