@@ -505,7 +505,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   }, [customModels, modelOptions]); // Also depend on modelOptions to refresh when parent changes
 
   return (
-    <div className="relative">
+    <div className="relative" data-testid="model-selector">
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button

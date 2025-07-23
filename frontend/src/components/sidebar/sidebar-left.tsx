@@ -107,6 +107,7 @@ export function SidebarLeft({
     <Sidebar
       collapsible="icon"
       className="border-r-0 relative overflow-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+      data-testid="sidebar"
       {...props}
     >
       {/* Liquid Glass Background Layers */}

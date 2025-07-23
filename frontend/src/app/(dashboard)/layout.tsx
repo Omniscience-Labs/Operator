@@ -15,6 +15,7 @@ import { DeleteOperationProvider } from '@/contexts/DeleteOperationContext';
 import { AgentStatusProvider } from '@/contexts/AgentStatusContext';
 import { StatusOverlay } from '@/components/ui/status-overlay';
 import { VSentry } from '@/components/sentry';
+import { OperatorTour } from '@/components/tour';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -108,6 +109,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
           {/* Status overlay for deletion operations */}
           <StatusOverlay />
+          
+          {/* Tour component */}
+          <OperatorTour />
         </SidebarProvider>
       </DeleteOperationProvider>
     </AgentStatusProvider>
