@@ -41,10 +41,19 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       }
 
       // Dynamic import to ensure proper module loading
-      const { Tour } = await import('shepherd.js');
-      console.log('🏗️ Creating new Tour instance...', typeof Tour);
+      const shepherdModule = await import('shepherd.js');
+      console.log('📦 Shepherd module:', shepherdModule);
       
-      tourRef.current = new Tour({
+      // Try different ways to get the Tour constructor
+      let TourConstructor = shepherdModule.Tour || shepherdModule.default?.Tour || shepherdModule.default;
+      
+      console.log('🏗️ Tour constructor found:', typeof TourConstructor, TourConstructor);
+      
+      if (!TourConstructor || typeof TourConstructor !== 'function') {
+        throw new Error('Tour constructor not found in shepherd.js module');
+      }
+      
+      tourRef.current = new TourConstructor({
         defaultStepOptions: {
           cancelIcon: {
             enabled: true,
