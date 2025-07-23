@@ -33,12 +33,14 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
   }, [isFirstTime]);
 
   const startTour = () => {
-    console.log('startTour called, Tour constructor:', typeof Tour);
+    console.log('🎬 startTour called, Tour constructor:', typeof Tour);
     if (tourRef.current) {
+      console.log('🔄 Completing existing tour before starting new one');
       tourRef.current.complete();
     }
 
     try {
+      console.log('🏗️ Creating new Tour instance...');
       tourRef.current = new Tour({
       defaultStepOptions: {
         cancelIcon: {
@@ -102,19 +104,26 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       onComplete?.();
     });
 
+      console.log('🎯 Starting tour...');
       tourRef.current.start();
-      console.log('Tour started successfully!');
+      console.log('✅ Tour started successfully!');
     } catch (error) {
-      console.error('Error starting tour:', error);
+      console.error('❌ Error starting tour:', error);
+      console.error('Error details:', error.message, error.stack);
     }
   };
 
   const handleTourButtonClick = () => {
-    console.log('Tour button clicked!', { isTourActive, tourRef: tourRef.current });
+    console.log('🎯 Tour button clicked!', { 
+      isTourActive, 
+      tourRef: tourRef.current,
+      Tour: typeof Tour 
+    });
     if (isTourActive) {
+      console.log('🛑 Completing existing tour...');
       tourRef.current?.complete();
     } else {
-      console.log('Starting tour...');
+      console.log('🚀 Starting new tour...');
       startTour();
     }
   };
