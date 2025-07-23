@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Tour, Step } from 'shepherd.js';
 import 'shepherd.js/dist/css/shepherd.css';
 import './tour-styles.css';
+import './types';
 import { Button } from '@/components/ui/button';
 import { Play, HelpCircle, X } from 'lucide-react';
 
@@ -26,14 +27,14 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
     return () => {
       if (tourRef.current) {
-        tourRef.current.destroy();
+        tourRef.current.complete();
       }
     };
   }, [isFirstTime]);
 
   const startTour = () => {
     if (tourRef.current) {
-      tourRef.current.destroy();
+      tourRef.current.complete();
     }
 
     tourRef.current = new Tour({
