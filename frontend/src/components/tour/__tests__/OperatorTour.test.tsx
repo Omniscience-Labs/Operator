@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { OperatorTour } from '../OperatorTour';
 
 // Mock Shepherd.js
@@ -34,15 +34,17 @@ describe('OperatorTour', () => {
     expect(screen.queryByTestId('tour-button')).not.toBeInTheDocument();
   });
 
-  it('calls onComplete when tour is completed', () => {
+  it('calls onComplete when tour is completed', async () => {
     const onComplete = jest.fn();
     render(<OperatorTour isFirstTime={false} onComplete={onComplete} />);
     
     const tourButton = screen.getByTestId('tour-button');
     fireEvent.click(tourButton);
     
-    // The tour should be started and onComplete should be called when completed
-    expect(onComplete).toHaveBeenCalled();
+    // Wait for the async tour to start
+    await waitFor(() => {
+      expect(onComplete).toHaveBeenCalled();
+    });
   });
 
   it('auto-starts tour for first-time users', () => {
