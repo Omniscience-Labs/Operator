@@ -33,11 +33,13 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
   }, [isFirstTime]);
 
   const startTour = () => {
+    console.log('startTour called, Tour constructor:', typeof Tour);
     if (tourRef.current) {
       tourRef.current.complete();
     }
 
-    tourRef.current = new Tour({
+    try {
+      tourRef.current = new Tour({
       defaultStepOptions: {
         cancelIcon: {
           enabled: true,
@@ -371,17 +373,24 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       onComplete?.();
     });
 
-    tourRef.current.start();
+      tourRef.current.start();
+      console.log('Tour started successfully!');
+    } catch (error) {
+      console.error('Error starting tour:', error);
+    }
   };
 
   const handleTourButtonClick = () => {
+    console.log('Tour button clicked!', { isTourActive, tourRef: tourRef.current });
     if (isTourActive) {
       tourRef.current?.complete();
     } else {
+      console.log('Starting tour...');
       startTour();
     }
   };
 
+  console.log('Rendering tour component:', { isFirstTime, isTourActive });
   return (
     <div className="tour-container">
       {/* Tour trigger button - only show if not first time */}
