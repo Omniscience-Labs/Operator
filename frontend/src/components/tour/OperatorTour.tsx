@@ -87,7 +87,38 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 2: New Task Guide
+      // Step 2: New Chat Guide
+      tourRef.current.addStep({
+        id: 'new-chat',
+        title: 'Start Your First Chat',
+        text: `
+          <div class="space-y-3">
+            <p>This is where you'll start your conversations with Operator! Type your message here to begin.</p>
+            <p>You can ask me anything - from simple questions to complex tasks. I'm here to help you get things done!</p>
+          </div>
+        `,
+        attachTo: {
+          element: '[data-testid="chat-input"], .chat-input, textarea, input[placeholder*="help"], input[placeholder*="task"]',
+          on: 'top'
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              console.log('🎯 Next button clicked, moving to step 3');
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 3: New Task Guide
       tourRef.current.addStep({
         id: 'new-task',
         title: 'Create Your First Task',
@@ -170,24 +201,38 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       tourRef: tourRef.current
     });
     
-    // Always start a fresh tour when button is clicked
-    console.log('🚀 Starting new tour...');
-    
-    // Clean up any existing tour
-    if (tourRef.current) {
-      try {
-        tourRef.current.destroy();
-      } catch (error) {
-        console.error('Error destroying existing tour:', error);
+    if (isTourActive) {
+      // If tour is active, end it
+      console.log('🛑 Ending active tour...');
+      if (tourRef.current) {
+        try {
+          tourRef.current.complete();
+        } catch (error) {
+          console.error('Error completing tour:', error);
+        }
       }
+      setIsTourActive(false);
+      onComplete?.();
+    } else {
+      // Start a fresh tour
+      console.log('🚀 Starting new tour...');
+      
+      // Clean up any existing tour
+      if (tourRef.current) {
+        try {
+          tourRef.current.destroy();
+        } catch (error) {
+          console.error('Error destroying existing tour:', error);
+        }
+      }
+      
+      // Reset state and start new tour
+      setIsTourActive(false);
+      tourRef.current = null;
+      
+      // Start fresh tour
+      startTour();
     }
-    
-    // Reset state and start new tour
-    setIsTourActive(false);
-    tourRef.current = null;
-    
-    // Start fresh tour
-    startTour();
   };
 
   console.log('Rendering tour component:', { isFirstTime, isTourActive });
