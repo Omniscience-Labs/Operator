@@ -106,8 +106,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         title: 'Create Your First Task',
         text: `
           <div class="space-y-3">
-            <p>Ready to get started? Click "New Task" to create your first task with Operator!</p>
-            <p>This is where you'll begin your AI-powered workflow and see Operator in action.</p>
+            <p>This is where you create a new task with Operator! Click the "New Task" button to get started.</p>
+            <p>Tasks are your way of telling Operator what you need help with - whether it's analyzing data, creating reports, or any other AI-powered workflow.</p>
           </div>
         `,
         attachTo: {
@@ -121,7 +121,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-secondary'
           },
           {
-            text: 'Complete',
+            text: 'End Tour',
             action: () => {
               tourRef.current?.complete();
               setIsTourActive(false);
