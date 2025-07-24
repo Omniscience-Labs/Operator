@@ -87,6 +87,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p><strong>💡 Tip:</strong> Click the tour button anytime for help with features.</p>
           </div>
         `,
+        attachTo: {
+          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
+          on: 'top-end'
+        },
         buttons: [
           {
             text: 'Got it!',
