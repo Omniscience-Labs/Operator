@@ -91,7 +91,10 @@
 }
 
 .shepherd-theme-arrows .shepherd-title {
-  color: hsl(var(--primary));
+  background: linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   font-size: 1.125rem;
   font-weight: 700;
   line-height: 1.4;
