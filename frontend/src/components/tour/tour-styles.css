@@ -1,7 +1,7 @@
 /* Custom Shepherd.js tour styles for Operator - Speech Bubble Design */
 
 .shepherd-theme-arrows {
-  background: hsl(var(--background));
+  background: white;
   border: 2px solid hsl(var(--border));
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
@@ -24,25 +24,25 @@
 }
 
 .shepherd-theme-arrows.shepherd-arrow-top::before {
-  border-bottom-color: hsl(var(--background));
+  border-bottom-color: white;
   top: -24px;
   right: 20px;
 }
 
 .shepherd-theme-arrows.shepherd-arrow-bottom::before {
-  border-top-color: hsl(var(--background));
+  border-top-color: white;
   bottom: -24px;
   right: 20px;
 }
 
 .shepherd-theme-arrows.shepherd-arrow-left::before {
-  border-right-color: hsl(var(--background));
+  border-right-color: white;
   left: -24px;
   top: 20px;
 }
 
 .shepherd-theme-arrows.shepherd-arrow-right::before {
-  border-left-color: hsl(var(--background));
+  border-left-color: white;
   right: -24px;
   top: 20px;
 }
@@ -83,7 +83,7 @@
 
 /* Header styling */
 .shepherd-theme-arrows .shepherd-header {
-  background: hsl(var(--background));
+  background: white;
   border-bottom: 1px solid hsl(var(--border));
   border-radius: 14px 14px 0 0;
   padding: 1rem 1.25rem 0.75rem;
@@ -91,7 +91,7 @@
 }
 
 .shepherd-theme-arrows .shepherd-title {
-  color: hsl(var(--foreground));
+  color: hsl(var(--primary));
   font-size: 1.125rem;
   font-weight: 700;
   line-height: 1.4;
@@ -104,7 +104,7 @@
   font-size: 0.875rem;
   line-height: 1.6;
   padding: 1rem 1.25rem;
-  background: hsl(var(--background));
+  background: white;
 }
 
 .shepherd-theme-arrows .shepherd-text p {
@@ -126,7 +126,7 @@
 
 /* Footer styling */
 .shepherd-theme-arrows .shepherd-footer {
-  background: hsl(var(--background));
+  background: white;
   border-top: 1px solid hsl(var(--border));
   border-radius: 0 0 14px 14px;
   padding: 0.75rem 1.25rem 1rem;
@@ -209,7 +209,7 @@
 }
 
 .shepherd-theme-arrows .shepherd-arrow:before {
-  background: hsl(var(--background));
+  background: white;
   border: 1px solid hsl(var(--border));
   content: '';
   height: 1rem;
@@ -262,7 +262,32 @@
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
   .shepherd-theme-arrows {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  .shepherd-theme-arrows .shepherd-header {
+    background: hsl(var(--background));
+  }
+  
+  .shepherd-theme-arrows .shepherd-text {
+    background: hsl(var(--background));
+  }
+  
+  .shepherd-theme-arrows .shepherd-footer {
+    background: hsl(var(--background));
+  }
+  
+  .shepherd-theme-arrows::before {
+    border-bottom-color: hsl(var(--background));
+    border-top-color: hsl(var(--background));
+    border-right-color: hsl(var(--background));
+    border-left-color: hsl(var(--background));
+  }
+  
+  .shepherd-theme-arrows .shepherd-arrow:before {
+    background: hsl(var(--background));
   }
   
   .shepherd-modal-overlay-container {

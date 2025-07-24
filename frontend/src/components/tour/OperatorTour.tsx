@@ -79,12 +79,12 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 1: Welcome
       tourRef.current.addStep({
         id: 'welcome',
-        title: 'Welcome to Operator! 🚀',
+        title: 'Welcome to Operator!',
         text: `
           <div class="space-y-3">
             <p>Hey there! I'm Operator, your AI-powered assistant.</p>
             <p>I can help you with anything - from analyzing data to creating reports, just describe what you need!</p>
-            <p><strong>💡 Tip:</strong> Let me show you what I can do!</p>
+            <p><strong>Tip:</strong> Let me show you what I can do!</p>
           </div>
         `,
         attachTo: {
@@ -103,7 +103,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 2: Service Contract Example
       tourRef.current.addStep({
         id: 'service-contract',
-        title: '📄 Start with a Service Contract',
+        title: 'Start with a Service Contract',
         text: `
           <div class="space-y-3">
             <p>This is just a service contract — and we're starting with the header file. From here, the agent knows exactly what to do.</p>
@@ -111,8 +111,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: 'input[placeholder*="Describe what you need"], textarea, .chat-input',
+          on: 'bottom-start'
         },
         buttons: [
           {
@@ -131,7 +131,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 3: Context Awareness
       tourRef.current.addStep({
         id: 'context-awareness',
-        title: '🧠 Context Awareness',
+        title: 'Context Awareness',
         text: `
           <div class="space-y-3">
             <p>The system is smart. It knows what to look for — whether it's pricing data, technical references, or your previous project documents.</p>
@@ -139,8 +139,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.paperclip-icon, [data-attachment], .attachment-button',
+          on: 'bottom-start'
         },
         buttons: [
           {
@@ -159,7 +159,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 4: Style Matching
       tourRef.current.addStep({
         id: 'style-matching',
-        title: '✍️ Style Matching',
+        title: 'Style Matching',
         text: `
           <div class="space-y-3">
             <p>We've trained the agent on real past contracts — hundreds or even thousands written by someone like Tim.</p>
@@ -167,8 +167,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.quick-starts, .examples, .suggestions',
+          on: 'top-start'
         },
         buttons: [
           {
@@ -187,7 +187,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 5: Easy Agent Setup
       tourRef.current.addStep({
         id: 'agent-setup',
-        title: '⚙️ Easy Agent Setup',
+        title: 'Easy Agent Setup',
         text: `
           <div class="space-y-3">
             <p>Setting up the agent is simple. You just give us one document — like a typical service contract — and we configure it to handle any document type you need.</p>
@@ -195,8 +195,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.agent-selector, [data-agent-selector], .agent-dropdown',
+          on: 'bottom-start'
         },
         buttons: [
           {
@@ -215,7 +215,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 6: Recurring Workflows
       tourRef.current.addStep({
         id: 'recurring-workflows',
-        title: '🔁 Built for Recurring Workflows',
+        title: 'Built for Recurring Workflows',
         text: `
           <div class="space-y-3">
             <p>If you're doing 4–5 quotes a day, or repeating similar tasks often, this changes the game.</p>
@@ -223,8 +223,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.quick-starts, .examples, .suggestions',
+          on: 'top-start'
         },
         buttons: [
           {
@@ -243,7 +243,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 7: Approval-Driven Automation
       tourRef.current.addStep({
         id: 'approval-automation',
-        title: '✅ Approval-Driven Automation',
+        title: 'Approval-Driven Automation',
         text: `
           <div class="space-y-3">
             <p>Once you're happy, just say 'I approve.' That's the signal.</p>
@@ -251,8 +251,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: 'button[type="submit"], .submit-button, .send-button',
+          on: 'top-start'
         },
         buttons: [
           {
@@ -271,15 +271,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 8: Formatted Output
       tourRef.current.addStep({
         id: 'formatted-output',
-        title: '🧾 Fully Formatted Output',
+        title: 'Fully Formatted Output',
         text: `
           <div class="space-y-3">
             <p>The Word doc includes your branding, your structure, and your tone — just like the references it learned from.</p>
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.file-export, .download-button, .export-options',
+          on: 'bottom-start'
         },
         buttons: [
           {
@@ -298,7 +298,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 9: Real-Time Collaboration
       tourRef.current.addStep({
         id: 'real-time-collaboration',
-        title: '🤖 Real-Time Agent Collaboration',
+        title: 'Real-Time Agent Collaboration',
         text: `
           <div class="space-y-3">
             <p>You can chat with the agent, ask it to change details, fix numbers, update scope — and once it looks good, just approve.</p>
@@ -306,8 +306,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.chat-messages, .message-thread, .conversation',
+          on: 'top-start'
         },
         buttons: [
           {
@@ -326,7 +326,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 10: Multi-Format Export
       tourRef.current.addStep({
         id: 'multi-format-export',
-        title: '📤 Multi-Format Export',
+        title: 'Multi-Format Export',
         text: `
           <div class="space-y-3">
             <p>Once approved, you instantly get a Word document and an Excel sheet.</p>
@@ -334,8 +334,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.file-export, .download-button, .export-options',
+          on: 'bottom-start'
         },
         buttons: [
           {
@@ -354,15 +354,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 11: Excel Breakdown
       tourRef.current.addStep({
         id: 'excel-breakdown',
-        title: '📊 Excel: Material + Labor Breakdown',
+        title: 'Excel: Material + Labor Breakdown',
         text: `
           <div class="space-y-3">
             <p>The Excel file auto-generates all your key numbers: materials, labor, project summary — no manual spreadsheeting needed.</p>
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.file-export, .download-button, .export-options',
+          on: 'bottom-start'
         },
         buttons: [
           {
@@ -381,7 +381,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 12: Beyond Contracts
       tourRef.current.addStep({
         id: 'beyond-contracts',
-        title: '🧪 Explore Beyond Contracts',
+        title: 'Explore Beyond Contracts',
         text: `
           <div class="space-y-3">
             <p>We've also experimented with other types of agents. Want to scrape the web for a summary on someone?</p>
@@ -389,8 +389,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: 'input[placeholder*="Describe what you need"], textarea, .chat-input',
+          on: 'bottom-start'
         },
         buttons: [
           {
@@ -409,7 +409,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 13: Web Scraping
       tourRef.current.addStep({
         id: 'web-scraping',
-        title: '🌐 Name-Based Web Scraping',
+        title: 'Name-Based Web Scraping',
         text: `
           <div class="space-y-3">
             <p>For example, when we typed in Sundaram, it pulled their full internet presence — professional background, LinkedIn data, roles, affiliations.</p>
@@ -417,8 +417,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.web-search, .browser-tool, .search-results',
+          on: 'top-start'
         },
         buttons: [
           {
@@ -437,7 +437,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 14: Web Reports
       tourRef.current.addStep({
         id: 'web-reports',
-        title: '🌍 Web-Published Reports',
+        title: 'Web-Published Reports',
         text: `
           <div class="space-y-3">
             <p>One experiment created a live hosted website — including HTML, CSS, and content — just from a company name.</p>
@@ -445,8 +445,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.web-search, .browser-tool, .search-results',
+          on: 'top-start'
         },
         buttons: [
           {
@@ -465,15 +465,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 15: Company Overviews
       tourRef.current.addStep({
         id: 'company-overviews',
-        title: '🏢 Auto-Generated Company Overviews',
+        title: 'Auto-Generated Company Overviews',
         text: `
           <div class="space-y-3">
             <p>Here's what that webpage included: employee count, years in business, headquarters, founder name, even estimated revenue — all auto-scraped from the web.</p>
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.web-search, .browser-tool, .search-results',
+          on: 'top-start'
         },
         buttons: [
           {
@@ -492,15 +492,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 16: Market Intelligence
       tourRef.current.addStep({
         id: 'market-intelligence',
-        title: '📈 Market Intelligence (Bonus!)',
+        title: 'Market Intelligence (Bonus!)',
         text: `
           <div class="space-y-3">
             <p>It didn't stop there. It added local construction data, market insights for the region, and even comparative charts — showing how your company stacks up.</p>
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.data-analysis, .charts, .analytics',
+          on: 'top-start'
         },
         buttons: [
           {
@@ -519,15 +519,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 17: Competitor Mapping
       tourRef.current.addStep({
         id: 'competitor-mapping',
-        title: '🧭 Competitor Mapping',
+        title: 'Competitor Mapping',
         text: `
           <div class="space-y-3">
             <p>The AI mapped competitors using public data — like Commonwealth Electric or Gaylor Electric — and visualized them side by side.</p>
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.data-analysis, .charts, .analytics',
+          on: 'top-start'
         },
         buttons: [
           {
@@ -546,7 +546,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 18: Download & Share
       tourRef.current.addStep({
         id: 'download-share',
-        title: '📁 Download + Share',
+        title: 'Download + Share',
         text: `
           <div class="space-y-3">
             <p>All your outputs — Word, Excel, web reports — are saved in the workspace. Download anytime.</p>
@@ -554,36 +554,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
-        },
-        buttons: [
-          {
-            text: 'Back',
-            action: () => tourRef.current?.back(),
-            classes: 'shepherd-button-secondary'
-          },
-          {
-            text: 'Next',
-            action: () => tourRef.current?.next(),
-            classes: 'shepherd-button-primary'
-          }
-        ]
-      });
-
-      // Step 19: What's Next
-      tourRef.current.addStep({
-        id: 'whats-next',
-        title: '📚 What\'s Next?',
-        text: `
-          <div class="space-y-3">
-            <p>That's the high-level walkthrough for now. We'll have more tutorials coming soon — but we'd love to see what you build with it.</p>
-            <p><strong>Ready to get started?</strong> Just describe what you need help with!</p>
-          </div>
-        `,
-        attachTo: {
-          element: '.dashboard-content, [data-dashboard-content], .flex.flex-col.items-center.gap-3.justify-center',
-          on: 'top-end'
+          element: '.share-button, .export-options, .download-options',
+          on: 'bottom-start'
         },
         buttons: [
           {
