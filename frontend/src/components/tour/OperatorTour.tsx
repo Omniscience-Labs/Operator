@@ -111,7 +111,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.new-task-button, .add-task, [data-new-task], .task-create-button, button:contains("New Task"), .btn-new-task',
+          element: 'button:contains("New Task"), .new-task-button, .add-task, [data-new-task], .task-create-button, .btn-new-task, button[aria-label*="task"], button[title*="task"]',
           on: 'left'
         },
         buttons: [
@@ -123,9 +123,17 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'End Tour',
             action: () => {
-              tourRef.current?.complete();
-              setIsTourActive(false);
-              onComplete?.();
+              try {
+                if (tourRef.current) {
+                  tourRef.current.complete();
+                }
+                setIsTourActive(false);
+                onComplete?.();
+              } catch (error) {
+                console.error('Error completing tour:', error);
+                setIsTourActive(false);
+                onComplete?.();
+              }
             },
             classes: 'shepherd-button-primary'
           }
@@ -138,13 +146,23 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       });
 
       tourRef.current.on('complete', () => {
-        setIsTourActive(false);
-        onComplete?.();
+        try {
+          setIsTourActive(false);
+          onComplete?.();
+        } catch (error) {
+          console.error('Error in tour complete event:', error);
+          setIsTourActive(false);
+        }
       });
 
       tourRef.current.on('cancel', () => {
-        setIsTourActive(false);
-        onComplete?.();
+        try {
+          setIsTourActive(false);
+          onComplete?.();
+        } catch (error) {
+          console.error('Error in tour cancel event:', error);
+          setIsTourActive(false);
+        }
       });
 
       console.log('🎯 Starting tour...');
@@ -163,7 +181,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     });
     if (isTourActive) {
       console.log('🛑 Completing existing tour...');
-      tourRef.current?.complete();
+      try {
+        if (tourRef.current) {
+          tourRef.current.complete();
+        }
+      } catch (error) {
+        console.error('Error completing tour from button:', error);
+        setIsTourActive(false);
+        onComplete?.();
+      }
     } else {
       console.log('🚀 Starting new tour...');
       startTour();
