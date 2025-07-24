@@ -179,6 +179,25 @@
   border-color: hsl(var(--secondary) / 0.9);
 }
 
+.shepherd-theme-arrows .shepherd-button-primary {
+  background: linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0.5rem 0 0;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.shepherd-theme-arrows .shepherd-button-primary:hover {
+  background: linear-gradient(90deg, #2563eb 0%, #9333ea 20%, #db2777 50%, #9333ea 80%, #2563eb 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
 /* Close button styling */
 .shepherd-theme-arrows .shepherd-cancel-icon {
   background: hsl(var(--secondary));
