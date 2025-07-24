@@ -84,7 +84,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           <div class="space-y-3">
             <p>Hey there! I'm Operator, your AI-powered assistant.</p>
             <p>I can help you with anything - from analyzing data to creating reports, just describe what you need!</p>
-            <p><strong>Tip:</strong> Let me show you how to personalize your experience!</p>
+            <p><strong>Tip:</strong> Let's get you started with your first task!</p>
           </div>
         `,
         attachTo: {
@@ -100,81 +100,19 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 2: Personalization Guide (bottom-left user info)
-      tourRef.current.addStep({
-        id: 'personalization-guide',
-        title: 'Personalize Your Operator',
-        text: `
-          <div class="space-y-3">
-            <p>Let's personalize your Operator experience! Click on your profile to access settings and customize your display name.</p>
-            <p>This makes your interactions more personal and tailored to you.</p>
-          </div>
-        `,
-        attachTo: {
-          element: '.user-account, .account-info, .user-details, .profile-section, .sidebar-account',
-          on: 'top-start'
-        },
-        buttons: [
-          {
-            text: 'Back',
-            action: () => tourRef.current?.back(),
-            classes: 'shepherd-button-secondary'
-          },
-          {
-            text: 'Next',
-            action: () => tourRef.current?.next(),
-            classes: 'shepherd-button-primary'
-          }
-        ]
-      });
-
-      // Step 3: User Settings Personalization
-      tourRef.current.addStep({
-        id: 'user-settings',
-        title: 'Access Your Settings',
-        text: `
-          <div class="space-y-3">
-            <p>Click on your profile to open the settings menu. From there, you can access personalization options to customize your display name and preferences.</p>
-          </div>
-        `,
-        attachTo: {
-          element: '.user-profile, .account-button, .profile-button, [data-user-menu], .user-menu-trigger',
-          on: 'bottom-start'
-        },
-        buttons: [
-          {
-            text: 'Back',
-            action: () => tourRef.current?.back(),
-            classes: 'shepherd-button-secondary'
-          },
-          {
-            text: 'Open Settings',
-            action: () => {
-              // Click the user profile button to open settings
-              const userProfileButton = document.querySelector('.user-profile, .account-button, .profile-button, [data-user-menu], .user-menu-trigger');
-              if (userProfileButton) {
-                (userProfileButton as HTMLElement).click();
-              }
-              tourRef.current?.next();
-            },
-            classes: 'shepherd-button-primary'
-          }
-        ]
-      });
-
-      // Step 4: New Task Guide
+      // Step 2: New Task Guide
       tourRef.current.addStep({
         id: 'new-task',
         title: 'Create Your First Task',
         text: `
           <div class="space-y-3">
             <p>Ready to get started? Click "New Task" to create your first task with Operator!</p>
-            <p>This is where you'll begin your AI-powered workflow.</p>
+            <p>This is where you'll begin your AI-powered workflow and see Operator in action.</p>
           </div>
         `,
         attachTo: {
-          element: '.new-task-button, .add-task, [data-new-task], .task-create-button',
-          on: 'bottom-start'
+          element: '.new-task-button, .add-task, [data-new-task], .task-create-button, button:contains("New Task"), .btn-new-task',
+          on: 'left'
         },
         buttons: [
           {
