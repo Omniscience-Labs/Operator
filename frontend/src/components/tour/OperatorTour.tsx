@@ -35,24 +35,18 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
   const startTour = async () => {
     try {
       console.log('🎬 startTour called');
-      if (tourRef.current) {
-        console.log('🔄 Completing existing tour before starting new one');
-        tourRef.current.complete();
-      }
-
-      // Dynamic import to ensure proper module loading
+      
+      // Import Shepherd.js dynamically
       const shepherdModule = await import('shepherd.js');
-      console.log('📦 Shepherd module:', shepherdModule);
-      
-      // Try different ways to get the Tour constructor
       let TourConstructor = shepherdModule.Tour || shepherdModule.default?.Tour || shepherdModule.default;
-      
-      console.log('🏗️ Tour constructor found:', typeof TourConstructor, TourConstructor);
       
       if (!TourConstructor || typeof TourConstructor !== 'function') {
         throw new Error('Tour constructor not found in shepherd.js module');
       }
+
+      console.log('🏗️ Creating new Tour instance...', TourConstructor);
       
+      // Create new tour instance
       tourRef.current = new TourConstructor({
         defaultStepOptions: {
           cancelIcon: {
@@ -60,17 +54,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             label: 'Close tour'
           },
           classes: 'shepherd-theme-arrows',
-          scrollTo: true,
-          popperOptions: {
-            modifiers: [
-              {
-                name: 'offset',
-                options: {
-                  offset: [0, 12]
-                }
-              }
-            ]
-          }
+          scrollTo: true
         },
         useModalOverlay: true,
         modalOverlayOpeningPadding: 4
@@ -94,7 +78,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         buttons: [
           {
             text: 'Next',
-            action: () => tourRef.current?.next(),
+            action: () => {
+              console.log('🎯 Next button clicked, moving to step 2');
+              tourRef.current?.next();
+            },
             classes: 'shepherd-button-primary'
           }
         ]
@@ -142,10 +129,12 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       // Event listeners
       tourRef.current.on('start', () => {
+        console.log('🎬 Tour started');
         setIsTourActive(true);
       });
 
       tourRef.current.on('complete', () => {
+        console.log('✅ Tour completed');
         try {
           setIsTourActive(false);
           onComplete?.();
@@ -156,6 +145,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       });
 
       tourRef.current.on('cancel', () => {
+        console.log('❌ Tour cancelled');
         try {
           setIsTourActive(false);
           onComplete?.();
@@ -179,21 +169,25 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       isTourActive, 
       tourRef: tourRef.current
     });
-    if (isTourActive) {
-      console.log('🛑 Completing existing tour...');
+    
+    // Always start a fresh tour when button is clicked
+    console.log('🚀 Starting new tour...');
+    
+    // Clean up any existing tour
+    if (tourRef.current) {
       try {
-        if (tourRef.current) {
-          tourRef.current.complete();
-        }
+        tourRef.current.destroy();
       } catch (error) {
-        console.error('Error completing tour from button:', error);
-        setIsTourActive(false);
-        onComplete?.();
+        console.error('Error destroying existing tour:', error);
       }
-    } else {
-      console.log('🚀 Starting new tour...');
-      startTour();
     }
+    
+    // Reset state and start new tour
+    setIsTourActive(false);
+    tourRef.current = null;
+    
+    // Start fresh tour
+    startTour();
   };
 
   console.log('Rendering tour component:', { isFirstTime, isTourActive });
