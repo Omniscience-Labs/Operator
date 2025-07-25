@@ -130,7 +130,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         `,
         attachTo: {
           element: '.file-upload-handler, [data-testid="file-upload"], button[aria-label*="upload"], button[aria-label*="file"], .attachment-area, .file-input',
-          on: 'left'
+          on: 'bottom'
         },
         buttons: [
           {
@@ -161,7 +161,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         `,
         attachTo: {
           element: '.integrations-dropdown, [data-testid="integrations"], button[aria-label*="integration"], button[aria-label*="plugin"], .plugin-area, .integration-button',
-          on: 'left'
+          on: 'bottom'
         },
         buttons: [
           {
