@@ -136,6 +136,16 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           element: 'button:has(.paperclip), button:has([data-testid="file-upload"]), .file-upload-handler button, button[aria-label*="upload"], button[aria-label*="file"]',
           on: 'left'
         },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [0, -20], // Move popup higher so highlighted area is visible
+              },
+            },
+          ],
+        },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
@@ -186,6 +196,16 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           element: 'button:has(.plug), [data-radix-collection-item]:has(.plug), .integrations-dropdown button, button[aria-label*="integration"], button[aria-label*="plugin"]',
           on: 'top'
         },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [0, -20], // Move popup higher so highlighted area is visible
+              },
+            },
+          ],
+        },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
@@ -235,6 +255,16 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         attachTo: {
           element: 'button:has(.file-audio), button:has([data-testid="meeting-recorder"]), .meeting-recorder button, button[aria-label*="meeting"], button[aria-label*="audio"]',
           on: 'top'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [0, -20], // Move popup higher so highlighted area is visible
+              },
+            },
+          ],
         },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
@@ -398,18 +428,18 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         title: 'Create Your First Task',
         text: `
           <div class="space-y-3">
-            <p>This is where you create a new task with Operator! Click the "New Task" button to get started.</p>
+            <p>This is where you create a new task with Operator! Click the "New Task" button in the sidebar to get started.</p>
             <p>Tasks are your way of telling Operator what you need help with - whether it's analyzing data, creating reports, or any other AI-powered workflow.</p>
           </div>
         `,
         attachTo: {
-          element: 'button:has(.plus), .liquid-button:has(.plus), button:has([class*="New Task"]), .new-task-button, .add-task, [data-new-task], .task-create-button, .btn-new-task, button[aria-label*="task"], button[title*="task"]',
+          element: '.liquid-button:has(.plus), .sidebar-menu-button:has(.plus), [data-testid="new-task-button"], .tasks-section .liquid-button, .sidebar-content .liquid-button:has(.plus)',
           on: 'right'
         },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
-              const element = document.querySelector('button:has(.plus), .liquid-button:has(.plus), button:has([class*="New Task"]), .new-task-button, .add-task, [data-new-task], .task-create-button, .btn-new-task, button[aria-label*="task"], button[title*="task"]');
+              const element = document.querySelector('.liquid-button:has(.plus), .sidebar-menu-button:has(.plus), [data-testid="new-task-button"], .tasks-section .liquid-button, .sidebar-content .liquid-button:has(.plus)');
               if (element) {
                 addHighlight(element);
               }
@@ -419,7 +449,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeHidePromise: () => {
           return new Promise<void>((resolve) => {
-            const element = document.querySelector('button:has(.plus), .liquid-button:has(.plus), button:has([class*="New Task"]), .new-task-button, .add-task, [data-new-task], .task-create-button, .btn-new-task, button[aria-label*="task"], button[title*="task"]');
+            const element = document.querySelector('.liquid-button:has(.plus), .sidebar-menu-button:has(.plus), [data-testid="new-task-button"], .tasks-section .liquid-button, .sidebar-content .liquid-button:has(.plus)');
             if (element) {
               removeHighlight(element);
             }
