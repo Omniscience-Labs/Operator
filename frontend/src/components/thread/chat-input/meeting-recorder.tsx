@@ -45,12 +45,13 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({
           <Button
             type="button"
             variant="ghost"
-            size="sm"
+            size="default"
             onClick={handleClick}
             disabled={disabled}
-            className="h-8 w-8 p-0 text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100"
+            className="h-7 rounded-md text-muted-foreground"
           >
             <FileAudio className="h-4 w-4" />
+            <span className="text-sm sm:block hidden">Meetings</span>
           </Button>
         </TooltipTrigger>
         <TooltipContent>Open Meetings</TooltipContent>

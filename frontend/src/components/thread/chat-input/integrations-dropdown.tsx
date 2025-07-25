@@ -135,12 +135,13 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
                   variant="ghost"
                   size="default"
                   className={cn(
-                    "h-8 rounded-lg text-muted-foreground shadow-none border-none focus:ring-0 px-3",
+                    "h-7 rounded-md text-muted-foreground",
                     className
                   )}
                   disabled={disabled}
                 >
                   <Plug className="h-4 w-4" />
+                  <span className="text-sm sm:block hidden">Integrations</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-72 p-2">
