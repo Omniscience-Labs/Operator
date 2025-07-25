@@ -46,9 +46,10 @@ class DataProvidersTool(Tool):
                     'tool_name_for_analytics': tool_name_for_analytics,
                     'data_provider_name': service_name,
                     'route': route,
-                    'credits': float(credits),
+                    'credits': 0.0,  # Set to 0 for failed calls (per user request)
                     'calculation_details': credit_details,
-                    'usage_type': 'tool'
+                    'usage_type': 'tool',
+                    'failed': True  # Optional flag for analytics
                 }
             except Exception as calc_error:
                 logger.debug(f"Could not calculate credits for failed call: {calc_error}")
@@ -270,7 +271,7 @@ Use this tool when you need to discover what endpoints are available.
                 "provider_metadata": {
                     "service_name": service_name,
                     "endpoint_route": route,
-                    "request_timestamp": logger.info.__defaults__[0] if hasattr(logger.info, '__defaults__') else "N/A"
+                    "request_timestamp": logger.info.__defaults__[0] if hasattr(logger.info, '__defaults__') and logger.info.__defaults__ is not None else "N/A"
                 }
             }
             

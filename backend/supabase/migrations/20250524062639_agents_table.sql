@@ -88,4 +88,150 @@ END $$;
 -- SET agent_id = NULL
 -- WHERE agent_id IS NULL;
 
+-- Add foreign key constraint to agent_shares if it exists without the constraint
+-- This handles the case where agent_shares was created before agents table
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'agent_shares'
+    ) THEN
+        -- Add foreign key if missing
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.table_constraints 
+            WHERE table_schema = 'public' 
+            AND table_name = 'agent_shares' 
+            AND constraint_type = 'FOREIGN KEY'
+            AND constraint_name LIKE '%agent_id%'
+        ) THEN
+            ALTER TABLE agent_shares 
+            ADD CONSTRAINT agent_shares_agent_id_fkey 
+            FOREIGN KEY (agent_id) 
+            REFERENCES agents(agent_id) 
+            ON DELETE CASCADE;
+            RAISE NOTICE 'Added foreign key constraint for agent_shares.agent_id';
+        END IF;
+        
+        -- Also update the INSERT policy to include agent ownership check
+        DROP POLICY IF EXISTS "Users can create shares for their own agents" ON agent_shares;
+        CREATE POLICY "Users can create shares for their own agents" ON agent_shares
+            FOR INSERT WITH CHECK (
+                creator_account_id = auth.uid() AND
+                EXISTS (
+                    SELECT 1 FROM agents 
+                    WHERE agent_id = agent_shares.agent_id 
+                    AND account_id = auth.uid()
+                )
+            );
+        RAISE NOTICE 'Updated agent_shares INSERT policy to include agent ownership check';
+        
+        -- Also create the get_shared_agent_by_token function now that agents table exists
+        CREATE OR REPLACE FUNCTION get_shared_agent_by_token(share_token TEXT)
+        RETURNS TABLE (
+            agent_data JSONB,
+            share_info JSONB
+        ) AS $func$
+        DECLARE
+            share_record agent_shares%ROWTYPE;
+            agent_record agents%ROWTYPE;
+            creator_name TEXT;
+        BEGIN
+            -- Find the share record
+            SELECT * INTO share_record
+            FROM agent_shares
+            WHERE token = share_token;
+            
+            -- Check if share exists
+            IF NOT FOUND THEN
+                RAISE EXCEPTION 'Share not found' USING ERRCODE = 'P0002';
+            END IF;
+            
+            -- Check if share has expired
+            IF share_record.expires_at IS NOT NULL AND share_record.expires_at < NOW() THEN
+                RAISE EXCEPTION 'Share has expired' USING ERRCODE = 'P0003';
+            END IF;
+            
+            -- Check if share has reached max uses
+            IF share_record.max_uses IS NOT NULL AND share_record.access_count >= share_record.max_uses THEN
+                RAISE EXCEPTION 'Share has reached maximum uses' USING ERRCODE = 'P0004';
+            END IF;
+            
+            -- Get the agent
+            SELECT * INTO agent_record
+            FROM agents
+            WHERE agent_id = share_record.agent_id;
+            
+            IF NOT FOUND THEN
+                RAISE EXCEPTION 'Agent not found' USING ERRCODE = 'P0002';
+            END IF;
+            
+            -- Get creator name from profiles or accounts
+            SELECT
+                COALESCE(
+                    (profile_data->>'name'),
+                    (profile_data->>'full_name'),
+                    email,
+                    'Unknown'
+                ) INTO creator_name
+            FROM basejump.accounts
+            WHERE id = share_record.creator_account_id;
+            
+            -- Increment access count
+            UPDATE agent_shares
+            SET access_count = access_count + 1,
+                updated_at = NOW()
+            WHERE id = share_record.id;
+            
+            -- Apply sharing preferences to filter agent data
+            IF share_record.sharing_preferences IS NOT NULL THEN
+                -- Filter knowledge bases if not included
+                IF (share_record.sharing_preferences->>'include_knowledge_bases')::boolean = false THEN
+                    agent_record.knowledge_bases = '[]'::jsonb;
+                END IF;
+                
+                -- Filter custom MCP tools if not included
+                IF (share_record.sharing_preferences->>'include_custom_mcp_tools')::boolean = false THEN
+                    agent_record.configured_mcps = '[]'::jsonb;
+                    agent_record.custom_mcps = '[]'::jsonb;
+                END IF;
+            END IF;
+            
+            -- Return the data
+            RETURN QUERY SELECT
+                row_to_json(agent_record)::jsonb AS agent_data,
+                jsonb_build_object(
+                    'share_type', share_record.share_type,
+                    'expires_at', share_record.expires_at,
+                    'access_count', share_record.access_count + 1, -- Return updated count
+                    'creator_name', creator_name,
+                    'sharing_preferences', share_record.sharing_preferences
+                ) AS share_info;
+        END;
+        $func$ LANGUAGE plpgsql SECURITY DEFINER;
+        
+        -- Grant execute permission on the function
+        GRANT EXECUTE ON FUNCTION get_shared_agent_by_token(TEXT) TO authenticated;
+        
+        RAISE NOTICE 'Created get_shared_agent_by_token function';
+    END IF;
+    
+    -- Check if we need to create the managed agent functions that were skipped
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_proc 
+        WHERE proname = 'add_agent_to_library' 
+        AND pg_function_is_visible(oid)
+    ) THEN
+        -- Run the restore managed agent functionality migration inline
+        RAISE NOTICE 'Creating add_agent_to_library and get_managed_agents_for_user functions';
+        
+        -- Include the content from 20250113000000_restore_managed_agent_functionality.sql
+        -- This ensures these functions are created when the agents table exists
+        
+        -- TODO: Copy the function definitions here or source them from the migration
+        -- For now, just log that they should be created
+        RAISE NOTICE 'Note: Run 20250113000000_restore_managed_agent_functionality.sql to create managed agent functions';
+    END IF;
+END $$;
+
 COMMIT;

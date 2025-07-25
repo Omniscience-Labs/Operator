@@ -339,6 +339,11 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
 
     // React Query file preloader
     const { preloadFiles } = useFilePreloader();
+    
+    // Track if messages update is from streaming vs refetch
+    const isStreamingUpdateRef = useRef(true);
+    const previousMessageIdsRef = useRef<Set<string>>(new Set());
+    const scrollPositionBeforeUpdateRef = useRef<number>(0);
 
     // Edit helper functions
     const startEditing = useCallback((messageId: string, currentContent: string) => {
@@ -439,7 +444,15 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
         if (messagesEndRef.current) {
             autoScrollingRef.current = true;
-            messagesEndRef.current.scrollIntoView({ behavior });
+            
+            // Add a small delay to let any layout changes settle
+            requestAnimationFrame(() => {
+                messagesEndRef.current?.scrollIntoView({ 
+                    behavior, 
+                    block: 'end',
+                    inline: 'nearest' 
+                });
+            });
             
             // Only reset position state, but let user scroll state be handled by scroll detection
             if (behavior === 'smooth') {
@@ -447,7 +460,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                     setIsAtBottom(true);
                     autoScrollingRef.current = false;
                     // Don't automatically reset userHasScrolled - let natural scroll detection handle it
-                }, 500);
+                }, 600); // Increased from 500ms to account for animation
             }
         }
     }, []);
@@ -475,12 +488,35 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     const previousMessageCount = React.useRef(displayMessages.length);
     React.useEffect(() => {
         const messageCountIncreased = displayMessages.length > previousMessageCount.current;
-        previousMessageCount.current = displayMessages.length;
+        const currentMessageIds = new Set(displayMessages.map(m => m.message_id || ''));
         
-        if (messageCountIncreased && !userHasScrolled && (agentStatus === 'running' || agentStatus === 'connecting')) {
+        // Check if this is a streaming update (new messages added) vs a refetch (messages replaced)
+        const isStreamingUpdate = messageCountIncreased && 
+            Array.from(previousMessageIdsRef.current).every(id => currentMessageIds.has(id));
+        
+        // If it's a refetch (not streaming), preserve scroll position
+        if (!isStreamingUpdate && messagesContainerRef.current && previousMessageIdsRef.current.size > 0) {
+            const currentScrollTop = messagesContainerRef.current.scrollTop;
+            const currentScrollHeight = messagesContainerRef.current.scrollHeight;
+            
+            // Restore scroll position after DOM updates
+            requestAnimationFrame(() => {
+                if (messagesContainerRef.current) {
+                    const newScrollHeight = messagesContainerRef.current.scrollHeight;
+                    const scrollDiff = newScrollHeight - currentScrollHeight;
+                    messagesContainerRef.current.scrollTop = currentScrollTop + scrollDiff;
+                }
+            });
+        }
+        
+        previousMessageCount.current = displayMessages.length;
+        previousMessageIdsRef.current = currentMessageIds;
+        
+        // Only auto-scroll for streaming updates when user hasn't scrolled
+        if (isStreamingUpdate && !userHasScrolled) {
             autoScrollToBottomIfNeeded();
         }
-    }, [displayMessages.length, autoScrollToBottomIfNeeded, userHasScrolled, agentStatus]);
+    }, [displayMessages, autoScrollToBottomIfNeeded, userHasScrolled]);
 
     // Auto-scroll when streaming content arrives - but only if user hasn't manually scrolled up AND agent is actively working
     React.useEffect(() => {
@@ -565,7 +601,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                     )}
                     
                     <div className={`mx-auto max-w-3xl md:px-8 min-w-0 ${editingMessageId ? 'relative z-40' : ''}`}>
-                        <div className="space-y-8 min-w-0">
+                        <div className="space-y-8 min-w-0 transition-all duration-200 ease-out">
                             {(() => {
 
                                 type MessageGroup = {
@@ -877,18 +913,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                                         return (
                                             <div key={group.key} ref={groupIndex === groupedMessages.length - 1 ? latestMessageRef : null}>
                                                 <div className="flex flex-col gap-2">
-                                                    {/* Agent name with ThreeSpinner and gradient text */}
-                                    <div className="flex items-center">
-                                        <div className="w-8 h-8 rounded-full bg-muted-foreground/10 flex items-center justify-center">
-                                            <ThreeSpinner size={24} color="currentColor" />
-                                        </div>
-                                        <div className="ml-2">
-                                            <GradientText
-                                                text={agentName ? agentName : 'Operator'}
-                                                className="text-sm text-muted-foreground"
-                                                gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
-                                            />
-                                        </div>
+                                                    {/* Agent name with gradient text */}
+                                    <div className="flex items-center gap-2">
+                                        <GradientText
+                                            text={agentName ? agentName : 'Operator'}
+                                            className="text-sm text-muted-foreground"
+                                            gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                        />
                                     </div>
                                                     
                                                     {/* Reasoning content - show first if present */}
@@ -1175,30 +1206,35 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                             {((agentStatus === 'running' || agentStatus === 'connecting') && !streamingTextContent &&
                                 !readOnly &&
                                 (messages.length === 0 || messages[messages.length - 1].type === 'user')) && (
-                                    <div ref={latestMessageRef} className='w-full h-22 rounded'>
-                                        {/* Show only the funny loading messages during generation phase - no extra logo */}
-                                        <div className="space-y-2 w-full h-12">
-                                            <AgentLoader />
-                                        </div>
-                                    </div>
+                                    <AnimatePresence mode="wait">
+                                        <motion.div 
+                                            key="agent-loader"
+                                            ref={latestMessageRef} 
+                                            className='w-full rounded'
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                        >
+                                            {/* Show only the funny loading messages during generation phase - no extra logo */}
+                                            <div className="space-y-2 w-full h-12">
+                                                <AgentLoader />
+                                            </div>
+                                        </motion.div>
+                                    </AnimatePresence>
                                 )}
 
                             {/* For playback mode - Show tool call animation if active */}
                             {readOnly && currentToolCall && (
                                 <div ref={latestMessageRef}>
                                     <div className="flex flex-col gap-2">
-                                        {/* Agent name with ThreeSpinner and gradient text */}
-                                        <div className="flex items-center">
-                                            <div className="w-8 h-8 rounded-full bg-muted-foreground/10 flex items-center justify-center">
-                                                <ThreeSpinner size={24} color="currentColor" />
-                                            </div>
-                                            <div className="ml-2">
-                                                <GradientText
-                                                    text={agentName ? agentName : 'Operator'}
-                                                    className="text-sm text-muted-foreground"
-                                                    gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
-                                                />
-                                            </div>
+                                        {/* Agent name with gradient text */}
+                                        <div className="flex items-center gap-2">
+                                            <GradientText
+                                                text={agentName ? agentName : 'Operator'}
+                                                className="text-sm text-muted-foreground"
+                                                gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                            />
                                         </div>
                                         
                                         {/* Tool call content */}
@@ -1218,18 +1254,13 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                             {readOnly && visibleMessages && visibleMessages.length === 0 && isStreamingText && (
                                 <div ref={latestMessageRef}>
                                     <div className="flex flex-col gap-2">
-                                        {/* Agent name with ThreeSpinner and gradient text */}
-                                        <div className="flex items-center">
-                                            <div className="w-8 h-8 rounded-full bg-muted-foreground/10 flex items-center justify-center">
-                                                <ThreeSpinner size={24} color="currentColor" />
-                                            </div>
-                                            <div className="ml-2">
-                                                <GradientText
-                                                    text={agentName ? agentName : 'Operator'}
-                                                    className="text-sm text-muted-foreground"
-                                                    gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
-                                                />
-                                            </div>
+                                        {/* Agent name with gradient text */}
+                                        <div className="flex items-center gap-2">
+                                            <GradientText
+                                                text={agentName ? agentName : 'Operator'}
+                                                className="text-sm text-muted-foreground"
+                                                gradient="linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%)"
+                                            />
                                         </div>
                                         
                                         {/* Streaming indicator content */}
@@ -1250,98 +1281,70 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
             )}
 
             {/* Unified floating pill - shows either "Working" or "Scroll to latest" */}
-            {((!readOnly && (agentStatus === 'running' || agentStatus === 'connecting')) || showScrollButton) && (
-                <div className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-48'} z-20 transform -translate-x-1/2 transition-all duration-200 ease-in-out ${
-                    (() => {
-                        if (isAgentBuilder) {
-                            // Agent builder mode - center within container
-                            return 'left-1/2';
-                        } else if (isSidePanelOpen && isLeftSidebarOpen) {
-                            // Both sidebars open - center between them
-                            return 'left-[calc(50%-100px)] sm:left-[calc(50%-200px)] md:left-[calc(50%-225px)] lg:left-[calc(50%-250px)] xl:left-[calc(50%-275px)]';
-                        } else if (isSidePanelOpen) {
-                            // Only right side panel open
-                            return 'left-[5%] sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]';
-                        } else if (isLeftSidebarOpen) {
-                            // Only left sidebar open - shift right to account for sidebar width
-                            return 'left-[calc(50%+120px)] sm:left-[calc(50%+130px)] md:left-[calc(50%+140px)] lg:left-[calc(50%+150px)]';
-                        } else {
-                            // No sidebars open - center normally
-                            return 'left-1/2';
-                        }
-                    })()
-                }`}>
-                    <AnimatePresence mode="wait">
-                        {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
-                            <StarBorder
-                                as={motion.button}
-                                key="working"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ 
-                                    opacity: 1,
-                                    y: 0,
-                                    transition: { 
-                                        duration: 0.3, 
-                                        ease: [0.25, 0.46, 0.45, 0.94]
-                                    }
-                                }}
-                                exit={{ 
-                                    opacity: 0,
-                                    y: 10,
-                                    transition: { 
-                                        duration: 0.2, 
-                                        ease: [0.25, 0.46, 0.45, 0.94]
-                                    } 
-                                }}
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                                onClick={() => scrollToBottom('smooth')}
-                                className="w-16 h-16 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center hover:bg-accent transition-all duration-200"
-                                color="hsl(var(--primary))"
-                                speed="4s"
-                                thickness={1}
-                            >
-                                <ThreeSpinner size={48} color="currentColor" />
-                            </StarBorder>
-                        )}
-                        {showScrollButton && !(agentStatus === 'running' || agentStatus === 'connecting') && (
-                            <StarBorder
-                                as={motion.button}
-                                key="scroll"
-                                initial={{ 
-                                    opacity: 0,
-                                    y: 10
-                                }}
-                                animate={{ 
-                                    opacity: 1,
-                                    y: 0,
-                                    transition: { 
-                                        duration: 0.3, 
-                                        ease: [0.25, 0.46, 0.45, 0.94]
-                                    }
-                                }}
-                                exit={{ 
-                                    opacity: 0,
-                                    y: 10,
-                                    transition: { 
-                                        duration: 0.2, 
-                                        ease: [0.25, 0.46, 0.45, 0.94]
-                                    }
-                                }}
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                                onClick={() => scrollToBottom('smooth')}
-                                className="w-10 h-10 rounded-full bg-background/95 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center hover:bg-accent transition-all duration-200"
-                                color="hsl(var(--primary))"
-                                speed="6s"
-                                thickness={1}
-                            >
-                                <ArrowDown className="h-4 w-4" />
-                            </StarBorder>
-                        )}
-                    </AnimatePresence>
-                </div>
-            )}
+            <AnimatePresence mode="wait">
+                {!readOnly && (agentStatus === 'running' || agentStatus === 'connecting') && (
+                    <motion.div
+                        key="working-pill"
+                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-54'} z-20 transform ${
+                            isAgentBuilder 
+                                ? 'left-1/2 -translate-x-1/2' 
+                                : isSidePanelOpen && isLeftSidebarOpen
+                                    ? 'left-1/2 translate-x-2 sm:left-[calc(50%-50px)] md:left-[calc(50%-60px)] lg:left-[calc(50%-70px)] xl:left-[calc(50%-80px)]'
+                                : isSidePanelOpen 
+                                    ? 'left-1/2 -translate-x-1/4 sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]'
+                                : isLeftSidebarOpen
+                                    ? 'left-1/2 translate-x-1/4 sm:left-[calc(50%+112px)] md:left-[calc(50%+120px)] lg:left-[calc(50%+125px)] xl:left-[calc(50%+130px)]'
+                                    : 'left-1/2 -translate-x-1/2'
+                        }`}
+                    >
+                        <StarBorder
+                            as="button"
+                            onClick={() => scrollToBottom('smooth')}
+                            className="w-12 h-12 rounded-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-12 [&_.inner-content]:!h-12 [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
+                            color="hsl(var(--primary))"
+                            speed="4s"
+                            thickness={1}
+                        >
+                            <ThreeSpinner size={44} color="currentColor" />
+                        </StarBorder>
+                    </motion.div>
+                )}
+                {showScrollButton && !(agentStatus === 'running' || agentStatus === 'connecting') && (
+                    <motion.div
+                        key="scroll-pill"
+                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                        className={`${isAgentBuilder ? 'absolute' : 'fixed'} ${isAgentBuilder ? 'bottom-24' : 'bottom-54'} z-20 transform ${
+                            isAgentBuilder 
+                                ? 'left-1/2 -translate-x-1/2' 
+                                : isSidePanelOpen && isLeftSidebarOpen
+                                    ? 'left-1/2 translate-x-2 sm:left-[calc(50%-50px)] md:left-[calc(50%-60px)] lg:left-[calc(50%-70px)] xl:left-[calc(50%-80px)]'
+                                : isSidePanelOpen 
+                                    ? 'left-1/2 -translate-x-1/4 sm:left-[calc(50%-225px)] md:left-[calc(50%-250px)] lg:left-[calc(50%-275px)] xl:left-[calc(50%-325px)]'
+                                : isLeftSidebarOpen
+                                    ? 'left-1/2 translate-x-1/4 sm:left-[calc(50%+112px)] md:left-[calc(50%+120px)] lg:left-[calc(50%+125px)] xl:left-[calc(50%+130px)]'
+                                    : 'left-1/2 -translate-x-1/2'
+                        }`}
+                    >
+                        <StarBorder
+                            as="button"
+                            onClick={() => scrollToBottom('smooth')}
+                            className="w-12 h-12 rounded-full relative overflow-hidden [&_.inner-content]:!p-0 [&_.inner-content]:!w-12 [&_.inner-content]:!h-12 [&_.inner-content]:!rounded-full [&_.inner-content]:!flex [&_.inner-content]:!items-center [&_.inner-content]:!justify-center [&_.inner-content]:!bg-background/95 [&_.inner-content]:!backdrop-blur-sm [&_.inner-content]:!border-border [&_.inner-content]:!shadow-lg [&_.inner-content]:hover:!bg-accent [&_.inner-content]:!transition-all [&_.inner-content]:!duration-200"
+                            color="hsl(var(--primary))"
+                            speed="6s"
+                            thickness={1}
+                        >
+                            <ArrowDown className="h-5 w-5 text-foreground" />
+                        </StarBorder>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </>
     );
 };

@@ -352,6 +352,17 @@ export const FileCache = {
     return path.toLowerCase().endsWith('.pdf');
   },
   
+  // Helper function to check if a file is a video
+  isVideoFile: (path: string): boolean => {
+    const ext = path.split('.').pop()?.toLowerCase() || '';
+    const videoExtensions = [
+      'mp4', 'webm', 'ogg', 'mov', 'avi', 'wmv', 'flv', 'mkv', 
+      'm4v', '3gp', 'ts', 'mts', 'm2ts', 'f4v', 'asf', 'rm', 
+      'rmvb', 'vob', 'ogv', 'mxf', 'divx', 'xvid', 'h264', 'h265'
+    ];
+    return videoExtensions.includes(ext);
+  },
+  
   // Helper function to check if a value is a Blob
   isBlob: (value: any): boolean => {
     return value instanceof Blob;
@@ -387,10 +398,34 @@ export const FileCache = {
       case 'zip': return 'application/zip';
       
       // Audio files
-      case 'webm': return 'audio/webm';
       case 'mp3': return 'audio/mpeg';
       case 'wav': return 'audio/wav';
       case 'ogg': return 'audio/ogg';
+      
+      // Video files
+      case 'mp4': return 'video/mp4';
+      case 'webm': return 'video/webm';
+      case 'mov': return 'video/quicktime';
+      case 'avi': return 'video/x-msvideo';
+      case 'wmv': return 'video/x-ms-wmv';
+      case 'flv': return 'video/x-flv';
+      case 'mkv': return 'video/x-matroska';
+      case 'm4v': return 'video/x-m4v';
+      case '3gp': return 'video/3gpp';
+      case 'ts': return 'video/mp2t';
+      case 'mts': return 'video/mp2t';
+      case 'm2ts': return 'video/mp2t';
+      case 'f4v': return 'video/x-f4v';
+      case 'asf': return 'video/x-ms-asf';
+      case 'rm': return 'application/vnd.rn-realmedia';
+      case 'rmvb': return 'application/vnd.rn-realmedia-vbr';
+      case 'vob': return 'video/mpeg';
+      case 'ogv': return 'video/ogg';
+      case 'mxf': return 'application/mxf';
+      case 'divx': return 'video/divx';
+      case 'xvid': return 'video/x-msvideo';
+      case 'h264': return 'video/h264';
+      case 'h265': return 'video/h265';
       
       // Default
       default: return 'application/octet-stream';
@@ -492,33 +527,41 @@ export const FileCache = {
           let content;
           let type: 'content' | 'url' = 'content';
           
-          // Check if this is a binary file (includes Office documents, PDFs, images)
+          // Check if this is a binary file (includes Office documents, PDFs, images, videos)
           const isBinaryFile = ['png', 'jpg', 'jpeg', 'gif', 'pdf', 'mp3', 'mp4', 
                                'xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt', 
-                               'zip', 'exe', 'bin', 'webm'].includes(extension || '');
+                               'zip', 'exe', 'bin', 'webm', 'mov', 'avi', 'wmv', 
+                               'flv', 'mkv', 'm4v', '3gp', 'ts', 'mts', 'm2ts', 
+                               'f4v', 'asf', 'rm', 'rmvb', 'vob', 'ogv', 'mxf', 
+                               'divx', 'xvid', 'h264', 'h265'].includes(extension || '');
           
-          if (isBinaryFile) {
-            const blob = await response.blob();
-            
-            if (FileCache.isImageFile(path)) {
-              // For images, store the raw blob
-              content = blob;
-              type = 'content';
-              console.log(`[FILE CACHE] Successfully preloaded image blob: ${normalizedPath} (${blob.size} bytes)`);
-            } else if (extension === 'pdf' || ['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt'].includes(extension || '')) {
-              // For PDFs and Office documents, ensure they're stored as blobs with proper MIME type
-              const mimeType = FileCache.getMimeTypeFromPath(path);
-              const properBlob = new Blob([blob], { type: mimeType });
-              content = properBlob;
-              type = 'content';
-              console.log(`[FILE CACHE] Successfully preloaded binary blob for ${extension} file: ${normalizedPath} (${blob.size} bytes)`);
-            } else {
-              // For other binary files, store the URL
-              content = URL.createObjectURL(blob);
-              type = 'url';
-              console.log(`[FILE CACHE] Successfully preloaded blob URL: ${normalizedPath} (${blob.size} bytes)`);
-            }
-          } 
+                      if (isBinaryFile) {
+              const blob = await response.blob();
+              
+              if (FileCache.isImageFile(path)) {
+                // For images, store the raw blob
+                content = blob;
+                type = 'content';
+                console.log(`[FILE CACHE] Successfully preloaded image blob: ${normalizedPath} (${blob.size} bytes)`);
+              } else if (extension === 'pdf' || ['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt'].includes(extension || '')) {
+                // For PDFs and Office documents, ensure they're stored as blobs with proper MIME type
+                const mimeType = FileCache.getMimeTypeFromPath(path);
+                const properBlob = new Blob([blob], { type: mimeType });
+                content = properBlob;
+                type = 'content';
+                console.log(`[FILE CACHE] Successfully preloaded binary blob for ${extension} file: ${normalizedPath} (${blob.size} bytes)`);
+              } else if (FileCache.isVideoFile(path)) {
+                // For videos, store the raw blob
+                content = blob;
+                type = 'content';
+                console.log(`[FILE CACHE] Successfully preloaded video blob: ${normalizedPath} (${blob.size} bytes)`);
+              } else {
+                // For other binary files, store the URL
+                content = URL.createObjectURL(blob);
+                type = 'url';
+                console.log(`[FILE CACHE] Successfully preloaded blob URL: ${normalizedPath} (${blob.size} bytes)`);
+              }
+            } 
           // Json files
           else if (extension === 'json') {
             content = await response.json();

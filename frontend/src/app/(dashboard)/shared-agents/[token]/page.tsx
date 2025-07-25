@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { AlertCircle, Loader2, Download, Eye, Clock, Share2, CheckCircle } from 'lucide-react';
+import { AlertCircle, Loader2, Download, Eye, Clock, Share2, CheckCircle, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -51,8 +51,16 @@ export default function SharedAgentPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasAddedToLibrary, setHasAddedToLibrary] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   
   const addToLibraryMutation = useAddSharedAgentToLibrary();
+
+  const handleLoginRedirect = () => {
+    setIsAuthenticating(true);
+    // Preserve the current shared agent URL for redirect after login
+    const currentUrl = window.location.pathname + window.location.search;
+    router.push(`/auth?returnUrl=${encodeURIComponent(currentUrl)}`);
+  };
 
   useEffect(() => {
     const fetchSharedAgent = async () => {
@@ -61,7 +69,7 @@ export default function SharedAgentPage() {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session?.access_token) {
-          throw new Error('You must be logged in to view shared agents.');
+          throw new Error('AUTHENTICATION_REQUIRED');
         }
 
         const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/shared-agents/${token}`, {
@@ -74,7 +82,7 @@ export default function SharedAgentPage() {
           if (response.status === 404) {
             throw new Error('This share link is invalid or has expired.');
           } else if (response.status === 401) {
-            throw new Error('You must be logged in to view shared agents.');
+            throw new Error('AUTHENTICATION_REQUIRED');
           } else {
             throw new Error('Failed to load shared agent.');
           }
@@ -83,7 +91,8 @@ export default function SharedAgentPage() {
         const data = await response.json();
         setSharedAgent(data);
       } catch (error) {
-        setError(error instanceof Error ? error.message : 'An error occurred');
+        const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -132,6 +141,47 @@ export default function SharedAgentPage() {
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
           <p className="text-muted-foreground">Loading shared agent...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Handle authentication required error with a clean login flow
+  if (error === 'AUTHENTICATION_REQUIRED') {
+    return (
+      <div className="container mx-auto max-w-4xl px-4 py-8 min-h-screen flex items-center justify-center">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center space-y-3">
+            <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+              <LogIn className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-xl">Login Required</CardTitle>
+            <CardDescription>
+              You need to sign in to view this shared agent. After logging in, you'll be brought right back here.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button 
+              onClick={handleLoginRedirect}
+              disabled={isAuthenticating}
+              className="w-full h-12"
+            >
+              {isAuthenticating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Redirecting...
+                </>
+              ) : (
+                <>
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In to Continue
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Don't have an account? You can create one during the sign-in process.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }

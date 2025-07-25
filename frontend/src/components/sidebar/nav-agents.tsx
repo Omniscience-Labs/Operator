@@ -18,6 +18,8 @@ import {
 import { toast } from "sonner"
 import { usePathname, useRouter } from "next/navigation"
 import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
+import { ThreeSpinner } from '@/components/ui/three-spinner';
+import { useAgentStatus } from '@/contexts/AgentStatusContext';
 
 import {
   DropdownMenu,
@@ -64,6 +66,7 @@ export function NavAgents() {
   const { performDelete } = useDeleteOperation();
   const isPerformingActionRef = useRef(false);
   const queryClient = useQueryClient();
+  const { isThreadRunning, hasUnreadCompletedStatus, markThreadAsViewed } = useAgentStatus();
 
   const [selectedThreads, setSelectedThreads] = useState<Set<string>>(new Set());
   const [deleteProgress, setDeleteProgress] = useState(0);
@@ -151,6 +154,8 @@ export function NavAgents() {
 
     e.preventDefault()
     setLoadingThreadId(threadId)
+    // Mark thread as viewed when clicked to remove the blue dot
+    markThreadAsViewed(threadId)
     router.push(url)
   }
 
@@ -436,6 +441,8 @@ export function NavAgents() {
               const isActive = pathname?.includes(thread.threadId) || false;
               const isThreadLoading = loadingThreadId === thread.threadId;
               const isSelected = selectedThreads.has(thread.threadId);
+              const isAgentRunning = isThreadRunning(thread.threadId);
+              const showCompletedDot = hasUnreadCompletedStatus(thread.threadId);
 
               return (
                 <SidebarMenuItem key={`thread-${thread.threadId}`} className="group">
@@ -458,6 +465,13 @@ export function NavAgents() {
                             >
                               {isThreadLoading ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : isAgentRunning ? (
+                                <ThreeSpinner size={16} color="currentColor" />
+                              ) : showCompletedDot ? (
+                                <div className="relative">
+                                  <MessagesSquare className="h-4 w-4" />
+                                  <div className="absolute -top-1 -right-1 h-2 w-2 bg-blue-500 rounded-full animate-pulse" />
+                                </div>
                               ) : (
                                 <MessagesSquare className="h-4 w-4" />
                               )}
@@ -487,16 +501,23 @@ export function NavAgents() {
                           className="flex items-center"
                         >
                           <div className="flex items-center group/icon relative">
-                            {/* Show checkbox on hover or when selected, otherwise show MessagesSquare */}
+                            {/* Show status-based icon or checkbox */}
                             {isThreadLoading ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : isAgentRunning ? (
+                              <ThreeSpinner size={16} color="currentColor" />
                             ) : (
                               <>
-                                {/* MessagesSquare icon - hidden on hover if not selected */}
-                                <MessagesSquare
-                                  className={`h-4 w-4 transition-opacity duration-150 ${isSelected ? 'opacity-0' : 'opacity-100 group-hover/icon:opacity-0'
-                                    }`}
-                                />
+                                {/* Main icon - with blue dot for completed status */}
+                                <div className="relative">
+                                  <MessagesSquare
+                                    className={`h-4 w-4 transition-opacity duration-150 ${isSelected ? 'opacity-0' : 'opacity-100 group-hover/icon:opacity-0'
+                                      }`}
+                                  />
+                                  {showCompletedDot && !isSelected && (
+                                    <div className="absolute -top-1 -right-1 h-2 w-2 bg-blue-500 rounded-full animate-pulse" />
+                                  )}
+                                </div>
 
                                 {/* Checkbox - appears on hover or when selected */}
                                 <div

@@ -18,6 +18,7 @@ import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
 import { Crown } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useRouter } from 'next/navigation';
+import { IntegrationsDropdown } from './integrations-dropdown';
 
 interface MessageInputProps {
   value: string;
@@ -166,6 +167,9 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
                 messages={messages}
               />
             )}
+            <IntegrationsDropdown
+              disabled={loading || (disabled && !isAgentRunning)}
+            />
             {!hideAttachments && (
               <MeetingRecorder
                 onFileAttached={(file) => setUploadedFiles(prev => [...prev, file])}

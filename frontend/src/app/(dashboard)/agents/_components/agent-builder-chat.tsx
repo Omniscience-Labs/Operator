@@ -20,6 +20,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { agentKeys } from '@/hooks/react-query/agents/keys';
 import { normalizeFilenameToNFC } from '@/lib/utils/unicode';
+import { useAgentStatus } from '@/contexts/AgentStatusContext';
 
 interface AgentBuilderChatProps {
   agentId: string;
@@ -79,6 +80,7 @@ export const AgentBuilderChat = React.memo(function AgentBuilderChat({
   const stopAgentMutation = useStopAgentMutation();
   const chatHistoryQuery = useAgentBuilderChatHistory(agentId);
   const queryClient = useQueryClient();
+  const { updateThreadStatus } = useAgentStatus();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -153,29 +155,38 @@ export const AgentBuilderChat = React.memo(function AgentBuilderChat({
   const handleStreamStatusChange = useCallback((status: string) => {
     switch (status) {
       case 'idle':
+        setAgentStatus('idle');
+        setAgentRunId(null);
+        if (threadId) updateThreadStatus(threadId, 'idle');
+        break;
       case 'completed':
+        setAgentStatus('idle');
+        setAgentRunId(null);
+        if (threadId) updateThreadStatus(threadId, 'completed');
+        setSaveStatus('saved');
+        queryClient.invalidateQueries({ queryKey: agentKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: agentKeys.detail(agentId) });
+        queryClient.invalidateQueries({ queryKey: agentKeys.builderChatHistory(agentId) });
+        setTimeout(() => setSaveStatus('idle'), 2000);
+        break;
       case 'stopped':
       case 'agent_not_running':
       case 'error':
       case 'failed':
         setAgentStatus('idle');
         setAgentRunId(null);
-        if (status === 'completed') {
-          setSaveStatus('saved');
-          queryClient.invalidateQueries({ queryKey: agentKeys.lists() });
-          queryClient.invalidateQueries({ queryKey: agentKeys.detail(agentId) });
-          queryClient.invalidateQueries({ queryKey: agentKeys.builderChatHistory(agentId) });
-          setTimeout(() => setSaveStatus('idle'), 2000);
-        }
+        if (threadId) updateThreadStatus(threadId, 'idle');
         break;
       case 'connecting':
         setAgentStatus('connecting');
+        if (threadId) updateThreadStatus(threadId, 'connecting');
         break;
       case 'streaming':
         setAgentStatus('running');
+        if (threadId) updateThreadStatus(threadId, 'running');
         break;
     }
-  }, []);
+  }, [threadId, updateThreadStatus, agentId, queryClient]);
 
   const handleStreamError = useCallback((errorMessage: string) => {
     if (!errorMessage.toLowerCase().includes('not found') &&
@@ -375,7 +386,20 @@ export const AgentBuilderChat = React.memo(function AgentBuilderChat({
 
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="h-full flex flex-col bg-muted dark:bg-muted/30">
+      <div className="flex-shrink-0 flex items-center gap-3 p-8">
+        <div
+          className="h-10 w-10 flex items-center justify-center rounded-lg text-lg"
+          style={{ backgroundColor: currentStyle.color }}
+        >
+          🧞
+        </div>
+        <div className="flex-1">
+          <h3 className="font-semibold">Omni Genie</h3>
+          <p className="text-sm text-muted-foreground">AI assistant to craft your agent</p>
+        </div>
+        <Badge variant="highlight" className="text-sm">Assistant Mode</Badge>
+      </div>
       <div className="flex-1 overflow-hidden relative">
         <div className="h-full overflow-y-auto scrollbar-hide">
           <ThreadContent
@@ -386,16 +410,16 @@ export const AgentBuilderChat = React.memo(function AgentBuilderChat({
             handleToolClick={() => { }}
             handleOpenFileViewer={handleOpenFileViewer}
             streamHookStatus={streamHookStatus}
-            agentName="Agent Builder"
-            agentAvatar={'🤖'}
+            agentName="Omni Genie"
+            agentAvatar={'🧞'}
             isSidePanelOpen={false}
             isAgentBuilder={true}
             emptyStateComponent={
               <div className="mt-6 flex flex-col items-center text-center text-muted-foreground/80">
-                <div className="flex w-20 aspect-square items-center justify-center rounded-2xl bg-muted-foreground/10 p-4 mb-4">
-                  <div className="text-4xl">🤖</div>
+                <div className="flex w-20 aspect-square items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 p-4 mb-4">
+                  <div className="text-4xl">🧞</div>
                 </div>
-                <p className='w-[60%] text-2xl'>Lets start with a brief <span className='text-primary/80 font-semibold'>description</span> of what you'd like to build</p>
+                <p className='w-[60%] text-2xl'>Hi! I'm <span className='text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 font-semibold'>Omni Genie</span>, let's craft the perfect agent together!</p>
               </div>
             }
           />
@@ -408,13 +432,13 @@ export const AgentBuilderChat = React.memo(function AgentBuilderChat({
           ref={chatInputRef}
           onSubmit={threadId ? handleSubmitMessage : handleSubmitFirstMessage}
           loading={isSubmitting}
-          placeholder="Tell me how you'd like to configure your agent..."
+          placeholder="Tell me about your agent idea..."
           value={inputValue}
           onChange={setInputValue}
           disabled={isSubmitting}
           isAgentRunning={agentStatus === 'running' || agentStatus === 'connecting'}
           onStopAgent={handleStopAgent}
-          agentName="Agent Builder"
+          agentName="Omni Genie"
           hideAttachments={true}
           bgColor='bg-muted-foreground/10'
           hideReasoningControl={true}

@@ -264,7 +264,7 @@ export const FileUploadHandler = forwardRef<
                 <span className="text-sm sm:block hidden">Attachments</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="top">
+            <TooltipContent side="top" className="bg-black text-white border-black">
               <p>Attach files</p>
             </TooltipContent>
           </Tooltip>

@@ -287,7 +287,7 @@ export const ChatInput = forwardRef<ChatInputHandles, ChatInputProps>(
     };
 
     return (
-      <div className="mx-auto w-full max-w-4xl">
+      <div className="mx-auto w-full max-w-4xl" data-testid="chat-input">
         <Card
           className="shadow-none w-full max-w-4xl mx-auto bg-transparent border-none rounded-xl overflow-hidden"
           onDragOver={handleDragOver}

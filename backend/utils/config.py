@@ -239,7 +239,7 @@ class Configuration:
             "generate_coordinate_grid": 1.0,
             
             # Data provider tools
-            "get_data_provider_endpoints": 0.5,
+            "get_data_provider_endpoints": 0.0,
             "execute_data_provider_call": 2.0,
             
             # Medium-cost tools

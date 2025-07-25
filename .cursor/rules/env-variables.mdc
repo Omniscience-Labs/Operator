@@ -1,0 +1,6 @@
+---
+alwaysApply: true
+---
+Always use environment variables to set secrets and configuration items. 
+
+Always add the configured secret to the appropriate env.example file.

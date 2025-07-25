@@ -132,13 +132,15 @@ class MemoryService:
         # - Same managed agent, different user: user_999 + managed_agent_789 -> memory scope: "user_999:managed_agent_789"
         #
         # This ensures complete memory isolation between users, even for the same managed agent
+
+        params = {"user_id": user_id}
         if agent_id:
             # Use combined user_id:agent_id for complete isolation
             memory_id = f"{user_id}:{agent_id}"
-            params = {"user_id": memory_id}
+            params = {"agent_id": memory_id}
         else:
             # Default operator uses just user_id
-            params = {"user_id": user_id}
+            params = {"agent_id": user_id}
             
         return params
     

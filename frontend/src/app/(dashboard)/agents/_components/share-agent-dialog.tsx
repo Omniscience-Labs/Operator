@@ -216,6 +216,8 @@ export function ShareAgentDialog({
         throw new Error('You must be logged in to create share links');
       }
 
+      const backendShareType = linkType === 'temporary' ? 'ephemeral' : linkType;
+
       const response = await fetch(`${API_URL}/agents/${agent.agent_id}/share`, {
         method: 'POST',
         headers: {
@@ -223,7 +225,7 @@ export function ShareAgentDialog({
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
-          share_type: linkType,
+          share_type: backendShareType,
           expires_in_hours: linkType === 'temporary' ? expiresInHours : null,
           include_knowledge_bases: includeKnowledgeBases,
           include_custom_mcp_tools: includeCustomMcpTools,

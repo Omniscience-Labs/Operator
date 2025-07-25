@@ -25,7 +25,7 @@ class UpdateAgentTool(Tool):
         "type": "function",
         "function": {
             "name": "update_agent",
-            "description": "Update the agent's configuration including name, description, system prompt, tools, and MCP servers. Call this whenever the user wants to modify any aspect of the agent.",
+            "description": "Update the agent's core configuration including name, description, system prompt, and visual appearance. Call this whenever the user wants to modify the agent's identity or behavioral guidelines.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -41,33 +41,34 @@ class UpdateAgentTool(Tool):
                         "type": "string",
                         "description": "The system instructions that define the agent's behavior, expertise, and approach. This should be comprehensive and well-structured."
                     },
-                    "agentpress_tools": {
-                        "type": "object",
-                        "description": "Configuration for AgentPress tools. Each key is a tool name, and the value is an object with 'enabled' (boolean) and 'description' (string) properties.",
-                        "additionalProperties": {
-                            "type": "object",
-                            "properties": {
-                                "enabled": {"type": "boolean"},
-                                "description": {"type": "string"}
-                            }
-                        }
-                    },
-                    "configured_mcps": {
-                        "type": "array",
-                        "description": "List of configured MCP servers for external integrations.",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "name": {"type": "string"},
-                                "qualifiedName": {"type": "string"},
-                                "config": {"type": "object"},
-                                "enabledTools": {
-                                    "type": "array",
-                                    "items": {"type": "string"}
-                                }
-                            }
-                        }
-                    },
+                    # COMMENTED OUT - Tools and MCP servers configured manually
+                    # "agentpress_tools": {
+                    #     "type": "object",
+                    #     "description": "Configuration for AgentPress tools. Each key is a tool name, and the value is an object with 'enabled' (boolean) and 'description' (string) properties.",
+                    #     "additionalProperties": {
+                    #         "type": "object",
+                    #         "properties": {
+                    #             "enabled": {"type": "boolean"},
+                    #             "description": {"type": "string"}
+                    #         }
+                    #     }
+                    # },
+                    # "configured_mcps": {
+                    #     "type": "array",
+                    #     "description": "List of configured MCP servers for external integrations.",
+                    #     "items": {
+                    #         "type": "object",
+                    #         "properties": {
+                    #             "name": {"type": "string"},
+                    #             "qualifiedName": {"type": "string"},
+                    #             "config": {"type": "object"},
+                    #             "enabledTools": {
+                    #                 "type": "array",
+                    #                 "items": {"type": "string"}
+                    #             }
+                    #         }
+                    #     }
+                    # },
                     "avatar": {
                         "type": "string",
                         "description": "Emoji to use as the agent's avatar."
@@ -75,19 +76,20 @@ class UpdateAgentTool(Tool):
                     "avatar_color": {
                         "type": "string",
                         "description": "Hex color code for the agent's avatar background."
-                    },
-                    "knowledge_bases": {
-                        "type": "array",
-                        "description": "List of LlamaCloud knowledge base indices for the agent to search.",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "name": {"type": "string", "description": "Name of the tool (used for method name generation)"},
-                                "index_name": {"type": "string", "description": "Name of the LlamaCloud index (used for API calls)"},
-                                "description": {"type": "string", "description": "Description of what this knowledge base contains"}
-                            }
-                        }
                     }
+                    # COMMENTED OUT - Knowledge bases configured manually
+                    # "knowledge_bases": {
+                    #     "type": "array",
+                    #     "description": "List of LlamaCloud knowledge base indices for the agent to search.",
+                    #     "items": {
+                    #         "type": "object",
+                    #         "properties": {
+                    #             "name": {"type": "string", "description": "Name of the tool (used for method name generation)"},
+                    #             "index_name": {"type": "string", "description": "Name of the LlamaCloud index (used for API calls)"},
+                    #             "description": {"type": "string", "description": "Description of what this knowledge base contains"}
+                    #         }
+                    #     }
+                    # }
                 },
                 "required": []
             }
@@ -99,19 +101,19 @@ class UpdateAgentTool(Tool):
             {"param_name": "name", "node_type": "attribute", "path": ".", "required": False},
             {"param_name": "description", "node_type": "element", "path": "description", "required": False},
             {"param_name": "system_prompt", "node_type": "element", "path": "system_prompt", "required": False},
-            {"param_name": "agentpress_tools", "node_type": "element", "path": "agentpress_tools", "required": False},
-            {"param_name": "configured_mcps", "node_type": "element", "path": "configured_mcps", "required": False},
             {"param_name": "avatar", "node_type": "attribute", "path": ".", "required": False},
-            {"param_name": "avatar_color", "node_type": "attribute", "path": ".", "required": False},
-            {"param_name": "knowledge_bases", "node_type": "element", "path": "knowledge_bases", "required": False}
+            {"param_name": "avatar_color", "node_type": "attribute", "path": ".", "required": False}
+            # COMMENTED OUT - Tools and integrations configured manually
+            # {"param_name": "agentpress_tools", "node_type": "element", "path": "agentpress_tools", "required": False},
+            # {"param_name": "configured_mcps", "node_type": "element", "path": "configured_mcps", "required": False},
+            # {"param_name": "knowledge_bases", "node_type": "element", "path": "knowledge_bases", "required": False}
         ],
         example='''
         <function_calls>
         <invoke name="update_agent">
         <parameter name="name">Research Assistant</parameter>
         <parameter name="description">An AI assistant specialized in conducting research and providing comprehensive analysis</parameter>
-        <parameter name="system_prompt">You are a research assistant with expertise in gathering, analyzing, and synthesizing information. Your approach is thorough and methodical...</parameter>
-        <parameter name="agentpress_tools">{"web_search": {"enabled": true, "description": "Search the web for information"}, "sb_files": {"enabled": true, "description": "Read and write files"}}</parameter>
+        <parameter name="system_prompt">You are a research assistant with expertise in gathering, analyzing, and synthesizing information. Your approach is thorough and methodical. You excel at finding relevant sources, evaluating information quality, and presenting findings in a clear, structured manner...</parameter>
         <parameter name="avatar">🔬</parameter>
         <parameter name="avatar_color">#4F46E5</parameter>
         </invoke>
@@ -123,11 +125,10 @@ class UpdateAgentTool(Tool):
         name: Optional[str] = None,
         description: Optional[str] = None,
         system_prompt: Optional[str] = None,
-        agentpress_tools: Optional[Dict[str, Dict[str, Any]]] = None,
-        configured_mcps: Optional[list] = None,
         avatar: Optional[str] = None,
-        avatar_color: Optional[str] = None,
-        knowledge_bases: Optional[List[Dict[str, str]]] = None
+        avatar_color: Optional[str] = None
+        # COMMENTED OUT - Tools and integrations configured manually
+        # knowledge_bases: Optional[List[Dict[str, str]]] = None
     ) -> ToolResult:
         """Update agent configuration with provided fields.
         
@@ -135,11 +136,8 @@ class UpdateAgentTool(Tool):
             name: Agent name
             description: Agent description
             system_prompt: System instructions for the agent
-            agentpress_tools: AgentPress tools configuration
-            configured_mcps: MCP servers configuration
             avatar: Emoji avatar
             avatar_color: Avatar background color
-            knowledge_bases: List of LlamaCloud knowledge base configurations for the agent to search
             
         Returns:
             ToolResult with updated agent data or error
@@ -154,25 +152,27 @@ class UpdateAgentTool(Tool):
                 update_data["description"] = description
             if system_prompt is not None:
                 update_data["system_prompt"] = system_prompt
-            if agentpress_tools is not None:
-                formatted_tools = {}
-                for tool_name, tool_config in agentpress_tools.items():
-                    if isinstance(tool_config, dict):
-                        formatted_tools[tool_name] = {
-                            "enabled": tool_config.get("enabled", False),
-                            "description": tool_config.get("description", "")
-                        }
-                update_data["agentpress_tools"] = formatted_tools
-            if configured_mcps is not None:
-                if isinstance(configured_mcps, str):
-                    configured_mcps = json.loads(configured_mcps)
-                update_data["configured_mcps"] = configured_mcps
+            # COMMENTED OUT - Tools and integrations configured manually
+            # if agentpress_tools is not None:
+            #     formatted_tools = {}
+            #     for tool_name, tool_config in agentpress_tools.items():
+            #         if isinstance(tool_config, dict):
+            #             formatted_tools[tool_name] = {
+            #                 "enabled": tool_config.get("enabled", False),
+            #                 "description": tool_config.get("description", "")
+            #             }
+            #     update_data["agentpress_tools"] = formatted_tools
+            # if configured_mcps is not None:
+            #     if isinstance(configured_mcps, str):
+            #         configured_mcps = json.loads(configured_mcps)
+            #     update_data["configured_mcps"] = configured_mcps
             if avatar is not None:
                 update_data["avatar"] = avatar
             if avatar_color is not None:
                 update_data["avatar_color"] = avatar_color
-            if knowledge_bases is not None:
-                update_data["knowledge_bases"] = knowledge_bases
+            # COMMENTED OUT - Knowledge bases configured manually
+            # if knowledge_bases is not None:
+            #     update_data["knowledge_bases"] = knowledge_bases
                 
             if not update_data:
                 return self.fail_response("No fields provided to update")

@@ -25,6 +25,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useCurrentAccount } from '@/hooks/use-current-account';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useTour } from '@/components/tour/TourContext';
+import { AgentsPageTour } from '@/components/tour/AgentsPageTour';
 
 type ViewMode = 'grid' | 'list';
 type SortOption = 'name' | 'created_at' | 'updated_at' | 'tools_count';
@@ -42,6 +44,7 @@ export default function AgentsPage() {
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
   const currentAccount = useCurrentAccount();
+  const { isFirstTimeUser, hasCompletedAgentsTour, setHasCompletedAgentsTour } = useTour();
 
   const [publishDialogAgent, setPublishDialogAgent] = useState<any>(null);
   const [shareDialogAgent, setShareDialogAgent] = useState<any>(null);
@@ -392,6 +395,17 @@ export default function AgentsPage() {
             }}
           />
         )}
+
+        {/* Agents Page Tour */}
+        <AgentsPageTour
+          isFirstTime={isFirstTimeUser && !hasCompletedAgentsTour}
+          hasAgents={agents.length > 0}
+          firstAgentId={agents.length > 0 ? agents[0].agent_id : undefined}
+          onComplete={() => {
+            setHasCompletedAgentsTour(true);
+            console.log('Agents tour completed');
+          }}
+        />
       </div>
     </div>
   );

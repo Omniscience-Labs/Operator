@@ -351,25 +351,14 @@ function LegalContent() {
                     </p>
 
                     <h3 className="text-lg font-medium tracking-tight">
-                      Open Source License
+                      Software License
                     </h3>
                     <p className="text-muted-foreground text-balance mb-6">
-                      Operator is licensed under the Apache License, Version 2.0.
-                      You may obtain a copy of the License at{' '}
-                      <a
-                        href="http://www.apache.org/licenses/LICENSE-2.0"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-secondary hover:underline"
-                      >
-                        http://www.apache.org/licenses/LICENSE-2.0
-                      </a>
-                      . Unless required by applicable law or agreed to in
-                      writing, software distributed under the License is
-                      distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-                      CONDITIONS OF ANY KIND, either express or implied. See the
-                      License for the specific language governing permissions
-                      and limitations under the License.
+                      Operator is proprietary software owned by OMNI AI Corp. 
+                      Your use of the Service is governed by these Terms of Service 
+                      and any additional license agreements. All rights in the 
+                      software and related intellectual property are reserved by 
+                      OMNI AI Corp.
                     </p>
 
                     <h3 className="text-lg font-medium tracking-tight">

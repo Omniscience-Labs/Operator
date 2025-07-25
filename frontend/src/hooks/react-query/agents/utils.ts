@@ -372,8 +372,8 @@ export const getThreadAgent = async (threadId: string): Promise<ThreadAgentRespo
 
 export const getAgentBuilderChatHistory = async (agentId: string): Promise<{messages: any[], thread_id: string | null}> => {
   try {
-    const agentPlaygroundEnabled = await isFlagEnabled('custom_agents');
-    if (!agentPlaygroundEnabled) {
+    const customAgentsEnabled = await isFlagEnabled('custom_agents');
+    if (!customAgentsEnabled) {
       throw new Error('Custom agents is not enabled');
     }
     const supabase = createClient();
@@ -443,8 +443,8 @@ export const startAgentBuilderChat = async (
   signal?: AbortSignal
 ): Promise<void> => {
   try {
-    const agentPlaygroundEnabled = await isFlagEnabled('custom_agents');
-    if (!agentPlaygroundEnabled) {
+    const customAgentsEnabled = await isFlagEnabled('custom_agents');
+    if (!customAgentsEnabled) {
       throw new Error('Custom agents is not enabled');
     }
     const supabase = createClient();

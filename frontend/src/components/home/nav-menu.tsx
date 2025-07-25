@@ -112,7 +112,7 @@ export function NavMenu() {
   };
 
   return (
-    <div className="w-full hidden md:block">
+    <div className="flex-1 hidden md:block">
       <ul
         className="relative mx-auto flex w-fit rounded-full h-11 px-2 items-center justify-center"
         ref={ref}

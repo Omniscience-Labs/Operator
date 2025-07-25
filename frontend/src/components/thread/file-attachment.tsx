@@ -32,7 +32,9 @@ function getFileType(filename: string): FileType {
     if (['md', 'markdown'].includes(ext)) return 'markdown';
     if (ext === 'pdf') return 'pdf';
     if (['mp3', 'wav', 'ogg', 'flac', 'webm', 'm4a', 'aac'].includes(ext)) return 'audio';
-    if (['mp4', 'webm', 'mov', 'avi'].includes(ext)) return 'video';
+    if (['mp4', 'webm', 'ogg', 'mov', 'avi', 'wmv', 'flv', 'mkv', 
+         'm4v', '3gp', 'ts', 'mts', 'm2ts', 'f4v', 'asf', 'rm', 
+         'rmvb', 'vob', 'ogv', 'mxf', 'divx', 'xvid', 'h264', 'h265'].includes(ext)) return 'video';
     if (['csv', 'tsv'].includes(ext)) return 'csv';
     if (['xls', 'xlsx'].includes(ext)) return 'spreadsheet';
     if (['zip', 'rar', 'tar', 'gz'].includes(ext)) return 'archive';
