@@ -118,7 +118,69 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 3: New Task Guide
+      // Step 3: Attachments Guide
+      tourRef.current.addStep({
+        id: 'attachments',
+        title: 'Attach Files & Documents',
+        text: `
+          <div class="space-y-3">
+            <p>This is the attachments area! You can upload files, documents, images, and more to help me understand your task better.</p>
+            <p>Simply drag and drop files here or click to browse. I can analyze PDFs, spreadsheets, images, and many other file types.</p>
+          </div>
+        `,
+        attachTo: {
+          element: '.file-upload-handler, [data-testid="file-upload"], button[aria-label*="upload"], button[aria-label*="file"], .attachment-area, .file-input',
+          on: 'left'
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              console.log('🎯 Next button clicked, moving to step 4');
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 4: Plugins Guide
+      tourRef.current.addStep({
+        id: 'plugins',
+        title: 'Integrations & Plugins',
+        text: `
+          <div class="space-y-3">
+            <p>This is the integrations area! Connect external tools and services to extend my capabilities.</p>
+            <p>You can integrate with databases, APIs, web services, and more to make me even more powerful for your specific needs.</p>
+          </div>
+        `,
+        attachTo: {
+          element: '.integrations-dropdown, [data-testid="integrations"], button[aria-label*="integration"], button[aria-label*="plugin"], .plugin-area, .integration-button',
+          on: 'left'
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              console.log('🎯 Next button clicked, moving to step 5');
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 5: New Task Guide
       tourRef.current.addStep({
         id: 'new-task',
         title: 'Create Your First Task',
