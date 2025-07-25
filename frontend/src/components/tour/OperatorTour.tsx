@@ -183,7 +183,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: 'button:has(.file-audio), .meeting-recorder button, button[aria-label*="meeting"], button[aria-label*="audio"]',
+          element: '.meeting-recorder button, button[aria-label*="meeting"], button[aria-label*="audio"], .file-audio, .chat-input, [data-testid="chat-input"]',
           on: 'bottom'
         },
         buttons: [
@@ -202,7 +202,67 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 6: Quick Start Guide
+      // Step 6: Agents Guide
+      tourRef.current.addStep({
+        id: 'agents',
+        title: 'Create & Manage AI Agents',
+        text: `
+          <div class="space-y-3">
+            <p>This is the Agents section! Here you can create and manage custom AI agents with specific instructions and tools.</p>
+            <p>Build agents tailored to your workflow - from data analysts to content creators, each with their own specialized capabilities.</p>
+          </div>
+        `,
+        attachTo: {
+          element: 'a[href="/agents"], .sidebar-menu-button:has(.bot), button:has(.bot), [data-testid="agents-link"], .sidebar-content',
+          on: 'right'
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 7: Marketplace Guide
+      tourRef.current.addStep({
+        id: 'marketplace',
+        title: 'Browse & Install Agents',
+        text: `
+          <div class="space-y-3">
+            <p>This is the Marketplace! Discover and install pre-built AI agents from the community.</p>
+            <p>Find agents for common tasks like project management, research, or creative work - all ready to use immediately.</p>
+          </div>
+        `,
+        attachTo: {
+          element: 'a[href="/marketplace"], .sidebar-menu-button:has(.store), button:has(.store), [data-testid="marketplace-link"], .sidebar-content',
+          on: 'right'
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 8: Quick Start Guide
       tourRef.current.addStep({
         id: 'quick-start',
         title: 'Quick Start Templates',
@@ -232,7 +292,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 7: New Task Guide
+      // Step 9: New Task Guide
       tourRef.current.addStep({
         id: 'new-task',
         title: 'Create Your First Task',
@@ -243,7 +303,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: 'button:contains("New Task"), .new-task-button, .add-task, [data-new-task], .task-create-button, .btn-new-task, button[aria-label*="task"], button[title*="task"]',
+          element: '.new-task-button, .add-task, [data-new-task], .task-create-button, .btn-new-task, button[aria-label*="task"], button[title*="task"], .sidebar-content, .dashboard-content',
           on: 'left'
         },
         buttons: [
