@@ -141,7 +141,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             {
               name: 'offset',
               options: {
-                offset: [0, -40], // Move popup higher so highlighted area is visible
+                offset: [0, -60], // Move popup higher so highlighted area is visible
               },
             },
           ],
@@ -201,7 +201,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             {
               name: 'offset',
               options: {
-                offset: [0, -40], // Move popup higher so highlighted area is visible
+                offset: [0, -60], // Move popup higher so highlighted area is visible
               },
             },
           ],
@@ -261,7 +261,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             {
               name: 'offset',
               options: {
-                offset: [0, -40], // Move popup higher so highlighted area is visible
+                offset: [0, -60], // Move popup higher so highlighted area is visible
               },
             },
           ],
@@ -362,7 +362,67 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 8: New Task Guide
+      // Step 8: Quick Start Guide
+      tourRef.current.addStep({
+        id: 'quick-start',
+        title: 'Quick Start Templates',
+        text: `
+          <div class="space-y-3">
+            <p>This is the Quick Start section! Here you'll find pre-built templates to help you get started quickly.</p>
+            <p>Choose from templates like project automation, UX research framework, or learning path generator to jumpstart your workflow.</p>
+          </div>
+        `,
+        attachTo: {
+          element: '.w-full.max-w-3xl.mx-auto.px-4, .examples, [data-testid="quick-starts"], .quick-starts, .suggestions, .templates',
+          on: 'top'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [0, -60], // Move popup higher so highlighted area is visible
+              },
+            },
+          ],
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = document.querySelector('.w-full.max-w-3xl.mx-auto.px-4, .examples, [data-testid="quick-starts"], .quick-starts, .suggestions, .templates');
+              if (element) {
+                addHighlight(element);
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = document.querySelector('.w-full.max-w-3xl.mx-auto.px-4, .examples, [data-testid="quick-starts"], .quick-starts, .suggestions, .templates');
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 9: New Task Guide
       tourRef.current.addStep({
         id: 'new-task',
         title: 'Create Your First Task',
