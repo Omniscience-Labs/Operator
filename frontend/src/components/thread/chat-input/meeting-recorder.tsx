@@ -51,10 +51,9 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({
             className="h-7 rounded-md text-muted-foreground"
           >
             <FileAudio className="h-4 w-4" />
-            <span className="text-sm sm:block hidden">Meetings</span>
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Open Meetings</TooltipContent>
+        <TooltipContent side="top" className="bg-black text-white border-black">Open Meetings</TooltipContent>
       </Tooltip>
     </TooltipProvider>
       );

@@ -141,7 +141,6 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
                   disabled={disabled}
                 >
                   <Plug className="h-4 w-4" />
-                  <span className="text-sm sm:block hidden">Integrations</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-72 p-2">
@@ -240,7 +239,7 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
               </DropdownMenuContent>
             </DropdownMenu>
           </TooltipTrigger>
-          <TooltipContent side="top">
+          <TooltipContent side="top" className="bg-black text-white border-black">
             <p>Connected Integrations</p>
           </TooltipContent>
         </Tooltip>
