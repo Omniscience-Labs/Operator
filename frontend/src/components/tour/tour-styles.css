@@ -13,6 +13,28 @@
   overflow: visible;
 }
 
+/* Highlight styles for tour elements */
+.shepherd-highlight {
+  position: relative;
+  z-index: 1000;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.6), 0 4px 12px rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  animation: shepherd-pulse 2s infinite;
+}
+
+@keyframes shepherd-pulse {
+  0% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.6), 0 4px 12px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2), 0 0 0 4px rgba(59, 130, 246, 0.4), 0 6px 16px rgba(59, 130, 246, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.6), 0 4px 12px rgba(59, 130, 246, 0.2);
+  }
+}
+
 /* Speech bubble tail */
 .shepherd-theme-arrows::before {
   content: '';

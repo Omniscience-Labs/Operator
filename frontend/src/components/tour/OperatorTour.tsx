@@ -32,6 +32,16 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     };
   }, [isFirstTime]);
 
+  // Function to add highlight class to element
+  const addHighlight = (element: Element) => {
+    element.classList.add('shepherd-highlight');
+  };
+
+  // Function to remove highlight class from element
+  const removeHighlight = (element: Element) => {
+    element.classList.remove('shepherd-highlight');
+  };
+
   const startTour = async () => {
     try {
       // Import Shepherd.js dynamically
@@ -123,8 +133,28 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.file-upload-handler, [data-testid="file-upload"], .attachment-area, .file-input, button[aria-label*="upload"], button[aria-label*="file"], input[type="file"], .chat-input, [data-testid="chat-input"]',
+          element: 'button:has(.paperclip), button:has([data-testid="file-upload"]), .file-upload-handler button, button[aria-label*="upload"], button[aria-label*="file"]',
           on: 'left'
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = document.querySelector('button:has(.paperclip), button:has([data-testid="file-upload"]), .file-upload-handler button, button[aria-label*="upload"], button[aria-label*="file"]');
+              if (element) {
+                addHighlight(element);
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = document.querySelector('button:has(.paperclip), button:has([data-testid="file-upload"]), .file-upload-handler button, button[aria-label*="upload"], button[aria-label*="file"]');
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
         },
         buttons: [
           {
@@ -153,8 +183,28 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.integrations-dropdown, [data-testid="integrations"], .plugin-area, .integration-button, button[aria-label*="integration"], button[aria-label*="plugin"], .message-input, .chat-input, [data-testid="chat-input"]',
-          on: 'bottom'
+          element: 'button:has(.plug), [data-radix-collection-item]:has(.plug), .integrations-dropdown button, button[aria-label*="integration"], button[aria-label*="plugin"]',
+          on: 'top'
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = document.querySelector('button:has(.plug), [data-radix-collection-item]:has(.plug), .integrations-dropdown button, button[aria-label*="integration"], button[aria-label*="plugin"]');
+              if (element) {
+                addHighlight(element);
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = document.querySelector('button:has(.plug), [data-radix-collection-item]:has(.plug), .integrations-dropdown button, button[aria-label*="integration"], button[aria-label*="plugin"]');
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
         },
         buttons: [
           {
@@ -183,8 +233,28 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.meeting-recorder button, button[aria-label*="meeting"], button[aria-label*="audio"], .file-audio, .chat-input, [data-testid="chat-input"]',
-          on: 'bottom'
+          element: 'button:has(.file-audio), button:has([data-testid="meeting-recorder"]), .meeting-recorder button, button[aria-label*="meeting"], button[aria-label*="audio"]',
+          on: 'top'
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = document.querySelector('button:has(.file-audio), button:has([data-testid="meeting-recorder"]), .meeting-recorder button, button[aria-label*="meeting"], button[aria-label*="audio"]');
+              if (element) {
+                addHighlight(element);
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = document.querySelector('button:has(.file-audio), button:has([data-testid="meeting-recorder"]), .meeting-recorder button, button[aria-label*="meeting"], button[aria-label*="audio"]');
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
         },
         buttons: [
           {
@@ -273,8 +343,38 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.quick-starts, [data-testid="quick-starts"], .examples, .suggestions, .templates',
+          element: '.w-full.max-w-3xl.mx-auto.px-4, .examples, [data-testid="quick-starts"], .quick-starts, .suggestions, .templates',
           on: 'top'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [0, -20], // Move popup higher so highlighted area is visible
+              },
+            },
+          ],
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = document.querySelector('.w-full.max-w-3xl.mx-auto.px-4, .examples, [data-testid="quick-starts"], .quick-starts, .suggestions, .templates');
+              if (element) {
+                addHighlight(element);
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = document.querySelector('.w-full.max-w-3xl.mx-auto.px-4, .examples, [data-testid="quick-starts"], .quick-starts, .suggestions, .templates');
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
         },
         buttons: [
           {
@@ -303,8 +403,28 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.new-task-button, .add-task, [data-new-task], .task-create-button, .btn-new-task, button[aria-label*="task"], button[title*="task"], .sidebar-content, .dashboard-content',
-          on: 'left'
+          element: 'button:has(.plus), .liquid-button:has(.plus), button:has([class*="New Task"]), .new-task-button, .add-task, [data-new-task], .task-create-button, .btn-new-task, button[aria-label*="task"], button[title*="task"]',
+          on: 'right'
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = document.querySelector('button:has(.plus), .liquid-button:has(.plus), button:has([class*="New Task"]), .new-task-button, .add-task, [data-new-task], .task-create-button, .btn-new-task, button[aria-label*="task"], button[title*="task"]');
+              if (element) {
+                addHighlight(element);
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = document.querySelector('button:has(.plus), .liquid-button:has(.plus), button:has([class*="New Task"]), .new-task-button, .add-task, [data-new-task], .task-create-button, .btn-new-task, button[aria-label*="task"], button[title*="task"]');
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
         },
         buttons: [
           {
@@ -338,6 +458,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.on('complete', () => {
         try {
+          // Remove any remaining highlights
+          document.querySelectorAll('.shepherd-highlight').forEach(el => {
+            removeHighlight(el);
+          });
           setIsTourActive(false);
           onComplete?.();
         } catch (error) {
@@ -347,6 +471,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.on('cancel', () => {
         try {
+          // Remove any remaining highlights
+          document.querySelectorAll('.shepherd-highlight').forEach(el => {
+            removeHighlight(el);
+          });
           setIsTourActive(false);
           onComplete?.();
         } catch (error) {
