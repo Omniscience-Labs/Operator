@@ -123,7 +123,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.file-upload-handler, [data-testid="file-upload"], .attachment-area, .file-input, button[aria-label*="upload"], button[aria-label*="file"], input[type="file"], .chat-input, [data-testid="chat-input"]',
+          element: 'button:has(.paperclip), .file-upload-handler button, button[aria-label*="upload"], button[aria-label*="file"], input[type="file"]',
           on: 'left'
         },
         buttons: [
@@ -153,7 +153,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '.integrations-dropdown, [data-testid="integrations"], .plugin-area, .integration-button, button[aria-label*="integration"], button[aria-label*="plugin"], .message-input, .chat-input, [data-testid="chat-input"]',
+          element: 'button:has(.plug), .integrations-dropdown button, button[aria-label*="integration"], button[aria-label*="plugin"]',
           on: 'bottom'
         },
         buttons: [
