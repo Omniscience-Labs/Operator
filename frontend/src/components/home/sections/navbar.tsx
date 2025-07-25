@@ -13,7 +13,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { ThreeSpinner } from '@/components/ui/three-spinner';
 
 const INITIAL_WIDTH = '70rem';
-const MAX_WIDTH = '900px';
+const MAX_WIDTH = '1200px';
 
 const overlayVariants = {
   hidden: { opacity: 0 },
@@ -113,7 +113,7 @@ export function Navbar() {
       >
         <div
           className={cn(
-            'mx-auto max-w-7xl rounded-2xl transition-all duration-300  xl:px-0',
+            'mx-auto rounded-2xl transition-all duration-300 xl:px-0',
             hasScrolled
               ? 'px-2 border border-border backdrop-blur-lg bg-background/75'
               : 'shadow-none px-7',
