@@ -13,7 +13,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { ThreeSpinner } from '@/components/ui/three-spinner';
 
 const INITIAL_WIDTH = '70rem';
-const MAX_WIDTH = '800px';
+const MAX_WIDTH = '900px';
 
 const overlayVariants = {
   hidden: { opacity: 0 },

@@ -172,7 +172,67 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 5: New Task Guide
+      // Step 5: Open Meetings Guide
+      tourRef.current.addStep({
+        id: 'meetings',
+        title: 'Open Meetings',
+        text: `
+          <div class="space-y-3">
+            <p>This is the meetings feature! Click here to open the meetings page where you can record and transcribe conversations.</p>
+            <p>You can record in-person meetings or join online meetings with a bot that captures everything for you.</p>
+          </div>
+        `,
+        attachTo: {
+          element: 'button:has(.file-audio), .meeting-recorder button, button[aria-label*="meeting"], button[aria-label*="audio"]',
+          on: 'bottom'
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 6: Quick Start Guide
+      tourRef.current.addStep({
+        id: 'quick-start',
+        title: 'Quick Start Templates',
+        text: `
+          <div class="space-y-3">
+            <p>This is the Quick Start section! Here you'll find pre-built templates to help you get started quickly.</p>
+            <p>Choose from templates like project automation, UX research framework, or learning path generator to jumpstart your workflow.</p>
+          </div>
+        `,
+        attachTo: {
+          element: '.quick-starts, [data-testid="quick-starts"], .examples, .suggestions, .templates',
+          on: 'top'
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 7: New Task Guide
       tourRef.current.addStep({
         id: 'new-task',
         title: 'Create Your First Task',
