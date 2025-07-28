@@ -135,11 +135,16 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
     })
   }
 
-  const copyToClipboard = () => {
+  const copyToClipboard = async () => {
     if (shareLink) {
       setIsCopying(true)
-      navigator.clipboard.writeText(shareLink)
-      toast.success("Link copied to clipboard")
+      try {
+        await navigator.clipboard.writeText(shareLink)
+        toast.success("Link copied to clipboard")
+      } catch (err) {
+        console.error('Failed to copy to clipboard:', err)
+        toast.error("Failed to copy link to clipboard")
+      }
       setTimeout(() => {
         setIsCopying(false)
       }, 500)
