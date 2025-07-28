@@ -2,7 +2,6 @@ import os
 import urllib.parse
 from typing import Optional
 import mimetypes
-import asyncio
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form, Depends, Request
 from fastapi.responses import Response
@@ -396,131 +395,52 @@ async def ensure_project_sandbox_active(
     Checks the sandbox status and starts it if it's not running.
     """
     logger.info(f"Received ensure sandbox active request for project {project_id}, user_id: {user_id}")
-    
-    # Add timeout protection for the entire operation
-    try:
-        return await asyncio.wait_for(
-            _ensure_sandbox_active_impl(project_id, user_id),
-            timeout=120  # 2 minute timeout for entire operation
-        )
-    except asyncio.TimeoutError:
-        error_message = f"Sandbox restart operation timed out for project {project_id}"
-        logger.error(error_message)
-        raise HTTPException(
-            status_code=504,
-            detail={
-                "error": "Sandbox restart timed out",
-                "message": "The sandbox restart operation took too long. Please try again in a few minutes.",
-                "project_id": project_id,
-                "timeout": "120 seconds"
-            }
-        )
-    except Exception as e:
-        error_message = f"Unexpected error in sandbox restart for project {project_id}: {str(e)}"
-        logger.error(error_message)
-        logger.error(f"Exception type: {type(e).__name__}")
-        raise HTTPException(
-            status_code=500, 
-            detail={
-                "error": "Sandbox restart failed",
-                "message": "An unexpected error occurred during sandbox restart. Please try again.",
-                "error_type": type(e).__name__,
-                "project_id": project_id
-            }
-        )
-
-async def _ensure_sandbox_active_impl(project_id: str, user_id: Optional[str]):
-    """Implementation of the sandbox ensure-active logic."""
     client = await db.client
     
-    try:
-        # Find the project and sandbox information
-        project_result = await client.table('projects').select('*').eq('project_id', project_id).execute()
-        
-        if not project_result.data or len(project_result.data) == 0:
-            logger.error(f"Project not found: {project_id}")
-            raise HTTPException(status_code=404, detail="Project not found")
-        
-        project_data = project_result.data[0]
-        
-        # For public projects, no authentication is needed
-        if not project_data.get('is_public'):
-            # For private projects, we must have a user_id
-            if not user_id:
-                logger.error(f"Authentication required for private project {project_id}")
-                raise HTTPException(status_code=401, detail="Authentication required for this resource")
-                
-            account_id = project_data.get('account_id')
+    # Find the project and sandbox information
+    project_result = await client.table('projects').select('*').eq('project_id', project_id).execute()
+    
+    if not project_result.data or len(project_result.data) == 0:
+        logger.error(f"Project not found: {project_id}")
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    project_data = project_result.data[0]
+    
+    # For public projects, no authentication is needed
+    if not project_data.get('is_public'):
+        # For private projects, we must have a user_id
+        if not user_id:
+            logger.error(f"Authentication required for private project {project_id}")
+            raise HTTPException(status_code=401, detail="Authentication required for this resource")
             
-            # Verify account membership
-            if account_id:
-                account_user_result = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', account_id).execute()
-                if not (account_user_result.data and len(account_user_result.data) > 0):
-                    logger.error(f"User {user_id} not authorized to access project {project_id}")
-                    raise HTTPException(status_code=403, detail="Not authorized to access this project")
-
+        account_id = project_data.get('account_id')
+        
+        # Verify account membership
+        if account_id:
+            account_user_result = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', account_id).execute()
+            if not (account_user_result.data and len(account_user_result.data) > 0):
+                logger.error(f"User {user_id} not authorized to access project {project_id}")
+                raise HTTPException(status_code=403, detail="Not authorized to access this project")
+    
+    try:
         # Get sandbox ID from project data
         sandbox_info = project_data.get('sandbox', {})
         if not sandbox_info.get('id'):
-            logger.error(f"No sandbox found for project {project_id}")
             raise HTTPException(status_code=404, detail="No sandbox found for this project")
             
         sandbox_id = sandbox_info['id']
-        logger.info(f"Attempting to ensure sandbox {sandbox_id} is active for project {project_id}")
         
-        # Get or start the sandbox with proper error handling
-        try:
-            sandbox = await get_or_start_sandbox(sandbox_id)
-        except Exception as sandbox_error:
-            logger.error(f"Failed to start sandbox {sandbox_id}: {str(sandbox_error)}")
-            
-            # Check if it's a Daytona API error or timeout
-            if "timeout" in str(sandbox_error).lower():
-                raise HTTPException(
-                    status_code=504,
-                    detail={
-                        "error": "Sandbox restart timeout",
-                        "message": "The sandbox is taking longer than expected to start. Please wait a few minutes and try again.",
-                        "project_id": project_id,
-                        "sandbox_id": sandbox_id
-                    }
-                )
-            else:
-                raise HTTPException(
-                    status_code=500,
-                    detail={
-                        "error": "Sandbox restart failed",
-                        "message": f"Failed to start sandbox: {str(sandbox_error)}",
-                        "project_id": project_id,
-                        "sandbox_id": sandbox_id
-                    }
-                )
+        # Get or start the sandbox
+        logger.info(f"Ensuring sandbox is active for project {project_id}")
+        sandbox = await get_or_start_sandbox(sandbox_id)
         
         logger.info(f"Successfully ensured sandbox {sandbox_id} is active for project {project_id}")
-        logger.info(f"Sandbox state: {sandbox.state}, URL: {sandbox.sandbox_url}")
         
         return {
             "status": "success", 
             "sandbox_id": sandbox_id,
-            "sandbox_state": str(sandbox.state),
-            "sandbox_url": sandbox.sandbox_url,
             "message": "Sandbox is active"
         }
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
-        raise
     except Exception as e:
-        error_message = f"Error ensuring sandbox is active for project {project_id}: {str(e)}"
-        logger.error(error_message)
-        logger.error(f"Exception type: {type(e).__name__}")
-        
-        # Return more detailed error information
-        raise HTTPException(
-            status_code=500, 
-            detail={
-                "error": "Failed to ensure sandbox is active",
-                "message": str(e),
-                "error_type": type(e).__name__,
-                "project_id": project_id
-            }
-        )
+        logger.error(f"Error ensuring sandbox is active for project {project_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))

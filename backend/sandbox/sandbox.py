@@ -1,12 +1,11 @@
+import asyncio
+import aiohttp
+from typing import Optional
 from daytona_sdk import Daytona, DaytonaConfig, CreateSandboxFromImageParams, Sandbox, SessionExecuteRequest, Resources, SandboxState
 from dotenv import load_dotenv
 from utils.logger import logger
 from utils.config import config
 from utils.config import Configuration
-import time
-import asyncio
-import concurrent.futures
-from functools import partial
 
 load_dotenv()
 
@@ -35,64 +34,29 @@ else:
 daytona = Daytona(daytona_config)
 logger.debug("Daytona client initialized")
 
-# Thread pool executor for blocking Daytona SDK calls
-# Increased max_workers to handle more concurrent sandbox operations
-executor = concurrent.futures.ThreadPoolExecutor(max_workers=8, thread_name_prefix="daytona")
-
-async def run_in_executor_with_timeout(func, *args, timeout=30):
-    """Run a synchronous function in an executor with timeout."""
-    loop = asyncio.get_event_loop()
-    try:
-        logger.debug(f"Executing {func.__name__} in thread pool with timeout {timeout}s")
-        result = await asyncio.wait_for(
-            loop.run_in_executor(executor, func, *args),
-            timeout=timeout
-        )
-        logger.debug(f"Successfully completed {func.__name__}")
-        return result
-    except asyncio.TimeoutError:
-        logger.error(f"Operation timed out after {timeout} seconds: {func.__name__}")
-        raise Exception(f"Daytona operation timed out after {timeout} seconds")
-    except Exception as e:
-        logger.error(f"Error in executor operation {func.__name__}: {str(e)}")
-        logger.error(f"Exception type: {type(e).__name__}")
-        raise e
-
 async def get_or_start_sandbox(sandbox_id: str):
     """Retrieve a sandbox by ID, check its state, and start it if needed."""
     
     logger.info(f"Getting or starting sandbox with ID: {sandbox_id}")
     
     try:
-        # Get sandbox info with timeout
-        logger.debug("Fetching sandbox information...")
-        sandbox = await run_in_executor_with_timeout(daytona.get, sandbox_id, timeout=15)
-        logger.debug(f"Sandbox current state: {sandbox.state}")
+        sandbox = daytona.get(sandbox_id)
         
         # Check if sandbox needs to be started
         if sandbox.state == SandboxState.ARCHIVED or sandbox.state == SandboxState.STOPPED:
             logger.info(f"Sandbox is in {sandbox.state} state. Starting...")
             try:
-                # Start sandbox with timeout
-                logger.debug("Starting sandbox...")
-                await run_in_executor_with_timeout(daytona.start, sandbox, timeout=45)
-                
+                daytona.start(sandbox)
                 # Wait a moment for the sandbox to initialize
-                logger.debug("Waiting for sandbox to initialize...")
-                await asyncio.sleep(3)
-                
+                # sleep(5)
                 # Refresh sandbox state after starting
-                logger.debug("Refreshing sandbox state...")
-                sandbox = await run_in_executor_with_timeout(daytona.get, sandbox_id, timeout=15)
-                logger.info(f"Sandbox state after start: {sandbox.state}")
+                sandbox = daytona.get(sandbox_id)
                 
-                # Ensure services are running after restart
-                await ensure_sandbox_services_running(sandbox)
+                # Start supervisord in a session when restarting
+                await start_supervisord_session_with_wait(sandbox)
             except Exception as e:
                 logger.error(f"Error starting sandbox: {e}")
                 raise e
-        else:
-            logger.info(f"Sandbox is already in {sandbox.state} state")
         
         logger.info(f"Sandbox {sandbox_id} is ready")
         return sandbox
@@ -101,69 +65,76 @@ async def get_or_start_sandbox(sandbox_id: str):
         logger.error(f"Error retrieving or starting sandbox: {str(e)}")
         raise e
 
-async def ensure_sandbox_services_running(sandbox: Sandbox):
-    """Ensure that all required services are running in the sandbox."""
-    try:
-        logger.info("Ensuring sandbox services are running")
-        
-        # Check if supervisord is running, if not start it
-        try:
-            logger.debug("Checking if supervisord is running...")
-            result = await run_in_executor_with_timeout(
-                sandbox.process.execute,
-                SessionExecuteRequest(command="pgrep -f supervisord", var_async=False),
-                timeout=10
-            )
-            
-            if not result.exit_code == 0:
-                # Supervisord not running, start it
-                logger.info("Supervisord not running, starting it")
-                await start_supervisord_session(sandbox)
-            else:
-                logger.info("Supervisord already running, restarting services")
-                # Restart all services using supervisorctl
-                await run_in_executor_with_timeout(
-                    sandbox.process.execute,
-                    SessionExecuteRequest(command="supervisorctl restart all", var_async=True),
-                    timeout=20
-                )
-        except Exception as e:
-            logger.warning(f"Could not check supervisord status, attempting to start: {e}")
-            await start_supervisord_session(sandbox)
-            
-    except Exception as e:
-        logger.error(f"Error ensuring sandbox services: {str(e)}")
-        # Don't raise - let the sandbox start anyway
-        pass
-
-async def start_supervisord_session(sandbox: Sandbox):
-    """Start supervisord in a session if not already running."""
-    session_id = f"supervisord-session-{int(time.time())}"  # Use unique session ID
+async def start_supervisord_session_with_wait(sandbox: Sandbox):
+    """Start supervisord in a session and wait for HTTP server to be ready."""
+    session_id = "supervisord-session"
     try:
         logger.info(f"Creating session {session_id} for supervisord")
-        await run_in_executor_with_timeout(
-            sandbox.process.create_session,
-            session_id,
-            timeout=10
-        )
+        sandbox.process.create_session(session_id)
         
         # Execute supervisord command
-        await run_in_executor_with_timeout(
-            sandbox.process.execute_session_command,
-            session_id,
-            SessionExecuteRequest(
-                command="exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf",
-                var_async=True
-            ),
-            timeout=15
-        )
+        sandbox.process.execute_session_command(session_id, SessionExecuteRequest(
+            command="exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf",
+            var_async=True
+        ))
+        logger.info(f"Supervisord started in session {session_id}")
+        
+        # Wait for HTTP server to be ready
+        await wait_for_http_server(sandbox)
+        
+    except Exception as e:
+        logger.error(f"Error starting supervisord session: {str(e)}")
+        raise e
+
+async def wait_for_http_server(sandbox: Sandbox, max_wait_time: int = 60):
+    """Wait for the HTTP server on port 8080 to be ready."""
+    logger.info("Waiting for HTTP server to be ready...")
+    
+    # Get the sandbox URL and construct health check URL
+    sandbox_url = sandbox.sandbox_url
+    if not sandbox_url:
+        logger.warning("No sandbox URL available, skipping health check")
+        return
+    
+    # Remove port if present and add 8080
+    base_url = sandbox_url.replace(':8080', '')
+    health_url = f"{base_url}:8080/health"
+    
+    start_time = asyncio.get_event_loop().time()
+    
+    async with aiohttp.ClientSession() as session:
+        while (asyncio.get_event_loop().time() - start_time) < max_wait_time:
+            try:
+                async with session.get(health_url, timeout=aiohttp.ClientTimeout(total=5)) as response:
+                    if response.status == 200:
+                        logger.info("HTTP server is ready!")
+                        return
+            except Exception as e:
+                logger.debug(f"Health check failed: {e}")
+            
+            # Wait 2 seconds before next attempt
+            await asyncio.sleep(2)
+    
+    logger.warning(f"HTTP server did not become ready within {max_wait_time} seconds")
+
+def start_supervisord_session(sandbox: Sandbox):
+    """Start supervisord in a session (legacy sync version)."""
+    session_id = "supervisord-session"
+    try:
+        logger.info(f"Creating session {session_id} for supervisord")
+        sandbox.process.create_session(session_id)
+        
+        # Execute supervisord command
+        sandbox.process.execute_session_command(session_id, SessionExecuteRequest(
+            command="exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf",
+            var_async=True
+        ))
         logger.info(f"Supervisord started in session {session_id}")
     except Exception as e:
         logger.error(f"Error starting supervisord session: {str(e)}")
-        # Don't raise - supervisord might already be running
-        pass
+        raise e
 
-async def create_sandbox(password: str, project_id: str = None):
+def create_sandbox(password: str, project_id: str = None):
     """Create a new sandbox with all required services configured and running."""
     
     logger.debug("Creating new Daytona sandbox environment")
@@ -200,29 +171,29 @@ async def create_sandbox(password: str, project_id: str = None):
         auto_archive_interval=24 * 60,
     )
     
-    # Create the sandbox using the executor to prevent blocking
-    logger.debug("Creating sandbox with Daytona API...")
-    sandbox = await run_in_executor_with_timeout(daytona.create, params, timeout=60)
+    # Create the sandbox
+    sandbox = daytona.create(params)
     logger.debug(f"Sandbox created with ID: {sandbox.id}")
     
     # Start supervisord in a session for new sandbox
-    try:
-        await start_supervisord_session(sandbox)
-    except Exception as e:
-        logger.warning(f"Failed to start supervisord for new sandbox: {e}")
+    start_supervisord_session(sandbox)
     
     logger.debug(f"Sandbox environment successfully initialized")
     return sandbox
-
-
 
 async def delete_sandbox(sandbox_id: str):
     """Delete a sandbox by its ID."""
     logger.info(f"Deleting sandbox with ID: {sandbox_id}")
     
     try:
-        await run_in_executor_with_timeout(daytona.delete, sandbox_id, timeout=30)
+        # Get the sandbox
+        sandbox = daytona.get(sandbox_id)
+        
+        # Delete the sandbox
+        daytona.remove(sandbox)
+        
         logger.info(f"Successfully deleted sandbox {sandbox_id}")
+        return True
     except Exception as e:
         logger.error(f"Error deleting sandbox {sandbox_id}: {str(e)}")
         raise e
