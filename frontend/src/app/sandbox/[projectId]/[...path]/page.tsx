@@ -67,7 +67,7 @@ export default function SandboxPage({ params }: SandboxPageProps) {
         const testUrl = `${baseUrl}:8080/${filePath}`;
         const testResponse = await fetch(testUrl, { 
           method: 'HEAD',
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(8000), // Increased timeout
         });
         
         if (testResponse.ok) {
@@ -109,13 +109,57 @@ export default function SandboxPage({ params }: SandboxPageProps) {
           return;
         }
 
-        // Wait a bit for the sandbox to start up
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Wait longer for sandbox services to start up properly
+        await new Promise(resolve => setTimeout(resolve, 8000));
         
-        // Check again after restart
-        await checkSandboxStatus(false);
+        // Retry with exponential backoff to ensure service is ready
+        const baseUrl = sandbox.sandbox_url?.replace(':8080', '') || '';
+        const finalUrl = `${baseUrl}:8080/${filePath}`;
+        const healthUrl = `${baseUrl}:8080/health`;
+        
+        for (let attempt = 1; attempt <= 5; attempt++) {
+          try {
+            // First check the health endpoint
+            const healthCheck = await fetch(healthUrl, { 
+              method: 'GET',
+              signal: AbortSignal.timeout(10000),
+            });
+            
+            if (healthCheck.ok) {
+              // Health check passed, now verify the actual file is accessible
+              const fileCheck = await fetch(finalUrl, { 
+                method: 'HEAD',
+                signal: AbortSignal.timeout(5000),
+              });
+              
+              if (fileCheck.ok) {
+                setSandboxStatus({ 
+                  status: 'active',
+                  directUrl: finalUrl,
+                });
+                // Redirect to the actual sandbox
+                window.location.href = finalUrl;
+                return;
+              }
+            }
+          } catch (error) {
+            console.log(`Health check attempt ${attempt} failed:`, error);
+            // Service not ready yet, continue retrying
+          }
+          
+          // Exponential backoff: wait 2s, 4s, 6s, 8s, 10s
+          const waitTime = attempt * 2000;
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+        
+        // If we get here, health checks failed
+        setSandboxStatus({
+          status: 'error',
+          message: 'Sandbox restarted successfully, but the web server is still starting up. This can happen during high server load or if your project has many files to initialize.',
+          directUrl: finalUrl,
+        });
       } else {
-        // After restart, try to get the final URL
+        // After restart, try to get the final URL (legacy fallback)
         try {
           const baseUrl = sandbox.sandbox_url?.replace(':8080', '') || '';
           const finalUrl = `${baseUrl}:8080/${filePath}`;
@@ -194,7 +238,7 @@ export default function SandboxPage({ params }: SandboxPageProps) {
           </div>
           
           <h3 className="text-xl font-semibold mb-4 text-zinc-900 dark:text-zinc-100">
-            Unable to Access Sandbox
+            Sandbox Starting Up
           </h3>
           
           {filePath && (
@@ -224,7 +268,7 @@ export default function SandboxPage({ params }: SandboxPageProps) {
               <Button variant="outline" asChild className="w-full">
                 <a href={sandboxStatus.directUrl} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4 mr-2" />
-                  Try Direct URL
+                  Open Direct URL
                 </a>
               </Button>
             )}
@@ -232,6 +276,11 @@ export default function SandboxPage({ params }: SandboxPageProps) {
             <Button variant="ghost" onClick={handleGoToDashboard} className="w-full">
               Go to Dashboard
             </Button>
+          </div>
+          
+          <div className="mt-6 text-sm text-zinc-500 dark:text-zinc-400">
+            <p>Your sandbox is starting up. This usually takes 15-30 seconds.</p>
+            <p className="mt-2">If the direct URL doesn't work immediately, wait 30 seconds and try again.</p>
           </div>
         </div>
       </div>
