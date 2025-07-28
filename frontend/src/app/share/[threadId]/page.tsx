@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   getMessages,
   getProject,
@@ -31,6 +31,10 @@ import { useAgentStream } from '@/hooks/useAgentStream';
 import { threadErrorCodeMessages } from '@/lib/constants/errorCodeMessages';
 import { ThreadSkeleton } from '@/components/thread/content/ThreadSkeleton';
 import { useAgent } from '@/hooks/react-query/agents/use-agents';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { LogIn, AlertCircle, Loader2 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 // Extend the base Message type with the expected database fields
 interface ApiMessageType extends BaseApiMessageType {
@@ -60,9 +64,12 @@ export default function ThreadPage({
   const threadId = unwrappedParams.threadId;
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const loginRequired = searchParams.get('login') === 'true';
   const [messages, setMessages] = useState<UnifiedMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [agentRunId, setAgentRunId] = useState<string | null>(null);
   const [agentStatus, setAgentStatus] = useState<
     'idle' | 'running' | 'connecting' | 'error'
@@ -110,6 +117,12 @@ export default function ThreadPage({
   const toggleSidePanel = useCallback(() => {
     setIsSidePanelOpen((prev) => !prev);
   }, []);
+
+  const handleLoginRedirect = () => {
+    setIsAuthenticating(true);
+    const currentUrl = window.location.pathname + window.location.search;
+    router.push(`/auth?returnUrl=${encodeURIComponent(currentUrl)}`);
+  };
 
   const handleSidePanelNavigate = useCallback((newIndex: number) => {
     setCurrentToolIndex(newIndex);
@@ -357,6 +370,18 @@ export default function ThreadPage({
             return [];
           }),
         ]);
+
+        if (loginRequired) {
+          const supabase = createClient();
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (!session?.access_token) {
+            setError('AUTHENTICATION_REQUIRED');
+            setIsLoading(false);
+            return;
+          }
+        }
 
         if (!isMounted) return;
 
@@ -784,6 +809,39 @@ export default function ThreadPage({
   if (isLoading && !initialLoadCompleted.current) {
     return (
       <ThreadSkeleton isSidePanelOpen={isSidePanelOpen} showHeader={true} />
+    );
+  }
+
+  if (error === 'AUTHENTICATION_REQUIRED') {
+    return (
+      <div className="container mx-auto max-w-4xl px-4 py-8 min-h-screen flex items-center justify-center">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center space-y-3">
+            <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+              <LogIn className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-xl">Login Required</CardTitle>
+            <CardDescription>
+              You need to sign in to view this shared chat. After logging in, you'll be brought right back here.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button onClick={handleLoginRedirect} disabled={isAuthenticating} className="w-full h-12">
+              {isAuthenticating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Redirecting...
+                </>
+              ) : (
+                <>
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In to Continue
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
