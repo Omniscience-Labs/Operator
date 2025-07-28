@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Papa from 'papaparse';
 import { cn } from '@/lib/utils';
@@ -41,6 +41,9 @@ export function CsvRenderer({
     content,
     className
 }: CsvRendererProps) {
+    // Generate unique instance ID to prevent key conflicts across multiple CSV renderers
+    const instanceId = useMemo(() => crypto.randomUUID(), []);
+    
     const parsedData = parseCSV(content);
     const isEmpty = parsedData.data.length === 0;
 
@@ -52,7 +55,7 @@ export function CsvRenderer({
                         <thead className="bg-muted sticky top-0">
                             <tr>
                                 {parsedData.headers.map((header, index) => (
-                                    <th key={index} className="px-3 py-2 text-left font-medium border border-border">
+                                    <th key={`${instanceId}-header-${index}`} className="px-3 py-2 text-left font-medium border border-border">
                                         {header}
                                     </th>
                                 ))}
@@ -60,9 +63,9 @@ export function CsvRenderer({
                         </thead>
                         <tbody>
                             {!isEmpty ? parsedData.data.map((row: any, rowIndex) => (
-                                <tr key={rowIndex} className="border-b border-border hover:bg-muted/50">
+                                <tr key={`${instanceId}-row-${rowIndex}`} className="border-b border-border hover:bg-muted/50">
                                     {parsedData.headers.map((header, cellIndex) => (
-                                        <td key={cellIndex} className="px-3 py-2 border border-border">
+                                        <td key={`${instanceId}-cell-${rowIndex}-${cellIndex}`} className="px-3 py-2 border border-border">
                                             {row[header] || ''}
                                         </td>
                                     ))}

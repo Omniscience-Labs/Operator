@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   FileSpreadsheet,
   CheckCircle,
@@ -49,6 +49,9 @@ export function ExcelToolView({
 }: ToolViewProps) {
   const [expandedView, setExpandedView] = useState(false);
   const [selectedSheet, setSelectedSheet] = useState<string | null>(null);
+  
+  // Generate unique instance ID to prevent key conflicts across multiple Excel tool instances
+  const instanceId = useMemo(() => crypto.randomUUID(), []);
 
   const data = extractExcelData(
     assistantContent,
@@ -88,7 +91,7 @@ export function ExcelToolView({
                 </th>
                 {headers.map((_, colIndex) => (
                   <th 
-                    key={colIndex} 
+                    key={`${instanceId}-header-${colIndex}`} 
                     className="border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 text-xs font-medium text-zinc-700 dark:text-zinc-300 min-w-[100px]"
                   >
                     {getColumnLetter(colIndex)}
@@ -104,7 +107,7 @@ export function ExcelToolView({
                     const { display, isNumber, isFormula } = formatCellDisplay(header);
                     return (
                       <td 
-                        key={colIndex} 
+                        key={`${instanceId}-header-row-${colIndex}`} 
                         className={cn(
                           "border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm",
                           "bg-zinc-50 dark:bg-zinc-800/50 font-semibold",
@@ -123,7 +126,7 @@ export function ExcelToolView({
               {rows.map((row, rowIndex) => {
                 const actualRowNumber = hasHeaders ? rowIndex + 2 : rowIndex + 1;
                 return (
-                  <tr key={rowIndex} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
+                  <tr key={`${instanceId}-row-${rowIndex}`} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
                     <td className="border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-2 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400">
                       {actualRowNumber}
                     </td>
@@ -131,7 +134,7 @@ export function ExcelToolView({
                       const { display, isNumber, isFormula } = formatCellDisplay(cell);
                       return (
                         <td 
-                          key={colIndex} 
+                          key={`${instanceId}-cell-${rowIndex}-${colIndex}`} 
                           className={cn(
                             "border border-zinc-200 dark:border-zinc-700 px-3 py-2 text-sm",
                             "bg-white dark:bg-zinc-900",
@@ -174,7 +177,7 @@ export function ExcelToolView({
       <div className="flex items-center gap-1 p-2 bg-zinc-100 dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 overflow-x-auto">
         {sheets.map((sheet, index) => (
           <button
-            key={index}
+            key={`${instanceId}-sheet-tab-${index}`}
             onClick={() => setSelectedSheet(sheet)}
             className={cn(
               "px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5",
@@ -212,7 +215,7 @@ export function ExcelToolView({
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-2">Created sheets:</p>
                     <div className="flex flex-wrap gap-2">
                       {data.sheets.map((sheet, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-xs">
+                        <Badge key={`${instanceId}-created-sheet-${idx}`} variant="secondary" className="text-xs">
                           <Sheet className="h-3 w-3 mr-1" />
                           {sheet}
                         </Badge>
@@ -357,7 +360,7 @@ export function ExcelToolView({
               <div className="space-y-2">
                 {data.sheets.map((sheet, idx) => (
                   <div 
-                    key={idx}
+                    key={`${instanceId}-list-sheet-${idx}`}
                     className="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                   >
                     <Sheet className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
