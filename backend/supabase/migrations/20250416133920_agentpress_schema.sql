@@ -400,3 +400,70 @@ $$;
 
 -- Grant execute permissions
 GRANT EXECUTE ON FUNCTION get_llm_formatted_messages TO authenticated, anon, service_role;
+
+-- Add foreign key constraint to thread_views if it exists without the constraint
+-- This handles the case where thread_views was created before threads table
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'thread_views'
+    ) AND NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE table_schema = 'public' 
+        AND table_name = 'thread_views' 
+        AND constraint_type = 'FOREIGN KEY'
+        AND constraint_name LIKE '%thread_id%'
+    ) THEN
+        ALTER TABLE thread_views 
+        ADD CONSTRAINT thread_views_thread_id_fkey 
+        FOREIGN KEY (thread_id) 
+        REFERENCES threads(thread_id) 
+        ON DELETE CASCADE;
+        RAISE NOTICE 'Added foreign key constraint for thread_views.thread_id';
+    END IF;
+END $$;
+
+-- Enable realtime for tables created in this migration
+DO $$
+BEGIN
+    -- Add agent_runs to realtime publication
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' 
+        AND schemaname = 'public' 
+        AND tablename = 'agent_runs'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE agent_runs;
+        RAISE NOTICE 'Added agent_runs to supabase_realtime publication';
+    END IF;
+    
+    -- Add threads to realtime publication
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' 
+        AND schemaname = 'public' 
+        AND tablename = 'threads'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE threads;
+        RAISE NOTICE 'Added threads to supabase_realtime publication';
+    END IF;
+    
+    -- Also check if thread_views needs to be added
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'thread_views'
+    ) AND NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' 
+        AND schemaname = 'public' 
+        AND tablename = 'thread_views'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE thread_views;
+        RAISE NOTICE 'Added thread_views to supabase_realtime publication';
+    END IF;
+END $$;
+
+COMMIT;

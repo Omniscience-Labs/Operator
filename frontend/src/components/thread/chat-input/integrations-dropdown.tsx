@@ -135,7 +135,7 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
                   variant="ghost"
                   size="default"
                   className={cn(
-                    "h-8 rounded-lg text-muted-foreground shadow-none border-none focus:ring-0 px-3",
+                    "h-7 rounded-md text-muted-foreground",
                     className
                   )}
                   disabled={disabled}
@@ -239,7 +239,7 @@ export function IntegrationsDropdown({ disabled = false, className }: Integratio
               </DropdownMenuContent>
             </DropdownMenu>
           </TooltipTrigger>
-          <TooltipContent side="top">
+          <TooltipContent side="top" className="bg-black text-white border-black">
             <p>Connected Integrations</p>
           </TooltipContent>
         </Tooltip>

@@ -15,6 +15,8 @@ import { DeleteOperationProvider } from '@/contexts/DeleteOperationContext';
 import { AgentStatusProvider } from '@/contexts/AgentStatusContext';
 import { StatusOverlay } from '@/components/ui/status-overlay';
 import { VSentry } from '@/components/sentry';
+import { TourProvider } from '@/components/tour/TourContext';
+import { TourManager } from '@/components/tour/TourManager';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -85,29 +87,34 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <AgentStatusProvider>
       <DeleteOperationProvider>
         <SidebarProvider>
-          <div className="flex h-screen w-full">
-            <SidebarLeft />
-            <SidebarInset className="flex-1 overflow-hidden">
-              <div className="bg-background h-full overflow-y-auto">{children}</div>
-            </SidebarInset>
-          </div>
+          <TourProvider>
+            <div className="flex h-screen w-full">
+              <SidebarLeft />
+              <SidebarInset className="flex-1 overflow-hidden">
+                <div className="bg-background h-full overflow-y-auto">{children}</div>
+              </SidebarInset>
+            </div>
 
-          {/* <PricingAlert 
-            open={showPricingAlert} 
-            onOpenChange={setShowPricingAlert}
-            closeable={false}
-            accountId={personalAccount?.account_id}
-            /> */}
+            {/* <PricingAlert 
+              open={showPricingAlert} 
+              onOpenChange={setShowPricingAlert}
+              closeable={false}
+              accountId={personalAccount?.account_id}
+              /> */}
 
-          <MaintenanceAlert
-            open={showMaintenanceAlert}
-            onOpenChange={setShowMaintenanceAlert}
-            closeable={true}
-          />
-          <VSentry />
+            <MaintenanceAlert
+              open={showMaintenanceAlert}
+              onOpenChange={setShowMaintenanceAlert}
+              closeable={true}
+            />
+            <VSentry />
 
-          {/* Status overlay for deletion operations */}
-          <StatusOverlay />
+            {/* Status overlay for deletion operations */}
+            <StatusOverlay />
+            
+            {/* Tour Manager */}
+            <TourManager />
+          </TourProvider>
         </SidebarProvider>
       </DeleteOperationProvider>
     </AgentStatusProvider>

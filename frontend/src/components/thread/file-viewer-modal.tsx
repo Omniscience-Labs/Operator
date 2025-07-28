@@ -1497,16 +1497,17 @@ export function FileViewerModal({
                     // Safety check: don't render text content for binary files
                     const isImageFile = FileCache.isImageFile(selectedFilePath);
                     const isPdfFile = FileCache.isPdfFile(selectedFilePath);
+                    const isVideoFile = FileCache.isVideoFile(selectedFilePath);
                     const extension = selectedFilePath?.split('.').pop()?.toLowerCase();
                     const isOfficeFile = ['xlsx', 'xls', 'docx', 'doc', 'pptx', 'ppt'].includes(extension || '');
-                    const isBinaryFile = isImageFile || isPdfFile || isOfficeFile;
+                    const isBinaryFile = isImageFile || isPdfFile || isVideoFile || isOfficeFile;
 
                     // For binary files, only render if we have a blob URL
                     if (isBinaryFile && !blobUrlForRenderer) {
                       return (
                         <div className="h-full w-full flex items-center justify-center">
                           <div className="text-sm text-muted-foreground">
-                            Loading {isPdfFile ? 'PDF' : isImageFile ? 'image' : 'file'}...
+                            Loading {isPdfFile ? 'PDF' : isImageFile ? 'image' : isVideoFile ? 'video' : 'file'}...
                           </div>
                         </div>
                       );

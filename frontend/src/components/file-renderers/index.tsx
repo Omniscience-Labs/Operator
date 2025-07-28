@@ -9,6 +9,7 @@ import { ImageRenderer } from './image-renderer';
 import { BinaryRenderer } from './binary-renderer';
 import { HtmlRenderer } from './html-renderer';
 import { AudioRenderer } from './audio-renderer';
+import { VideoRenderer } from './video-renderer';
 import { DocxPreviewRenderer } from './docx-preview-renderer';
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
 import { CsvRenderer } from './csv-renderer';
@@ -19,6 +20,7 @@ export type FileType =
   | 'pdf'
   | 'image'
   | 'audio'
+  | 'video'
   | 'text'
   | 'binary'
   | 'csv'
@@ -93,7 +95,12 @@ export function getFileTypeFromExtension(fileName: string): FileType {
     'bmp',
     'ico',
   ];
-  const audioExtensions = ['mp3', 'wav', 'ogg', 'flac', 'webm', 'm4a', 'aac'];
+  const audioExtensions = ['mp3', 'wav', 'ogg', 'flac', 'm4a', 'aac'];
+  const videoExtensions = [
+    'mp4', 'webm', 'ogg', 'mov', 'avi', 'wmv', 'flv', 'mkv', 
+    'm4v', '3gp', 'ts', 'mts', 'm2ts', 'f4v', 'asf', 'rm', 
+    'rmvb', 'vob', 'ogv', 'mxf', 'divx', 'xvid', 'h264', 'h265'
+  ];
   const pdfExtensions = ['pdf'];
   const csvExtensions = ['csv', 'tsv'];
   const textExtensions = ['txt', 'log', 'env', 'ini'];
@@ -107,6 +114,8 @@ export function getFileTypeFromExtension(fileName: string): FileType {
     return 'image';
   } else if (audioExtensions.includes(extension)) {
     return 'audio';
+  } else if (videoExtensions.includes(extension)) {
+    return 'video';
   } else if (pdfExtensions.includes(extension)) {
     return 'pdf';
   } else if (csvExtensions.includes(extension)) {
@@ -201,6 +210,8 @@ export function FileRenderer({
         <ImageRenderer url={binaryUrl} />
       ) : fileType === 'audio' && binaryUrl ? (
         <AudioRenderer url={binaryUrl} fileName={fileName} onDownload={onDownload} isDownloading={isDownloading} />
+      ) : fileType === 'video' && binaryUrl ? (
+        <VideoRenderer url={binaryUrl} fileName={fileName} onDownload={onDownload} isDownloading={isDownloading} />
       ) : fileType === 'pdf' && binaryUrl ? (
         <PdfRenderer url={binaryUrl} />
       ) : fileType === 'markdown' ? (

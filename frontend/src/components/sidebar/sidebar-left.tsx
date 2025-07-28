@@ -107,6 +107,7 @@ export function SidebarLeft({
     <Sidebar
       collapsible="icon"
       className="border-r-0 relative overflow-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+      data-testid="sidebar"
       {...props}
     >
       {/* Liquid Glass Background Layers */}
@@ -234,52 +235,74 @@ export function SidebarLeft({
           >
             <SidebarGroup>
               {showAgentPlayground && (
-                <Link href="/agents">
-                  <motion.div
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <SidebarMenuButton className={cn(
-                      'hover:bg-white/15 dark:hover:bg-black/15 transition-all duration-200',
-                      {
-                        'bg-white/20 dark:bg-black/20 font-medium shadow-sm': pathname === '/agents',
-                      }
-                    )}>
-                      <Bot className="h-4 w-4 mr-2" />
-                      <span className="flex items-center justify-between w-full">
-                        {currentAccount?.is_team_context ? 'Team Agents' : 'Agents'}
-                        <Badge variant="new">
-                          New
-                        </Badge>
-                      </span>
-                    </SidebarMenuButton>
-                  </motion.div>
-                </Link>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href="/agents">
+                      <motion.div
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <SidebarMenuButton className={cn(
+                          'hover:bg-white/15 dark:hover:bg-black/15 transition-all duration-200',
+                          {
+                            'bg-white/20 dark:bg-black/20 font-medium shadow-sm': pathname === '/agents',
+                          }
+                        )}>
+                          <Bot className="h-4 w-4 mr-2" />
+                          <span className="flex items-center justify-between w-full">
+                            {currentAccount?.is_team_context ? 'Team Agents' : 'Agents'}
+                            <Badge variant="new">
+                              New
+                            </Badge>
+                          </span>
+                        </SidebarMenuButton>
+                      </motion.div>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="bg-black text-white border-black">
+                    {state === 'collapsed' ? (
+                      <p>Create and manage AI agents</p>
+                    ) : (
+                      <p>Build custom AI agents with specific instructions and tools</p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
               )}
               {marketplaceEnabled && !currentAccount?.is_team_context && (
-                <Link href="/marketplace">
-                  <motion.div
-                    whileHover={{ scale: 1.02, x: 4 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <SidebarMenuButton className={cn(
-                      'hover:bg-white/15 dark:hover:bg-black/15 transition-all duration-200',
-                      {
-                        'bg-white/20 dark:bg-black/20 font-medium shadow-sm': pathname === '/marketplace',
-                      }
-                    )}>
-                      <Store className="h-4 w-4 mr-2" />
-                      <span className="flex items-center justify-between w-full">
-                        Marketplace
-                        <Badge variant="new">
-                          New
-                        </Badge>
-                      </span>
-                    </SidebarMenuButton>
-                  </motion.div>
-                </Link>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link href="/marketplace">
+                      <motion.div
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <SidebarMenuButton className={cn(
+                          'hover:bg-white/15 dark:hover:bg-black/15 transition-all duration-200',
+                          {
+                            'bg-white/20 dark:bg-black/20 font-medium shadow-sm': pathname === '/marketplace',
+                          }
+                        )}>
+                          <Store className="h-4 w-4 mr-2" />
+                          <span className="flex items-center justify-between w-full">
+                            Marketplace
+                            <Badge variant="new">
+                              New
+                            </Badge>
+                          </span>
+                        </SidebarMenuButton>
+                      </motion.div>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="bg-black text-white border-black">
+                    {state === 'collapsed' ? (
+                      <p>Browse and install agents</p>
+                    ) : (
+                      <p>Discover and install pre-built AI agents from the community</p>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
               )}
             </SidebarGroup>
           </motion.div>
@@ -290,28 +313,39 @@ export function SidebarLeft({
           transition={{ duration: 0.5, delay: 0.5 }}
         >
           <SidebarGroup>
-            <Link href="/meetings">
-              <motion.div
-                whileHover={{ scale: 1.02, x: 4 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2 }}
-              >
-                <SidebarMenuButton className={cn(
-                  'hover:bg-white/15 dark:hover:bg-black/15 transition-all duration-200',
-                  {
-                    'bg-white/20 dark:bg-black/20 font-medium shadow-sm': pathname === '/meetings' || pathname.startsWith('/meetings/'),
-                  }
-                )}>
-                  <FileAudio className="h-4 w-4 mr-2" />
-                  <span className="flex items-center justify-between w-full">
-                    Meetings
-                    <Badge variant="new">
-                      New
-                    </Badge>
-                  </span>
-                </SidebarMenuButton>
-              </motion.div>
-            </Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link href="/meetings">
+                  <motion.div
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <SidebarMenuButton className={cn(
+                      'hover:bg-white/15 dark:hover:bg-black/15 transition-all duration-200',
+                      {
+                        'bg-white/20 dark:bg-black/20 font-medium shadow-sm': pathname === '/meetings' || pathname.startsWith('/meetings/'),
+                      }
+                    )}>
+                      <FileAudio className="h-4 w-4 mr-2" />
+                      <span className="flex items-center justify-between w-full">
+                        Meetings
+                        <Badge variant="new">
+                          New
+                        </Badge>
+                      </span>
+                    </SidebarMenuButton>
+                  </motion.div>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-black text-white border-black">
+                {state === 'collapsed' ? (
+                  <p>Record and transcribe meetings</p>
+                ) : (
+                  <p>Record in-person or join online meetings with AI transcription</p>
+                )}
+              </TooltipContent>
+            </Tooltip>
           </SidebarGroup>
         </motion.div>
         <motion.div

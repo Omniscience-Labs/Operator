@@ -339,6 +339,11 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
 
     // React Query file preloader
     const { preloadFiles } = useFilePreloader();
+    
+    // Track if messages update is from streaming vs refetch
+    const isStreamingUpdateRef = useRef(true);
+    const previousMessageIdsRef = useRef<Set<string>>(new Set());
+    const scrollPositionBeforeUpdateRef = useRef<number>(0);
 
     // Edit helper functions
     const startEditing = useCallback((messageId: string, currentContent: string) => {
@@ -439,7 +444,15 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
         if (messagesEndRef.current) {
             autoScrollingRef.current = true;
-            messagesEndRef.current.scrollIntoView({ behavior });
+            
+            // Add a small delay to let any layout changes settle
+            requestAnimationFrame(() => {
+                messagesEndRef.current?.scrollIntoView({ 
+                    behavior, 
+                    block: 'end',
+                    inline: 'nearest' 
+                });
+            });
             
             // Only reset position state, but let user scroll state be handled by scroll detection
             if (behavior === 'smooth') {
@@ -447,7 +460,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                     setIsAtBottom(true);
                     autoScrollingRef.current = false;
                     // Don't automatically reset userHasScrolled - let natural scroll detection handle it
-                }, 500);
+                }, 600); // Increased from 500ms to account for animation
             }
         }
     }, []);
@@ -475,12 +488,35 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
     const previousMessageCount = React.useRef(displayMessages.length);
     React.useEffect(() => {
         const messageCountIncreased = displayMessages.length > previousMessageCount.current;
-        previousMessageCount.current = displayMessages.length;
+        const currentMessageIds = new Set(displayMessages.map(m => m.message_id || ''));
         
-        if (messageCountIncreased && !userHasScrolled) {
+        // Check if this is a streaming update (new messages added) vs a refetch (messages replaced)
+        const isStreamingUpdate = messageCountIncreased && 
+            Array.from(previousMessageIdsRef.current).every(id => currentMessageIds.has(id));
+        
+        // If it's a refetch (not streaming), preserve scroll position
+        if (!isStreamingUpdate && messagesContainerRef.current && previousMessageIdsRef.current.size > 0) {
+            const currentScrollTop = messagesContainerRef.current.scrollTop;
+            const currentScrollHeight = messagesContainerRef.current.scrollHeight;
+            
+            // Restore scroll position after DOM updates
+            requestAnimationFrame(() => {
+                if (messagesContainerRef.current) {
+                    const newScrollHeight = messagesContainerRef.current.scrollHeight;
+                    const scrollDiff = newScrollHeight - currentScrollHeight;
+                    messagesContainerRef.current.scrollTop = currentScrollTop + scrollDiff;
+                }
+            });
+        }
+        
+        previousMessageCount.current = displayMessages.length;
+        previousMessageIdsRef.current = currentMessageIds;
+        
+        // Only auto-scroll for streaming updates when user hasn't scrolled
+        if (isStreamingUpdate && !userHasScrolled) {
             autoScrollToBottomIfNeeded();
         }
-    }, [displayMessages.length, autoScrollToBottomIfNeeded, userHasScrolled]);
+    }, [displayMessages, autoScrollToBottomIfNeeded, userHasScrolled]);
 
     // Auto-scroll when streaming content arrives - but only if user hasn't manually scrolled up AND agent is actively working
     React.useEffect(() => {
@@ -565,7 +601,7 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                     )}
                     
                     <div className={`mx-auto max-w-3xl md:px-8 min-w-0 ${editingMessageId ? 'relative z-40' : ''}`}>
-                        <div className="space-y-8 min-w-0">
+                        <div className="space-y-8 min-w-0 transition-all duration-200 ease-out">
                             {(() => {
 
                                 type MessageGroup = {
@@ -1170,12 +1206,22 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
                             {((agentStatus === 'running' || agentStatus === 'connecting') && !streamingTextContent &&
                                 !readOnly &&
                                 (messages.length === 0 || messages[messages.length - 1].type === 'user')) && (
-                                    <div ref={latestMessageRef} className='w-full h-22 rounded'>
-                                        {/* Show only the funny loading messages during generation phase - no extra logo */}
-                                        <div className="space-y-2 w-full h-12">
-                                            <AgentLoader />
-                                        </div>
-                                    </div>
+                                    <AnimatePresence mode="wait">
+                                        <motion.div 
+                                            key="agent-loader"
+                                            ref={latestMessageRef} 
+                                            className='w-full rounded'
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                        >
+                                            {/* Show only the funny loading messages during generation phase - no extra logo */}
+                                            <div className="space-y-2 w-full h-12">
+                                                <AgentLoader />
+                                            </div>
+                                        </motion.div>
+                                    </AnimatePresence>
                                 )}
 
                             {/* For playback mode - Show tool call animation if active */}

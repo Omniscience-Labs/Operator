@@ -309,6 +309,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
   return (
     <div
       ref={cardRef}
+      data-agent-id={agent.agent_id}
       className={cn(
         'group relative w-full min-h-[400px] rounded-2xl overflow-hidden transition-all duration-500 ease-out cursor-pointer',
         'hover:shadow-2xl hover:shadow-black/30 hover:-translate-y-2',

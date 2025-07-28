@@ -1,16 +1,40 @@
 BEGIN;
 
 -- Create thread_views table to track when users last viewed threads
-CREATE TABLE IF NOT EXISTS thread_views (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    thread_id UUID NOT NULL REFERENCES threads(thread_id) ON DELETE CASCADE,
-    account_id UUID NOT NULL REFERENCES basejump.accounts(id) ON DELETE CASCADE,
-    last_viewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    
-    UNIQUE(thread_id, account_id)
-);
+-- Check if threads table exists first
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'threads'
+    ) THEN
+        -- Threads table exists, create with foreign key
+        CREATE TABLE IF NOT EXISTS thread_views (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            thread_id UUID NOT NULL REFERENCES threads(thread_id) ON DELETE CASCADE,
+            account_id UUID NOT NULL REFERENCES basejump.accounts(id) ON DELETE CASCADE,
+            last_viewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            
+            UNIQUE(thread_id, account_id)
+        );
+    ELSE
+        -- Threads table doesn't exist yet, create without foreign key
+        CREATE TABLE IF NOT EXISTS thread_views (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            thread_id UUID NOT NULL, -- No foreign key yet
+            account_id UUID NOT NULL REFERENCES basejump.accounts(id) ON DELETE CASCADE,
+            last_viewed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            
+            UNIQUE(thread_id, account_id)
+        );
+        RAISE NOTICE 'thread_views table created without thread_id foreign key - will be added when threads table is created';
+    END IF;
+END $$;
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_thread_views_thread_id ON thread_views(thread_id);
@@ -58,6 +82,9 @@ CREATE TRIGGER trigger_thread_views_updated_at
 
 -- Grant permissions
 GRANT ALL PRIVILEGES ON TABLE thread_views TO authenticated, service_role;
+
+-- Drop the function if it exists to avoid conflicts with different return types
+DROP FUNCTION IF EXISTS get_thread_statuses_for_account(UUID);
 
 -- Function to get thread statuses for a user
 CREATE OR REPLACE FUNCTION get_thread_statuses_for_account(p_account_id UUID)

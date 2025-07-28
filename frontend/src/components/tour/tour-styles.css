@@ -1,0 +1,381 @@
+/* Custom Shepherd.js tour styles for Operator - Speech Bubble Design */
+
+.shepherd-theme-arrows {
+  background: white;
+  border: 2px solid hsl(var(--border));
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
+  color: hsl(var(--foreground));
+  font-family: inherit;
+  max-width: 320px;
+  padding: 0;
+  position: relative;
+  overflow: visible;
+}
+
+/* Highlight styles for tour elements */
+.shepherd-highlight {
+  position: relative;
+  z-index: 1000;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.6), 0 4px 12px rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  animation: shepherd-pulse 2s infinite;
+}
+
+@keyframes shepherd-pulse {
+  0% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.6), 0 4px 12px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2), 0 0 0 4px rgba(59, 130, 246, 0.4), 0 6px 16px rgba(59, 130, 246, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.6), 0 4px 12px rgba(59, 130, 246, 0.2);
+  }
+}
+
+/* Speech bubble tail */
+.shepherd-theme-arrows::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 12px solid transparent;
+  z-index: 1;
+}
+
+.shepherd-theme-arrows.shepherd-arrow-top::before {
+  border-bottom-color: white;
+  top: -24px;
+  right: 20px;
+}
+
+.shepherd-theme-arrows.shepherd-arrow-bottom::before {
+  border-top-color: white;
+  bottom: -24px;
+  right: 20px;
+}
+
+.shepherd-theme-arrows.shepherd-arrow-left::before {
+  border-right-color: white;
+  left: -24px;
+  top: 20px;
+}
+
+.shepherd-theme-arrows.shepherd-arrow-right::before {
+  border-left-color: white;
+  right: -24px;
+  top: 20px;
+}
+
+/* Border for speech bubble tail */
+.shepherd-theme-arrows::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 12px solid transparent;
+  z-index: 0;
+}
+
+.shepherd-theme-arrows.shepherd-arrow-top::after {
+  border-bottom-color: hsl(var(--border));
+  top: -26px;
+  right: 20px;
+}
+
+.shepherd-theme-arrows.shepherd-arrow-bottom::after {
+  border-top-color: hsl(var(--border));
+  bottom: -26px;
+  right: 20px;
+}
+
+.shepherd-theme-arrows.shepherd-arrow-left::after {
+  border-right-color: hsl(var(--border));
+  left: -26px;
+  top: 20px;
+}
+
+.shepherd-theme-arrows.shepherd-arrow-right::after {
+  border-left-color: hsl(var(--border));
+  right: -26px;
+  top: 20px;
+}
+
+/* Header styling */
+.shepherd-theme-arrows .shepherd-header {
+  background: white;
+  border-bottom: 1px solid hsl(var(--border));
+  border-radius: 14px 14px 0 0;
+  padding: 1rem 1.25rem 0.75rem;
+  position: relative;
+}
+
+.shepherd-theme-arrows .shepherd-title {
+  background: linear-gradient(90deg, #3b82f6 0%, #a855f7 20%, #ec4899 50%, #a855f7 80%, #3b82f6 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Content styling */
+.shepherd-theme-arrows .shepherd-text {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  line-height: 1.6;
+  padding: 1rem 1.25rem;
+  background: white;
+}
+
+.shepherd-theme-arrows .shepherd-text p {
+  margin: 0 0 0.75rem 0;
+}
+
+.shepherd-theme-arrows .shepherd-text p:last-child {
+  margin-bottom: 0;
+}
+
+.shepherd-theme-arrows .shepherd-text ul {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.shepherd-theme-arrows .shepherd-text li {
+  margin: 0.25rem 0;
+}
+
+/* Footer styling */
+.shepherd-theme-arrows .shepherd-footer {
+  background: white;
+  border-top: 1px solid hsl(var(--border));
+  border-radius: 0 0 14px 14px;
+  padding: 0.75rem 1.25rem 1rem;
+}
+
+/* Button styling */
+.shepherd-theme-arrows .shepherd-button {
+  background: hsl(var(--primary));
+  border: 1px solid hsl(var(--primary));
+  border-radius: 8px;
+  color: hsl(var(--primary-foreground));
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  margin: 0 0.25rem;
+  padding: 0.625rem 1.25rem;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.shepherd-theme-arrows .shepherd-button:hover {
+  background: hsl(var(--primary) / 0.9);
+  border-color: hsl(var(--primary) / 0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.shepherd-theme-arrows .shepherd-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.shepherd-theme-arrows .shepherd-button:focus {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.shepherd-theme-arrows .shepherd-button.shepherd-button-secondary {
+  background: hsl(var(--secondary));
+  border-color: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+}
+
+.shepherd-theme-arrows .shepherd-button.shepherd-button-secondary:hover {
+  background: hsl(var(--secondary) / 0.9);
+  border-color: hsl(var(--secondary) / 0.9);
+}
+
+.shepherd-theme-arrows .shepherd-button-primary {
+  background: white;
+  border: 2px solid hsl(var(--border));
+  border-radius: 8px;
+  color: black;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0.5rem 0 0;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.shepherd-theme-arrows .shepherd-button-primary:hover {
+  background: white;
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* Close button styling */
+.shepherd-theme-arrows .shepherd-cancel-icon {
+  background: hsl(var(--secondary));
+  border: 1px solid hsl(var(--border));
+  border-radius: 50%;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1;
+  margin: 0;
+  padding: 0.25rem;
+  transition: all 0.2s ease-in-out;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shepherd-theme-arrows .shepherd-cancel-icon:hover {
+  background: hsl(var(--secondary) / 0.8);
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+
+/* Arrow styling */
+.shepherd-theme-arrows .shepherd-arrow {
+  height: 1rem;
+  width: 1rem;
+}
+
+.shepherd-theme-arrows .shepherd-arrow:before {
+  background: white;
+  border: 1px solid hsl(var(--border));
+  content: '';
+  height: 1rem;
+  transform: rotate(45deg);
+  width: 1rem;
+}
+
+.shepherd-theme-arrows .shepherd-arrow.shepherd-arrow-top:before {
+  border-bottom: none;
+  border-right: none;
+}
+
+.shepherd-theme-arrows .shepherd-arrow.shepherd-arrow-bottom:before {
+  border-left: none;
+  border-top: none;
+}
+
+.shepherd-theme-arrows .shepherd-arrow.shepherd-arrow-left:before {
+  border-bottom: none;
+  border-right: none;
+}
+
+.shepherd-theme-arrows .shepherd-arrow.shepherd-arrow-right:before {
+  border-bottom: none;
+  border-left: none;
+}
+
+/* Modal overlay - subtle background */
+.shepherd-modal-overlay-container {
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(1px);
+}
+
+/* Animation for speech bubble appearance */
+@keyframes speechBubbleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.shepherd-theme-arrows {
+  animation: speechBubbleIn 0.3s ease-out;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .shepherd-theme-arrows {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  .shepherd-theme-arrows .shepherd-header {
+    background: hsl(var(--background));
+  }
+  
+  .shepherd-theme-arrows .shepherd-text {
+    background: hsl(var(--background));
+  }
+  
+  .shepherd-theme-arrows .shepherd-footer {
+    background: hsl(var(--background));
+  }
+  
+  .shepherd-theme-arrows::before {
+    border-bottom-color: hsl(var(--background));
+    border-top-color: hsl(var(--background));
+    border-right-color: hsl(var(--background));
+    border-left-color: hsl(var(--background));
+  }
+  
+  .shepherd-theme-arrows .shepherd-arrow:before {
+    background: hsl(var(--background));
+  }
+  
+  .shepherd-modal-overlay-container {
+    background: rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Light mode adjustments */
+@media (prefers-color-scheme: light) {
+  .shepherd-theme-arrows {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .shepherd-theme-arrows {
+    max-width: calc(100vw - 2rem);
+    margin: 0 1rem;
+  }
+  
+  .shepherd-theme-arrows .shepherd-text {
+    padding: 0.75rem 1rem;
+  }
+  
+  .shepherd-theme-arrows .shepherd-footer {
+    padding: 0.5rem 1rem 0.75rem;
+  }
+  
+  .shepherd-theme-arrows .shepherd-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .shepherd-theme-arrows {
+    border-width: 2px;
+  }
+  
+  .shepherd-theme-arrows .shepherd-button {
+    border-width: 2px;
+  }
+} 

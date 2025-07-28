@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -14,12 +15,14 @@ interface ReasoningDisplayProps {
   reasoningMessage: UnifiedMessage;
   isStreaming?: boolean;
   className?: string;
+  autoCollapse?: boolean;
 }
 
 export const ReasoningDisplay: React.FC<ReasoningDisplayProps> = ({
   reasoningMessage,
   isStreaming = false,
   className,
+  autoCollapse = true,
 }) => {
   const [isOpen, setIsOpen] = useState(isStreaming);
 
@@ -31,14 +34,14 @@ export const ReasoningDisplay: React.FC<ReasoningDisplayProps> = ({
   useEffect(() => {
     if (isStreaming) {
       setIsOpen(true);
-    } else {
+    } else if (autoCollapse) {
       // Auto-collapse after a brief delay when streaming completes
       const timer = setTimeout(() => {
         setIsOpen(false);
-      }, 2000);
+      }, 3000); // Increased from 2000ms for better UX
       return () => clearTimeout(timer);
     }
-  }, [isStreaming]);
+  }, [isStreaming, autoCollapse]);
 
   const displayText = reasoningText;
 

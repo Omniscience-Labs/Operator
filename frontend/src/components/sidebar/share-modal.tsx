@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Copy, Share2, Link, Link2Off, Check, Globe, Loader2 } from "lucide-react"
 import { toast } from "sonner"
@@ -60,6 +61,7 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
   const [shareLink, setShareLink] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isCopying, setIsCopying] = useState(false)
+  const [requireLogin, setRequireLogin] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -74,16 +76,19 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
 
   useEffect(() => {
     if (threadData?.is_public) {
-      const publicUrl = generateShareLink()
+      const publicUrl = generateShareLink(false)
       setShareLink(publicUrl)
+      setRequireLogin(false)
     } else {
       setShareLink(null)
+      setRequireLogin(false)
     }
   }, [threadData])
 
-  const generateShareLink = () => {
+  const generateShareLink = (loginFlag: boolean) => {
     if (!threadId) return ""
-    return `${process.env.NEXT_PUBLIC_URL || window.location.origin}/share/${threadId}`
+    const base = `${process.env.NEXT_PUBLIC_URL || window.location.origin}/share/${threadId}`
+    return loginFlag ? `${base}?login=true` : base
   }
 
   const createShareLink = async () => {
@@ -93,9 +98,17 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
 
     try {
       await updatePublicStatus(true)
-      const generatedLink = generateShareLink()
+      const generatedLink = generateShareLink(requireLogin)
       setShareLink(generatedLink)
-      toast.success("Shareable link created successfully")
+      
+      // Automatically copy the link to clipboard
+      try {
+        await navigator.clipboard.writeText(generatedLink)
+        toast.success("Shareable link created and copied to clipboard")
+      } catch (clipboardError) {
+        console.error("Failed to copy to clipboard:", clipboardError)
+        toast.success("Shareable link created (click copy button to copy)")
+      }
     } catch (error) {
       console.error("Error creating share link:", error)
       toast.error("Failed to create shareable link")
@@ -110,6 +123,7 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
     setIsLoading(true)
 
     try {
+      setRequireLogin(false)
       await updatePublicStatus(false)
       setShareLink(null)
       toast.success("Shareable link removed")
@@ -135,11 +149,16 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
     })
   }
 
-  const copyToClipboard = () => {
+  const copyToClipboard = async () => {
     if (shareLink) {
       setIsCopying(true)
-      navigator.clipboard.writeText(shareLink)
-      toast.success("Link copied to clipboard")
+      try {
+        await navigator.clipboard.writeText(shareLink)
+        toast.success("Link copied to clipboard")
+      } catch (err) {
+        console.error('Failed to copy to clipboard:', err)
+        toast.error("Failed to copy link to clipboard")
+      }
       setTimeout(() => {
         setIsCopying(false)
       }, 500)
@@ -205,7 +224,9 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
               <Alert>
                 <Globe className="h-4 w-4" />
                 <AlertDescription>
-                  This chat is publicly accessible. Anyone with the link can view this conversation.
+                  {requireLogin
+                    ? 'Users must log in to view this conversation.'
+                    : 'This chat is publicly accessible. Anyone with the link can view this conversation.'}
                 </AlertDescription>
               </Alert>
 
@@ -255,8 +276,12 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold">Share this chat</h3>
                 <p className="text-sm text-muted-foreground">
-                  Create a shareable link that allows others to view this conversation publicly.
+                  Create a shareable link that allows others to view this conversation.
                 </p>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <Label htmlFor="require-login" className="text-sm">Require login to view</Label>
+                <Switch id="require-login" checked={requireLogin} onCheckedChange={setRequireLogin} />
               </div>
               <Button onClick={createShareLink} disabled={isLoading} className="w-full">
                 {isLoading ? (

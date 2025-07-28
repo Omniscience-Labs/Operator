@@ -241,7 +241,7 @@ export function ExecuteDataProviderCallToolView({
                   </summary>
                   
                   <div className="mt-3 p-4 bg-zinc-900 dark:bg-zinc-950 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                    <pre className="text-xs font-mono text-emerald-400 dark:text-emerald-300 overflow-x-auto">
+                    <pre className="text-xs font-mono text-emerald-400 dark:text-emerald-300 whitespace-pre overflow-x-auto">
                       {JSON.stringify(payload, null, 2)}
                     </pre>
                   </div>

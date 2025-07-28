@@ -231,7 +231,7 @@ function JsonRenderer({ data }: { data: any }) {
         </span>
       </div>
       <ScrollArea className="max-h-96">
-        <pre className="whitespace-pre-wrap font-mono text-xs text-zinc-700 dark:text-zinc-300">
+        <pre className="whitespace-pre font-mono text-xs text-zinc-700 dark:text-zinc-300 overflow-x-auto">
           {JSON.stringify(data, null, 2)}
         </pre>
       </ScrollArea>
@@ -326,7 +326,7 @@ function TextRenderer({ content }: { content: string }) {
   return (
     <div className="p-3">
       <ScrollArea className="max-h-96">
-        <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">
+        <p className="whitespace-pre text-sm text-zinc-700 dark:text-zinc-300 overflow-x-auto">
           {content}
         </p>
       </ScrollArea>
@@ -387,7 +387,7 @@ export function MCPContentRenderer({ detectionResult, rawContent }: MCPContentRe
             </span>
           </div>
           <ScrollArea className="max-h-96">
-            <pre className="whitespace-pre-wrap font-mono text-xs text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900 p-3 rounded">
+            <pre className="whitespace-pre font-mono text-xs text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-900 p-3 rounded overflow-x-auto">
               {contentStr}
             </pre>
           </ScrollArea>
