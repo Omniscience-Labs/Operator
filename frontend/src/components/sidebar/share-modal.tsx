@@ -100,7 +100,15 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
       await updatePublicStatus(true)
       const generatedLink = generateShareLink(requireLogin)
       setShareLink(generatedLink)
-      toast.success("Shareable link created successfully")
+      
+      // Automatically copy the link to clipboard
+      try {
+        await navigator.clipboard.writeText(generatedLink)
+        toast.success("Shareable link created and copied to clipboard")
+      } catch (clipboardError) {
+        console.error("Failed to copy to clipboard:", clipboardError)
+        toast.success("Shareable link created (click copy button to copy)")
+      }
     } catch (error) {
       console.error("Error creating share link:", error)
       toast.error("Failed to create shareable link")
@@ -141,11 +149,16 @@ export function ShareModal({ isOpen, onClose, threadId, projectId }: ShareModalP
     })
   }
 
-  const copyToClipboard = () => {
+  const copyToClipboard = async () => {
     if (shareLink) {
       setIsCopying(true)
-      navigator.clipboard.writeText(shareLink)
-      toast.success("Link copied to clipboard")
+      try {
+        await navigator.clipboard.writeText(shareLink)
+        toast.success("Link copied to clipboard")
+      } catch (err) {
+        console.error('Failed to copy to clipboard:', err)
+        toast.error("Failed to copy link to clipboard")
+      }
       setTimeout(() => {
         setIsCopying(false)
       }, 500)
