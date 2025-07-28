@@ -141,18 +141,18 @@ class SandboxFilesTool(SandboxToolsBase):
             
             message = f"File '{file_path}' created successfully."
             
-            # Check if index.html was created and add 8080 server info (only in root workspace)
-            if file_path.lower() == 'index.html':
+            # Check if HTML file was created and add smart URL with auto-restart functionality
+            if file_path.lower().endswith('.html'):
                 try:
                     # Generate frontend URL that includes project ID for auto-restart functionality
                     from utils.config import config
                     frontend_url = config.NEXT_PUBLIC_URL or "http://localhost:3000"
-                    smart_url = f"{frontend_url}/sandbox/{self.project_id}/index.html"
+                    smart_url = f"{frontend_url}/sandbox/{self.project_id}/{file_path}"
                     
-                    message += f"\n\n[Auto-detected index.html - Website URL: {smart_url}]"
+                    message += f"\n\n[Auto-detected HTML file - Website URL: {smart_url}]"
                     message += "\n[Note: This URL will automatically restart the sandbox if inactive - perfect for sharing!]"
                 except Exception as e:
-                    logger.warning(f"Failed to get website URL for index.html: {str(e)}")
+                    logger.warning(f"Failed to get website URL for HTML file: {str(e)}")
             
             return self.success_response(message)
         except Exception as e:
@@ -303,18 +303,18 @@ class SandboxFilesTool(SandboxToolsBase):
             
             message = f"File '{file_path}' completely rewritten successfully."
             
-            # Check if index.html was rewritten and add 8080 server info (only in root workspace)
-            if file_path.lower() == 'index.html':
+            # Check if HTML file was rewritten and add smart URL with auto-restart functionality
+            if file_path.lower().endswith('.html'):
                 try:
                     # Generate frontend URL that includes project ID for auto-restart functionality
                     from utils.config import config
                     frontend_url = config.NEXT_PUBLIC_URL or "http://localhost:3000"
-                    smart_url = f"{frontend_url}/sandbox/{self.project_id}/index.html"
+                    smart_url = f"{frontend_url}/sandbox/{self.project_id}/{file_path}"
                     
-                    message += f"\n\n[Auto-detected index.html - Website URL: {smart_url}]"
+                    message += f"\n\n[Auto-detected HTML file - Website URL: {smart_url}]"
                     message += "\n[Note: This URL will automatically restart the sandbox if inactive - perfect for sharing!]"
                 except Exception as e:
-                    logger.warning(f"Failed to get website URL for index.html: {str(e)}")
+                    logger.warning(f"Failed to get website URL for HTML file: {str(e)}")
             
             return self.success_response(message)
         except Exception as e:
