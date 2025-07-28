@@ -13,6 +13,7 @@ import { VideoRenderer } from './video-renderer';
 import { DocxPreviewRenderer } from './docx-preview-renderer';
 import { constructHtmlPreviewUrl } from '@/lib/utils/url';
 import { CsvRenderer } from './csv-renderer';
+import { Project } from '@/lib/api';
 
 export type FileType =
   | 'markdown'
@@ -31,13 +32,7 @@ interface FileRendererProps {
   binaryUrl: string | null;
   fileName: string;
   className?: string;
-  project?: {
-    sandbox?: {
-      sandbox_url?: string;
-      vnc_preview?: string;
-      pass?: string;
-    };
-  };
+  project?: Project;
   markdownRef?: React.RefObject<HTMLDivElement>;
   onDownload?: () => void;
   isDownloading?: boolean;
@@ -190,7 +185,7 @@ export function FileRenderer({
   // Construct HTML file preview URL if we have a sandbox and the file is HTML
   const htmlPreviewUrl =
     isHtmlFile && project?.sandbox?.sandbox_url && fileName
-      ? constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName)
+      ? constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName, project.id)
       : blobHtmlUrl; // Use blob URL as fallback
 
   // Clean up blob URL on unmount

@@ -58,7 +58,7 @@ export function HtmlRenderer({
     // Construct HTML file preview URL using the same logic as FileRenderer
     const htmlPreviewUrl = useMemo(() => {
         if (project?.sandbox?.sandbox_url && fileName) {
-            return constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName);
+            return constructHtmlPreviewUrl(project.sandbox.sandbox_url, fileName, project.id);
         }
         return blobHtmlUrl || previewUrl;
     }, [project?.sandbox?.sandbox_url, fileName, blobHtmlUrl, previewUrl]);

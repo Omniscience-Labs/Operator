@@ -11,9 +11,6 @@ class SandboxFilesTool(SandboxToolsBase):
 
     def __init__(self, project_id: str, thread_manager: ThreadManager):
         super().__init__(project_id, thread_manager)
-        logger.info(f"=== SandboxFilesTool INITIALIZED ===")
-        logger.info(f"Project ID: {project_id}")
-        logger.info(f"Workspace path: /workspace")
         self.SNIPPET_LINES = 4  # Number of context lines to show around edits
         self.workspace_path = "/workspace"  # Ensure we're always operating in /workspace
 
@@ -124,11 +121,6 @@ class SandboxFilesTool(SandboxToolsBase):
         '''
     )
     async def create_file(self, file_path: str, file_contents: str, permissions: str = "644") -> ToolResult:
-        logger.info(f"=== CREATE_FILE CALLED ===")
-        logger.info(f"File path: {file_path}")
-        logger.info(f"Content length: {len(file_contents)} characters")
-        logger.info(f"Project ID available: {self.project_id}")
-        
         try:
             # Ensure sandbox is initialized
             await self._ensure_sandbox()
@@ -150,32 +142,18 @@ class SandboxFilesTool(SandboxToolsBase):
             message = f"File '{file_path}' created successfully."
             
             # Check if HTML file was created and add smart URL with auto-restart functionality
-            logger.info(f"Checking if file '{file_path}' is HTML file for smart URL generation")
-            logger.info(f"Project ID: {self.project_id}")
-            logger.info(f"File extension check: {file_path.lower().endswith('.html')}")
-            
             if file_path.lower().endswith('.html'):
-                logger.info(f"HTML file detected: {file_path}, generating smart URL")
                 try:
                     # Generate frontend URL that includes project ID for auto-restart functionality
                     from utils.config import config
-                    logger.info(f"Raw NEXT_PUBLIC_URL from config: '{config.NEXT_PUBLIC_URL}'")
                     frontend_url = config.NEXT_PUBLIC_URL or "http://localhost:3000"
-                    logger.info(f"Frontend URL after fallback: {frontend_url}")
-                    
                     smart_url = f"{frontend_url}/sandbox/{self.project_id}/{file_path}"
-                    logger.info(f"Generated smart URL: {smart_url}")
                     
                     message += f"\n\n[Auto-detected HTML file - Website URL: {smart_url}]"
                     message += "\n[Note: This URL will automatically restart the sandbox if inactive - perfect for sharing!]"
-                    logger.info(f"Smart URL successfully added to message for file: {file_path}")
                 except Exception as e:
-                    logger.error(f"Failed to get website URL for HTML file '{file_path}': {str(e)}", exc_info=True)
-            else:
-                logger.info(f"File '{file_path}' is not HTML, skipping smart URL generation")
+                    logger.warning(f"Failed to get website URL for HTML file: {str(e)}")
             
-            logger.info(f"=== CREATE_FILE COMPLETED ===")
-            logger.info(f"Final message: {message}")
             return self.success_response(message)
         except Exception as e:
             return self.fail_response(f"Error creating file: {str(e)}")
@@ -311,11 +289,6 @@ class SandboxFilesTool(SandboxToolsBase):
         '''
     )
     async def full_file_rewrite(self, file_path: str, file_contents: str, permissions: str = "644") -> ToolResult:
-        logger.info(f"=== FULL_FILE_REWRITE CALLED ===")
-        logger.info(f"File path: {file_path}")
-        logger.info(f"Content length: {len(file_contents)} characters")
-        logger.info(f"Project ID available: {self.project_id}")
-        
         try:
             # Ensure sandbox is initialized
             await self._ensure_sandbox()
@@ -331,32 +304,18 @@ class SandboxFilesTool(SandboxToolsBase):
             message = f"File '{file_path}' completely rewritten successfully."
             
             # Check if HTML file was rewritten and add smart URL with auto-restart functionality
-            logger.info(f"Checking if rewritten file '{file_path}' is HTML file for smart URL generation")
-            logger.info(f"Project ID: {self.project_id}")
-            logger.info(f"File extension check: {file_path.lower().endswith('.html')}")
-            
             if file_path.lower().endswith('.html'):
-                logger.info(f"HTML file detected: {file_path}, generating smart URL")
                 try:
                     # Generate frontend URL that includes project ID for auto-restart functionality
                     from utils.config import config
-                    logger.info(f"Raw NEXT_PUBLIC_URL from config: '{config.NEXT_PUBLIC_URL}'")
                     frontend_url = config.NEXT_PUBLIC_URL or "http://localhost:3000"
-                    logger.info(f"Frontend URL after fallback: {frontend_url}")
-                    
                     smart_url = f"{frontend_url}/sandbox/{self.project_id}/{file_path}"
-                    logger.info(f"Generated smart URL: {smart_url}")
                     
                     message += f"\n\n[Auto-detected HTML file - Website URL: {smart_url}]"
                     message += "\n[Note: This URL will automatically restart the sandbox if inactive - perfect for sharing!]"
-                    logger.info(f"Smart URL successfully added to message for rewritten file: {file_path}")
                 except Exception as e:
-                    logger.error(f"Failed to get website URL for rewritten HTML file '{file_path}': {str(e)}", exc_info=True)
-            else:
-                logger.info(f"Rewritten file '{file_path}' is not HTML, skipping smart URL generation")
+                    logger.warning(f"Failed to get website URL for HTML file: {str(e)}")
             
-            logger.info(f"=== FULL_FILE_REWRITE COMPLETED ===")
-            logger.info(f"Final message: {message}")
             return self.success_response(message)
         except Exception as e:
             return self.fail_response(f"Error rewriting file: {str(e)}")
