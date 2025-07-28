@@ -4,6 +4,9 @@ from utils.logger import logger
 from utils.config import config
 from utils.config import Configuration
 import time
+import asyncio
+import concurrent.futures
+from functools import partial
 
 load_dotenv()
 
@@ -32,29 +35,56 @@ else:
 daytona = Daytona(daytona_config)
 logger.debug("Daytona client initialized")
 
+# Thread pool executor for blocking Daytona SDK calls
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=4, thread_name_prefix="daytona")
+
+async def run_in_executor_with_timeout(func, *args, timeout=30):
+    """Run a synchronous function in an executor with timeout."""
+    loop = asyncio.get_event_loop()
+    try:
+        return await asyncio.wait_for(
+            loop.run_in_executor(executor, func, *args),
+            timeout=timeout
+        )
+    except asyncio.TimeoutError:
+        logger.error(f"Operation timed out after {timeout} seconds: {func.__name__}")
+        raise Exception(f"Daytona operation timed out after {timeout} seconds")
+
 async def get_or_start_sandbox(sandbox_id: str):
     """Retrieve a sandbox by ID, check its state, and start it if needed."""
     
     logger.info(f"Getting or starting sandbox with ID: {sandbox_id}")
     
     try:
-        sandbox = daytona.get(sandbox_id)
+        # Get sandbox info with timeout
+        logger.debug("Fetching sandbox information...")
+        sandbox = await run_in_executor_with_timeout(daytona.get, sandbox_id, timeout=15)
+        logger.debug(f"Sandbox current state: {sandbox.state}")
         
         # Check if sandbox needs to be started
         if sandbox.state == SandboxState.ARCHIVED or sandbox.state == SandboxState.STOPPED:
             logger.info(f"Sandbox is in {sandbox.state} state. Starting...")
             try:
-                daytona.start(sandbox)
+                # Start sandbox with timeout
+                logger.debug("Starting sandbox...")
+                await run_in_executor_with_timeout(daytona.start, sandbox, timeout=45)
+                
                 # Wait a moment for the sandbox to initialize
-                # sleep(5)
+                logger.debug("Waiting for sandbox to initialize...")
+                await asyncio.sleep(3)
+                
                 # Refresh sandbox state after starting
-                sandbox = daytona.get(sandbox_id)
+                logger.debug("Refreshing sandbox state...")
+                sandbox = await run_in_executor_with_timeout(daytona.get, sandbox_id, timeout=15)
+                logger.info(f"Sandbox state after start: {sandbox.state}")
                 
                 # Ensure services are running after restart
                 await ensure_sandbox_services_running(sandbox)
             except Exception as e:
                 logger.error(f"Error starting sandbox: {e}")
                 raise e
+        else:
+            logger.info(f"Sandbox is already in {sandbox.state} state")
         
         logger.info(f"Sandbox {sandbox_id} is ready")
         return sandbox
@@ -70,42 +100,55 @@ async def ensure_sandbox_services_running(sandbox: Sandbox):
         
         # Check if supervisord is running, if not start it
         try:
-            result = sandbox.process.execute(SessionExecuteRequest(
-                command="pgrep -f supervisord",
-                var_async=False
-            ))
+            logger.debug("Checking if supervisord is running...")
+            result = await run_in_executor_with_timeout(
+                sandbox.process.execute,
+                SessionExecuteRequest(command="pgrep -f supervisord", var_async=False),
+                timeout=10
+            )
+            
             if not result.exit_code == 0:
                 # Supervisord not running, start it
                 logger.info("Supervisord not running, starting it")
-                start_supervisord_session(sandbox)
+                await start_supervisord_session(sandbox)
             else:
                 logger.info("Supervisord already running, restarting services")
                 # Restart all services using supervisorctl
-                sandbox.process.execute(SessionExecuteRequest(
-                    command="supervisorctl restart all",
-                    var_async=True
-                ))
+                await run_in_executor_with_timeout(
+                    sandbox.process.execute,
+                    SessionExecuteRequest(command="supervisorctl restart all", var_async=True),
+                    timeout=20
+                )
         except Exception as e:
             logger.warning(f"Could not check supervisord status, attempting to start: {e}")
-            start_supervisord_session(sandbox)
+            await start_supervisord_session(sandbox)
             
     except Exception as e:
         logger.error(f"Error ensuring sandbox services: {str(e)}")
         # Don't raise - let the sandbox start anyway
         pass
 
-def start_supervisord_session(sandbox: Sandbox):
+async def start_supervisord_session(sandbox: Sandbox):
     """Start supervisord in a session if not already running."""
     session_id = f"supervisord-session-{int(time.time())}"  # Use unique session ID
     try:
         logger.info(f"Creating session {session_id} for supervisord")
-        sandbox.process.create_session(session_id)
+        await run_in_executor_with_timeout(
+            sandbox.process.create_session,
+            session_id,
+            timeout=10
+        )
         
         # Execute supervisord command
-        sandbox.process.execute_session_command(session_id, SessionExecuteRequest(
-            command="exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf",
-            var_async=True
-        ))
+        await run_in_executor_with_timeout(
+            sandbox.process.execute_session_command,
+            session_id,
+            SessionExecuteRequest(
+                command="exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf",
+                var_async=True
+            ),
+            timeout=15
+        )
         logger.info(f"Supervisord started in session {session_id}")
     except Exception as e:
         logger.error(f"Error starting supervisord session: {str(e)}")
@@ -154,24 +197,39 @@ def create_sandbox(password: str, project_id: str = None):
     logger.debug(f"Sandbox created with ID: {sandbox.id}")
     
     # Start supervisord in a session for new sandbox
-    start_supervisord_session(sandbox)
+    # Note: This is called from sync context during creation
+    try:
+        start_supervisord_session_sync(sandbox)
+    except Exception as e:
+        logger.warning(f"Failed to start supervisord for new sandbox: {e}")
     
     logger.debug(f"Sandbox environment successfully initialized")
     return sandbox
+
+def start_supervisord_session_sync(sandbox: Sandbox):
+    """Start supervisord in a session (synchronous version for create_sandbox)."""
+    session_id = f"supervisord-session-{int(time.time())}"
+    try:
+        logger.info(f"Creating session {session_id} for supervisord")
+        sandbox.process.create_session(session_id)
+        
+        # Execute supervisord command
+        sandbox.process.execute_session_command(session_id, SessionExecuteRequest(
+            command="exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf",
+            var_async=True
+        ))
+        logger.info(f"Supervisord started in session {session_id}")
+    except Exception as e:
+        logger.error(f"Error starting supervisord session: {str(e)}")
+        pass
 
 async def delete_sandbox(sandbox_id: str):
     """Delete a sandbox by its ID."""
     logger.info(f"Deleting sandbox with ID: {sandbox_id}")
     
     try:
-        # Get the sandbox
-        sandbox = daytona.get(sandbox_id)
-        
-        # Delete the sandbox
-        daytona.remove(sandbox)
-        
+        await run_in_executor_with_timeout(daytona.delete, sandbox_id, timeout=30)
         logger.info(f"Successfully deleted sandbox {sandbox_id}")
-        return True
     except Exception as e:
         logger.error(f"Error deleting sandbox {sandbox_id}: {str(e)}")
         raise e

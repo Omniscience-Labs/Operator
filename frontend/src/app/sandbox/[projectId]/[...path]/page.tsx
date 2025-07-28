@@ -87,127 +87,161 @@ export default function SandboxPage({ params }: SandboxPageProps) {
       if (shouldRestart) {
         setSandboxStatus({ status: 'restarting' });
         
-        const { data: { session } } = await supabase.auth.getSession();
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+          };
 
-        if (session?.access_token) {
-          headers['Authorization'] = `Bearer ${session.access_token}`;
-        }
+          if (session?.access_token) {
+            headers['Authorization'] = `Bearer ${session.access_token}`;
+          }
 
-        const restartResponse = await fetch(`${API_URL}/project/${projectId}/sandbox/ensure-active`, {
-          method: 'POST',
-          headers,
-        });
-
-        if (!restartResponse.ok) {
-          setSandboxStatus({
-            status: 'error',
-            message: 'Failed to restart sandbox. Please try again.',
+          const restartResponse = await fetch(`${API_URL}/project/${projectId}/sandbox/ensure-active`, {
+            method: 'POST',
+            headers,
+            signal: AbortSignal.timeout(130000), // 130s timeout (slightly more than backend)
           });
-          return;
-        }
 
-        // Wait longer for sandbox services to start up properly
-        await new Promise(resolve => setTimeout(resolve, 8000));
-        
-        // Retry with exponential backoff to ensure service is ready
-        const baseUrl = sandbox.sandbox_url?.replace(':8080', '') || '';
-        const finalUrl = `${baseUrl}:8080/${filePath}`;
-        const pingUrl = `${baseUrl}:8080/ping`;
-        const healthUrl = `${baseUrl}:8080/health`;
-        
-        // First, try to verify the service is responding at all
-        let serviceIsResponding = false;
-        
-        for (let attempt = 1; attempt <= 5; attempt++) {
-          try {
-            // Try multiple approaches to verify the service
-            console.log(`Attempt ${attempt}: Checking service availability`);
+          if (!restartResponse.ok) {
+            let errorMessage = 'Failed to restart sandbox. Please try again.';
             
-            // Approach 1: Try the lightweight ping endpoint first
             try {
-              const pingCheck = await fetch(pingUrl, { 
-                method: 'GET',
-                signal: AbortSignal.timeout(6000),
-              });
-              
-              if (pingCheck.ok) {
-                console.log('Ping check passed');
-                serviceIsResponding = true;
+              const errorData = await restartResponse.json();
+              if (errorData.detail) {
+                if (typeof errorData.detail === 'string') {
+                  errorMessage = errorData.detail;
+                } else if (errorData.detail.message) {
+                  errorMessage = errorData.detail.message;
+                }
               }
-            } catch (pingError) {
-              console.log('Ping endpoint not available, trying health check');
+            } catch (parseError) {
+              console.log('Could not parse error response:', parseError);
             }
             
-            // Approach 2: Try the health endpoint
-            if (!serviceIsResponding) {
+            setSandboxStatus({
+              status: 'error',
+              message: errorMessage,
+            });
+            return;
+          }
+
+          // Wait longer for sandbox services to start up properly
+          await new Promise(resolve => setTimeout(resolve, 8000));
+          
+          // Retry with exponential backoff to ensure service is ready
+          const baseUrl = sandbox.sandbox_url?.replace(':8080', '') || '';
+          const finalUrl = `${baseUrl}:8080/${filePath}`;
+          const pingUrl = `${baseUrl}:8080/ping`;
+          const healthUrl = `${baseUrl}:8080/health`;
+          
+          // First, try to verify the service is responding at all
+          let serviceIsResponding = false;
+          
+          for (let attempt = 1; attempt <= 5; attempt++) {
+            try {
+              // Try multiple approaches to verify the service
+              console.log(`Attempt ${attempt}: Checking service availability`);
+              
+              // Approach 1: Try the lightweight ping endpoint first
               try {
-                const healthCheck = await fetch(healthUrl, { 
+                const pingCheck = await fetch(pingUrl, { 
                   method: 'GET',
+                  signal: AbortSignal.timeout(6000),
+                });
+                
+                if (pingCheck.ok) {
+                  console.log('Ping check passed');
+                  serviceIsResponding = true;
+                }
+              } catch (pingError) {
+                console.log('Ping endpoint not available, trying health check');
+              }
+              
+              // Approach 2: Try the health endpoint
+              if (!serviceIsResponding) {
+                try {
+                  const healthCheck = await fetch(healthUrl, { 
+                    method: 'GET',
+                    signal: AbortSignal.timeout(8000),
+                  });
+                  
+                  if (healthCheck.ok) {
+                    console.log('Health check passed');
+                    serviceIsResponding = true;
+                  }
+                } catch (healthError) {
+                  console.log('Health endpoint not available, trying direct file check');
+                }
+              }
+              
+              // Approach 3: Try direct file access (fallback)
+              if (!serviceIsResponding) {
+                const directCheck = await fetch(finalUrl, { 
+                  method: 'HEAD',
                   signal: AbortSignal.timeout(8000),
                 });
                 
-                if (healthCheck.ok) {
-                  console.log('Health check passed');
+                if (directCheck.ok) {
+                  console.log('Direct file check passed');
                   serviceIsResponding = true;
                 }
-              } catch (healthError) {
-                console.log('Health endpoint not available, trying direct file check');
               }
-            }
-            
-            // Approach 3: Try direct file access (fallback)
-            if (!serviceIsResponding) {
-              const directCheck = await fetch(finalUrl, { 
-                method: 'HEAD',
-                signal: AbortSignal.timeout(8000),
-              });
               
-              if (directCheck.ok) {
-                console.log('Direct file check passed');
+              // Approach 4: Try any response from the server (even 404 means server is running)
+              if (!serviceIsResponding) {
+                const basicCheck = await fetch(`${baseUrl}:8080/`, { 
+                  method: 'HEAD',
+                  signal: AbortSignal.timeout(8000),
+                });
+                
+                // Any response code means the server is running
+                console.log(`Basic server check: ${basicCheck.status}`);
                 serviceIsResponding = true;
               }
-            }
-            
-            // Approach 4: Try any response from the server (even 404 means server is running)
-            if (!serviceIsResponding) {
-              const basicCheck = await fetch(`${baseUrl}:8080/`, { 
-                method: 'HEAD',
-                signal: AbortSignal.timeout(8000),
-              });
               
-              // Any response code means the server is running
-              console.log(`Basic server check: ${basicCheck.status}`);
-              serviceIsResponding = true;
+              if (serviceIsResponding) {
+                setSandboxStatus({ 
+                  status: 'active',
+                  directUrl: finalUrl,
+                });
+                // Redirect to the actual sandbox
+                window.location.href = finalUrl;
+                return;
+              }
+            } catch (error) {
+              console.log(`Service check attempt ${attempt} failed:`, error);
             }
             
-            if (serviceIsResponding) {
-              setSandboxStatus({ 
-                status: 'active',
-                directUrl: finalUrl,
-              });
-              // Redirect to the actual sandbox
-              window.location.href = finalUrl;
-              return;
-            }
-          } catch (error) {
-            console.log(`Service check attempt ${attempt} failed:`, error);
+            // Wait before next attempt: 3s, 5s, 7s, 9s, 11s
+            const waitTime = 3000 + (attempt * 2000);
+            console.log(`Waiting ${waitTime/1000}s before next attempt...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
           }
           
-          // Wait before next attempt: 3s, 5s, 7s, 9s, 11s
-          const waitTime = 3000 + (attempt * 2000);
-          console.log(`Waiting ${waitTime/1000}s before next attempt...`);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
+          // If we get here, health checks failed
+          setSandboxStatus({
+            status: 'error',
+            message: 'Sandbox restarted successfully, but the web server is still starting up. This can happen during high server load or if your project has many files to initialize.',
+            directUrl: finalUrl,
+          });
+        } catch (restartError) {
+          console.error('Sandbox restart error:', restartError);
+          
+          let errorMessage = 'Failed to restart sandbox. Please try again.';
+          
+          if (restartError.name === 'AbortError' || restartError.message?.includes('timeout')) {
+            errorMessage = 'Sandbox restart is taking longer than expected. Please wait a few minutes and try again.';
+          } else if (restartError.message) {
+            errorMessage = restartError.message;
+          }
+          
+          setSandboxStatus({
+            status: 'error',
+            message: errorMessage,
+          });
+          return;
         }
-        
-        // If we get here, health checks failed
-        setSandboxStatus({
-          status: 'error',
-          message: 'Sandbox restarted successfully, but the web server is still starting up. This can happen during high server load or if your project has many files to initialize.',
-          directUrl: finalUrl,
-        });
       } else {
         // After restart, try to get the final URL (legacy fallback)
         try {

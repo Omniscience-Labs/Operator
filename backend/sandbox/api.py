@@ -2,6 +2,7 @@ import os
 import urllib.parse
 from typing import Optional
 import mimetypes
+import asyncio
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Form, Depends, Request
 from fastapi.responses import Response
@@ -395,6 +396,41 @@ async def ensure_project_sandbox_active(
     Checks the sandbox status and starts it if it's not running.
     """
     logger.info(f"Received ensure sandbox active request for project {project_id}, user_id: {user_id}")
+    
+    # Add timeout protection for the entire operation
+    try:
+        return await asyncio.wait_for(
+            _ensure_sandbox_active_impl(project_id, user_id),
+            timeout=120  # 2 minute timeout for entire operation
+        )
+    except asyncio.TimeoutError:
+        error_message = f"Sandbox restart operation timed out for project {project_id}"
+        logger.error(error_message)
+        raise HTTPException(
+            status_code=504,
+            detail={
+                "error": "Sandbox restart timed out",
+                "message": "The sandbox restart operation took too long. Please try again in a few minutes.",
+                "project_id": project_id,
+                "timeout": "120 seconds"
+            }
+        )
+    except Exception as e:
+        error_message = f"Unexpected error in sandbox restart for project {project_id}: {str(e)}"
+        logger.error(error_message)
+        logger.error(f"Exception type: {type(e).__name__}")
+        raise HTTPException(
+            status_code=500, 
+            detail={
+                "error": "Sandbox restart failed",
+                "message": "An unexpected error occurred during sandbox restart. Please try again.",
+                "error_type": type(e).__name__,
+                "project_id": project_id
+            }
+        )
+
+async def _ensure_sandbox_active_impl(project_id: str, user_id: Optional[str]):
+    """Implementation of the sandbox ensure-active logic."""
     client = await db.client
     
     try:
@@ -432,8 +468,33 @@ async def ensure_project_sandbox_active(
         sandbox_id = sandbox_info['id']
         logger.info(f"Attempting to ensure sandbox {sandbox_id} is active for project {project_id}")
         
-        # Get or start the sandbox
-        sandbox = await get_or_start_sandbox(sandbox_id)
+        # Get or start the sandbox with proper error handling
+        try:
+            sandbox = await get_or_start_sandbox(sandbox_id)
+        except Exception as sandbox_error:
+            logger.error(f"Failed to start sandbox {sandbox_id}: {str(sandbox_error)}")
+            
+            # Check if it's a Daytona API error or timeout
+            if "timeout" in str(sandbox_error).lower():
+                raise HTTPException(
+                    status_code=504,
+                    detail={
+                        "error": "Sandbox restart timeout",
+                        "message": "The sandbox is taking longer than expected to start. Please wait a few minutes and try again.",
+                        "project_id": project_id,
+                        "sandbox_id": sandbox_id
+                    }
+                )
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail={
+                        "error": "Sandbox restart failed",
+                        "message": f"Failed to start sandbox: {str(sandbox_error)}",
+                        "project_id": project_id,
+                        "sandbox_id": sandbox_id
+                    }
+                )
         
         logger.info(f"Successfully ensured sandbox {sandbox_id} is active for project {project_id}")
         logger.info(f"Sandbox state: {sandbox.state}, URL: {sandbox.sandbox_url}")
