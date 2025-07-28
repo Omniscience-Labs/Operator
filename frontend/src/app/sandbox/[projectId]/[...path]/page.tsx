@@ -115,40 +115,90 @@ export default function SandboxPage({ params }: SandboxPageProps) {
         // Retry with exponential backoff to ensure service is ready
         const baseUrl = sandbox.sandbox_url?.replace(':8080', '') || '';
         const finalUrl = `${baseUrl}:8080/${filePath}`;
+        const pingUrl = `${baseUrl}:8080/ping`;
         const healthUrl = `${baseUrl}:8080/health`;
+        
+        // First, try to verify the service is responding at all
+        let serviceIsResponding = false;
         
         for (let attempt = 1; attempt <= 5; attempt++) {
           try {
-            // First check the health endpoint
-            const healthCheck = await fetch(healthUrl, { 
-              method: 'GET',
-              signal: AbortSignal.timeout(10000),
-            });
+            // Try multiple approaches to verify the service
+            console.log(`Attempt ${attempt}: Checking service availability`);
             
-            if (healthCheck.ok) {
-              // Health check passed, now verify the actual file is accessible
-              const fileCheck = await fetch(finalUrl, { 
-                method: 'HEAD',
-                signal: AbortSignal.timeout(5000),
+            // Approach 1: Try the lightweight ping endpoint first
+            try {
+              const pingCheck = await fetch(pingUrl, { 
+                method: 'GET',
+                signal: AbortSignal.timeout(6000),
               });
               
-              if (fileCheck.ok) {
-                setSandboxStatus({ 
-                  status: 'active',
-                  directUrl: finalUrl,
+              if (pingCheck.ok) {
+                console.log('Ping check passed');
+                serviceIsResponding = true;
+              }
+            } catch (pingError) {
+              console.log('Ping endpoint not available, trying health check');
+            }
+            
+            // Approach 2: Try the health endpoint
+            if (!serviceIsResponding) {
+              try {
+                const healthCheck = await fetch(healthUrl, { 
+                  method: 'GET',
+                  signal: AbortSignal.timeout(8000),
                 });
-                // Redirect to the actual sandbox
-                window.location.href = finalUrl;
-                return;
+                
+                if (healthCheck.ok) {
+                  console.log('Health check passed');
+                  serviceIsResponding = true;
+                }
+              } catch (healthError) {
+                console.log('Health endpoint not available, trying direct file check');
               }
             }
+            
+            // Approach 3: Try direct file access (fallback)
+            if (!serviceIsResponding) {
+              const directCheck = await fetch(finalUrl, { 
+                method: 'HEAD',
+                signal: AbortSignal.timeout(8000),
+              });
+              
+              if (directCheck.ok) {
+                console.log('Direct file check passed');
+                serviceIsResponding = true;
+              }
+            }
+            
+            // Approach 4: Try any response from the server (even 404 means server is running)
+            if (!serviceIsResponding) {
+              const basicCheck = await fetch(`${baseUrl}:8080/`, { 
+                method: 'HEAD',
+                signal: AbortSignal.timeout(8000),
+              });
+              
+              // Any response code means the server is running
+              console.log(`Basic server check: ${basicCheck.status}`);
+              serviceIsResponding = true;
+            }
+            
+            if (serviceIsResponding) {
+              setSandboxStatus({ 
+                status: 'active',
+                directUrl: finalUrl,
+              });
+              // Redirect to the actual sandbox
+              window.location.href = finalUrl;
+              return;
+            }
           } catch (error) {
-            console.log(`Health check attempt ${attempt} failed:`, error);
-            // Service not ready yet, continue retrying
+            console.log(`Service check attempt ${attempt} failed:`, error);
           }
           
-          // Exponential backoff: wait 2s, 4s, 6s, 8s, 10s
-          const waitTime = attempt * 2000;
+          // Wait before next attempt: 3s, 5s, 7s, 9s, 11s
+          const waitTime = 3000 + (attempt * 2000);
+          console.log(`Waiting ${waitTime/1000}s before next attempt...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }
         

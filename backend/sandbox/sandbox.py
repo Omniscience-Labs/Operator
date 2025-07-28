@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from utils.logger import logger
 from utils.config import config
 from utils.config import Configuration
+import time
 
 load_dotenv()
 
@@ -49,8 +50,8 @@ async def get_or_start_sandbox(sandbox_id: str):
                 # Refresh sandbox state after starting
                 sandbox = daytona.get(sandbox_id)
                 
-                # Start supervisord in a session when restarting
-                start_supervisord_session(sandbox)
+                # Ensure services are running after restart
+                await ensure_sandbox_services_running(sandbox)
             except Exception as e:
                 logger.error(f"Error starting sandbox: {e}")
                 raise e
@@ -62,9 +63,40 @@ async def get_or_start_sandbox(sandbox_id: str):
         logger.error(f"Error retrieving or starting sandbox: {str(e)}")
         raise e
 
+async def ensure_sandbox_services_running(sandbox: Sandbox):
+    """Ensure that all required services are running in the sandbox."""
+    try:
+        logger.info("Ensuring sandbox services are running")
+        
+        # Check if supervisord is running, if not start it
+        try:
+            result = sandbox.process.execute(SessionExecuteRequest(
+                command="pgrep -f supervisord",
+                var_async=False
+            ))
+            if not result.exit_code == 0:
+                # Supervisord not running, start it
+                logger.info("Supervisord not running, starting it")
+                start_supervisord_session(sandbox)
+            else:
+                logger.info("Supervisord already running, restarting services")
+                # Restart all services using supervisorctl
+                sandbox.process.execute(SessionExecuteRequest(
+                    command="supervisorctl restart all",
+                    var_async=True
+                ))
+        except Exception as e:
+            logger.warning(f"Could not check supervisord status, attempting to start: {e}")
+            start_supervisord_session(sandbox)
+            
+    except Exception as e:
+        logger.error(f"Error ensuring sandbox services: {str(e)}")
+        # Don't raise - let the sandbox start anyway
+        pass
+
 def start_supervisord_session(sandbox: Sandbox):
-    """Start supervisord in a session."""
-    session_id = "supervisord-session"
+    """Start supervisord in a session if not already running."""
+    session_id = f"supervisord-session-{int(time.time())}"  # Use unique session ID
     try:
         logger.info(f"Creating session {session_id} for supervisord")
         sandbox.process.create_session(session_id)
@@ -77,7 +109,8 @@ def start_supervisord_session(sandbox: Sandbox):
         logger.info(f"Supervisord started in session {session_id}")
     except Exception as e:
         logger.error(f"Error starting supervisord session: {str(e)}")
-        raise e
+        # Don't raise - supervisord might already be running
+        pass
 
 def create_sandbox(password: str, project_id: str = None):
     """Create a new sandbox with all required services configured and running."""

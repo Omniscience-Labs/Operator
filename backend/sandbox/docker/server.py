@@ -30,6 +30,12 @@ async def health_check():
         "timestamp": int(time.time())
     })
 
+# Simple ping endpoint for basic connectivity
+@app.get("/ping")
+async def ping():
+    """Simple ping endpoint for basic connectivity check"""
+    return {"status": "ok"}
+
 # Status endpoint for monitoring
 @app.get("/status")
 async def status():
