@@ -143,6 +143,10 @@ async def log_requests_middleware(request: Request, call_next):
 allowed_origins = [ "http://localhost:3000", "https://operator.becomeomni.com", "https://dev1.operator.becomeomni.com", "https://huston.becomeomni.net", "https://mssc.becomeomni.net","https://coldchain.becomeomni.net","https://kellybox.becomeomni.net"]
 allow_origin_regex = None
 
+# Add frontend URL from environment variable if set
+if config.NEXT_PUBLIC_URL:
+    allowed_origins.append(config.NEXT_PUBLIC_URL)
+
 # Add staging-specific origins
 if config.ENV_MODE == EnvMode.STAGING:
     allowed_origins.append("https://operator.staging.becomeomni.com")
