@@ -36,19 +36,27 @@ daytona = Daytona(daytona_config)
 logger.debug("Daytona client initialized")
 
 # Thread pool executor for blocking Daytona SDK calls
-executor = concurrent.futures.ThreadPoolExecutor(max_workers=4, thread_name_prefix="daytona")
+# Increased max_workers to handle more concurrent sandbox operations
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=8, thread_name_prefix="daytona")
 
 async def run_in_executor_with_timeout(func, *args, timeout=30):
     """Run a synchronous function in an executor with timeout."""
     loop = asyncio.get_event_loop()
     try:
-        return await asyncio.wait_for(
+        logger.debug(f"Executing {func.__name__} in thread pool with timeout {timeout}s")
+        result = await asyncio.wait_for(
             loop.run_in_executor(executor, func, *args),
             timeout=timeout
         )
+        logger.debug(f"Successfully completed {func.__name__}")
+        return result
     except asyncio.TimeoutError:
         logger.error(f"Operation timed out after {timeout} seconds: {func.__name__}")
         raise Exception(f"Daytona operation timed out after {timeout} seconds")
+    except Exception as e:
+        logger.error(f"Error in executor operation {func.__name__}: {str(e)}")
+        logger.error(f"Exception type: {type(e).__name__}")
+        raise e
 
 async def get_or_start_sandbox(sandbox_id: str):
     """Retrieve a sandbox by ID, check its state, and start it if needed."""
@@ -155,7 +163,7 @@ async def start_supervisord_session(sandbox: Sandbox):
         # Don't raise - supervisord might already be running
         pass
 
-def create_sandbox(password: str, project_id: str = None):
+async def create_sandbox(password: str, project_id: str = None):
     """Create a new sandbox with all required services configured and running."""
     
     logger.debug("Creating new Daytona sandbox environment")
@@ -192,36 +200,21 @@ def create_sandbox(password: str, project_id: str = None):
         auto_archive_interval=24 * 60,
     )
     
-    # Create the sandbox
-    sandbox = daytona.create(params)
+    # Create the sandbox using the executor to prevent blocking
+    logger.debug("Creating sandbox with Daytona API...")
+    sandbox = await run_in_executor_with_timeout(daytona.create, params, timeout=60)
     logger.debug(f"Sandbox created with ID: {sandbox.id}")
     
     # Start supervisord in a session for new sandbox
-    # Note: This is called from sync context during creation
     try:
-        start_supervisord_session_sync(sandbox)
+        await start_supervisord_session(sandbox)
     except Exception as e:
         logger.warning(f"Failed to start supervisord for new sandbox: {e}")
     
     logger.debug(f"Sandbox environment successfully initialized")
     return sandbox
 
-def start_supervisord_session_sync(sandbox: Sandbox):
-    """Start supervisord in a session (synchronous version for create_sandbox)."""
-    session_id = f"supervisord-session-{int(time.time())}"
-    try:
-        logger.info(f"Creating session {session_id} for supervisord")
-        sandbox.process.create_session(session_id)
-        
-        # Execute supervisord command
-        sandbox.process.execute_session_command(session_id, SessionExecuteRequest(
-            command="exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf",
-            var_async=True
-        ))
-        logger.info(f"Supervisord started in session {session_id}")
-    except Exception as e:
-        logger.error(f"Error starting supervisord session: {str(e)}")
-        pass
+
 
 async def delete_sandbox(sandbox_id: str):
     """Delete a sandbox by its ID."""
