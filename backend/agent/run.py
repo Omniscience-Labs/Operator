@@ -126,8 +126,16 @@ async def run_agent(
         thread_manager.add_tool(DateTimeTool)  # Always enable datetime tool (built-in)
         if config.RAPID_API_KEY:
             thread_manager.add_tool(DataProvidersTool)
+        logger.info(f"Checking HeyGen tool: HEYGEN_API_KEY={'SET' if config.HEYGEN_API_KEY else 'NOT SET'}")
         if config.HEYGEN_API_KEY:
-            thread_manager.add_tool(SandboxVideoAvatarTool, project_id=project_id, thread_manager=thread_manager)
+            try:
+                logger.info("Attempting to load HeyGen Video Avatar tool...")
+                thread_manager.add_tool(SandboxVideoAvatarTool, project_id=project_id, thread_manager=thread_manager)
+                logger.info("✅ HeyGen Video Avatar tool loaded successfully")
+            except Exception as e:
+                logger.error(f"❌ Failed to load HeyGen Video Avatar tool: {str(e)}", exc_info=True)
+        else:
+            logger.warning("⚠️ HeyGen Video Avatar tool NOT loaded - HEYGEN_API_KEY not configured")
     else:
         logger.info("Custom agent specified - registering only enabled tools")
         # Always register basic tools for all custom agents
@@ -162,8 +170,16 @@ async def run_agent(
             thread_manager.add_tool(SandboxPodcastTool, project_id=project_id, thread_manager=thread_manager)
         if config.RAPID_API_KEY and enabled_tools.get('data_providers_tool', {}).get('enabled', False):
             thread_manager.add_tool(DataProvidersTool)
-        if config.HEYGEN_API_KEY and enabled_tools.get('sb_video_avatar_tool', {}).get('enabled', False):
-            thread_manager.add_tool(SandboxVideoAvatarTool, project_id=project_id, thread_manager=thread_manager)
+        # HeyGen Video Avatar Tool
+        heygen_enabled = enabled_tools.get('sb_video_avatar_tool', {}).get('enabled', False)
+        logger.info(f"Custom agent HeyGen tool check: HEYGEN_API_KEY={'SET' if config.HEYGEN_API_KEY else 'NOT SET'}, tool_enabled={heygen_enabled}")
+        if config.HEYGEN_API_KEY and heygen_enabled:
+            try:
+                logger.info("Attempting to load HeyGen Video Avatar tool for custom agent...")
+                thread_manager.add_tool(SandboxVideoAvatarTool, project_id=project_id, thread_manager=thread_manager)
+                logger.info("✅ HeyGen Video Avatar tool loaded successfully for custom agent")
+            except Exception as e:
+                logger.error(f"❌ Failed to load HeyGen Video Avatar tool for custom agent: {str(e)}", exc_info=True)
 
     # Register knowledge search tool if agent has knowledge bases configured
     if agent_config and agent_config.get('knowledge_bases'):
