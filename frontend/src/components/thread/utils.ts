@@ -20,6 +20,12 @@ import {
   BookOpen,
   MessageCircleQuestion,
   CheckCircle2,
+  Video,
+  Play,
+  Mic,
+  MicOff,
+  Camera,
+  List,
 } from 'lucide-react';
 
 // Flag to control whether tool result messages are rendered
@@ -165,6 +171,20 @@ export const getToolIcon = (toolName: string): ElementType => {
     // Knowledge base tools
     case 'list-available-knowledge-bases':
       return BookOpen;
+
+    // HeyGen Video Avatar tools
+    case 'create-avatar-session':
+      return Video;
+    case 'avatar-speak':
+      return Play;
+    case 'start-voice-chat':
+      return Mic;
+    case 'stop-voice-chat':
+      return MicOff;
+    case 'close-avatar-session':
+      return Camera;
+    case 'list-avatar-sessions':
+      return List;
 
     // Default case
     default:
@@ -356,6 +376,14 @@ const TOOL_DISPLAY_NAMES = new Map([
   ['search-mcp-servers', 'Searching MCP Servers'],
   ['get-mcp-server-tools', 'Getting MCP Server Tools'],
   ['configure-mcp-server', 'Configuring MCP Server'],
+  
+  // HeyGen Video Avatar tools
+  ['create-avatar-session', 'Creating Video Avatar'],
+  ['avatar-speak', 'Avatar Speaking'],
+  ['start-voice-chat', 'Starting Voice Chat'],
+  ['stop-voice-chat', 'Stopping Voice Chat'],
+  ['close-avatar-session', 'Closing Avatar Session'],
+  ['list-avatar-sessions', 'Listing Avatar Sessions'],
   ['get-popular-mcp-servers', 'Getting Popular MCP Servers'],
   ['test-mcp-server-connection', 'Testing MCP Server Connection'],
   
