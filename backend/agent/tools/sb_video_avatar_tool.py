@@ -64,15 +64,23 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         super().__init__(project_id, thread_manager)
         self.workspace_path = "/workspace"
         
-        # HeyGen API configuration
-        self.heygen_api_key = os.getenv('HEYGEN_API_KEY', '')
-        self.heygen_api_base = os.getenv('HEYGEN_API_BASE', 'https://api.heygen.com')
+        # HeyGen API configuration - try multiple sources
+        self.heygen_api_key = config.HEYGEN_API_KEY or os.getenv('HEYGEN_API_KEY', '')
+        self.heygen_api_base = config.HEYGEN_API_BASE or os.getenv('HEYGEN_API_BASE', 'https://api.heygen.com')
+        
+        # Debug logging
+        logger.info(f"Config HEYGEN_API_KEY: {'SET' if config.HEYGEN_API_KEY else 'NOT SET'}")
+        logger.info(f"Env HEYGEN_API_KEY: {'SET' if os.getenv('HEYGEN_API_KEY') else 'NOT SET'}")
+        logger.info(f"Final API key: {'SET' if self.heygen_api_key else 'NOT SET'}")
         
         # Session management
         self.active_sessions: Dict[str, Dict[str, Any]] = {}
         
         if not self.heygen_api_key:
-            logger.warning("HEYGEN_API_KEY not found in environment variables")
+            logger.warning("HEYGEN_API_KEY not configured in config system")
+        else:
+            logger.info(f"HeyGen API key loaded: {self.heygen_api_key[:10]}...")
+            logger.info(f"HeyGen API base: {self.heygen_api_base}")
 
     async def _create_session_token(self) -> str:
         """Create a session token for HeyGen API."""
@@ -86,10 +94,14 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                     headers={"x-api-key": self.heygen_api_key}
                 ) as response:
                     if response.status != 200:
-                        raise Exception(f"Failed to create session token: {response.status}")
+                        error_text = await response.text()
+                        raise Exception(f"HeyGen API error {response.status}: {error_text}")
                     
                     data = await response.json()
-                    return data.get('token', '')
+                    token = data.get('token', '')
+                    if not token:
+                        raise Exception(f"No token returned from HeyGen API. Response: {data}")
+                    return token
         except Exception as e:
             logger.error(f"Error creating session token: {str(e)}")
             raise e
@@ -230,9 +242,12 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                 return self.fail_response(f"Avatar session '{session_name}' already exists. Use a different name or close the existing session first.")
             
             # Create session token
-            session_token = await self._create_session_token()
-            if not session_token:
-                return self.fail_response("Failed to create HeyGen session token. Please check your API key.")
+            try:
+                session_token = await self._create_session_token()
+                if not session_token:
+                    return self.fail_response("Failed to create HeyGen session token. Please check your API key.")
+            except Exception as e:
+                return self.fail_response(f"Failed to create HeyGen session token: {str(e)}. Please check your API key and configuration.")
             
             # Prepare session configuration
             session_config = {
