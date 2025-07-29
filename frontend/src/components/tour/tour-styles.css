@@ -14,6 +14,34 @@
   z-index: 10000; /* Increased z-index to ensure it's above everything */
 }
 
+/* Special styling for tour steps with videos */
+.shepherd-theme-arrows:has(iframe) {
+  max-width: 480px; /* Wider for video content */
+}
+
+/* Video container styling */
+.shepherd-theme-arrows .shepherd-text iframe {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive video container */
+.shepherd-theme-arrows .shepherd-text .relative {
+  margin: 1rem 0;
+}
+
+/* Ensure videos are responsive on mobile */
+@media (max-width: 640px) {
+  .shepherd-theme-arrows:has(iframe) {
+    max-width: calc(100vw - 2rem);
+    margin: 0 1rem;
+  }
+  
+  .shepherd-theme-arrows .shepherd-text iframe {
+    border-radius: 6px;
+  }
+}
+
 /* Highlight styles for tour elements */
 .shepherd-highlight {
   position: relative;

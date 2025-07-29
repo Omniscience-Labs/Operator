@@ -266,9 +266,29 @@ export function AgentsPageTour({
         id: 'welcome-agents',
         title: 'Welcome to Your Agents!',
         text: `
-          <div class="space-y-3">
+          <div class="space-y-4">
             <p>This is your Agents page where you can create, manage, and customize AI agents.</p>
-            <p>AI agents are specialized assistants that can help you with specific tasks, workflows, and projects.</p>
+            <p>Watch this quick video to see how agents work:</p>
+            
+            <!-- Embedded Loom Video -->
+            <div class="relative w-full" style="padding-bottom: 56.25%; height: 0; margin: 1rem 0;">
+              <iframe 
+                src="https://www.loom.com/embed/YOUR_LOOM_VIDEO_ID?hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true&autoplay=false&loop=false" 
+                frameborder="0" 
+                webkitallowfullscreen 
+                mozallowfullscreen 
+                allowfullscreen
+                loading="lazy"
+                title="Agents Demo Video"
+                class="absolute top-0 left-0 w-full h-full rounded-lg"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+              </iframe>
+            </div>
+            
+            <p><strong>Tip:</strong> AI agents are specialized assistants that can help you with specific tasks, workflows, and projects.</p>
+            <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
+              <em>Click the video to play. You can continue the tour while it plays!</em>
+            </p>
           </div>
         `,
         attachTo: {
