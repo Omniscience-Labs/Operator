@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import 'shepherd.js/dist/css/shepherd.css';
 import './tour-styles.css';
 import './types';
@@ -13,36 +13,96 @@ interface OperatorTourProps {
   onComplete?: () => void;
 }
 
+// Add highlight to element
+const addHighlight = (element: Element) => {
+  element.classList.add('shepherd-highlight');
+};
+
+// Remove highlight from element
+const removeHighlight = (element: Element) => {
+  element.classList.remove('shepherd-highlight');
+};
+
 export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourProps) {
-  const tourRef = useRef<any | null>(null);
-  const [isTourActive, setIsTourActive] = useState(false);
+  const tourRef = useRef<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    // Auto-start tour for first-time users
-    if (isFirstTime) {
-      setTimeout(() => {
-        startTour();
-      }, 1000); // Small delay to ensure DOM is ready
-    }
-
-    return () => {
-      if (tourRef.current) {
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    if (tourRef.current) {
+      try {
         tourRef.current.complete();
+        tourRef.current = null;
+      } catch (error) {
+        console.warn('Error cleaning up tour:', error);
       }
-    };
-  }, [isFirstTime]);
+    }
+    
+    // Remove any lingering highlights
+    document.querySelectorAll('.shepherd-highlight').forEach(el => {
+      el.classList.remove('shepherd-highlight');
+    });
+  }, []);
 
-  // Function to add highlight class to element
-  const addHighlight = (element: Element) => {
-    element.classList.add('shepherd-highlight');
+  // Enhanced element finding with better selectors
+  const findAttachmentElement = () => {
+    const selectors = [
+      'button:has(.paperclip)',
+      'button:has([data-testid="file-upload"])',
+      '.file-upload-handler button',
+      'button[aria-label*="upload"]',
+      'button[aria-label*="file"]',
+      'button[aria-label*="attach"]',
+      '[data-tour="attachments"]'
+    ];
+    
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element) return element;
+    }
+    return null;
   };
 
-  // Function to remove highlight class from element
-  const removeHighlight = (element: Element) => {
-    element.classList.remove('shepherd-highlight');
+  const findPluginElement = () => {
+    const selectors = [
+      'button:has(.plug)',
+      '[data-radix-collection-item]:has(.plug)',
+      '.integrations-dropdown button',
+      'button[aria-label*="integration"]',
+      'button[aria-label*="plugin"]',
+      '[data-tour="plugins"]'
+    ];
+    
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element) return element;
+    }
+    return null;
   };
+
+  const findMediaElement = () => {
+    const selectors = [
+      'button:has(.file-audio)',
+      'button:has([data-testid="meeting-recorder"])',
+      '.meeting-recorder button',
+      'button[aria-label*="meeting"]',
+      'button[aria-label*="audio"]',
+      'button[aria-label*="media"]',
+      '[data-tour="media"]'
+    ];
+    
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element) return element;
+    }
+    return null;
+  };
+
 
   const startTour = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
     try {
       // Import Shepherd.js dynamically
       const shepherdModule = await import('shepherd.js');
@@ -63,7 +123,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           scrollTo: true
         },
         useModalOverlay: true,
-        modalOverlayOpeningPadding: 4
+        modalOverlayOpeningPadding: 8
       });
 
       // Step 1: Welcome
@@ -92,18 +152,25 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 2: New Chat Guide
+      // Step 2: Chat Input
       tourRef.current.addStep({
-        id: 'new-chat',
-        title: 'Start Your First Chat',
+        id: 'chat-input',
+        title: 'Start Your Conversation',
         text: `
           <div class="space-y-3">
-            <p>This is where you'll start your conversations with Operator! Type your message here to begin.</p>
-            <p>You can ask me anything - from simple questions to complex tasks. I'm here to help you get things done!</p>
+            <p>This is where the magic happens! Type your message or question here.</p>
+            <p>I can help with tasks like:</p>
+            <ul>
+              <li>• Analyzing spreadsheets and data</li>
+              <li>• Creating presentations and reports</li>
+              <li>• Writing and editing documents</li>
+              <li>• Research and web browsing</li>
+              <li>• And much more!</li>
+            </ul>
           </div>
         `,
         attachTo: {
-          element: '[data-testid="chat-input"], .chat-input, textarea, input[placeholder*="help"], input[placeholder*="task"]',
+          element: 'textarea[placeholder*="message"], input[placeholder*="message"], .chat-input textarea, [data-testid="chat-input"]',
           on: 'top'
         },
         buttons: [
@@ -122,7 +189,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 3: Attachments Guide
+      // Step 3: Attachments Guide - IMPROVED POSITIONING
       tourRef.current.addStep({
         id: 'attachments',
         title: 'Attach Files & Documents',
@@ -141,7 +208,20 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             {
               name: 'offset',
               options: {
-                offset: [0, -60], // Move popup higher so highlighted area is visible
+                offset: [0, -120], // Increased from -60 to -120 to lift popup much higher
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 20,
+              },
+            },
+            {
+              name: 'flip',
+              options: {
+                fallbackPlacements: ['top', 'bottom', 'right'],
               },
             },
           ],
@@ -149,9 +229,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
-              const element = document.querySelector('button:has(.paperclip), button:has([data-testid="file-upload"]), .file-upload-handler button, button[aria-label*="upload"], button[aria-label*="file"]');
+              const element = findAttachmentElement();
               if (element) {
                 addHighlight(element);
+                // Ensure element is scrolled into view with extra space
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
               }
               resolve();
             }, 100);
@@ -159,7 +245,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeHidePromise: () => {
           return new Promise<void>((resolve) => {
-            const element = document.querySelector('button:has(.paperclip), button:has([data-testid="file-upload"]), .file-upload-handler button, button[aria-label*="upload"], button[aria-label*="file"]');
+            const element = findAttachmentElement();
             if (element) {
               removeHighlight(element);
             }
@@ -182,7 +268,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 4: Plugins Guide
+      // Step 4: Plugins Guide - IMPROVED POSITIONING
       tourRef.current.addStep({
         id: 'plugins',
         title: 'Integrations & Plugins',
@@ -201,7 +287,20 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             {
               name: 'offset',
               options: {
-                offset: [0, -60], // Move popup higher so highlighted area is visible
+                offset: [0, -120], // Increased from -60 to -120 to lift popup much higher
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 20,
+              },
+            },
+            {
+              name: 'flip',
+              options: {
+                fallbackPlacements: ['bottom', 'left', 'right'],
               },
             },
           ],
@@ -209,9 +308,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
-              const element = document.querySelector('button:has(.plug), [data-radix-collection-item]:has(.plug), .integrations-dropdown button, button[aria-label*="integration"], button[aria-label*="plugin"]');
+              const element = findPluginElement();
               if (element) {
                 addHighlight(element);
+                // Ensure element is scrolled into view with extra space
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
               }
               resolve();
             }, 100);
@@ -219,7 +324,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeHidePromise: () => {
           return new Promise<void>((resolve) => {
-            const element = document.querySelector('button:has(.plug), [data-radix-collection-item]:has(.plug), .integrations-dropdown button, button[aria-label*="integration"], button[aria-label*="plugin"]');
+            const element = findPluginElement();
             if (element) {
               removeHighlight(element);
             }
@@ -242,7 +347,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 5: Open Meetings Guide
+      // Step 5: Media/Meetings Guide - IMPROVED POSITIONING
       tourRef.current.addStep({
         id: 'meetings',
         title: 'Open Meetings',
@@ -261,7 +366,20 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             {
               name: 'offset',
               options: {
-                offset: [0, -60], // Move popup higher so highlighted area is visible
+                offset: [0, -120], // Increased from -60 to -120 to lift popup much higher
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 20,
+              },
+            },
+            {
+              name: 'flip',
+              options: {
+                fallbackPlacements: ['bottom', 'left', 'right'],
               },
             },
           ],
@@ -269,9 +387,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
-              const element = document.querySelector('button:has(.file-audio), button:has([data-testid="meeting-recorder"]), .meeting-recorder button, button[aria-label*="meeting"], button[aria-label*="audio"]');
+              const element = findMediaElement();
               if (element) {
                 addHighlight(element);
+                // Ensure element is scrolled into view with extra space
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
               }
               resolve();
             }, 100);
@@ -279,7 +403,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeHidePromise: () => {
           return new Promise<void>((resolve) => {
-            const element = document.querySelector('button:has(.file-audio), button:has([data-testid="meeting-recorder"]), .meeting-recorder button, button[aria-label*="meeting"], button[aria-label*="audio"]');
+            const element = findMediaElement();
             if (element) {
               removeHighlight(element);
             }
@@ -302,110 +426,30 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 6: Agents Guide
+      // Step 6: Send Message
       tourRef.current.addStep({
-        id: 'agents',
-        title: 'Create & Manage AI Agents',
+        id: 'send-message',
+        title: 'Send Your Message',
         text: `
           <div class="space-y-3">
-            <p>This is the Agents section! Here you can create and manage custom AI agents with specific instructions and tools.</p>
-            <p>Build agents tailored to your workflow - from data analysts to content creators, each with their own specialized capabilities.</p>
+            <p>Once you've typed your message and added any files, click this button to send it to me!</p>
+            <p>I'll analyze your request and provide helpful responses, execute tasks, or ask clarifying questions if needed.</p>
           </div>
         `,
         attachTo: {
-          element: 'a[href="/agents"], .sidebar-menu-button:has(.bot), button:has(.bot), [data-testid="agents-link"], .sidebar-content',
-          on: 'right'
-        },
-        buttons: [
-          {
-            text: 'Back',
-            action: () => tourRef.current?.back(),
-            classes: 'shepherd-button-secondary'
-          },
-          {
-            text: 'Next',
-            action: () => {
-              tourRef.current?.next();
-            },
-            classes: 'shepherd-button-primary'
-          }
-        ]
-      });
-
-      // Step 7: Marketplace Guide
-      tourRef.current.addStep({
-        id: 'marketplace',
-        title: 'Browse & Install Agents',
-        text: `
-          <div class="space-y-3">
-            <p>This is the Marketplace! Discover and install pre-built AI agents from the community.</p>
-            <p>Find agents for common tasks like project management, research, or creative work - all ready to use immediately.</p>
-          </div>
-        `,
-        attachTo: {
-          element: 'a[href="/marketplace"], .sidebar-menu-button:has(.store), button:has(.store), [data-testid="marketplace-link"], .sidebar-content',
-          on: 'right'
-        },
-        buttons: [
-          {
-            text: 'Back',
-            action: () => tourRef.current?.back(),
-            classes: 'shepherd-button-secondary'
-          },
-          {
-            text: 'Next',
-            action: () => {
-              tourRef.current?.next();
-            },
-            classes: 'shepherd-button-primary'
-          }
-        ]
-      });
-
-      // Step 8: Quick Start Guide
-      tourRef.current.addStep({
-        id: 'quick-start',
-        title: 'Quick Start Templates',
-        text: `
-          <div class="space-y-3">
-            <p>This is the Quick Start section! Here you'll find pre-built templates to help you get started quickly.</p>
-            <p>Choose from templates like project automation, UX research framework, or learning path generator to jumpstart your workflow.</p>
-          </div>
-        `,
-        attachTo: {
-          element: '.w-full.max-w-3xl.mx-auto.px-4, .examples, [data-testid="quick-starts"], .quick-starts, .suggestions, .templates',
-          on: 'top'
+          element: 'button[type="submit"], .send-button, button:has(.send), button[aria-label*="send"]',
+          on: 'left'
         },
         popperOptions: {
           modifiers: [
             {
               name: 'offset',
               options: {
-                offset: [0, -60], // Move popup higher so highlighted area is visible
+                offset: [0, -80],
               },
             },
           ],
         },
-        beforeShowPromise: () => {
-          return new Promise<void>((resolve) => {
-            setTimeout(() => {
-              const element = document.querySelector('.w-full.max-w-3xl.mx-auto.px-4, .examples, [data-testid="quick-starts"], .quick-starts, .suggestions, .templates');
-              if (element) {
-                addHighlight(element);
-              }
-              resolve();
-            }, 100);
-          });
-        },
-        beforeHidePromise: () => {
-          return new Promise<void>((resolve) => {
-            const element = document.querySelector('.w-full.max-w-3xl.mx-auto.px-4, .examples, [data-testid="quick-starts"], .quick-starts, .suggestions, .templates');
-            if (element) {
-              removeHighlight(element);
-            }
-            resolve();
-          });
-        },
         buttons: [
           {
             text: 'Back',
@@ -413,165 +457,53 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-secondary'
           },
           {
-            text: 'Next',
+            text: 'Finish Tour',
             action: () => {
-              tourRef.current?.next();
+              tourRef.current?.complete();
             },
             classes: 'shepherd-button-primary'
           }
         ]
       });
 
-      // Step 9: New Task Guide
-      tourRef.current.addStep({
-        id: 'new-task',
-        title: 'Create Your First Task',
-        text: `
-          <div class="space-y-3">
-            <p>This is where you create a new task with Operator! Click the "New Task" button in the sidebar to get started.</p>
-            <p>Tasks are your way of telling Operator what you need help with - whether it's analyzing data, creating reports, or any other AI-powered workflow.</p>
-          </div>
-        `,
-        attachTo: {
-          element: '.liquid-button:has(.plus), .sidebar-menu-button:has(.plus), [data-testid="new-task-button"], .tasks-section .liquid-button, .sidebar-content .liquid-button:has(.plus)',
-          on: 'right'
-        },
-        beforeShowPromise: () => {
-          return new Promise<void>((resolve) => {
-            setTimeout(() => {
-              const element = document.querySelector('.liquid-button:has(.plus), .sidebar-menu-button:has(.plus), [data-testid="new-task-button"], .tasks-section .liquid-button, .sidebar-content .liquid-button:has(.plus)');
-              if (element) {
-                addHighlight(element);
-              }
-              resolve();
-            }, 100);
-          });
-        },
-        beforeHidePromise: () => {
-          return new Promise<void>((resolve) => {
-            const element = document.querySelector('.liquid-button:has(.plus), .sidebar-menu-button:has(.plus), [data-testid="new-task-button"], .tasks-section .liquid-button, .sidebar-content .liquid-button:has(.plus)');
-            if (element) {
-              removeHighlight(element);
-            }
-            resolve();
-          });
-        },
-        buttons: [
-          {
-            text: 'Back',
-            action: () => tourRef.current?.back(),
-            classes: 'shepherd-button-secondary'
-          },
-          {
-            text: 'End Tour',
-            action: () => {
-              try {
-                if (tourRef.current) {
-                  tourRef.current.complete();
-                }
-                setIsTourActive(false);
-                onComplete?.();
-              } catch (error) {
-                setIsTourActive(false);
-                onComplete?.();
-              }
-            },
-            classes: 'shepherd-button-primary'
-          }
-        ]
-      });
-
-      // Event listeners
-      tourRef.current.on('start', () => {
-        setIsTourActive(true);
-      });
-
+      // Tour event handlers
       tourRef.current.on('complete', () => {
-        try {
-          // Remove any remaining highlights
-          document.querySelectorAll('.shepherd-highlight').forEach(el => {
-            removeHighlight(el);
-          });
-          setIsTourActive(false);
-          onComplete?.();
-        } catch (error) {
-          setIsTourActive(false);
-        }
+        cleanup();
+        onComplete?.();
       });
 
       tourRef.current.on('cancel', () => {
-        try {
-          // Remove any remaining highlights
-          document.querySelectorAll('.shepherd-highlight').forEach(el => {
-            removeHighlight(el);
-          });
-          setIsTourActive(false);
-          onComplete?.();
-        } catch (error) {
-          setIsTourActive(false);
-        }
+        cleanup();
+        onComplete?.();
       });
 
+      // Start the tour
       tourRef.current.start();
+      
     } catch (error) {
-      // Silent error handling - no logging
+      console.error('Failed to start tour:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleTourButtonClick = () => {
-    if (isTourActive) {
-      // If tour is active, end it
-      if (tourRef.current) {
-        try {
-          tourRef.current.complete();
-        } catch (error) {
-          // Silent error handling
-        }
-      }
-      setIsTourActive(false);
-      onComplete?.();
-    } else {
-      // Start a fresh tour
-      // Clean up any existing tour
-      if (tourRef.current) {
-        try {
-          tourRef.current.destroy();
-        } catch (error) {
-          // Silent error handling
-        }
-      }
+  useEffect(() => {
+    if (isFirstTime) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        startTour();
+      }, 500);
       
-      // Reset state and start new tour
-      setIsTourActive(false);
-      tourRef.current = null;
-      
-      // Start fresh tour
-      startTour();
+      return () => clearTimeout(timer);
     }
-  };
+    
+    return cleanup;
+  }, [isFirstTime, cleanup]);
 
-  return (
-    <div className="tour-container">
-      {/* Tour trigger button - always show for now */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleTourButtonClick}
-        className="fixed bottom-4 right-4 z-50 shadow-lg bg-white dark:bg-zinc-900 border-2 border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950"
-        data-testid="tour-button"
-      >
-        {isTourActive ? (
-          <>
-            <X className="h-4 w-4 mr-2" />
-            End Tour
-          </>
-        ) : (
-          <>
-            <HelpCircle className="h-4 w-4 mr-2" />
-            Tour
-          </>
-        )}
-      </Button>
-    </div>
-  );
+  // Cleanup on unmount
+  useEffect(() => {
+    return cleanup;
+  }, [cleanup]);
+
+  return null;
 } 

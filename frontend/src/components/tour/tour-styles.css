@@ -4,19 +4,20 @@
   background: white;
   border: 2px solid hsl(var(--border));
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1);
   color: hsl(var(--foreground));
   font-family: inherit;
   max-width: 320px;
   padding: 0;
   position: relative;
   overflow: visible;
+  z-index: 10000; /* Increased z-index to ensure it's above everything */
 }
 
 /* Highlight styles for tour elements */
 .shepherd-highlight {
   position: relative;
-  z-index: 1000;
+  z-index: 9999; /* High z-index but below the popup */
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 0 0 2px rgba(59, 130, 246, 0.6), 0 4px 12px rgba(59, 130, 246, 0.2);
   border-radius: 8px;
   transition: all 0.3s ease;
@@ -42,7 +43,7 @@
   width: 0;
   height: 0;
   border: 12px solid transparent;
-  z-index: 1;
+  z-index: 10001; /* Above the main popup */
 }
 
 .shepherd-theme-arrows.shepherd-arrow-top::before {
@@ -76,7 +77,7 @@
   width: 0;
   height: 0;
   border: 12px solid transparent;
-  z-index: 0;
+  z-index: 10000; /* Same as main popup */
 }
 
 .shepherd-theme-arrows.shepherd-arrow-top::after {
@@ -110,6 +111,7 @@
   border-radius: 14px 14px 0 0;
   padding: 1rem 1.25rem 0.75rem;
   position: relative;
+  z-index: 10001;
 }
 
 .shepherd-theme-arrows .shepherd-title {
@@ -130,6 +132,8 @@
   line-height: 1.6;
   padding: 1rem 1.25rem;
   background: white;
+  z-index: 10001;
+  position: relative;
 }
 
 .shepherd-theme-arrows .shepherd-text p {
@@ -155,6 +159,8 @@
   border-top: 1px solid hsl(var(--border));
   border-radius: 0 0 14px 14px;
   padding: 0.75rem 1.25rem 1rem;
+  z-index: 10001;
+  position: relative;
 }
 
 /* Button styling */
@@ -171,6 +177,8 @@
   padding: 0.625rem 1.25rem;
   transition: all 0.2s ease-in-out;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10002; /* Above everything else */
+  position: relative;
 }
 
 .shepherd-theme-arrows .shepherd-button:hover {
@@ -240,6 +248,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 10002;
+  position: relative;
 }
 
 .shepherd-theme-arrows .shepherd-cancel-icon:hover {
@@ -252,6 +262,7 @@
 .shepherd-theme-arrows .shepherd-arrow {
   height: 1rem;
   width: 1rem;
+  z-index: 10001;
 }
 
 .shepherd-theme-arrows .shepherd-arrow:before {
@@ -283,10 +294,16 @@
   border-left: none;
 }
 
-/* Modal overlay - subtle background */
+/* Modal overlay - more subtle background */
 .shepherd-modal-overlay-container {
-  background: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(1px);
+  background: rgba(0, 0, 0, 0.05); /* Even more subtle */
+  backdrop-filter: blur(0.5px);
+  z-index: 9998; /* Below highlights and popups */
+}
+
+/* Ensure modal overlay doesn't interfere with popups */
+.shepherd-modal-overlay-container .shepherd-modal {
+  z-index: 9998;
 }
 
 /* Animation for speech bubble appearance */
@@ -305,12 +322,29 @@
   animation: speechBubbleIn 0.3s ease-out;
 }
 
+/* Improved positioning for specific placements */
+.shepherd-theme-arrows.shepherd-arrow-top {
+  margin-bottom: 20px; /* Extra space from element */
+}
+
+.shepherd-theme-arrows.shepherd-arrow-bottom {
+  margin-top: 20px; /* Extra space from element */
+}
+
+.shepherd-theme-arrows.shepherd-arrow-left {
+  margin-right: 20px; /* Extra space from element */
+}
+
+.shepherd-theme-arrows.shepherd-arrow-right {
+  margin-left: 20px; /* Extra space from element */
+}
+
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
   .shepherd-theme-arrows {
     background: hsl(var(--background));
     color: hsl(var(--foreground));
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
   }
   
   .shepherd-theme-arrows .shepherd-header {
@@ -337,14 +371,14 @@
   }
   
   .shepherd-modal-overlay-container {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.1);
   }
 }
 
 /* Light mode adjustments */
 @media (prefers-color-scheme: light) {
   .shepherd-theme-arrows {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.06);
   }
 }
 
@@ -378,4 +412,19 @@
   .shepherd-theme-arrows .shepherd-button {
     border-width: 2px;
   }
+}
+
+/* Additional improvements for better visibility */
+.shepherd-theme-arrows {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Ensure popups stay visible above all content */
+.shepherd-element {
+  z-index: 10000 !important;
+}
+
+.shepherd-element .shepherd-theme-arrows {
+  z-index: 10001 !important;
 } 
