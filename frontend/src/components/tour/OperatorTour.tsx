@@ -119,6 +119,49 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     return null;
   };
 
+  const findNewTaskElement = () => {
+    const selectors = [
+      // Target LiquidButton components with specific class patterns
+      'button[class*="liquid-button"]:has(.lucide-plus)',
+      // Target by the specific class structure we found (expanded)
+      'button.h-8.px-3.bg-gray-100:has(.lucide-plus)',
+      'button.h-8.px-3:has(.lucide-plus)',
+      // Target collapsed version
+      'button.h-9.w-9.min-w-\\[2\\.25rem\\]:has(.lucide-plus)',
+      'button.h-9.w-9:has(.lucide-plus)',
+      // More specific targeting
+      'button:has(.lucide-plus):has(span[class*="ml-1"])',
+      // Fallback selectors
+      '[data-testid="new-task-button"]',
+      // Generic plus button in sidebar area
+      '.sidebar-content button:has(.lucide-plus)',
+      'nav button:has(.lucide-plus)',
+      // Last resort - any button with plus icon
+      'button:has(.lucide-plus)'
+    ];
+    
+    for (const selector of selectors) {
+      try {
+        const element = document.querySelector(selector);
+        if (element) {
+          // Additional check to make sure it's the right button
+          const textContent = element.textContent?.toLowerCase();
+          if (textContent?.includes('new task') || textContent?.includes('new') || element.querySelector('span[class*="sr-only"]')?.textContent?.includes('New Task')) {
+            return element;
+          }
+          // If no text check passes, still return first match as fallback
+          if (!document.querySelector('button:has(.lucide-plus):not(' + selector + ')')) {
+            return element;
+          }
+        }
+      } catch (e) {
+        // Skip invalid selectors
+        continue;
+      }
+    }
+    return null;
+  };
+
 
   const startTour = async () => {
     if (isLoading) return;
@@ -449,7 +492,86 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 6: Send Message
+      // Step 6: New Task Button
+      tourRef.current.addStep({
+        id: 'new-task',
+        title: 'Create a New Task',
+        text: `
+          <div class="space-y-3">
+            <p>This is the "New Task" button! Click here to create a new task in your workspace.</p>
+            <p>You can add a title, description, and due date to organize your work efficiently.</p>
+          </div>
+        `,
+        attachTo: {
+          element: 'button[class*="liquid-button"]:has(.lucide-plus), button.h-8.px-3:has(.lucide-plus), button.h-9.w-9:has(.lucide-plus), nav button:has(.lucide-plus)',
+          on: 'right'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [20, 0], // Position popup to the right of the button with proper spacing
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 20,
+              },
+            },
+            {
+              name: 'flip',
+              options: {
+                fallbackPlacements: ['left', 'top', 'bottom'],
+              },
+            },
+          ],
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = findNewTaskElement();
+              if (element) {
+                addHighlight(element);
+                // Ensure element is scrolled into view with extra space
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = findNewTaskElement();
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 7: Send Message
       tourRef.current.addStep({
         id: 'send-message',
         title: 'Send Your Message',
