@@ -339,6 +339,21 @@
   margin-left: 20px; /* Extra space from element */
 }
 
+/* Better arrow positioning for top placement (popup above element) */
+.shepherd-theme-arrows.shepherd-arrow-top::before {
+  border-bottom-color: white;
+  top: -24px;
+  right: 20px;
+  left: auto; /* Reset left positioning */
+}
+
+.shepherd-theme-arrows.shepherd-arrow-top::after {
+  border-bottom-color: hsl(var(--border));
+  top: -26px;
+  right: 20px;
+  left: auto; /* Reset left positioning */
+}
+
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
   .shepherd-theme-arrows {

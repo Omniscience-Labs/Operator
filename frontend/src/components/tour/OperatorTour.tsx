@@ -50,13 +50,19 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
   // Enhanced element finding with better selectors
   const findAttachmentElement = () => {
     const selectors = [
+      // Most specific first - target the actual button with Paperclip icon
+      'button:has(.lucide-paperclip)',
+      'button:has([data-lucide="paperclip"])',
+      // Fallback selectors
       'button:has(.paperclip)',
       'button:has([data-testid="file-upload"])',
       '.file-upload-handler button',
       'button[aria-label*="upload"]',
       'button[aria-label*="file"]',
       'button[aria-label*="attach"]',
-      '[data-tour="attachments"]'
+      '[data-tour="attachments"]',
+      // Target by class structure we found
+      'button.h-7.rounded-md.text-muted-foreground:has(.lucide-paperclip)'
     ];
     
     for (const selector of selectors) {
@@ -68,12 +74,18 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
   const findPluginElement = () => {
     const selectors = [
+      // Most specific first - target the actual button with Plug icon
+      'button:has(.lucide-plug)',
+      'button:has([data-lucide="plug"])',
+      // Fallback selectors
       'button:has(.plug)',
       '[data-radix-collection-item]:has(.plug)',
       '.integrations-dropdown button',
       'button[aria-label*="integration"]',
       'button[aria-label*="plugin"]',
-      '[data-tour="plugins"]'
+      '[data-tour="plugins"]',
+      // Target by class structure we found
+      'button.h-7.rounded-md.text-muted-foreground:has(.lucide-plug)'
     ];
     
     for (const selector of selectors) {
@@ -85,13 +97,19 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
   const findMediaElement = () => {
     const selectors = [
+      // Most specific first - target the actual button with FileAudio icon
+      'button:has(.lucide-file-audio)',
+      'button:has([data-lucide="file-audio"])',
+      // Fallback selectors
       'button:has(.file-audio)',
       'button:has([data-testid="meeting-recorder"])',
       '.meeting-recorder button',
       'button[aria-label*="meeting"]',
       'button[aria-label*="audio"]',
       'button[aria-label*="media"]',
-      '[data-tour="media"]'
+      '[data-tour="media"]',
+      // Target by class structure we found
+      'button.h-7.rounded-md.text-muted-foreground:has(.lucide-file-audio)'
     ];
     
     for (const selector of selectors) {
@@ -200,20 +218,20 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         title: 'Attach Files & Documents',
         text: `
           <div class="space-y-3">
-            <p>This is the attachments area! You can upload files, documents, images, and more to help me understand your task better.</p>
+            <p>This is the attachments button! Click here to upload files, documents, images, and more to help me understand your task better.</p>
             <p>Simply drag and drop files here or click to browse. I can analyze PDFs, spreadsheets, images, and many other file types.</p>
           </div>
         `,
         attachTo: {
-          element: 'button:has(.paperclip), button:has([data-testid="file-upload"]), .file-upload-handler button, button[aria-label*="upload"], button[aria-label*="file"]',
-          on: 'left'
+          element: 'button:has(.lucide-paperclip), button:has(.paperclip), button.h-7.rounded-md.text-muted-foreground:has(.lucide-paperclip)',
+          on: 'top'
         },
         popperOptions: {
           modifiers: [
             {
               name: 'offset',
               options: {
-                offset: [0, -120], // Increased from -60 to -120 to lift popup much higher
+                offset: [0, -20], // Position popup above the button with proper spacing
               },
             },
             {
@@ -226,7 +244,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             {
               name: 'flip',
               options: {
-                fallbackPlacements: ['top', 'bottom', 'right'],
+                fallbackPlacements: ['bottom', 'left', 'right'],
               },
             },
           ],
@@ -279,12 +297,12 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         title: 'Integrations & Plugins',
         text: `
           <div class="space-y-3">
-            <p>This is the integrations area! Connect external tools and services to extend my capabilities.</p>
+            <p>This is the integrations button! Click here to connect external tools and services to extend my capabilities.</p>
             <p>You can integrate with databases, APIs, web services, and more to make me even more powerful for your specific needs.</p>
           </div>
         `,
         attachTo: {
-          element: 'button:has(.plug), [data-radix-collection-item]:has(.plug), .integrations-dropdown button, button[aria-label*="integration"], button[aria-label*="plugin"]',
+          element: 'button:has(.lucide-plug), button:has(.plug), button.h-7.rounded-md.text-muted-foreground:has(.lucide-plug)',
           on: 'top'
         },
         popperOptions: {
@@ -292,7 +310,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             {
               name: 'offset',
               options: {
-                offset: [0, -120], // Increased from -60 to -120 to lift popup much higher
+                offset: [0, -20], // Position popup above the button with proper spacing
               },
             },
             {
@@ -355,15 +373,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 5: Media/Meetings Guide - IMPROVED POSITIONING
       tourRef.current.addStep({
         id: 'meetings',
-        title: 'Open Meetings',
+        title: 'Meeting Recorder',
         text: `
           <div class="space-y-3">
-            <p>This is the meetings feature! Click here to open the meetings page where you can record and transcribe conversations.</p>
+            <p>This is the meeting recorder button! Click here to open the meetings page where you can record and transcribe conversations.</p>
             <p>You can record in-person meetings or join online meetings with a bot that captures everything for you.</p>
           </div>
         `,
         attachTo: {
-          element: 'button:has(.file-audio), button:has([data-testid="meeting-recorder"]), .meeting-recorder button, button[aria-label*="meeting"], button[aria-label*="audio"]',
+          element: 'button:has(.lucide-file-audio), button:has(.file-audio), button.h-7.rounded-md.text-muted-foreground:has(.lucide-file-audio)',
           on: 'top'
         },
         popperOptions: {
@@ -371,7 +389,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             {
               name: 'offset',
               options: {
-                offset: [0, -120], // Increased from -60 to -120 to lift popup much higher
+                offset: [0, -20], // Position popup above the button with proper spacing
               },
             },
             {
