@@ -33,6 +33,7 @@ from agent.tools.memory_search_tool import MemorySearchTool
 from agent.tools.knowledge_search_tool import KnowledgeSearchTool
 from agent.tools.datetime_tool import DateTimeTool
 from agent.tools.composio_tool_wrapper import ComposioMCP
+from agent.tools.sb_video_avatar_tool import SandboxVideoAvatarTool
 
 from services.langfuse import langfuse
 from langfuse.client import StatefulTraceClient
@@ -125,6 +126,8 @@ async def run_agent(
         thread_manager.add_tool(DateTimeTool)  # Always enable datetime tool (built-in)
         if config.RAPID_API_KEY:
             thread_manager.add_tool(DataProvidersTool)
+        if config.HEYGEN_API_KEY:
+            thread_manager.add_tool(SandboxVideoAvatarTool, project_id=project_id, thread_manager=thread_manager)
     else:
         logger.info("Custom agent specified - registering only enabled tools")
         # Always register basic tools for all custom agents
@@ -159,6 +162,8 @@ async def run_agent(
             thread_manager.add_tool(SandboxPodcastTool, project_id=project_id, thread_manager=thread_manager)
         if config.RAPID_API_KEY and enabled_tools.get('data_providers_tool', {}).get('enabled', False):
             thread_manager.add_tool(DataProvidersTool)
+        if config.HEYGEN_API_KEY and enabled_tools.get('sb_video_avatar_tool', {}).get('enabled', False):
+            thread_manager.add_tool(SandboxVideoAvatarTool, project_id=project_id, thread_manager=thread_manager)
 
     # Register knowledge search tool if agent has knowledge bases configured
     if agent_config and agent_config.get('knowledge_bases'):
