@@ -6,7 +6,7 @@ import './tour-styles.css';
 import './types';
 
 import { Button } from '@/components/ui/button';
-import { Play, HelpCircle, X } from 'lucide-react';
+import { HelpCircle, X } from 'lucide-react';
 
 interface OperatorTourProps {
   isFirstTime?: boolean;
@@ -26,6 +26,7 @@ const removeHighlight = (element: Element) => {
 export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourProps) {
   const tourRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTourActive, setIsTourActive] = useState(false);
 
   // Cleanup function
   const cleanup = useCallback(() => {
@@ -42,6 +43,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     document.querySelectorAll('.shepherd-highlight').forEach(el => {
       el.classList.remove('shepherd-highlight');
     });
+    
+    setIsTourActive(false);
   }, []);
 
   // Enhanced element finding with better selectors
@@ -103,6 +106,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     if (isLoading) return;
     
     setIsLoading(true);
+    setIsTourActive(true);
+    
     try {
       // Import Shepherd.js dynamically
       const shepherdModule = await import('shepherd.js');
@@ -482,8 +487,24 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       
     } catch (error) {
       console.error('Failed to start tour:', error);
+      setIsTourActive(false);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Handle tour button click
+  const handleTourButtonClick = () => {
+    if (isTourActive) {
+      // If tour is active, end it
+      cleanup();
+    } else {
+      // Start a fresh tour
+      // Clean up any existing tour first
+      cleanup();
+      
+      // Start fresh tour
+      startTour();
     }
   };
 
@@ -505,5 +526,29 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     return cleanup;
   }, [cleanup]);
 
-  return null;
+  return (
+    <div className="tour-container">
+      {/* Tour trigger button - show for manual tour starts */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleTourButtonClick}
+        disabled={isLoading}
+        className="fixed bottom-4 right-4 z-50 shadow-lg bg-white dark:bg-zinc-900 border-2 border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950"
+        data-testid="dashboard-tour-button"
+      >
+        {isTourActive ? (
+          <>
+            <X className="h-4 w-4 mr-2" />
+            End Tour
+          </>
+        ) : (
+          <>
+            <HelpCircle className="h-4 w-4 mr-2" />
+            {isLoading ? 'Loading...' : 'Tour'}
+          </>
+        )}
+      </Button>
+    </div>
+  );
 } 
