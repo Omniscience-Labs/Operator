@@ -7,6 +7,7 @@ import uuid
 from typing import Dict, Any, Optional, List
 from utils.logger import logger
 from utils.config import config
+from services import redis
 
 
 @dramatiq.actor
@@ -24,9 +25,6 @@ async def generate_podcast_background(
         api_base_url = os.getenv('PODCASTFY_API_URL', 'https://podcastfy-8x6a.onrender.com')
         
         # Store initial status in Redis
-        from utils.redis import get_redis_connection
-        redis = await get_redis_connection()
-        
         await redis.hset(
             f"podcast_job:{job_id}",
             mapping={
@@ -78,9 +76,6 @@ async def generate_podcast_background(
         
         # Store error in Redis
         try:
-            from utils.redis import get_redis_connection
-            redis = await get_redis_connection()
-            
             await redis.hset(
                 f"podcast_job:{job_id}",
                 mapping={

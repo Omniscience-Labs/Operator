@@ -13,6 +13,7 @@ from agentpress.tool import ToolResult, openapi_schema, xml_schema
 from sandbox.tool_base import SandboxToolsBase
 from agentpress.thread_manager import ThreadManager
 from utils.logger import logger
+from services import redis
 
 
 class SandboxPodcastTool(SandboxToolsBase):
@@ -578,9 +579,6 @@ class SandboxPodcastTool(SandboxToolsBase):
             )
             
             # Store initial job info in Redis
-            from utils.redis import get_redis_connection
-            redis = await get_redis_connection()
-            
             await redis.hset(
                 f"podcast_job:{job_id}",
                 mapping={
@@ -609,9 +607,6 @@ class SandboxPodcastTool(SandboxToolsBase):
     async def _check_job_status(self, job_id: str) -> Dict[str, Any]:
         """Check job status from Redis"""
         try:
-            from utils.redis import get_redis_connection
-            redis = await get_redis_connection()
-            
             # Get job data from Redis
             job_data = await redis.hgetall(f"podcast_job:{job_id}")
             
