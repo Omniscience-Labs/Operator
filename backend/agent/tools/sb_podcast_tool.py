@@ -625,7 +625,7 @@ class SandboxPodcastTool(SandboxToolsBase):
             
             # Try to import the dramatiq actor
             try:
-                from services.podcast_generator import generate_podcast_background
+                from run_agent_background import generate_podcast_background
             except ImportError as e:
                 logger.error(f"Podcast generator not available: {e}")
                 raise Exception("Podcast generation service is not available. Please try again later.")
