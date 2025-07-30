@@ -17,8 +17,16 @@ import os
 from services.langfuse import langfuse
 from utils.retry import retry
 
-# Import dramatiq actors
-from services.podcast_generator import generate_podcast_background
+# Import dramatiq actors (conditional to avoid startup failures)
+try:
+    from services.podcast_generator import generate_podcast_background
+    logger.info("✅ Podcast generator actor loaded successfully")
+except ImportError as e:
+    logger.warning(f"⚠️ Podcast generator actor not available: {e}")
+    generate_podcast_background = None
+except Exception as e:
+    logger.error(f"❌ Error loading podcast generator actor: {e}")
+    generate_podcast_background = None
 
 # RabbitMQ connection configuration
 rabbitmq_host = os.getenv('RABBITMQ_HOST', 'localhost')

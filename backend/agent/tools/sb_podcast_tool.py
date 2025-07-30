@@ -351,9 +351,27 @@ class SandboxPodcastTool(SandboxToolsBase):
                 "voices": voices or {}
             }
             
-            # Submit async job to Operator's job system
-            result = await self._submit_podcast_job(payload)
-            job_id = result["job_id"]
+            # Try async job system first, fallback to sync if needed
+            try:
+                result = await self._submit_podcast_job(payload)
+                job_id = result["job_id"]
+            except Exception as async_error:
+                logger.warning(f"Async job system failed, falling back to sync: {async_error}")
+                
+                # Fallback to original synchronous call
+                response = requests.post(
+                    f"{self.api_base_url}/generate",
+                    json=payload,
+                    timeout=360  # 5 minutes timeout for podcast generation
+                )
+                response.raise_for_status()
+                result = response.json()
+                
+                if not result.get("audioUrl"):
+                    return self.fail_response(f"Podcast generation failed: No audio URL returned")
+                
+                # Handle sync response (skip async job tracking)
+                return self._handle_sync_response(result, payload)
             
             # Return immediately with job tracking info
             message = f"🎙️ Podcast generation started!\n\n"
@@ -395,6 +413,46 @@ class SandboxPodcastTool(SandboxToolsBase):
         except Exception as e:
             logger.error(f"Error in podcast generation: {str(e)}", exc_info=True)
             return self.fail_response(f"Podcast generation failed: {str(e)}")
+    
+    def _handle_sync_response(self, result: Dict[str, Any], payload: Dict[str, Any]) -> ToolResult:
+        """Handle synchronous podcast generation response (fallback mode)"""
+        try:
+            # Download the audio file
+            local_path = self._download_audio_file(result["audioUrl"])
+            
+            # Create podcasts directory in workspace
+            podcasts_dir = f"{self.workspace_path}/podcasts"
+            self.sandbox.fs.create_folder(podcasts_dir, "755")
+            
+            # Determine output filename
+            output_name = payload.get('output_name')
+            if not output_name:
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_name = f"podcast_{timestamp}"
+            
+            # Upload to sandbox
+            with open(local_path, 'rb') as f:
+                audio_content = f.read()
+            
+            audio_filename = f"{output_name}.mp3"
+            audio_path = f"{podcasts_dir}/{audio_filename}"
+            self.sandbox.fs.upload_file(audio_content, audio_path)
+            
+            # Clean up local file
+            try:
+                os.unlink(local_path)
+            except:
+                pass
+            
+            # Prepare success message
+            message = f"🎙️ Podcast generated successfully! (sync mode)\n\nGenerated files:\n"
+            message += f"- podcasts/{audio_filename}\n"
+            
+            return self.success_response(message)
+            
+        except Exception as e:
+            logger.error(f"Error handling sync response: {str(e)}")
+            return self.fail_response(f"Failed to process podcast: {str(e)}")
 
     @openapi_schema({
         "type": "function",
@@ -564,7 +622,13 @@ class SandboxPodcastTool(SandboxToolsBase):
         """Submit podcast generation job to Operator's job system"""
         try:
             import uuid
-            from services.podcast_generator import generate_podcast_background
+            
+            # Try to import the dramatiq actor
+            try:
+                from services.podcast_generator import generate_podcast_background
+            except ImportError as e:
+                logger.error(f"Podcast generator not available: {e}")
+                raise Exception("Podcast generation service is not available. Please try again later.")
             
             # Generate unique job ID
             job_id = str(uuid.uuid4())
