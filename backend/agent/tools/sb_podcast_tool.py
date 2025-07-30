@@ -349,44 +349,18 @@ class SandboxPodcastTool(SandboxToolsBase):
                 "voices": voices or {}
             }
             
-            # Make API request to FastAPI
+            # Submit async job to FastAPI
             result = self._make_fastapi_request(payload)
+            job_id = result["job_id"]
             
-            if not result.get("audioUrl"):
-                return self.fail_response(f"Podcast generation failed: No audio URL returned")
-            
-            # Download the audio file
-            local_path = self._download_audio_file(result["audioUrl"])
-            
-            # Create podcasts directory in workspace
-            podcasts_dir = f"{self.workspace_path}/podcasts"
-            self.sandbox.fs.create_folder(podcasts_dir, "755")
-            
-            # Determine output filename
-            if not output_name:
-                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_name = f"podcast_{timestamp}"
-            
-            # Upload to sandbox
-            with open(local_path, 'rb') as f:
-                audio_content = f.read()
-            
-            audio_filename = f"{output_name}.mp3"
-            audio_path = f"{podcasts_dir}/{audio_filename}"
-            self.sandbox.fs.upload_file(audio_content, audio_path)
-            
-            # Clean up local file
-            try:
-                os.unlink(local_path)
-            except:
-                pass
-            
-            # Prepare success message
-            message = f"🎙️ Podcast generated successfully!\n\nGenerated files:\n"
-            message += f"- podcasts/{audio_filename}\n"
+            # Return immediately with job tracking info
+            message = f"🎙️ Podcast generation started!\n\n"
+            message += f"Job ID: {job_id}\n"
+            message += f"Status: Queued for processing\n\n"
+            message += f"⏳ This will take a few minutes. I'll let you know when it's ready!\n\n"
             
             # Add content source summary
-            message += f"\nContent sources processed:\n"
+            message += f"Content sources being processed:\n"
             if topic:
                 message += f"- Topic: {topic}\n"
             if urls:
@@ -411,6 +385,9 @@ class SandboxPodcastTool(SandboxToolsBase):
             if user_instructions:
                 message += f"- Instructions: {user_instructions}\n"
             
+            # Store job ID for potential status checking
+            # TODO: Could add a check_podcast_status function later
+            
             return self.success_response(message)
             
         except Exception as e:
@@ -418,10 +395,69 @@ class SandboxPodcastTool(SandboxToolsBase):
             return self.fail_response(f"Podcast generation failed: {str(e)}")
 
     @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "check_podcast_status",
+            "description": "Check the status of an async podcast generation job using its job ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "job_id": {
+                        "type": "string",
+                        "description": "The job ID returned when podcast generation was started"
+                    }
+                },
+                "required": ["job_id"]
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="check-podcast-status",
+        mappings=[
+            {"param_name": "job_id", "node_type": "attribute", "path": ".", "required": True}
+        ],
+        example='''
+        <function_calls>
+        <invoke name="check_podcast_status">
+        <parameter name="job_id">abc123-def456-789</parameter>
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def check_podcast_status(self, job_id: str) -> ToolResult:
+        """Check the status of a podcast generation job"""
+        try:
+            result = self._check_job_status(job_id)
+            
+            status = result.get("status", "unknown")
+            message = f"🎙️ Podcast Job Status: {job_id}\n\n"
+            
+            if status == "queued":
+                message += "⏳ Status: Queued - waiting to be processed"
+            elif status == "processing":
+                message += "🔄 Status: Processing - generating your podcast..."
+            elif status == "completed":
+                message += "✅ Status: Completed!\n"
+                if result.get("audioUrl"):
+                    message += f"Audio URL: {result['audioUrl']}\n"
+                    message += "\nYour podcast is ready! You can download it from the URL above."
+            elif status == "failed":
+                message += "❌ Status: Failed\n"
+                if result.get("error"):
+                    message += f"Error: {result['error']}"
+            else:
+                message += f"Status: {status}"
+                
+            return self.success_response(message)
+            
+        except Exception as e:
+            return self.fail_response(f"Failed to check podcast status: {str(e)}")
+
+    @openapi_schema({
         "type": "function", 
         "function": {
             "name": "list_podcasts",
-            "description": "List all generated podcasts in the sandbox workspace with their details and file sizes.",
+            "description": "List all generated podcasts in the workspace with their details and file sizes.",
             "parameters": {
                 "type": "object",
                 "properties": {},
@@ -523,21 +559,42 @@ class SandboxPodcastTool(SandboxToolsBase):
             return self.fail_response(f"Error listing podcasts: {str(e)}")
 
     def _make_fastapi_request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Make request to FastAPI endpoint"""
+        """Submit async podcast generation job"""
         try:
-            logger.info(f"Making request to {self.api_base_url}/generate")
+            logger.info(f"Submitting async job to {self.api_base_url}/generate-async")
+            
+            # Submit job (instant response)
             response = requests.post(
-                f"{self.api_base_url}/generate",
+                f"{self.api_base_url}/generate-async",
                 json=payload,
-                timeout=360  # 5 minutes timeout for podcast generation
+                timeout=30  # Short timeout for job submission
             )
             response.raise_for_status()
-            return response.json()
+            job_data = response.json()
+            
+            job_id = job_data["job_id"]
+            logger.info(f"Job submitted with ID: {job_id}")
+            
+            # Return job info immediately
+            return {
+                "job_id": job_id,
+                "status": "submitted",
+                "audioUrl": None  # Will be populated when job completes
+            }
             
         except requests.exceptions.RequestException as e:
-            raise Exception(f"FastAPI request failed: {str(e)}")
+            raise Exception(f"Failed to submit podcast job: {str(e)}")
         except Exception as e:
             raise Exception(f"Podcast generation failed: {str(e)}")
+    
+    def _check_job_status(self, job_id: str) -> Dict[str, Any]:
+        """Check job status"""
+        try:
+            response = requests.get(f"{self.api_base_url}/status/{job_id}")
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            raise Exception(f"Failed to check job status: {str(e)}")
 
     def _download_audio_file(self, audio_url: str) -> str:
         """Download the generated audio file from FastAPI"""
@@ -570,7 +627,7 @@ class SandboxPodcastTool(SandboxToolsBase):
         return [
             {
                 "name": "generate_podcast",
-                "description": "Generate an AI podcast from URLs, text, or files using advanced conversation AI",
+                "description": "Generate an AI podcast from URLs, text, or files using advanced conversation AI (async - returns job ID)",
                 "parameters": [
                     {"name": "urls", "type": "List[str]", "description": "List of URLs to process", "required": False},
                     {"name": "file_paths", "type": "List[str]", "description": "List of file paths in sandbox (content read as text)", "required": False},
@@ -591,7 +648,14 @@ class SandboxPodcastTool(SandboxToolsBase):
                 ]
             },
             {
-                "name": "list_podcasts", 
+                "name": "check_podcast_status",
+                "description": "Check the status of an async podcast generation job",
+                "parameters": [
+                    {"name": "job_id", "type": "str", "description": "Job ID returned from generate_podcast", "required": True}
+                ]
+            },
+            {
+                "name": "list_podcasts",
                 "description": "List all generated podcasts in the workspace",
                 "parameters": []
             }
