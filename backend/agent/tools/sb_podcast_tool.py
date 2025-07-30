@@ -623,24 +623,35 @@ class SandboxPodcastTool(SandboxToolsBase):
         try:
             import uuid
             
-            # Try to import the dramatiq actor
-            try:
-                from run_agent_background import generate_podcast_background
-            except ImportError as e:
-                logger.error(f"Podcast generator not available: {e}")
-                raise Exception("Podcast generation service is not available. Please try again later.")
-            
             # Generate unique job ID
             job_id = str(uuid.uuid4())
             logger.info(f"Submitting podcast job with ID: {job_id}")
             
-            # Submit job to dramatiq actor (Operator's worker system)
-            generate_podcast_background.send(
-                job_id=job_id,
-                thread_id=getattr(self.thread_manager, 'thread_id', 'unknown'),
-                project_id=self.project_id,
-                payload=payload
-            )
+            # Submit job to dramatiq actor using broker directly (avoid import issues)
+            try:
+                import dramatiq
+                
+                # Send message to the podcast generation actor
+                # This avoids importing the background runner module directly
+                dramatiq.get_broker().enqueue_message(
+                    dramatiq.Message(
+                        queue_name="default",
+                        actor_name="generate_podcast_background",
+                        args=[],
+                        kwargs={
+                            "job_id": job_id,
+                            "thread_id": getattr(self.thread_manager, 'thread_id', 'unknown'),
+                            "project_id": self.project_id,
+                            "payload": payload
+                        },
+                        options={}
+                    )
+                )
+                logger.info(f"✅ Podcast job {job_id} sent to dramatiq broker")
+                
+            except Exception as broker_error:
+                logger.error(f"Failed to submit job to dramatiq: {broker_error}")
+                raise Exception("Podcast generation service is not available. Please try again later.")
             
             # Store initial job info in Redis
             await redis.hset(
