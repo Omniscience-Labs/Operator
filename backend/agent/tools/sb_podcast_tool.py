@@ -5,6 +5,7 @@ import asyncio
 import datetime
 import time
 import requests
+import uuid
 from typing import Optional, List, Dict, Any, Union
 from pathlib import Path
 from urllib.parse import urlparse, urljoin
@@ -349,8 +350,8 @@ class SandboxPodcastTool(SandboxToolsBase):
                 "voices": voices or {}
             }
             
-            # Submit async job to FastAPI
-            result = self._make_fastapi_request(payload)
+            # Submit async job to Operator's job system
+            result = await self._submit_podcast_job(payload)
             job_id = result["job_id"]
             
             # Return immediately with job tracking info
@@ -427,7 +428,7 @@ class SandboxPodcastTool(SandboxToolsBase):
     async def check_podcast_status(self, job_id: str) -> ToolResult:
         """Check the status of a podcast generation job"""
         try:
-            result = self._check_job_status(job_id)
+            result = await self._check_job_status(job_id)
             
             status = result.get("status", "unknown")
             message = f"🎙️ Podcast Job Status: {job_id}\n\n"
@@ -558,41 +559,79 @@ class SandboxPodcastTool(SandboxToolsBase):
             logger.error(f"Error listing podcasts: {str(e)}", exc_info=True)
             return self.fail_response(f"Error listing podcasts: {str(e)}")
 
-    def _make_fastapi_request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Submit async podcast generation job"""
+    async def _submit_podcast_job(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Submit podcast generation job to Operator's job system"""
         try:
-            logger.info(f"Submitting async job to {self.api_base_url}/generate-async")
+            import uuid
+            from services.podcast_generator import generate_podcast_background
             
-            # Submit job (instant response)
-            response = requests.post(
-                f"{self.api_base_url}/generate-async",
-                json=payload,
-                timeout=30  # Short timeout for job submission
+            # Generate unique job ID
+            job_id = str(uuid.uuid4())
+            logger.info(f"Submitting podcast job with ID: {job_id}")
+            
+            # Submit job to dramatiq actor (Operator's worker system)
+            generate_podcast_background.send(
+                job_id=job_id,
+                thread_id=getattr(self.thread_manager, 'thread_id', 'unknown'),
+                project_id=self.project_id,
+                payload=payload
             )
-            response.raise_for_status()
-            job_data = response.json()
             
-            job_id = job_data["job_id"]
-            logger.info(f"Job submitted with ID: {job_id}")
+            # Store initial job info in Redis
+            from utils.redis import get_redis_connection
+            redis = await get_redis_connection()
+            
+            await redis.hset(
+                f"podcast_job:{job_id}",
+                mapping={
+                    "status": "queued",
+                    "project_id": self.project_id,
+                    "thread_id": getattr(self.thread_manager, 'thread_id', 'unknown'),
+                    "created_at": str(asyncio.get_event_loop().time())
+                }
+            )
+            
+            # Set expiration (24 hours)
+            await redis.expire(f"podcast_job:{job_id}", 86400)
+            
+            logger.info(f"Job {job_id} submitted to Operator worker system")
             
             # Return job info immediately
             return {
                 "job_id": job_id,
-                "status": "submitted",
+                "status": "queued",
                 "audioUrl": None  # Will be populated when job completes
             }
             
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Failed to submit podcast job: {str(e)}")
         except Exception as e:
-            raise Exception(f"Podcast generation failed: {str(e)}")
+            raise Exception(f"Failed to submit podcast job: {str(e)}")
     
-    def _check_job_status(self, job_id: str) -> Dict[str, Any]:
-        """Check job status"""
+    async def _check_job_status(self, job_id: str) -> Dict[str, Any]:
+        """Check job status from Redis"""
         try:
-            response = requests.get(f"{self.api_base_url}/status/{job_id}")
-            response.raise_for_status()
-            return response.json()
+            from utils.redis import get_redis_connection
+            redis = await get_redis_connection()
+            
+            # Get job data from Redis
+            job_data = await redis.hgetall(f"podcast_job:{job_id}")
+            
+            if not job_data:
+                raise Exception("Job not found")
+            
+            # Convert bytes to strings
+            result = {k.decode() if isinstance(k, bytes) else k: 
+                     v.decode() if isinstance(v, bytes) else v 
+                     for k, v in job_data.items()}
+            
+            return {
+                "job_id": job_id,
+                "status": result.get("status", "unknown"),
+                "audioUrl": result.get("audio_url"),
+                "error": result.get("error"),
+                "created_at": result.get("created_at"),
+                "completed_at": result.get("completed_at")
+            }
+            
         except Exception as e:
             raise Exception(f"Failed to check job status: {str(e)}")
 

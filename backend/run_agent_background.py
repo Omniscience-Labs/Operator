@@ -17,6 +17,9 @@ import os
 from services.langfuse import langfuse
 from utils.retry import retry
 
+# Import dramatiq actors
+from services.podcast_generator import generate_podcast_background
+
 # RabbitMQ connection configuration
 rabbitmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
 rabbitmq_port = int(os.getenv('RABBITMQ_PORT', 5672))
