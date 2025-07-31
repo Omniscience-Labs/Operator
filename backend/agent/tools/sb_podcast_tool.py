@@ -501,10 +501,22 @@ class SandboxPodcastTool(SandboxToolsBase):
             elif status == "processing":
                 message += "🔄 Status: Processing - generating your podcast..."
             elif status == "completed":
-                message += "✅ Status: Completed!\n"
-                if result.get("audioUrl"):
-                    message += f"Audio URL: {result['audioUrl']}\n"
-                    message += "\nYour podcast is ready! You can download it from the URL above."
+                message += "🎉 **Podcast Complete!** ✅\n\n"
+                
+                # Check for download URL
+                download_url = result.get("audioUrl") or result.get("audio_url")
+                if download_url:
+                    message += f"🔗 **DOWNLOAD LINK**: {download_url}\n\n"
+                    message += "👆 **Click the link above to download your podcast!**\n\n"
+                
+                # Add file info
+                if result.get("filename"):
+                    message += f"📁 **File**: {result['filename']}\n"
+                if result.get("audio_path"):
+                    message += f"📂 **Sandbox Path**: {result['audio_path']}\n"
+                
+                message += f"⏰ **Completed**: {result.get('completed_at', 'Unknown time')}\n"
+                message += f"🆔 **Job ID**: {job_id}"
             elif status == "failed":
                 message += "❌ Status: Failed\n"
                 if result.get("error"):
@@ -695,17 +707,52 @@ class SandboxPodcastTool(SandboxToolsBase):
             if not podcasts:
                 return self.success_response("🎙️ No podcast files found in the podcasts directory.")
             
-            message = f"🎙️ Found {len(podcasts)} podcast(s):\n\n"
+            # Also check Redis for completed jobs with download links
+            redis_client = await redis.get_client()
+            job_keys = await redis_client.keys("podcast_job:*")
+            completed_jobs = {}
             
-            for podcast_name, files in podcasts.items():
-                message += f"📻 {podcast_name}\n"
+            for key in job_keys:
+                job_data = await redis.hgetall(key)
+                if job_data:
+                    job_info = {k.decode() if isinstance(k, bytes) else k: 
+                               v.decode() if isinstance(v, bytes) else v 
+                               for k, v in job_data.items()}
+                    
+                    if job_info.get("status") == "completed":
+                        job_id = key.replace("podcast_job:", "")
+                        completed_jobs[job_id] = job_info
+            
+            message = f"🎙️ Found {len(podcasts)} podcast file(s) and {len(completed_jobs)} completed job(s):\n\n"
+            
+            # Show completed jobs with download links first
+            if completed_jobs:
+                message += "📥 **COMPLETED PODCASTS WITH DOWNLOAD LINKS:**\n\n"
+                for job_id, job_info in completed_jobs.items():
+                    filename = job_info.get('filename', 'podcast.mp3')
+                    download_url = job_info.get('audio_url')
+                    
+                    message += f"🎯 **{filename}**\n"
+                    if download_url:
+                        message += f"   🔗 **DOWNLOAD**: {download_url}\n"
+                    if job_info.get('audio_path'):
+                        message += f"   📂 Sandbox: {job_info['audio_path']}\n"
+                    message += f"   🆔 Job: {job_id}\n\n"
                 
-                if 'transcript' in files:
-                    size_kb = files['transcript']['size'] / 1024
-                    message += f"   📝 Transcript: {files['transcript']['filename']} ({size_kb:.1f} KB)\n"
-                
-                if 'audio' in files:
-                    size_mb = files['audio']['size'] / (1024 * 1024)
+                message += "---\n\n"
+            
+            # Show sandbox files
+            if podcasts:
+                message += "📁 **FILES IN SANDBOX:**\n\n"
+                for podcast_name, files in podcasts.items():
+                    message += f"📻 {podcast_name}\n"
+                    
+                    if 'transcript' in files:
+                        size_kb = files['transcript']['size'] / 1024
+                        message += f"   📝 Transcript: {files['transcript']['filename']} ({size_kb:.1f} KB)\n"
+                    
+                    if 'audio' in files:
+                        size_mb = files['audio']['size'] / (1024 * 1024)
                     message += f"   🎵 Audio: {files['audio']['filename']} ({size_mb:.1f} MB)\n"
                 
                 # Show most recent modification time
@@ -784,11 +831,12 @@ class SandboxPodcastTool(SandboxToolsBase):
             audio_path = f"podcasts/{audio_filename}"
             self.sandbox.fs.upload_file(audio_content, audio_path)
             
-            # Update Redis with success
+            # Update Redis with success - include original download URL
             await redis.hset(
                 f"podcast_job:{job_id}",
                 mapping={
                     "status": "completed",
+                    "audio_url": result["audioUrl"],  # Store original download URL
                     "audio_path": audio_path,
                     "filename": audio_filename,
                     "completed_at": str(time.time())
