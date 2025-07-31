@@ -514,6 +514,111 @@ class SandboxPodcastTool(SandboxToolsBase):
             return self.fail_response(f"Failed to check podcast status: {str(e)}")
 
     @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "debug_podcast_jobs",
+            "description": "Debug stuck podcast jobs - shows detailed job info and can clear stuck jobs",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "clear_stuck": {
+                        "type": "boolean",
+                        "description": "If true, clear jobs stuck in processing for >30 minutes",
+                        "default": False
+                    }
+                },
+                "required": []
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="debug-podcast-jobs",
+        mappings=[
+            {"param_name": "clear_stuck", "node_type": "attribute", "path": ".", "required": False}
+        ],
+        example='''
+        <function_calls>
+        <invoke name="debug_podcast_jobs">
+        <parameter name="clear_stuck">false</parameter>
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def debug_podcast_jobs(self, clear_stuck: bool = False) -> ToolResult:
+        """Debug podcast job system - show detailed job info and optionally clear stuck jobs"""
+        try:
+            # Get all podcast job keys
+            redis_client = await redis.get_client()
+            job_keys = await redis_client.keys("podcast_job:*")
+            
+            if not job_keys:
+                return self.success_response("No podcast jobs found in Redis")
+            
+            message = f"🔍 **Podcast Job Diagnostic Report**\n\n"
+            message += f"Found {len(job_keys)} job(s):\n\n"
+            
+            current_time = time.time()
+            stuck_jobs = []
+            
+            for key in job_keys:
+                job_data = await redis.hgetall(key)
+                if not job_data:
+                    continue
+                    
+                # Convert bytes to strings
+                job_info = {k.decode() if isinstance(k, bytes) else k: 
+                           v.decode() if isinstance(v, bytes) else v 
+                           for k, v in job_data.items()}
+                
+                job_id = key.replace("podcast_job:", "")
+                status = job_info.get("status", "unknown")
+                created_at = float(job_info.get("created_at", "0"))
+                age_minutes = (current_time - created_at) / 60
+                
+                message += f"**Job ID**: `{job_id}`\n"
+                message += f"- Status: {status}\n"
+                message += f"- Age: {age_minutes:.1f} minutes\n"
+                message += f"- Project: {job_info.get('project_id', 'unknown')}\n"
+                message += f"- Thread: {job_info.get('thread_id', 'unknown')}\n"
+                
+                if job_info.get("error"):
+                    message += f"- ❌ Error: {job_info['error']}\n"
+                
+                if status == "processing" and age_minutes > 30:
+                    stuck_jobs.append(key)
+                    message += f"- ⚠️ **STUCK** (processing >30 min)\n"
+                
+                message += "\n"
+            
+            if stuck_jobs:
+                message += f"⚠️ **Found {len(stuck_jobs)} stuck job(s)**\n\n"
+                
+                if clear_stuck:
+                    message += "🧹 **Clearing stuck jobs...**\n"
+                    for key in stuck_jobs:
+                        await redis.delete(key)
+                        job_id = key.replace("podcast_job:", "")
+                        message += f"- Cleared job: `{job_id}`\n"
+                    message += f"\n✅ Cleared {len(stuck_jobs)} stuck job(s)\n"
+                else:
+                    message += "💡 **Tip**: Run with `clear_stuck=true` to clear these stuck jobs\n"
+            
+            # Add system info
+            message += "\n---\n"
+            message += f"**System Info:**\n"
+            message += f"- Redis connection: ✅ Active\n"
+            message += f"- Current time: {current_time}\n"
+            message += f"- API Base URL: {self.api_base_url}\n"
+            message += f"- ElevenLabs key: {'✅ Set' if self.elevenlabs_key else '❌ Missing'}\n"
+            message += f"- OpenAI key: {'✅ Set' if self.openai_key else '❌ Missing'}\n"
+            message += f"- Gemini key: {'✅ Set' if self.gemini_key else '❌ Missing'}\n"
+            
+            return self.success_response(message)
+            
+        except Exception as e:
+            return self.fail_response(f"Debug failed: {str(e)}")
+
+    @openapi_schema({
         "type": "function", 
         "function": {
             "name": "list_podcasts",
@@ -799,6 +904,13 @@ class SandboxPodcastTool(SandboxToolsBase):
                 "description": "Check the status of an async podcast generation job",
                 "parameters": [
                     {"name": "job_id", "type": "str", "description": "Job ID returned from generate_podcast", "required": True}
+                ]
+            },
+            {
+                "name": "debug_podcast_jobs",
+                "description": "Debug stuck podcast jobs - shows detailed job info and can clear stuck jobs",
+                "parameters": [
+                    {"name": "clear_stuck", "type": "bool", "description": "If true, clear jobs stuck >30 min", "required": False}
                 ]
             },
             {
