@@ -659,14 +659,16 @@ class SandboxPodcastTool(SandboxToolsBase):
         try:
             logger.info(f"🎙️ Processing podcast job {job_id}")
             
-            # Make FastAPI request (this takes 3-6 minutes)
-            result = self._make_fastapi_request(payload)
+            # Make FastAPI request in thread pool (this takes 3-6 minutes)
+            result = await asyncio.to_thread(self._make_fastapi_request, payload)
             
             # Download and upload to sandbox
-            local_path = self._download_audio_file(result["audioUrl"])
+            local_path = await asyncio.to_thread(self._download_audio_file, result["audioUrl"])
             
-            with open(local_path, 'rb') as f:
-                audio_content = f.read()
+            # Read file in thread pool to avoid blocking
+            audio_content = await asyncio.to_thread(
+                lambda: open(local_path, 'rb').read()
+            )
             
             await self._ensure_sandbox()
             audio_filename = result.get("filename", f"podcast_{job_id}.mp3")
@@ -685,7 +687,8 @@ class SandboxPodcastTool(SandboxToolsBase):
             )
             
             logger.info(f"✅ Podcast job {job_id} completed")
-            os.unlink(local_path)  # cleanup
+            # Clean up temp file in thread pool
+            await asyncio.to_thread(os.unlink, local_path)
             
         except Exception as e:
             logger.error(f"❌ Podcast job {job_id} failed: {str(e)}")
@@ -697,6 +700,22 @@ class SandboxPodcastTool(SandboxToolsBase):
                     "completed_at": str(time.time())
                 }
             )
+
+    def _make_fastapi_request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Make request to FastAPI endpoint"""
+        try:
+            logger.info(f"Making request to {self.api_base_url}/generate")
+            response = requests.post(
+                f"{self.api_base_url}/generate",
+                json=payload,
+                timeout=360  # 6 minutes timeout for podcast generation
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"FastAPI request failed: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Podcast generation failed: {str(e)}")
     
     async def _check_job_status(self, job_id: str) -> Dict[str, Any]:
         """Check job status from Redis"""
