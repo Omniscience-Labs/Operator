@@ -26,6 +26,7 @@ import {
   MicOff,
   Camera,
   List,
+  Clock,
 } from 'lucide-react';
 
 // Flag to control whether tool result messages are rendered
@@ -185,6 +186,14 @@ export const getToolIcon = (toolName: string): ElementType => {
       return Camera;
     case 'list-avatar-sessions':
       return List;
+
+    // Podcast tools
+    case 'generate-podcast':
+      return Mic;
+    case 'list-podcasts':
+      return List;
+    case 'check-podcast-status':
+      return Clock;
 
     // Default case
     default:
