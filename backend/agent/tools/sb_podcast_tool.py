@@ -14,6 +14,7 @@ from sandbox.tool_base import SandboxToolsBase
 from agentpress.thread_manager import ThreadManager
 from utils.logger import logger
 from services import redis
+import re
 
 
 class SandboxPodcastTool(SandboxToolsBase):
@@ -503,16 +504,21 @@ class SandboxPodcastTool(SandboxToolsBase):
             elif status == "completed":
                 message += "🎉 **Podcast Complete!** ✅\n\n"
                 
-                # Check for download URL
+                # Check for download URL and local audio path
                 download_url = result.get("audioUrl") or result.get("audio_url")
+                audio_path = result.get("audio_path")  # Local sandbox path
                 filename = result.get("filename", "podcast.mp3")
                 
-                if download_url:
-                    # Add audio attachment in format the frontend recognizes for audio rendering
+                if download_url and audio_path:
+                    # Add audio attachment using local sandbox path for player
                     message += f"🎧 **Listen to your podcast:**\n\n"
-                    message += f"[Uploaded File: {download_url}]\n\n"
+                    message += f"[Uploaded File: {audio_path}]\n\n"
                     message += f"🔗 **Download Link**: {download_url}\n\n"
                     message += "👆 **Use the player above to listen, or click the link to download!**\n\n"
+                elif download_url:
+                    # Fallback to just download link if no local file
+                    message += f"🔗 **Download Link**: {download_url}\n\n"
+                    message += "👆 **Click the link above to download your podcast!**\n\n"
                 
                 # Add file info
                 if result.get("filename"):
@@ -715,7 +721,7 @@ class SandboxPodcastTool(SandboxToolsBase):
             # Also check Redis for completed jobs with download links
             redis_client = await redis.get_client()
             job_keys = await redis_client.keys("podcast_job:*")
-            completed_jobs = {}
+            redis_jobs = {}
             
             for key in job_keys:
                 job_data = await redis.hgetall(key)
@@ -726,20 +732,26 @@ class SandboxPodcastTool(SandboxToolsBase):
                     
                     if job_info.get("status") == "completed":
                         job_id = key.replace("podcast_job:", "")
-                        completed_jobs[job_id] = job_info
+                        redis_jobs[job_id] = job_info
             
-            message = f"🎙️ Found {len(podcasts)} podcast file(s) and {len(completed_jobs)} completed job(s):\n\n"
+            message = f"🎙️ Found {len(podcasts)} podcast file(s) and {len(redis_jobs)} completed job(s):\n\n"
             
             # Show completed jobs with download links first
-            if completed_jobs:
-                message += "📥 **COMPLETED PODCASTS WITH DOWNLOAD LINKS:**\n\n"
-                for job_id, job_info in completed_jobs.items():
-                    filename = job_info.get('filename', 'podcast.mp3')
-                    download_url = job_info.get('audio_url')
+            if redis_jobs:
+                message += f"📥 **COMPLETED PODCASTS WITH DOWNLOAD LINKS** ({len(redis_jobs)}):\n\n"
+                
+                for job_id, job_info in redis_jobs.items():
+                    filename = job_info.get('filename', f'podcast_{job_id[:8]}.mp3')
+                    download_url = job_info.get('audioUrl') or job_info.get('audio_url')
+                    audio_path = job_info.get('audio_path')  # Local sandbox path
                     
                     message += f"🎯 **{filename}**\n"
-                    if download_url:
-                        message += f"   🎧 **AUDIO PLAYER**: [Uploaded File: {download_url}]\n"
+                    if download_url and audio_path:
+                        # Use local path for audio player, external URL for download
+                        message += f"   🎧 **AUDIO PLAYER**: [Uploaded File: {audio_path}]\n"
+                        message += f"   🔗 **DOWNLOAD**: {download_url}\n"
+                    elif download_url:
+                        # Fallback to just download link
                         message += f"   🔗 **DOWNLOAD**: {download_url}\n"
                     if job_info.get('audio_path'):
                         message += f"   📂 Sandbox: {job_info['audio_path']}\n"
@@ -818,45 +830,66 @@ class SandboxPodcastTool(SandboxToolsBase):
         except Exception as e:
             raise Exception(f"Failed to submit podcast job: {str(e)}")
 
-    async def _process_podcast_background(self, job_id: str, payload: Dict[str, Any]):
-        """Process podcast in background using asyncio"""
+    async def _process_podcast_background(self, job_id: str, payload: Dict[str, Any]) -> None:
+        """Process podcast generation in background"""
+        logger.info(f"🎙️ Background processing started for job: {job_id}")
+        
         try:
-            logger.info(f"🎙️ Processing podcast job {job_id}")
-            
-            # Make FastAPI request in thread pool (this takes 3-6 minutes)
+            # Make the API request in thread pool to avoid blocking
             result = await asyncio.to_thread(self._make_fastapi_request, payload)
             
-            # Download and upload to sandbox
-            local_path = await asyncio.to_thread(self._download_audio_file, result["audioUrl"])
+            # Check if we got an audio URL
+            audio_url = result.get("audioUrl")
+            if not audio_url:
+                logger.error("No audio URL in result")
+                await redis.hset(
+                    f"podcast_job:{job_id}",
+                    mapping={
+                        "status": "failed",
+                        "error": "No audio URL in response",
+                        "completed_at": str(time.time())
+                    }
+                )
+                return
             
-            # Read file in thread pool to avoid blocking
-            audio_content = await asyncio.to_thread(
-                lambda: open(local_path, 'rb').read()
-            )
+            logger.info(f"📥 Downloading audio from: {audio_url}")
             
-            await self._ensure_sandbox()
-            audio_filename = result.get("filename", f"podcast_{job_id}.mp3")
-            audio_path = f"podcasts/{audio_filename}"
-            self.sandbox.fs.upload_file(audio_content, audio_path)
+            # Download the audio file to sandbox
+            audio_response = await asyncio.to_thread(requests.get, audio_url, timeout=60)
+            audio_response.raise_for_status()
             
-            # Update Redis with success - include original download URL
+            # Generate filename
+            podcast_name = payload.get('podcast_name', 'podcast')
+            safe_name = re.sub(r'[^\w\-_\.]', '_', podcast_name.lower())
+            filename = f"{safe_name}_{job_id[:8]}.mp3"
+            
+            # Ensure podcasts directory exists
+            podcasts_dir = "/workspace/podcasts"
+            await asyncio.to_thread(os.makedirs, podcasts_dir, exist_ok=True)
+            
+            # Save audio file
+            audio_path = os.path.join(podcasts_dir, filename)
+            with open(audio_path, 'wb') as f:
+                f.write(audio_response.content)
+            
+            logger.info(f"💾 Audio saved to: {audio_path}")
+            
+            # Update Redis with completion info including both external URL and local path
             await redis.hset(
                 f"podcast_job:{job_id}",
                 mapping={
                     "status": "completed",
-                    "audio_url": result["audioUrl"],  # Store original download URL
-                    "audio_path": audio_path,
-                    "filename": audio_filename,
+                    "audioUrl": audio_url,  # External URL for download
+                    "filename": filename,
+                    "audio_path": f"podcasts/{filename}",  # Local path for audio player
                     "completed_at": str(time.time())
                 }
             )
             
-            logger.info(f"✅ Podcast job {job_id} completed")
-            # Clean up temp file in thread pool
-            await asyncio.to_thread(os.unlink, local_path)
+            logger.info(f"✅ Podcast job {job_id} completed successfully")
             
         except Exception as e:
-            logger.error(f"❌ Podcast job {job_id} failed: {str(e)}")
+            logger.error(f"❌ Background processing failed for job {job_id}: {str(e)}")
             await redis.hset(
                 f"podcast_job:{job_id}",
                 mapping={
@@ -945,31 +978,6 @@ class SandboxPodcastTool(SandboxToolsBase):
             
         except Exception as e:
             raise Exception(f"Failed to check job status: {str(e)}")
-
-    def _download_audio_file(self, audio_url: str) -> str:
-        """Download the generated audio file from FastAPI"""
-        try:
-            # Construct full URL if relative
-            if audio_url.startswith('/'):
-                download_url = f"{self.api_base_url}{audio_url}"
-            else:
-                download_url = audio_url
-            
-            logger.info(f"Downloading audio from: {download_url}")
-            
-            # Download the file
-            response = requests.get(download_url, timeout=60)
-            response.raise_for_status()
-            
-            # Save to temporary location using tempfile
-            import tempfile
-            filename = audio_url.split('/')[-1]  # Extract filename from URL
-            with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{filename}") as temp_file:
-                temp_file.write(response.content)
-                return temp_file.name
-            
-        except Exception as e:
-            raise Exception(f"Failed to download audio file: {str(e)}")
 
     # Define the available functions for the agent
     @property  
