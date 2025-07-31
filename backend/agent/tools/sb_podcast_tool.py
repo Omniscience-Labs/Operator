@@ -794,9 +794,29 @@ class SandboxPodcastTool(SandboxToolsBase):
             logger.error(f"Error listing podcasts: {str(e)}", exc_info=True)
             return self.fail_response(f"Error listing podcasts: {str(e)}")
 
+    async def _check_service_health(self) -> bool:
+        """Check if Podcastfy service is healthy before making requests"""
+        try:
+            logger.info("Checking Podcastfy service health...")
+            response = requests.get(f"{self.api_base_url}/health", timeout=10)
+            if response.status_code == 200:
+                health_data = response.json()
+                logger.info(f"Service health check: {health_data}")
+                return health_data.get("status") == "healthy"
+            else:
+                logger.warning(f"Service health check failed: {response.status_code}")
+                return False
+        except Exception as e:
+            logger.error(f"Service health check error: {e}")
+            return False
+
     async def _submit_podcast_job(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Submit podcast generation job using simple background processing"""
         try:
+            # Check service health first
+            if not await self._check_service_health():
+                raise Exception("Podcastfy service is not healthy - cannot submit job")
+            
             # Generate unique job ID
             job_id = str(uuid.uuid4())
             logger.info(f"🎙️ Starting async podcast job: {job_id}")
@@ -900,63 +920,113 @@ class SandboxPodcastTool(SandboxToolsBase):
             )
 
     def _make_fastapi_request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Make request to FastAPI endpoint"""
-        try:
-            logger.info(f"Making request to {self.api_base_url}/generate")
-            logger.info(f"Payload keys: {list(payload.keys())}")
-            
-            response = requests.post(
-                f"{self.api_base_url}/generate",
-                json=payload,
-                timeout=600,  # Increase to 10 minutes for complex podcasts
-                headers={
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            )
-            
-            logger.info(f"Response status: {response.status_code}")
-            logger.info(f"Response headers: {dict(response.headers)}")
-            
-            response.raise_for_status()
-            result = response.json()
-            
-            logger.info(f"Response keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
-            
-            # Better handling of different response formats
-            if not isinstance(result, dict):
-                raise Exception(f"Invalid response format: expected dict, got {type(result)}")
-            
-            # Handle different possible field names for audio URL
-            audio_url = (
-                result.get("audioUrl") or 
-                result.get("audio_url") or 
-                result.get("audioURL") or
-                result.get("file_url") or
-                result.get("download_url")
-            )
-            
-            if not audio_url:
-                logger.error(f"No audio URL found in response. Available fields: {list(result.keys())}")
-                logger.error(f"Full response: {result}")
-                raise Exception(f"No audio URL in response. Available fields: {list(result.keys())}")
-            
-            # Fix relative URLs by prepending base URL
-            if audio_url.startswith('/'):
-                audio_url = f"{self.api_base_url}{audio_url}"
-                logger.info(f"Converted relative URL to absolute: {audio_url}")
-            
-            # Ensure the result has the expected audioUrl field
-            result["audioUrl"] = audio_url
-            
-            return result
-            
-        except requests.exceptions.Timeout as e:
-            raise Exception(f"Request timed out after 10 minutes: {str(e)}")
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"FastAPI request failed: {str(e)}")
-        except Exception as e:
-            raise Exception(f"Podcast generation failed: {str(e)}")
+        """Make request to FastAPI endpoint with retries"""
+        max_retries = 3
+        retry_delay = 5  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Making request to {self.api_base_url}/generate (attempt {attempt + 1}/{max_retries})")
+                logger.info(f"Payload keys: {list(payload.keys())}")
+                
+                response = requests.post(
+                    f"{self.api_base_url}/generate",
+                    json=payload,
+                    timeout=600,  # 10 minutes for complex podcasts
+                    headers={
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                )
+                
+                logger.info(f"Response status: {response.status_code}")
+                logger.info(f"Response headers: {dict(response.headers)}")
+                
+                response.raise_for_status()
+                result = response.json()
+                
+                logger.info(f"Response keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
+                logger.info(f"Full response content: {result}")  # Log full response for debugging
+                
+                # Better handling of different response formats
+                if not isinstance(result, dict):
+                    raise Exception(f"Invalid response format: expected dict, got {type(result)}")
+                
+                # Handle different possible field names for audio URL
+                audio_url = (
+                    result.get("audioUrl") or 
+                    result.get("audio_url") or 
+                    result.get("audioURL") or
+                    result.get("file_url") or
+                    result.get("download_url") or
+                    result.get("url") or
+                    result.get("link")
+                )
+                
+                if not audio_url:
+                    logger.error(f"No audio URL found in response. Available fields: {list(result.keys())}")
+                    logger.error(f"Full response: {result}")
+                    
+                    # If this is not the last attempt, continue to retry
+                    if attempt < max_retries - 1:
+                        logger.info(f"Retrying in {retry_delay} seconds...")
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        raise Exception(f"No audio URL in response after {max_retries} attempts. Available fields: {list(result.keys())}")
+                
+                # Fix relative URLs by prepending base URL
+                if audio_url.startswith('/'):
+                    audio_url = f"{self.api_base_url}{audio_url}"
+                    logger.info(f"Converted relative URL to absolute: {audio_url}")
+                
+                # Verify the URL is accessible
+                try:
+                    head_response = requests.head(audio_url, timeout=30)
+                    if head_response.status_code != 200:
+                        logger.warning(f"Audio URL returned {head_response.status_code}: {audio_url}")
+                        if attempt < max_retries - 1:
+                            logger.info(f"Audio URL not accessible, retrying in {retry_delay} seconds...")
+                            time.sleep(retry_delay)
+                            continue
+                except Exception as e:
+                    logger.warning(f"Could not verify audio URL accessibility: {e}")
+                
+                # Ensure the result has the expected audioUrl field
+                result["audioUrl"] = audio_url
+                
+                logger.info(f"✅ Successfully generated podcast with audio URL: {audio_url}")
+                return result
+                
+            except requests.exceptions.Timeout as e:
+                logger.error(f"Request timed out (attempt {attempt + 1}/{max_retries}): {str(e)}")
+                if attempt < max_retries - 1:
+                    logger.info(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                    continue
+                else:
+                    raise Exception(f"Request timed out after {max_retries} attempts: {str(e)}")
+                    
+            except requests.exceptions.RequestException as e:
+                logger.error(f"FastAPI request failed (attempt {attempt + 1}/{max_retries}): {str(e)}")
+                if attempt < max_retries - 1:
+                    logger.info(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                    continue
+                else:
+                    raise Exception(f"FastAPI request failed after {max_retries} attempts: {str(e)}")
+                    
+            except Exception as e:
+                logger.error(f"Podcast generation failed (attempt {attempt + 1}/{max_retries}): {str(e)}")
+                if attempt < max_retries - 1:
+                    logger.info(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                    continue
+                else:
+                    raise Exception(f"Podcast generation failed after {max_retries} attempts: {str(e)}")
+        
+        # This should never be reached, but just in case
+        raise Exception("All retry attempts exhausted")
     
     async def _check_job_status(self, job_id: str) -> Dict[str, Any]:
         """Check job status from Redis"""
@@ -996,7 +1066,7 @@ class SandboxPodcastTool(SandboxToolsBase):
                     {"name": "file_paths", "type": "List[str]", "description": "List of file paths in sandbox (content read as text)", "required": False},
                     {"name": "text", "type": "str", "description": "Direct text input for podcast generation", "required": False},
                     {"name": "topic", "type": "str", "description": "Topic or subject for the podcast", "required": False},
-                    {"name": "output_name", "type": "str", "description": "Custom name for output files", "required": False},
+                    {"name": "output_name", "type": "str", "description": "Custom output name", "required": False},
                     {"name": "conversation_style", "type": "List[str]", "description": "Style like ['engaging','fast-paced']", "required": False},
                     {"name": "podcast_length", "type": "str", "description": "Length: short/medium/long", "required": False},
                     {"name": "roles_person1", "type": "str", "description": "Role of first speaker", "required": False},
