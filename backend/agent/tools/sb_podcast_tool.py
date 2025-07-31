@@ -117,13 +117,13 @@ class SandboxPodcastTool(SandboxToolsBase):
                     },
                     "roles_person1": {
                         "type": "string",
-                        "description": "Role of the first speaker in the podcast (e.g., 'main summarizer', 'host', 'expert')",
-                        "default": "main summarizer"
+                        "description": "Role of the first speaker in the podcast (e.g., 'news anchor', 'host', 'expert', 'financial analyst')",
+                        "default": "news anchor"
                     },
                     "roles_person2": {
                         "type": "string", 
-                        "description": "Role of the second speaker in the podcast (e.g., 'questioner/clarifier', 'co-host', 'interviewer')",
-                        "default": "questioner/clarifier"
+                        "description": "Role of the second speaker in the podcast (e.g., 'financial expert', 'market analyst', 'interviewer', 'co-host')",
+                        "default": "financial expert"
                     },
                     "dialogue_structure": {
                         "type": "array",
@@ -202,8 +202,8 @@ class SandboxPodcastTool(SandboxToolsBase):
         <parameter name="conversation_style">["engaging", "fast-paced", "enthusiastic"]</parameter>
         <parameter name="podcast_length">medium</parameter>
         <parameter name="language">English</parameter>
-        <parameter name="roles_person1">main summarizer</parameter>
-        <parameter name="roles_person2">questioner/clarifier</parameter>
+        <parameter name="roles_person1">financial news anchor</parameter>
+        <parameter name="roles_person2">market expert</parameter>
         <parameter name="dialogue_structure">["Introduction", "Main Content Summary", "Deep Dive", "Conclusion"]</parameter>
         <parameter name="podcast_name">Tech Research Podcast</parameter>
         <parameter name="podcast_tagline">Deep dives into cutting-edge technology</parameter>
@@ -224,8 +224,8 @@ class SandboxPodcastTool(SandboxToolsBase):
                              podcast_length: str = "medium", 
                              language: str = "English",
                              transcript_only: bool = False,
-                             roles_person1: str = "main summarizer",
-                             roles_person2: str = "questioner/clarifier",
+                             roles_person1: str = "news anchor",
+                             roles_person2: str = "financial expert",
                              dialogue_structure: List[str] = ["Introduction", "Main Content Summary", "Conclusion"],
                              podcast_name: str = "AI Generated Podcast",
                              podcast_tagline: str = "Transforming content into engaging conversations",
@@ -305,20 +305,29 @@ class SandboxPodcastTool(SandboxToolsBase):
                         logger.error(f"Error reading file {file_path}: {str(e)}")
                         file_content += f"\n\nError reading {file_path}: {str(e)}"
             
-            # Combine all text content
+            # Combine all text content with better formatting
             combined_text = ""
             if topic:
-                combined_text += f"Topic: {topic}\n\nPlease create a podcast discussion about: {topic}"
+                combined_text += f"PODCAST TOPIC: {topic}\n\n"
+                combined_text += f"Create a professional podcast discussion between {roles_person1} and {roles_person2} about: {topic}\n\n"
+            
             if text:
                 if combined_text:
-                    combined_text += f"\n\nAdditional content: {text}"
+                    combined_text += f"CONTENT TO DISCUSS:\n{text}\n\n"
                 else:
-                    combined_text = text
+                    combined_text = f"CONTENT TO DISCUSS:\n{text}\n\n"
+                    combined_text += f"Create a podcast conversation between {roles_person1} and {roles_person2} discussing this content.\n\n"
+            
             if file_content:
                 if combined_text:
-                    combined_text += f"\n\n{file_content}"
+                    combined_text += f"ADDITIONAL CONTENT:\n{file_content}\n\n"
                 else:
-                    combined_text = file_content
+                    combined_text = f"CONTENT TO DISCUSS:\n{file_content}\n\n"
+                    combined_text += f"Create a podcast conversation between {roles_person1} and {roles_person2} discussing this content.\n\n"
+            
+            # Add specific instructions to avoid generic host names
+            if combined_text:
+                combined_text += f"\nIMPORTANT: Use the specific roles '{roles_person1}' and '{roles_person2}' as speaker identities. Do NOT use generic terms like 'Host 1' or 'Host 2'. Make it sound like a natural conversation between these specific roles."
             
             # Send both API keys - let the FastAPI decide which to use
             openai_key = self.openai_key
@@ -340,6 +349,14 @@ class SandboxPodcastTool(SandboxToolsBase):
             # Use edge TTS for Render services as it's more reliable (ElevenLabs often hits limits)
             tts_model = "edge" if "render" in self.api_base_url.lower() else "elevenlabs"
             
+            # Configure better voices for Edge TTS with more natural sounding options
+            if tts_model == "edge" and not voices:
+                voices = {
+                    "question": "en-US-JennyNeural",  # Natural female voice for person1  
+                    "answer": "en-US-DavisNeural"    # Natural male voice for person2
+                }
+                logger.info("Using Edge TTS with high-quality dual voices: Jenny (female) and Davis (male)")
+            
             payload = {
                 "urls": processed_urls,
                 "text": combined_text.strip() if combined_text.strip() else None,
@@ -355,7 +372,12 @@ class SandboxPodcastTool(SandboxToolsBase):
                 "user_instructions": user_instructions,
                 "engagement_techniques": engagement_techniques,
                 "is_long_form": podcast_length == "long",
-                "voices": voices or {}
+                "voices": voices,
+                # Add Edge TTS specific settings for better quality
+                "word_timestamps": False,  # Disable for better flow
+                "ssml_tags": True,  # Enable SSML for better prosody
+                "speed_rate": "0.9",  # Slightly slower for clarity
+                "pitch_rate": "+0Hz"  # Natural pitch
             }
             
             # Only send API keys if the service URL suggests it needs them in payload
