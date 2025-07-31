@@ -941,6 +941,11 @@ class SandboxPodcastTool(SandboxToolsBase):
                 logger.error(f"Full response: {result}")
                 raise Exception(f"No audio URL in response. Available fields: {list(result.keys())}")
             
+            # Fix relative URLs by prepending base URL
+            if audio_url.startswith('/'):
+                audio_url = f"{self.api_base_url}{audio_url}"
+                logger.info(f"Converted relative URL to absolute: {audio_url}")
+            
             # Ensure the result has the expected audioUrl field
             result["audioUrl"] = audio_url
             
