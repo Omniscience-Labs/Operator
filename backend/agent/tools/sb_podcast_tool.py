@@ -263,9 +263,11 @@ class SandboxPodcastTool(SandboxToolsBase):
             if not any([urls, file_paths, text, topic]):
                 return self.fail_response("At least one content source (URLs, files, text, or topic) must be provided")
             
-            # Check for ElevenLabs API key when actually using the tool
-            if not self.elevenlabs_key:
-                return self.fail_response("ELEVENLABS_API_KEY must be set to generate podcasts. Please configure this environment variable.")
+            # Check for ElevenLabs API key when using ElevenLabs TTS
+            # For Render services, we use Edge TTS which doesn't require ElevenLabs
+            uses_elevenlabs = "render" not in self.api_base_url.lower()
+            if uses_elevenlabs and not self.elevenlabs_key:
+                return self.fail_response("ELEVENLABS_API_KEY must be set to generate podcasts with ElevenLabs TTS. Please configure this environment variable, or use a Render service which supports Edge TTS.")
             
             # Process URLs - combine with file content for now
             processed_urls = []
@@ -331,13 +333,14 @@ class SandboxPodcastTool(SandboxToolsBase):
                 raise ValueError("No valid LLM API key available")
             
             # Prepare request payload for FastAPI
+            # Note: For Render deployment, don't send API keys if they're set as env vars on the service
+            # Use edge TTS for Render services as it's more reliable (ElevenLabs often hits limits)
+            tts_model = "edge" if "render" in self.api_base_url.lower() else "elevenlabs"
+            
             payload = {
                 "urls": processed_urls,
                 "text": combined_text.strip() if combined_text.strip() else None,
-                "openai_key": openai_key,
-                "google_key": google_key,
-                "elevenlabs_key": self.elevenlabs_key,
-                "tts_model": "elevenlabs",
+                "tts_model": tts_model,
                 "creativity": creativity,
                 "conversation_style": conversation_style,
                 "roles_person1": roles_person1,
@@ -351,6 +354,19 @@ class SandboxPodcastTool(SandboxToolsBase):
                 "is_long_form": podcast_length == "long",
                 "voices": voices or {}
             }
+            
+            # Only send API keys if the service URL suggests it needs them in payload
+            # Render services typically use environment variables, while some others need keys in payload
+            if "render" not in self.api_base_url.lower():
+                payload.update({
+                    "openai_key": openai_key,
+                    "google_key": google_key,
+                    "elevenlabs_key": self.elevenlabs_key,
+                })
+                logger.info("Added API keys to payload for non-Render service")
+            else:
+                logger.info("Skipping API keys in payload - Render service should use environment variables")
+                logger.info(f"Using {tts_model} TTS for Render service (more reliable than ElevenLabs)")
             
             # Try async job system first, fallback to sync if needed
             try:
@@ -797,15 +813,18 @@ class SandboxPodcastTool(SandboxToolsBase):
     async def _check_service_health(self) -> bool:
         """Check if Podcastfy service is healthy before making requests"""
         try:
-            logger.info("Checking Podcastfy service health...")
-            response = requests.get(f"{self.api_base_url}/health", timeout=10)
+            logger.info(f"Checking Podcastfy service health at: {self.api_base_url}")
+            response = requests.get(f"{self.api_base_url}/health", timeout=15)
             if response.status_code == 200:
                 health_data = response.json()
                 logger.info(f"Service health check: {health_data}")
                 return health_data.get("status") == "healthy"
             else:
-                logger.warning(f"Service health check failed: {response.status_code}")
+                logger.warning(f"Service health check failed: {response.status_code} - {response.text}")
                 return False
+        except requests.exceptions.Timeout:
+            logger.error(f"Service health check timed out - service may be sleeping/cold starting")
+            return False
         except Exception as e:
             logger.error(f"Service health check error: {e}")
             return False
@@ -815,7 +834,11 @@ class SandboxPodcastTool(SandboxToolsBase):
         try:
             # Check service health first
             if not await self._check_service_health():
-                raise Exception("Podcastfy service is not healthy - cannot submit job")
+                raise Exception(f"Podcastfy service at {self.api_base_url} is not healthy. This could be due to:\n"
+                               f"- Service is sleeping (common with Render/Hugging Face)\n"
+                               f"- Service is experiencing issues\n" 
+                               f"- Network connectivity problems\n"
+                               f"Please try again in a few minutes or contact support if the issue persists.")
             
             # Generate unique job ID
             job_id = str(uuid.uuid4())
@@ -948,6 +971,13 @@ class SandboxPodcastTool(SandboxToolsBase):
                 logger.info(f"Response keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
                 logger.info(f"Full response content: {result}")  # Log full response for debugging
                 
+                # Check if service is in fallback mode
+                method = result.get("method", "unknown")
+                if method == "direct_api_fallback":
+                    logger.warning(f"⚠️ Podcastfy service is in FALLBACK MODE - audio generation disabled")
+                    logger.warning(f"Service message: {result.get('message', 'No message')}")
+                    logger.warning(f"This usually means the service lacks proper TTS configuration (ElevenLabs API key, etc.)")
+                
                 # Better handling of different response formats
                 if not isinstance(result, dict):
                     raise Exception(f"Invalid response format: expected dict, got {type(result)}")
@@ -960,10 +990,31 @@ class SandboxPodcastTool(SandboxToolsBase):
                     result.get("file_url") or
                     result.get("download_url") or
                     result.get("url") or
-                    result.get("link")
+                    result.get("link") or
+                    result.get("audio_file")  # Some services use this field
                 )
                 
                 if not audio_url:
+                    method = result.get("method", "unknown")
+                    if method == "direct_api_fallback":
+                        # Check if this is ElevenLabs quota issue
+                        service_message = result.get('message', '')
+                        if 'edge TTS' in service_message.lower():
+                            raise Exception(f"🚨 ELEVENLABS QUOTA EXCEEDED:\n\n"
+                                          f"Your ElevenLabs account appears to be at its character limit.\n"
+                                          f"Service message: {service_message}\n\n"
+                                          f"SOLUTIONS:\n"
+                                          f"• Wait for your ElevenLabs quota to reset\n"
+                                          f"• Upgrade your ElevenLabs subscription\n"
+                                          f"• Use Edge TTS (free alternative - we've switched to this automatically)")
+                        else:
+                            # Generic fallback mode error
+                            raise Exception(f"🚨 RENDER SERVICE CONFIGURATION ISSUE:\n\n"
+                                          f"Your Podcastfy service at {self.api_base_url} is running in FALLBACK MODE.\n"
+                                          f"It can generate transcripts but NOT audio.\n\n"
+                                          f"Service response: {service_message}\n\n"
+                                          f"SOLUTION: Check your Render service environment variables and logs.")
+                    
                     logger.error(f"No audio URL found in response. Available fields: {list(result.keys())}")
                     logger.error(f"Full response: {result}")
                     
@@ -979,6 +1030,10 @@ class SandboxPodcastTool(SandboxToolsBase):
                 if audio_url.startswith('/'):
                     audio_url = f"{self.api_base_url}{audio_url}"
                     logger.info(f"Converted relative URL to absolute: {audio_url}")
+                elif not audio_url.startswith(('http://', 'https://')):
+                    # Handle other relative path formats
+                    audio_url = f"{self.api_base_url}/{audio_url.lstrip('/')}"
+                    logger.info(f"Converted relative path to absolute: {audio_url}")
                 
                 # Verify the URL is accessible
                 try:
