@@ -11,7 +11,7 @@ export const DEFAULT_AGENTPRESS_TOOLS: Record<string, { enabled: boolean; descri
     'sb_audio_transcription_tool': { enabled: false, description: 'Transcribe audio files up to 2 hours in length with automatic chunking for large files', icon: '🎤', color: 'bg-rose-100 dark:bg-rose-800/50' },
     'data_providers_tool': { enabled: false, description: 'Access to data providers and external APIs like Apollo (requires API key)', icon: '🔗', color: 'bg-cyan-100 dark:bg-cyan-800/50' },
     'sb_podcast_tool': { enabled: false, description: 'Generate AI-powered podcasts from URLs, files, images, and other content sources with customizable conversation styles', icon: '🎙️', color: 'bg-violet-100 dark:bg-violet-800/50' },
-    'sb_video_avatar_tool': { enabled: false, description: 'Generate videos with AI avatars that speak any text with natural speech and lip synchronization - perfect for video content creation', icon: '🎬', color: 'bg-red-100 dark:bg-red-800/50' },
+    'sb_video_avatar_tool': { enabled: true, description: 'Generate videos with AI avatars that speak any text with natural speech and lip synchronization - perfect for video content creation', icon: '🎬', color: 'bg-red-100 dark:bg-red-800/50' },
 };
 
 export const getToolDisplayName = (toolName: string): string => {

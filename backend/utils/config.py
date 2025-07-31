@@ -150,9 +150,8 @@ class Configuration:
     FIRECRAWL_URL: Optional[str] = "https://api.firecrawl.dev"
     
     # HeyGen configuration
-    
-    HEYGEN_API_KEY: Optional[str] = "YWY3Yzc1N2YyN2JmNGE1NTkxZjhlYmYwMmZhNmUwZjMtMTc1MzgyNDc5Nw=="
-    HEYGEN_API_BASE: Optional[str] = "https://api.heygen.com"
+    HEYGEN_API_KEY: Optional[str] = None
+    HEYGEN_API_BASE: Optional[str] = None
     
     # Stripe configuration
     STRIPE_SECRET_KEY: Optional[str] = None
