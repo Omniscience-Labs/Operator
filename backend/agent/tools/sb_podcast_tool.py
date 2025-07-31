@@ -619,65 +619,84 @@ class SandboxPodcastTool(SandboxToolsBase):
             return self.fail_response(f"Error listing podcasts: {str(e)}")
 
     async def _submit_podcast_job(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Submit podcast generation job to Operator's job system"""
+        """Submit podcast generation job using simple background processing"""
         try:
-            import uuid
-            
             # Generate unique job ID
             job_id = str(uuid.uuid4())
-            logger.info(f"Submitting podcast job with ID: {job_id}")
+            logger.info(f"🎙️ Starting async podcast job: {job_id}")
             
-            # Submit job to dramatiq actor using broker directly (avoid import issues)
-            try:
-                import dramatiq
-                
-                # Send message to the podcast generation actor
-                # This avoids importing the background runner module directly
-                dramatiq.get_broker().enqueue_message(
-                    dramatiq.Message(
-                        queue_name="default",
-                        actor_name="generate_podcast_background",
-                        args=[],
-                        kwargs={
-                            "job_id": job_id,
-                            "thread_id": getattr(self.thread_manager, 'thread_id', 'unknown'),
-                            "project_id": self.project_id,
-                            "payload": payload
-                        },
-                        options={}
-                    )
-                )
-                logger.info(f"✅ Podcast job {job_id} sent to dramatiq broker")
-                
-            except Exception as broker_error:
-                logger.error(f"Failed to submit job to dramatiq: {broker_error}")
-                raise Exception("Podcast generation service is not available. Please try again later.")
-            
-            # Store initial job info in Redis
+            # Store job info in Redis with "processing" status
             await redis.hset(
                 f"podcast_job:{job_id}",
                 mapping={
-                    "status": "queued",
+                    "status": "processing",
                     "project_id": self.project_id,
                     "thread_id": getattr(self.thread_manager, 'thread_id', 'unknown'),
-                    "created_at": str(asyncio.get_event_loop().time())
+                    "created_at": str(time.time()),
+                    "payload": json.dumps(payload)
                 }
             )
             
             # Set expiration (24 hours)
             await redis.expire(f"podcast_job:{job_id}", 86400)
             
-            logger.info(f"Job {job_id} submitted to Operator worker system")
+            # Start background task
+            asyncio.create_task(self._process_podcast_background(job_id, payload))
             
-            # Return job info immediately
+            logger.info(f"✅ Podcast job {job_id} started")
+            
             return {
                 "job_id": job_id,
-                "status": "queued",
-                "audioUrl": None  # Will be populated when job completes
+                "status": "processing",
+                "audioUrl": None
             }
             
         except Exception as e:
             raise Exception(f"Failed to submit podcast job: {str(e)}")
+
+    async def _process_podcast_background(self, job_id: str, payload: Dict[str, Any]):
+        """Process podcast in background using asyncio"""
+        try:
+            logger.info(f"🎙️ Processing podcast job {job_id}")
+            
+            # Make FastAPI request (this takes 3-6 minutes)
+            result = self._make_fastapi_request(payload)
+            
+            # Download and upload to sandbox
+            local_path = self._download_audio_file(result["audioUrl"])
+            
+            with open(local_path, 'rb') as f:
+                audio_content = f.read()
+            
+            await self._ensure_sandbox()
+            audio_filename = result.get("filename", f"podcast_{job_id}.mp3")
+            audio_path = f"podcasts/{audio_filename}"
+            self.sandbox.fs.upload_file(audio_content, audio_path)
+            
+            # Update Redis with success
+            await redis.hset(
+                f"podcast_job:{job_id}",
+                mapping={
+                    "status": "completed",
+                    "audio_path": audio_path,
+                    "filename": audio_filename,
+                    "completed_at": str(time.time())
+                }
+            )
+            
+            logger.info(f"✅ Podcast job {job_id} completed")
+            os.unlink(local_path)  # cleanup
+            
+        except Exception as e:
+            logger.error(f"❌ Podcast job {job_id} failed: {str(e)}")
+            await redis.hset(
+                f"podcast_job:{job_id}",
+                mapping={
+                    "status": "failed",
+                    "error": str(e),
+                    "completed_at": str(time.time())
+                }
+            )
     
     async def _check_job_status(self, job_id: str) -> Dict[str, Any]:
         """Check job status from Redis"""
