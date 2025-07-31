@@ -194,6 +194,8 @@ export const getToolIcon = (toolName: string): ElementType => {
       return List;
     case 'check-podcast-status':
       return Clock;
+    case 'debug-podcast-jobs':
+      return Search;
 
     // Default case
     default:

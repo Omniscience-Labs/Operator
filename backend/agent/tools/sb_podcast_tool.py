@@ -362,7 +362,11 @@ class SandboxPodcastTool(SandboxToolsBase):
                 response = requests.post(
                     f"{self.api_base_url}/generate",
                     json=payload,
-                    timeout=360  # 5 minutes timeout for podcast generation
+                    timeout=600,  # 10 minutes timeout for podcast generation
+                    headers={
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
                 )
                 response.raise_for_status()
                 result = response.json()
@@ -810,13 +814,51 @@ class SandboxPodcastTool(SandboxToolsBase):
         """Make request to FastAPI endpoint"""
         try:
             logger.info(f"Making request to {self.api_base_url}/generate")
+            logger.info(f"Payload keys: {list(payload.keys())}")
+            
             response = requests.post(
                 f"{self.api_base_url}/generate",
                 json=payload,
-                timeout=360  # 6 minutes timeout for podcast generation
+                timeout=600,  # Increase to 10 minutes for complex podcasts
+                headers={
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
             )
+            
+            logger.info(f"Response status: {response.status_code}")
+            logger.info(f"Response headers: {dict(response.headers)}")
+            
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            
+            logger.info(f"Response keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
+            
+            # Better handling of different response formats
+            if not isinstance(result, dict):
+                raise Exception(f"Invalid response format: expected dict, got {type(result)}")
+            
+            # Handle different possible field names for audio URL
+            audio_url = (
+                result.get("audioUrl") or 
+                result.get("audio_url") or 
+                result.get("audioURL") or
+                result.get("file_url") or
+                result.get("download_url")
+            )
+            
+            if not audio_url:
+                logger.error(f"No audio URL found in response. Available fields: {list(result.keys())}")
+                logger.error(f"Full response: {result}")
+                raise Exception(f"No audio URL in response. Available fields: {list(result.keys())}")
+            
+            # Ensure the result has the expected audioUrl field
+            result["audioUrl"] = audio_url
+            
+            return result
+            
+        except requests.exceptions.Timeout as e:
+            raise Exception(f"Request timed out after 10 minutes: {str(e)}")
         except requests.exceptions.RequestException as e:
             raise Exception(f"FastAPI request failed: {str(e)}")
         except Exception as e:
