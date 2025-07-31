@@ -62,6 +62,26 @@ class SandboxPodcastTool(SandboxToolsBase):
             return True
         except Exception:
             return False
+    
+    def _estimate_duration(self, filename: str) -> str:
+        """Estimate podcast duration based on filename and typical speech patterns."""
+        try:
+            # Try to get actual file size for better estimation
+            audio_path = f"{self.workspace_path}/podcasts/{filename}"
+            file_info = self.sandbox.fs.get_file_info(audio_path)
+            file_size_mb = file_info.size / (1024 * 1024)
+            
+            # Rough estimation: ~1MB per minute for good quality MP3
+            estimated_minutes = int(file_size_mb)
+            if estimated_minutes < 1:
+                return "Under 1 minute"
+            elif estimated_minutes == 1:
+                return "1 minute"
+            else:
+                return f"{estimated_minutes} minutes"
+        except:
+            # Fallback estimation
+            return "1-3 minutes"
 
     @openapi_schema({
         "type": "function",
@@ -543,31 +563,40 @@ class SandboxPodcastTool(SandboxToolsBase):
             elif status == "processing":
                 message += "🔄 Status: Processing - generating your podcast..."
             elif status == "completed":
-                message += "🎉 **Podcast Complete!** ✅\n\n"
+                message += "🎉 **Podcast Ready!** ✅\n\n"
                 
                 # Check for download URL and local audio path
                 download_url = result.get("audioUrl") or result.get("audio_url")
-                audio_path = result.get("audio_path")  # Local sandbox path
+                audio_path = result.get("audio_path")  # Local path
                 filename = result.get("filename", "podcast.mp3")
+                display_name = result.get("display_name", filename)
+                
+                # Calculate file size for display
+                try:
+                    if audio_path:
+                        file_info = self.sandbox.fs.get_file_info(f"{self.workspace_path}/{audio_path}")
+                        file_size_mb = file_info.size / (1024 * 1024)
+                        size_display = f" ({file_size_mb:.1f} MB)"
+                    else:
+                        size_display = ""
+                except:
+                    size_display = ""
                 
                 if download_url and audio_path:
-                    # Add audio attachment using local sandbox path for player
-                    message += f"🎧 **Listen to your podcast:**\n\n"
-                    message += f"[Uploaded File: {audio_path}]\n\n"
-                    message += f"🔗 **Download Link**: {download_url}\n\n"
-                    message += "👆 **Use the player above to listen, or click the link to download!**\n\n"
+                    # Professional display with file info
+                    message += f"🎧 **{display_name}**{size_display}\n"
+                    message += f"**Duration**: Approximately {self._estimate_duration(filename)}\n"
+                    message += f"**Style**: Professional podcast format\n\n"
+                    message += f"🎯 **Access Your Podcast:**\n"
+                    message += f"**Audio Player**: Available at {audio_path}\n"
+                    message += f"**Download Link**: [Download Podcast]({download_url})\n\n"
                 elif download_url:
-                    # Fallback to just download link if no local file
-                    message += f"🔗 **Download Link**: {download_url}\n\n"
-                    message += "👆 **Click the link above to download your podcast!**\n\n"
+                    # Fallback to just download link
+                    message += f"🎧 **{display_name}**{size_display}\n\n"
+                    message += f"🎯 **Download**: [Get Your Podcast]({download_url})\n\n"
                 
-                # Add file info
-                if result.get("filename"):
-                    message += f"📁 **File**: {result['filename']}\n"
-                if result.get("audio_path"):
-                    message += f"📂 **Sandbox Path**: {result['audio_path']}\n"
-                
-                message += f"⏰ **Completed**: {result.get('completed_at', 'Unknown time')}\n"
+                completed_time = result.get('completed_at', 'Unknown time')
+                message += f"⏰ **Completed**: {completed_time}\n"
                 message += f"🆔 **Job ID**: {job_id}"
             elif status == "failed":
                 message += "❌ Status: Failed\n"
@@ -777,32 +806,46 @@ class SandboxPodcastTool(SandboxToolsBase):
             
             message = f"🎙️ Found {len(podcasts)} podcast file(s) and {len(redis_jobs)} completed job(s):\n\n"
             
-            # Show completed jobs with download links first
+            # Show completed podcasts with professional formatting
             if redis_jobs:
-                message += f"📥 **COMPLETED PODCASTS WITH DOWNLOAD LINKS** ({len(redis_jobs)}):\n\n"
+                message += f"🎧 **YOUR PODCASTS** ({len(redis_jobs)}):\n\n"
                 
                 for job_id, job_info in redis_jobs.items():
                     filename = job_info.get('filename', f'podcast_{job_id[:8]}.mp3')
+                    display_name = job_info.get('display_name', filename)
                     download_url = job_info.get('audioUrl') or job_info.get('audio_url')
-                    audio_path = job_info.get('audio_path')  # Local sandbox path
+                    audio_path = job_info.get('audio_path')  # Local path
                     
-                    message += f"🎯 **{filename}**\n"
+                    # Calculate file size
+                    try:
+                        if audio_path:
+                            file_info = self.sandbox.fs.get_file_info(f"{self.workspace_path}/{audio_path}")
+                            file_size_mb = file_info.size / (1024 * 1024)
+                            size_display = f" ({file_size_mb:.1f} MB)"
+                            duration = self._estimate_duration(filename)
+                        else:
+                            size_display = ""
+                            duration = "Unknown duration"
+                    except:
+                        size_display = ""
+                        duration = "Unknown duration"
+                    
+                    message += f"🎙️ **{display_name}**{size_display}\n"
+                    message += f"   📊 **Duration**: {duration}\n"
                     if download_url and audio_path:
-                        # Use local path for audio player, external URL for download
-                        message += f"   🎧 **AUDIO PLAYER**: [Uploaded File: {audio_path}]\n"
-                        message += f"   🔗 **DOWNLOAD**: {download_url}\n"
+                        # Professional presentation
+                        message += f"   🎧 **Play**: Available at {audio_path}\n"
+                        message += f"   📥 **Download**: [Get Podcast]({download_url})\n"
                     elif download_url:
                         # Fallback to just download link
-                        message += f"   🔗 **DOWNLOAD**: {download_url}\n"
-                    if job_info.get('audio_path'):
-                        message += f"   📂 Sandbox: {job_info['audio_path']}\n"
-                    message += f"   🆔 Job: {job_id}\n\n"
+                        message += f"   📥 **Download**: [Get Podcast]({download_url})\n"
+                    message += "\n"
                 
                 message += "---\n\n"
             
-                            # Show sandbox files
+                            # Show additional podcast files
                 if podcasts:
-                    message += "📁 **FILES IN SANDBOX:**\n\n"
+                    message += "📁 **ADDITIONAL FILES:**\n\n"
                     for podcast_name, files in podcasts.items():
                         message += f"📻 {podcast_name}\n"
                         
@@ -813,8 +856,9 @@ class SandboxPodcastTool(SandboxToolsBase):
                         if 'audio' in files:
                             size_mb = files['audio']['size'] / (1024 * 1024)
                             audio_path = f"podcasts/{files['audio']['filename']}"
-                            message += f"   🎧 **AUDIO PLAYER**: [Uploaded File: {audio_path}]\n"
-                            message += f"   🎵 Audio: {files['audio']['filename']} ({size_mb:.1f} MB)\n"
+                            duration = self._estimate_duration(files['audio']['filename'])
+                            message += f"   🎧 **Play**: Available at {audio_path}\n"
+                            message += f"   📊 **Details**: {files['audio']['filename']} ({size_mb:.1f} MB, ~{duration})\n"
                 
                 # Show most recent modification time
                 mod_times = []
@@ -928,10 +972,24 @@ class SandboxPodcastTool(SandboxToolsBase):
             audio_response = await asyncio.to_thread(requests.get, audio_url, timeout=60)
             audio_response.raise_for_status()
             
-            # Generate filename
-            podcast_name = payload.get('podcast_name', 'podcast')
-            safe_name = re.sub(r'[^\w\-_\.]', '_', podcast_name.lower())
-            filename = f"{safe_name}_{job_id[:8]}.mp3"
+            # Generate meaningful filename with topic and date
+            podcast_name = payload.get('name', payload.get('podcast_name', 'podcast'))
+            topic_text = payload.get('text', '')
+            
+            # Try to extract meaningful name from topic/content
+            if topic_text and len(topic_text) > 10:
+                # Extract first meaningful phrase from content
+                words = topic_text.split()[:6]  # First 6 words
+                meaningful_name = ' '.join(words)
+                meaningful_name = re.sub(r'[^\w\s\-]', '', meaningful_name)  # Remove special chars
+                meaningful_name = re.sub(r'\s+', '_', meaningful_name.strip())  # Replace spaces with underscores
+            else:
+                meaningful_name = podcast_name
+            
+            # Create safe filename with date
+            current_date = datetime.datetime.now().strftime("%Y%m%d")
+            safe_name = re.sub(r'[^\w\-_]', '_', meaningful_name.lower())[:30]  # Limit length
+            filename = f"{safe_name}_{current_date}.mp3"
             
             # Ensure podcasts directory exists in sandbox
             podcasts_dir = f"{self.workspace_path}/podcasts"
@@ -956,7 +1014,9 @@ class SandboxPodcastTool(SandboxToolsBase):
                     "audioUrl": audio_url,  # External URL for download
                     "filename": filename,
                     "audio_path": f"podcasts/{filename}",  # Local path for audio player
-                    "completed_at": str(time.time())
+                    "completed_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "display_name": filename.replace('.mp3', '').replace('_', ' ').title(),
+                    "topic_hint": payload.get('text', '')[:100] if payload.get('text') else ""  # Store snippet for reference
                 }
             )
             
