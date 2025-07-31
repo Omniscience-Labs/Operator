@@ -505,9 +505,14 @@ class SandboxPodcastTool(SandboxToolsBase):
                 
                 # Check for download URL
                 download_url = result.get("audioUrl") or result.get("audio_url")
+                filename = result.get("filename", "podcast.mp3")
+                
                 if download_url:
-                    message += f"🔗 **DOWNLOAD LINK**: {download_url}\n\n"
-                    message += "👆 **Click the link above to download your podcast!**\n\n"
+                    # Add audio attachment in format the frontend recognizes for audio rendering
+                    message += f"🎧 **Listen to your podcast:**\n\n"
+                    message += f"[Uploaded File: {download_url}]\n\n"
+                    message += f"🔗 **Download Link**: {download_url}\n\n"
+                    message += "👆 **Use the player above to listen, or click the link to download!**\n\n"
                 
                 # Add file info
                 if result.get("filename"):
@@ -734,6 +739,7 @@ class SandboxPodcastTool(SandboxToolsBase):
                     
                     message += f"🎯 **{filename}**\n"
                     if download_url:
+                        message += f"   🎧 **AUDIO PLAYER**: [Uploaded File: {download_url}]\n"
                         message += f"   🔗 **DOWNLOAD**: {download_url}\n"
                     if job_info.get('audio_path'):
                         message += f"   📂 Sandbox: {job_info['audio_path']}\n"
@@ -741,19 +747,21 @@ class SandboxPodcastTool(SandboxToolsBase):
                 
                 message += "---\n\n"
             
-            # Show sandbox files
-            if podcasts:
-                message += "📁 **FILES IN SANDBOX:**\n\n"
-                for podcast_name, files in podcasts.items():
-                    message += f"📻 {podcast_name}\n"
-                    
-                    if 'transcript' in files:
-                        size_kb = files['transcript']['size'] / 1024
-                        message += f"   📝 Transcript: {files['transcript']['filename']} ({size_kb:.1f} KB)\n"
-                    
-                    if 'audio' in files:
-                        size_mb = files['audio']['size'] / (1024 * 1024)
-                    message += f"   🎵 Audio: {files['audio']['filename']} ({size_mb:.1f} MB)\n"
+                            # Show sandbox files
+                if podcasts:
+                    message += "📁 **FILES IN SANDBOX:**\n\n"
+                    for podcast_name, files in podcasts.items():
+                        message += f"📻 {podcast_name}\n"
+                        
+                        if 'transcript' in files:
+                            size_kb = files['transcript']['size'] / 1024
+                            message += f"   📝 Transcript: {files['transcript']['filename']} ({size_kb:.1f} KB)\n"
+                        
+                        if 'audio' in files:
+                            size_mb = files['audio']['size'] / (1024 * 1024)
+                            audio_path = f"podcasts/{files['audio']['filename']}"
+                            message += f"   🎧 **AUDIO PLAYER**: [Uploaded File: {audio_path}]\n"
+                            message += f"   🎵 Audio: {files['audio']['filename']} ({size_mb:.1f} MB)\n"
                 
                 # Show most recent modification time
                 mod_times = []
