@@ -49,8 +49,11 @@ class SandboxPodcastTool(SandboxToolsBase):
         
         # Validate required environment variables
         if not self.openai_key and not self.gemini_key:
-            raise ValueError("Either OPENAI_API_KEY or GEMINI_API_KEY must be set")
+            logger.warning("Neither OPENAI_API_KEY nor GEMINI_API_KEY found - podcast generation may fail")
+            # Don't raise error here, let the service handle it
         # Note: ELEVENLABS_API_KEY is now optional - will be validated when tool is used
+        
+        logger.info(f"Podcast tool initialized with: OpenAI={'✅' if self.openai_key else '❌'}, Gemini={'✅' if self.gemini_key else '❌'}, ElevenLabs={'✅' if self.elevenlabs_key else '❌'}")
 
     def _validate_file_exists(self, file_path: str) -> bool:
         """Check if a file exists in the sandbox."""
@@ -878,6 +881,8 @@ class SandboxPodcastTool(SandboxToolsBase):
         logger.info(f"🎙️ Background processing started for job: {job_id}")
         
         try:
+            # Ensure sandbox is available for file operations
+            await self._ensure_sandbox()
             # Make the API request in thread pool to avoid blocking
             result = await asyncio.to_thread(self._make_fastapi_request, payload)
             
@@ -906,16 +911,20 @@ class SandboxPodcastTool(SandboxToolsBase):
             safe_name = re.sub(r'[^\w\-_\.]', '_', podcast_name.lower())
             filename = f"{safe_name}_{job_id[:8]}.mp3"
             
-            # Ensure podcasts directory exists
-            podcasts_dir = "/workspace/podcasts"
-            await asyncio.to_thread(os.makedirs, podcasts_dir, exist_ok=True)
+            # Ensure podcasts directory exists in sandbox
+            podcasts_dir = f"{self.workspace_path}/podcasts"
+            try:
+                # Use sandbox file system instead of direct OS calls
+                self.sandbox.fs.create_folder(podcasts_dir, "755")
+                logger.info(f"Created podcasts directory: {podcasts_dir}")
+            except Exception as e:
+                logger.warning(f"Directory might already exist: {e}")
             
-            # Save audio file
-            audio_path = os.path.join(podcasts_dir, filename)
-            with open(audio_path, 'wb') as f:
-                f.write(audio_response.content)
+            # Save audio file using sandbox file system
+            audio_path = f"{podcasts_dir}/{filename}"
+            self.sandbox.fs.upload_file(audio_response.content, audio_path)
             
-            logger.info(f"💾 Audio saved to: {audio_path}")
+            logger.info(f"💾 Audio saved to sandbox: {audio_path}")
             
             # Update Redis with completion info including both external URL and local path
             await redis.hset(
@@ -1027,13 +1036,18 @@ class SandboxPodcastTool(SandboxToolsBase):
                         raise Exception(f"No audio URL in response after {max_retries} attempts. Available fields: {list(result.keys())}")
                 
                 # Fix relative URLs by prepending base URL
-                if audio_url.startswith('/'):
+                if audio_url and audio_url.startswith('/'):
                     audio_url = f"{self.api_base_url}{audio_url}"
                     logger.info(f"Converted relative URL to absolute: {audio_url}")
-                elif not audio_url.startswith(('http://', 'https://')):
+                elif audio_url and not audio_url.startswith(('http://', 'https://')):
                     # Handle other relative path formats
                     audio_url = f"{self.api_base_url}/{audio_url.lstrip('/')}"
                     logger.info(f"Converted relative path to absolute: {audio_url}")
+                
+                # Validate the final URL format
+                if audio_url and not audio_url.startswith(('http://', 'https://')):
+                    logger.error(f"Invalid URL format after processing: {audio_url}")
+                    raise Exception(f"Invalid URL format: {audio_url}")
                 
                 # Verify the URL is accessible
                 try:
