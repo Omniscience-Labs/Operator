@@ -31,7 +31,7 @@ async def generate_podcast_background(
         logger.info(f"🎙️ Starting podcast generation for job {job_id}")
         
         # Get the external podcastfy API URL
-        api_base_url = os.getenv('PODCASTFY_API_URL', 'https://podcastfy-8x6a.onrender.com')
+        api_base_url = os.getenv('PODCASTFY_API_URL', 'https://podcastfy-omni.onrender.com')
         
         # Store initial status in Redis
         await redis.hset(
@@ -45,11 +45,11 @@ async def generate_podcast_background(
         )
         
         # Call the external podcastfy service
-        logger.info(f"Calling external podcastfy service: {api_base_url}/generate")
+        logger.info(f"Calling external podcastfy service: {api_base_url}/api/generate")
         
         # Make synchronous request to external service (this runs in background worker)
         response = requests.post(
-            f"{api_base_url}/generate",
+            f"{api_base_url}/api/generate",
             json=payload,
             timeout=600  # 10 minutes timeout for podcast generation
         )

@@ -42,7 +42,7 @@ class SandboxPodcastTool(SandboxToolsBase):
     def __init__(self, project_id: str, thread_manager: ThreadManager):
         super().__init__(project_id, thread_manager)
         self.workspace_path = "/workspace"
-        self.api_base_url = os.getenv('PODCASTFY_API_URL', 'https://podcastfy-8x6a.onrender.com')
+        self.api_base_url = os.getenv('PODCASTFY_API_URL', 'https://podcastfy-omni.onrender.com')
         self.gemini_key = os.getenv('GEMINI_API_KEY', '')
         self.openai_key = os.getenv('OPENAI_API_KEY', '')
         self.elevenlabs_key = os.getenv('ELEVENLABS_API_KEY', '')
@@ -366,16 +366,19 @@ class SandboxPodcastTool(SandboxToolsBase):
             
             # Prepare request payload for FastAPI
             # Note: For Render deployment, don't send API keys if they're set as env vars on the service
-            # Use edge TTS for Render services as it's more reliable (ElevenLabs often hits limits)
+            # Use Edge TTS for Render services, ElevenLabs for HuggingFace spaces  
             tts_model = "edge" if "render" in self.api_base_url.lower() else "elevenlabs"
             
-            # Configure better voices for Edge TTS with more natural sounding options
+            # Configure voices based on TTS model
             if tts_model == "edge" and not voices:
                 voices = {
                     "question": "en-US-JennyNeural",  # Natural female voice for person1  
                     "answer": "en-US-DavisNeural"    # Natural male voice for person2
                 }
                 logger.info("Using Edge TTS with high-quality dual voices: Jenny (female) and Davis (male)")
+            elif tts_model == "elevenlabs" and not voices:
+                voices = {}  # Let ElevenLabs use default voices
+                logger.info("Using ElevenLabs TTS with default voice switching")
             
             payload = {
                 "urls": processed_urls,
@@ -422,7 +425,7 @@ class SandboxPodcastTool(SandboxToolsBase):
                 
                 # Fallback to original synchronous call
                 response = requests.post(
-                    f"{self.api_base_url}/generate",
+                    f"{self.api_base_url}/api/generate",
                     json=payload,
                     timeout=600,  # 10 minutes timeout for podcast generation
                     headers={
@@ -883,7 +886,7 @@ class SandboxPodcastTool(SandboxToolsBase):
         """Check if Podcastfy service is healthy before making requests"""
         try:
             logger.info(f"Checking Podcastfy service health at: {self.api_base_url}")
-            response = requests.get(f"{self.api_base_url}/health", timeout=15)
+            response = requests.get(f"{self.api_base_url}/api/health", timeout=15)
             if response.status_code == 200:
                 health_data = response.json()
                 logger.info(f"Service health check: {health_data}")
@@ -1040,11 +1043,11 @@ class SandboxPodcastTool(SandboxToolsBase):
         
         for attempt in range(max_retries):
             try:
-                logger.info(f"Making request to {self.api_base_url}/generate (attempt {attempt + 1}/{max_retries})")
+                logger.info(f"Making request to {self.api_base_url}/api/generate (attempt {attempt + 1}/{max_retries})")
                 logger.info(f"Payload keys: {list(payload.keys())}")
                 
                 response = requests.post(
-                    f"{self.api_base_url}/generate",
+                    f"{self.api_base_url}/api/generate",
                     json=payload,
                     timeout=600,  # 10 minutes for complex podcasts
                     headers={
