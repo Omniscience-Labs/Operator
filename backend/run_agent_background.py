@@ -56,10 +56,10 @@ async def generate_podcast_background(
         response.raise_for_status()
         result = response.json()
         
-        if not result or not result.get("audioUrl"):
+        if not result or not result.get("audio_url"):
             raise Exception("Podcast generation failed: No audio URL returned from external service")
         
-        audio_url = result["audioUrl"]
+        audio_url = result["audio_url"]
         logger.info(f"✅ Podcast generated successfully: {audio_url}")
         
         # Store successful result in Redis

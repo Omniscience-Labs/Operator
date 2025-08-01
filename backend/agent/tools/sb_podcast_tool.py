@@ -439,7 +439,7 @@ class SandboxPodcastTool(SandboxToolsBase):
                 response.raise_for_status()
                 result = response.json()
                 
-                if not result.get("audioUrl"):
+                if not result.get("audio_url"):
                     return self.fail_response(f"Podcast generation failed: No audio URL returned")
                 
                 # Handle sync response (skip async job tracking)
@@ -959,7 +959,7 @@ class SandboxPodcastTool(SandboxToolsBase):
             result = await asyncio.to_thread(self._make_fastapi_request, payload)
             
             # Check if we got an audio URL
-            audio_url = result.get("audioUrl")
+            audio_url = result.get("audio_url")
             if not audio_url:
                 logger.error("No audio URL in result")
                 await redis.hset(
