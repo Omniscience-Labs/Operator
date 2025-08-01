@@ -417,9 +417,12 @@ class SandboxPodcastTool(SandboxToolsBase):
                 logger.info(f"Using {tts_model} TTS for Render service (more reliable than ElevenLabs)")
             
             # Try async job system first, fallback to sync if needed
+            # TEMPORARY: Skip async system due to job processing issues
+            async_error = Exception("Forcing sync mode - async job system has file serving issues")
             try:
-                result = await self._submit_podcast_job(payload)
-                job_id = result["job_id"]
+                # result = await self._submit_podcast_job(payload)
+                # job_id = result["job_id"]
+                raise async_error  # Force fallback to sync
             except Exception as async_error:
                 logger.warning(f"Async job system failed, falling back to sync: {async_error}")
                 
