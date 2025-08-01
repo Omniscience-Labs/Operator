@@ -49,3 +49,7 @@ llama-index-indices-managed-llama-cloud>=0.3.0
 pytz>=2023.3
 composio==1.0.0rc9
 
+# Local TTS dependencies for podcast generation fallback
+pyttsx3>=2.90
+gTTS>=2.3.0
+
