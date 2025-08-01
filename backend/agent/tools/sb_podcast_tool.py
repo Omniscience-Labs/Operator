@@ -463,17 +463,20 @@ class SandboxPodcastTool(SandboxToolsBase):
                     logger.warning(f"🌐 External service failed: {str(external_error)}")
                     logger.info("🏠 Falling back to LOCAL podcast generation")
                     
-                    # Final fallback: local generation
-                    try:
-                        return self._generate_podcast_locally(payload)
-                    except Exception as local_error:
-                        logger.error(f"🏠 Local generation also failed: {str(local_error)}")
-                        return self.fail_response(
-                            f"All podcast generation methods failed:\n"
-                            f"- Async: {async_error}\n"
-                            f"- External sync: {external_error}\n"  
-                            f"- Local: {local_error}"
-                        )
+                    # Final fallback: local generation (disabled due to Python 3.12+ audioop issues)
+                    if False:  # Disabled - requires Python 3.11 for audioop compatibility
+                        try:
+                            return self._generate_podcast_locally(payload)
+                        except Exception as local_error:
+                            logger.error(f"🏠 Local generation also failed: {str(local_error)}")
+                    
+                    return self.fail_response(
+                        f"Podcast generation methods failed:\n"
+                        f"- Async: {async_error}\n"
+                        f"- External sync: {external_error}\n"
+                        f"📝 Note: Local fallback disabled (requires Python 3.11 for audioop compatibility)\n"
+                        f"💡 The external Podcastfy service should work - it's running Python 3.11.9"
+                    )
             
             # Return immediately with job tracking info
             message = f"🎙️ Podcast generation started!\n\n"
@@ -557,7 +560,12 @@ class SandboxPodcastTool(SandboxToolsBase):
             return self.fail_response(f"Failed to process podcast: {str(e)}")
 
     def _generate_podcast_locally(self, payload: Dict[str, Any]) -> ToolResult:
-        """Generate podcast locally using Python TTS as final fallback"""
+        """Generate podcast locally using Python TTS as final fallback
+        
+        NOTE: Currently disabled due to Python 3.12+ compatibility issues with audioop.
+        Podcastfy requires Python 3.11 for audio processing (audioop.lin2lin removed in 3.12+).
+        Use external Podcastfy service instead, which runs Python 3.11.9.
+        """
         try:
             logger.info("🏠 Starting LOCAL podcast generation (final fallback)")
             
