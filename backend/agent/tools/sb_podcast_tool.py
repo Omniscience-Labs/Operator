@@ -490,7 +490,7 @@ class SandboxPodcastTool(SandboxToolsBase):
         """Handle synchronous podcast generation response (fallback mode)"""
         try:
             # Download the audio file
-            local_path = self._download_audio_file(result["audioUrl"])
+            local_path = self._download_audio_file(result["audio_url"])
             
             # Create podcasts directory in workspace
             podcasts_dir = f"{self.workspace_path}/podcasts"
@@ -1202,7 +1202,7 @@ class SandboxPodcastTool(SandboxToolsBase):
             return {
                 "job_id": job_id,
                 "status": result.get("status", "unknown"),
-                "audioUrl": result.get("audio_url"),
+                "audioUrl": result.get("audioUrl"),  # Read the same field name we store
                 "error": result.get("error"),
                 "created_at": result.get("created_at"),
                 "completed_at": result.get("completed_at")
