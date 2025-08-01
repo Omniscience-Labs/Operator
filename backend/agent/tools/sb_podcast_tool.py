@@ -1401,6 +1401,8 @@ class SandboxPodcastTool(SandboxToolsBase):
                     result.get("audio_file")  # Some services use this field
                 )
                 
+
+                
                 if not audio_url:
                     method = result.get("method", "unknown")
                     if method == "direct_api_fallback":
@@ -1431,7 +1433,20 @@ class SandboxPodcastTool(SandboxToolsBase):
                         time.sleep(retry_delay)
                         continue
                     else:
-                        raise Exception(f"No audio URL in response after {max_retries} attempts. Available fields: {list(result.keys())}")
+                        # Check if we got a transcript but no audio (service generating HTML only)
+                        if result.get("transcript") or result.get("transcript_url"):
+                            raise Exception(f"🎤 SERVICE GENERATING TRANSCRIPT ONLY (HTML):\n\n"
+                                          f"The Podcastfy service created a transcript but NO AUDIO.\n"
+                                          f"This means it's only making HTML content, not MP3 files.\n\n"
+                                          f"Common causes:\n"
+                                          f"• TTS service (ElevenLabs/Edge) is down\n"
+                                          f"• Service misconfiguration\n"
+                                          f"• Audio generation timeout\n\n"
+                                          f"Service message: {result.get('message', 'No message')}\n"
+                                          f"Method: {result.get('method', 'unknown')}\n\n"
+                                          f"💡 Try again later or contact support if this persists.")
+                        else:
+                            raise Exception(f"No audio URL in response after {max_retries} attempts. Available fields: {list(result.keys())}")
                 
                 # Fix relative URLs by prepending base URL
                 if audio_url and audio_url.startswith('/'):
