@@ -428,12 +428,38 @@ class SandboxPodcastTool(SandboxToolsBase):
                 logger.info(f"Using {tts_model} TTS for Render service (more reliable than ElevenLabs)")
             
             # Try async job system first, fallback to sync, then local generation
-            # TEMPORARY: Skip async system due to job processing issues
-            async_error = Exception("Forcing sync mode - async job system has file serving issues")
+            # Try async system first (fixed file serving issues)
             try:
-                # result = await self._submit_podcast_job(payload)
-                # job_id = result["job_id"]
-                raise async_error  # Force fallback to sync
+                result = await self._submit_podcast_job(payload)
+                job_id = result["job_id"]
+                
+                # Return immediately with job tracking info
+                message = f"🎙️ Podcast generation started!\n\n"
+                message += f"Job ID: {job_id}\n"
+                message += f"Status: Queued for processing\n\n"
+                message += f"⏳ This will take a few minutes. I'll let you know when it's ready!\n\n"
+                
+                # Add content source summary
+                message += f"Content sources being processed:\n"
+                if topic:
+                    message += f"- Topic: {topic}\n"
+                if urls:
+                    message += f"- {len(urls)} URLs\n"
+                if file_paths:
+                    file_chars = len(file_content.strip()) if file_content.strip() else 0
+                    message += f"- {len(file_paths)} local files (content read as text: {file_chars} characters)\n" 
+                if text:
+                    text_chars = len(text.strip()) if text.strip() else 0
+                    message += f"- Direct text input ({text_chars} characters)\n"
+                
+                message += f"\nConfiguration:\n"
+                message += f"- Length: {podcast_length}\n"
+                message += f"- Style: {', '.join(conversation_style)}\n"
+                message += f"- Language: {language}\n"
+                message += f"- Speakers: {roles_person1} & {roles_person2}\n\n"
+                message += f"💡 Use `check_podcast_status(job_id='{job_id}')` to check progress!"
+                
+                return self.success_response(message)
             except Exception as async_error:
                 logger.warning(f"Async job system failed, falling back to sync: {async_error}")
                 
@@ -522,38 +548,56 @@ class SandboxPodcastTool(SandboxToolsBase):
     def _handle_sync_response(self, result: Dict[str, Any], payload: Dict[str, Any]) -> ToolResult:
         """Handle synchronous podcast generation response (fallback mode)"""
         try:
-            # Download the audio file
-            local_path = self._download_audio_file(result["audio_url"])
+            # Download the audio file using the same method as async
+            audio_url = result["audio_url"]
+            logger.info(f"📥 Downloading audio from: {audio_url}")
             
-            # Create podcasts directory in workspace
-            podcasts_dir = f"{self.workspace_path}/podcasts"
-            self.sandbox.fs.create_folder(podcasts_dir, "755")
+            # Download to temporary file first (reliable pattern)
+            import tempfile
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
+                temp_path = temp_file.name
             
-            # Determine output filename
-            output_name = payload.get('output_name')
-            if not output_name:
-                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_name = f"podcast_{timestamp}"
-            
-            # Upload to sandbox
-            with open(local_path, 'rb') as f:
-                audio_content = f.read()
-            
-            audio_filename = f"{output_name}.mp3"
-            audio_path = f"{podcasts_dir}/{audio_filename}"
-            self.sandbox.fs.upload_file(audio_content, audio_path)
-            
-            # Clean up local file
             try:
-                os.unlink(local_path)
-            except:
-                pass
-            
-            # Prepare success message
-            message = f"🎙️ Podcast generated successfully! (sync mode)\n\nGenerated files:\n"
-            message += f"- podcasts/{audio_filename}\n"
-            
-            return self.success_response(message)
+                # Download file content
+                response = requests.get(audio_url, timeout=60)
+                response.raise_for_status()
+                
+                # Write to temp file
+                with open(temp_path, 'wb') as f:
+                    f.write(response.content)
+                
+                # Create podcasts directory in workspace
+                podcasts_dir = f"{self.workspace_path}/podcasts"
+                self.sandbox.fs.create_folder(podcasts_dir, "755")
+                
+                # Determine output filename
+                output_name = payload.get('output_name')
+                if not output_name:
+                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    output_name = f"podcast_{timestamp}"
+                
+                # Upload to sandbox using temp file content
+                with open(temp_path, 'rb') as f:
+                    audio_content = f.read()
+                
+                audio_filename = f"{output_name}.mp3"
+                audio_path = f"{podcasts_dir}/{audio_filename}"
+                self.sandbox.fs.upload_file(audio_content, audio_path)
+                
+                logger.info(f"💾 Audio saved to sandbox: {audio_path}")
+                
+                # Prepare success message
+                message = f"🎙️ Podcast generated successfully! (sync mode)\n\nGenerated files:\n"
+                message += f"- podcasts/{audio_filename}\n"
+                
+                return self.success_response(message)
+                
+            finally:
+                # Clean up temp file
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
             
         except Exception as e:
             logger.error(f"Error handling sync response: {str(e)}")
@@ -1220,41 +1264,61 @@ class SandboxPodcastTool(SandboxToolsBase):
             
             logger.info(f"📥 Downloading audio from: {audio_url}")
             
-            # Download the audio file to sandbox
-            audio_response = await asyncio.to_thread(requests.get, audio_url, timeout=60)
-            audio_response.raise_for_status()
+            # Download the audio file using temp file pattern (reliable for sandbox)
+            import tempfile
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
+                temp_path = temp_file.name
             
-            # Generate meaningful filename with topic and date
-            podcast_name = payload.get('name', payload.get('podcast_name', 'podcast'))
-            topic_text = payload.get('text', '')
-            
-            # Try to extract meaningful name from topic/content
-            if topic_text and len(topic_text) > 10:
-                # Extract first meaningful phrase from content
-                words = topic_text.split()[:6]  # First 6 words
-                meaningful_name = ' '.join(words)
-                meaningful_name = re.sub(r'[^\w\s\-]', '', meaningful_name)  # Remove special chars
-                meaningful_name = re.sub(r'\s+', '_', meaningful_name.strip())  # Replace spaces with underscores
-            else:
-                meaningful_name = podcast_name
-            
-            # Create safe filename with date
-            current_date = datetime.datetime.now().strftime("%Y%m%d")
-            safe_name = re.sub(r'[^\w\-_]', '_', meaningful_name.lower())[:30]  # Limit length
-            filename = f"{safe_name}_{current_date}.mp3"
-            
-            # Ensure podcasts directory exists in sandbox
-            podcasts_dir = f"{self.workspace_path}/podcasts"
             try:
-                # Use sandbox file system instead of direct OS calls
-                self.sandbox.fs.create_folder(podcasts_dir, "755")
-                logger.info(f"Created podcasts directory: {podcasts_dir}")
-            except Exception as e:
-                logger.warning(f"Directory might already exist: {e}")
-            
-            # Save audio file using sandbox file system
-            audio_path = f"{podcasts_dir}/{filename}"
-            self.sandbox.fs.upload_file(audio_response.content, audio_path)
+                # Download file content to temp file
+                audio_response = await asyncio.to_thread(requests.get, audio_url, timeout=60)
+                audio_response.raise_for_status()
+                
+                # Write to temp file first
+                with open(temp_path, 'wb') as f:
+                    f.write(audio_response.content)
+                
+                # Generate meaningful filename with topic and date
+                podcast_name = payload.get('name', payload.get('podcast_name', 'podcast'))
+                topic_text = payload.get('text', '')
+                
+                # Try to extract meaningful name from topic/content
+                if topic_text and len(topic_text) > 10:
+                    # Extract first meaningful phrase from content
+                    words = topic_text.split()[:6]  # First 6 words
+                    meaningful_name = ' '.join(words)
+                    meaningful_name = re.sub(r'[^\w\s\-]', '', meaningful_name)  # Remove special chars
+                    meaningful_name = re.sub(r'\s+', '_', meaningful_name.strip())  # Replace spaces with underscores
+                else:
+                    meaningful_name = podcast_name
+                
+                # Create safe filename with date
+                current_date = datetime.datetime.now().strftime("%Y%m%d")
+                safe_name = re.sub(r'[^\w\-_]', '_', meaningful_name.lower())[:30]  # Limit length
+                filename = f"{safe_name}_{current_date}.mp3"
+                
+                # Ensure podcasts directory exists in sandbox
+                podcasts_dir = f"{self.workspace_path}/podcasts"
+                try:
+                    # Use sandbox file system instead of direct OS calls
+                    self.sandbox.fs.create_folder(podcasts_dir, "755")
+                    logger.info(f"Created podcasts directory: {podcasts_dir}")
+                except Exception as e:
+                    logger.warning(f"Directory might already exist: {e}")
+                
+                # Read temp file and upload to sandbox (reliable pattern)
+                with open(temp_path, 'rb') as f:
+                    audio_content = f.read()
+                
+                audio_path = f"{podcasts_dir}/{filename}"
+                self.sandbox.fs.upload_file(audio_content, audio_path)
+                
+            finally:
+                # Clean up temp file
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
             
             logger.info(f"💾 Audio saved to sandbox: {audio_path}")
             
