@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Download, Star, Calendar, User, Tags, TrendingUp, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMarketplaceAgents, useAddAgentToLibrary } from '@/hooks/react-query/marketplace/use-marketplace';
+import { useMarketplaceAgents, useAddAgentToLibrary, useUserAgentLibrary } from '@/hooks/react-query/marketplace/use-marketplace';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 
@@ -18,6 +19,7 @@ import { useCurrentAccount } from '@/hooks/use-current-account';
 type SortOption = 'newest' | 'popular' | 'most_downloaded' | 'name';
 
 export default function MarketplacePage() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -36,10 +38,16 @@ export default function MarketplacePage() {
   }), [page, searchQuery, selectedTags, sortBy, currentAccount]);
 
   const { data: agentsResponse, isLoading, error } = useMarketplaceAgents(queryParams);
+  const { data: userLibrary } = useUserAgentLibrary();
   const addToLibraryMutation = useAddAgentToLibrary();
 
   const agents = agentsResponse?.agents || [];
   const pagination = agentsResponse?.pagination;
+
+  // Helper function to check if an agent is already in user's library
+  const isAgentInLibrary = (agentId: string) => {
+    return userLibrary?.some(libraryItem => libraryItem.original_agent_id === agentId) || false;
+  };
 
   React.useEffect(() => {
     setPage(1);
@@ -71,6 +79,11 @@ export default function MarketplacePage() {
 
   const handleHighlightChange = (agentId: string | null) => {
     setHighlightedAgentId(agentId);
+  };
+
+  const handleAgentClick = (agentId: string) => {
+    // Navigate to dashboard with the selected agent
+    router.push(`/dashboard?agent_id=${agentId}`);
   };
 
 
@@ -235,7 +248,9 @@ export default function MarketplacePage() {
                 agent={agent}
                 mode="marketplace"
                 onAddToLibrary={(agentId) => handleAddToLibrary(agentId, agent.name)}
+                onChat={handleAgentClick}
                 isLoading={addingAgentId === agent.agent_id}
+                isAddedToLibrary={isAgentInLibrary(agent.agent_id)}
                 enableTilt={true}
                 isHighlighted={highlightedAgentId === agent.agent_id}
                 onHighlightChange={handleHighlightChange}
