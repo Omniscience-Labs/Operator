@@ -524,7 +524,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             action: () => {
               // Click the meetings dashboard button
               const meetingsButton = findMeetingsDashboardButton();
-              if (meetingsButton) {
+              if (meetingsButton && meetingsButton instanceof HTMLElement) {
                 meetingsButton.click();
               }
               // Small delay to allow navigation, then show next step
