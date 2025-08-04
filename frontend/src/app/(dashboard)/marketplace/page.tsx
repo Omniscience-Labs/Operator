@@ -201,12 +201,31 @@ export default function MarketplacePage() {
             ))}
           </div>
         ) : agents.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">
-              {searchQuery || selectedTags.length > 0
-                ? "No agents found matching your criteria. Try adjusting your search or filters."
-                : "No agents are currently available in the marketplace."}
-            </p>
+          <div className="text-center py-12 space-y-6">
+            <div className="space-y-3">
+              <p className="text-muted-foreground">
+                {searchQuery || selectedTags.length > 0
+                  ? "No agents found matching your criteria. Try adjusting your search or filters."
+                  : "No agents are currently available in the marketplace."}
+              </p>
+              {!searchQuery && selectedTags.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Be the first to share your agents with your community!
+                </p>
+              )}
+            </div>
+            {!searchQuery && selectedTags.length === 0 && (
+              <Button 
+                onClick={() => {
+                  // Navigate to agents page and trigger tour
+                  window.location.href = '/agents?tour=publish';
+                }}
+                className="gap-2"
+              >
+                <Globe className="h-4 w-4" />
+                Add Agent to Marketplace
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 sm:gap-6">
