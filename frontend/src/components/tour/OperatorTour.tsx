@@ -119,6 +119,44 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     return null;
   };
 
+  const findMeetingsDashboardButton = () => {
+    const selectors = [
+      // Target the meetings link in the sidebar
+      'a[href="/meetings"]',
+      'a[href="/meetings"] button',
+      'a[href="/meetings"] .sidebar-menu-button',
+      // Fallback selectors looking for meetings text
+      'a:has-text("Meetings")',
+      '[href="/meetings"]',
+      // Look for FileAudio icon in sidebar context
+      '.sidebar a:has(.lucide-file-audio)',
+      'nav a:has(.lucide-file-audio)',
+      // Generic fallback
+      'a[href*="meetings"]'
+    ];
+    
+    for (const selector of selectors) {
+      try {
+        const element = document.querySelector(selector);
+        if (element) return element;
+      } catch (e) {
+        // Skip invalid selectors like :has-text
+        continue;
+      }
+    }
+    
+    // Manual search for meetings link by text content
+    const links = document.querySelectorAll('a');
+    for (const link of links) {
+      if (link.textContent?.toLowerCase().includes('meetings') && 
+          (link.getAttribute('href') === '/meetings' || link.getAttribute('href')?.includes('meetings'))) {
+        return link;
+      }
+    }
+    
+    return null;
+  };
+
   const findNewTaskElement = () => {
     const selectors = [
       // Target LiquidButton components with specific class patterns
@@ -413,14 +451,13 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 5: Media/Meetings Guide - IMPROVED POSITIONING
+      // Step 5: Join Online Meetings Button
       tourRef.current.addStep({
-        id: 'meetings',
-        title: 'Meeting Recorder',
+        id: 'join-online-meetings',
+        title: 'Join Online Meetings',
         text: `
           <div class="space-y-3">
-            <p>This is the meeting recorder button! Click here to open the meetings page where you can record and transcribe conversations.</p>
-            <p>You can record in-person meetings or join online meetings with a bot that captures everything for you.</p>
+            <p>This is how you directly join a meeting! Click this button to join Zoom, Teams, or any online meeting with an AI bot that will record and transcribe everything for you.</p>
           </div>
         `,
         attachTo: {
@@ -485,14 +522,88 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Next',
             action: () => {
-              tourRef.current?.next();
+              // Click the meetings dashboard button
+              const meetingsButton = findMeetingsDashboardButton();
+              if (meetingsButton) {
+                meetingsButton.click();
+              }
+              // Small delay to allow navigation, then show next step
+              setTimeout(() => {
+                tourRef.current?.next();
+              }, 500);
             },
             classes: 'shepherd-button-primary'
           }
         ]
       });
 
-      // Step 6: New Task Button
+      // Step 6: Meetings Dashboard
+      tourRef.current.addStep({
+        id: 'meetings-dashboard',
+        title: 'Meetings Dashboard',
+        text: `
+          <div class="space-y-3">
+            <p>View all meetings here! This is your meetings dashboard where you can organize, search, and manage all your recorded conversations.</p>
+            <p>Create new meetings, organize them in folders, and access all your transcripts from one central location.</p>
+          </div>
+        `,
+        attachTo: {
+          element: 'a[href="/meetings"], [href="/meetings"]',
+          on: 'right'
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = findMeetingsDashboardButton();
+              if (element) {
+                addHighlight(element);
+                // Ensure element is scrolled into view
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
+              }
+              resolve();
+            }, 600); // Slightly longer delay to account for navigation
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = findMeetingsDashboardButton();
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => {
+              // Navigate back to dashboard before going back
+              window.location.href = '/dashboard';
+              setTimeout(() => {
+                tourRef.current?.back();
+              }, 500);
+            },
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              // Navigate back to dashboard for the next step
+              window.location.href = '/dashboard';
+              setTimeout(() => {
+                tourRef.current?.next();
+              }, 500);
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 7: New Task Button
       tourRef.current.addStep({
         id: 'new-task',
         title: 'Create a New Task',
@@ -571,7 +682,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 7: Send Message
+      // Step 8: Send Message
       tourRef.current.addStep({
         id: 'send-message',
         title: 'Send Your Message',
