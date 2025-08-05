@@ -854,7 +854,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       });
 
       // Step 7: Sidebar Meetings Link
-      const sidebarMeetingsStep = {
+      const sidebarMeetingsStep: any = {
         id: 'sidebar-meetings',
         title: 'Meetings Navigation',
         text: `
@@ -927,7 +927,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       tourRef.current.addStep(sidebarMeetingsStep);
 
       // Step 8: Sidebar Agents Link  
-      const sidebarAgentsStep = {
+      const sidebarAgentsStep: any = {
         id: 'sidebar-agents',
         title: 'Your Agents',
         text: `
