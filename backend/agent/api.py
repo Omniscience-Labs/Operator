@@ -1641,7 +1641,6 @@ async def initiate_agent_with_files(
                 )
                 
                 if downloaded_files:
-                    message_content += f"\n\n[Agent Default Files Available]: {', '.join([f.split('/')[-1] for f in downloaded_files])}"
                     logger.info(f"Downloaded {len(downloaded_files)} default files to sandbox: {downloaded_files}")
                 else:
                     logger.info(f"No files were actually downloaded")
