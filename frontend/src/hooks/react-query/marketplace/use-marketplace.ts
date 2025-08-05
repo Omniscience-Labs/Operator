@@ -208,6 +208,7 @@ export function usePublishAgent() {
       teamIds = [],
       includeKnowledgeBases = true,
       includeCustomMcpTools = true,
+      includeDefaultFiles = true,
       managedAgent = false
     }: { 
       agentId: string; 
@@ -216,6 +217,7 @@ export function usePublishAgent() {
       teamIds?: string[];
       includeKnowledgeBases?: boolean;
       includeCustomMcpTools?: boolean;
+      includeDefaultFiles?: boolean;
       managedAgent?: boolean;
     }): Promise<void> => {
       try {
@@ -242,6 +244,7 @@ export function usePublishAgent() {
             team_ids: teamIds,
             include_knowledge_bases: includeKnowledgeBases,
             include_custom_mcp_tools: includeCustomMcpTools,
+            include_default_files: includeDefaultFiles,
             managed_agent: managedAgent
           }),
         });

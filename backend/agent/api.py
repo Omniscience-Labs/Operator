@@ -2337,6 +2337,7 @@ class PublishAgentRequest(BaseModel):
     team_ids: Optional[List[UUID]] = []  # Team account IDs to share with (must be valid UUIDs)
     include_knowledge_bases: Optional[bool] = True  # Whether to include knowledge bases when sharing
     include_custom_mcp_tools: Optional[bool] = True  # Whether to include custom MCP tools when sharing
+    include_default_files: Optional[bool] = True  # Whether to include default files when sharing
     managed_agent: Optional[bool] = False  # Whether this is a managed agent (users get live reference instead of copy)
     
     @validator('team_ids', pre=True)
@@ -2478,6 +2479,7 @@ async def publish_agent_to_marketplace(
     logger.info(f"Team IDs received: {publish_data.team_ids}")
     logger.info(f"Include knowledge bases: {publish_data.include_knowledge_bases}")
     logger.info(f"Include custom MCP tools: {publish_data.include_custom_mcp_tools}")
+    logger.info(f"Include default files: {publish_data.include_default_files}")
     logger.info(f"Managed agent: {publish_data.managed_agent}")
     
     client = await db.client
@@ -2506,6 +2508,7 @@ async def publish_agent_to_marketplace(
         sharing_preferences = {
             'include_knowledge_bases': publish_data.include_knowledge_bases,
             'include_custom_mcp_tools': publish_data.include_custom_mcp_tools,
+            'include_default_files': publish_data.include_default_files,
             'managed_agent': publish_data.managed_agent
         }
         
@@ -2662,7 +2665,16 @@ async def add_agent_to_library(
     client = await db.client
     
     try:
-        # Call the database function with user_id
+        # First, get the original agent data to check sharing preferences
+        agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
+        if not agent_result.data:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        original_agent = agent_result.data[0]
+        sharing_preferences = original_agent.get('sharing_preferences', {})
+        default_files = original_agent.get('default_files', [])
+        
+        # Call the database function to create the agent copy
         result = await client.rpc('add_agent_to_library', {
             'p_original_agent_id': agent_id,
             'p_user_account_id': user_id
@@ -2671,10 +2683,40 @@ async def add_agent_to_library(
         if result.data:
             new_agent_id = result.data
             logger.info(f"Successfully added agent {agent_id} to library as {new_agent_id}")
+            
+            # Check if this is a managed agent (no file copying needed)
+            is_managed = sharing_preferences.get('managed_agent', False)
+            
+            # Copy default files if included in sharing preferences and not a managed agent
+            if not is_managed and sharing_preferences.get('include_default_files', True) and default_files:
+                try:
+                    files_manager = AgentDefaultFilesManager()
+                    copied_files = await files_manager.copy_files_for_agent_copy(
+                        original_agent['account_id'],  # Source account
+                        agent_id,                       # Source agent
+                        user_id,                        # Destination account 
+                        new_agent_id,                   # Destination agent
+                        default_files
+                    )
+                    
+                    # Update the new agent with copied files metadata
+                    if copied_files:
+                        await client.table('agents').update({
+                            'default_files': copied_files
+                        }).eq('agent_id', new_agent_id).execute()
+                        
+                        logger.info(f"Copied {len(copied_files)} default files for agent {new_agent_id}")
+                        
+                except Exception as e:
+                    logger.error(f"Error copying default files for agent {new_agent_id}: {str(e)}")
+                    # Don't fail the entire operation, just log the error
+            
             return {"message": "Agent added to library successfully", "new_agent_id": new_agent_id}
         else:
             raise HTTPException(status_code=400, detail="Failed to add agent to library")
         
+    except HTTPException:
+        raise
     except Exception as e:
         error_msg = str(e)
         logger.error(f"Error adding agent {agent_id} to library: {error_msg}")

@@ -34,6 +34,7 @@ export function PublishAgentDialog({
 }: PublishAgentDialogProps) {
   const [includeKnowledgeBases, setIncludeKnowledgeBases] = useState(true);
   const [includeCustomMcpTools, setIncludeCustomMcpTools] = useState(true);
+  const [includeDefaultFiles, setIncludeDefaultFiles] = useState(true);
   const [managedAgent, setManagedAgent] = useState(false);
   const publishAgentMutation = usePublishAgent();
   
@@ -49,6 +50,7 @@ export function PublishAgentDialog({
         teamIds: [],
         includeKnowledgeBases,
         includeCustomMcpTools,
+        includeDefaultFiles,
         managedAgent
       });
       
@@ -182,6 +184,29 @@ export function PublishAgentDialog({
                       Include custom MCP server configurations. Recipients will need access to the same MCP servers.
                       {(!agent.configured_mcps || agent.configured_mcps.length === 0) && (!agent.custom_mcps || agent.custom_mcps.length === 0) && (
                         <span className="text-amber-600 dark:text-amber-400"> No custom MCP tools configured.</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3 p-3 rounded-lg border bg-muted/20">
+                  <Checkbox
+                    id="include-default-files"
+                    checked={includeDefaultFiles}
+                    onCheckedChange={(checked) => setIncludeDefaultFiles(checked === true)}
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="include-default-files" className="cursor-pointer font-medium">
+                      Default Files {agent.default_files && agent.default_files.length > 0 && (
+                        <Badge variant="secondary" className="ml-2">
+                          {agent.default_files.length} files
+                        </Badge>
+                      )}
+                    </Label>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Include default files that are automatically available in agent workspace.
+                      {!agent.default_files || agent.default_files.length === 0 && (
+                        <span className="text-amber-600 dark:text-amber-400"> No default files configured.</span>
                       )}
                     </p>
                   </div>
