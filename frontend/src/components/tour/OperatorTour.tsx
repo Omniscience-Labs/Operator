@@ -257,14 +257,14 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       }
       
       // Look for submit type
-      if (button.type === 'submit') {
+      if (button.getAttribute('type') === 'submit') {
         console.log('Found submit button:', button);
         return button;
       }
       
       // Look for buttons in chat input area that might be send buttons
       const isInChatInput = button.closest('[data-testid="chat-input"], .chat-input, form');
-      if (isInChatInput && (hasArrowUp || button.type === 'submit')) {
+      if (isInChatInput && (hasArrowUp || button.getAttribute('type') === 'submit')) {
         console.log('Found send button in chat input:', button);
         return button;
       }
