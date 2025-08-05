@@ -96,6 +96,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
   };
 
   const findJoinOnlineMeetingButton = () => {
+    console.log('Searching for join online meeting button...');
+    
     const selectors = [
       // Target any button that might open the Join Online Meeting dialog
       'button[aria-label*="Join Online Meeting"]',
@@ -124,6 +126,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       '.meeting-recorder button'
     ];
     
+    // Debug: Log all buttons on the page
+    const allButtons = document.querySelectorAll('button');
+    console.log(`Found ${allButtons.length} buttons on page`);
+    
     // Also search by text content
     const buttons = document.querySelectorAll('button');
     for (const button of buttons) {
@@ -131,9 +137,22 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       const title = button.getAttribute('title')?.toLowerCase() || '';
       const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
       
+      // Debug: Log interesting buttons
+      if (text.includes('join') || text.includes('meeting') || 
+          title.includes('join') || title.includes('meeting') ||
+          ariaLabel.includes('join') || ariaLabel.includes('meeting')) {
+        console.log('Found potential meeting button:', {
+          text,
+          title,
+          ariaLabel,
+          element: button
+        });
+      }
+      
       if (text.includes('join') && text.includes('meeting') ||
           title.includes('join') && title.includes('meeting') ||
           ariaLabel.includes('join') && ariaLabel.includes('meeting')) {
+        console.log('Found matching join meeting button:', button);
         return button;
       }
     }
@@ -141,11 +160,16 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     for (const selector of selectors) {
       try {
         const element = document.querySelector(selector);
-        if (element) return element;
+        if (element) {
+          console.log(`Found element with selector "${selector}":`, element);
+          return element;
+        }
       } catch (e) {
         continue;
       }
     }
+    
+    console.log('No join online meeting button found');
     return null;
   };
 
@@ -482,7 +506,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       });
 
       // Step 5: Join Online Meeting Button
-      tourRef.current.addStep({
+      const joinMeetingButton = findJoinOnlineMeetingButton();
+      const joinMeetingStepConfig: any = {
         id: 'join-online-meeting',
         title: 'Join Online Meeting',
         text: `
@@ -490,37 +515,11 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>Join online meeting</p>
           </div>
         `,
-        attachTo: {
-          element: 'button:has(.lucide-file-audio), button:has(.file-audio), button.h-7.rounded-md.text-muted-foreground:has(.lucide-file-audio)',
-          on: 'top'
-        },
-        popperOptions: {
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [0, -20], // Position popup above the button with proper spacing
-              },
-            },
-            {
-              name: 'preventOverflow',
-              options: {
-                boundary: 'viewport',
-                padding: 20,
-              },
-            },
-            {
-              name: 'flip',
-              options: {
-                fallbackPlacements: ['bottom', 'left', 'right'],
-              },
-            },
-          ],
-        },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
               const element = findJoinOnlineMeetingButton();
+              console.log('Join meeting button found:', element);
               if (element) {
                 addHighlight(element);
                 // Ensure element is scrolled into view with extra space
@@ -529,6 +528,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   block: 'center',
                   inline: 'nearest' 
                 });
+              } else {
+                console.warn('Join online meeting button not found');
               }
               resolve();
             }, 100);
@@ -565,10 +566,47 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      });
+      };
+
+      // Add attachTo only if we found the button
+      if (joinMeetingButton) {
+        joinMeetingStepConfig.attachTo = {
+          element: joinMeetingButton,
+          on: 'top'
+        };
+        joinMeetingStepConfig.popperOptions = {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [0, -20],
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 20,
+              },
+            },
+            {
+              name: 'flip',
+              options: {
+                fallbackPlacements: ['bottom', 'left', 'right'],
+              },
+            },
+          ],
+        };
+      } else {
+        // If button not found, show step in center of screen
+        console.warn('Join online meeting button not found, showing step without attachment');
+      }
+
+      tourRef.current.addStep(joinMeetingStepConfig);
 
       // Step 6: Meetings Dashboard
-      tourRef.current.addStep({
+      const meetingsDashboardButton = findMeetingsDashboardButton();
+      const meetingsDashboardStepConfig: any = {
         id: 'meetings-dashboard',
         title: 'See All Meetings',
         text: `
@@ -576,14 +614,11 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>See all meetings from here</p>
           </div>
         `,
-        attachTo: {
-          element: 'a[href="/meetings"], [href="/meetings"]',
-          on: 'right'
-        },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
               const element = findMeetingsDashboardButton();
+              console.log('Meetings dashboard button found:', element);
               if (element) {
                 addHighlight(element);
                 // Ensure element is scrolled into view
@@ -592,6 +627,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   block: 'center',
                   inline: 'nearest' 
                 });
+              } else {
+                console.warn('Meetings dashboard button not found');
               }
               resolve();
             }, 600); // Slightly longer delay to account for navigation
@@ -630,7 +667,19 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      });
+      };
+
+      // Add attachTo only if we found the meetings dashboard button
+      if (meetingsDashboardButton) {
+        meetingsDashboardStepConfig.attachTo = {
+          element: meetingsDashboardButton,
+          on: 'right'
+        };
+      } else {
+        console.warn('Meetings dashboard button not found, showing step without attachment');
+      }
+
+      tourRef.current.addStep(meetingsDashboardStepConfig);
 
       // Step 7: New Task Button
       tourRef.current.addStep({
