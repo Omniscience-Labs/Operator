@@ -274,29 +274,38 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     return null;
   };
 
-  const findSidebarMeetingsLink = () => {
+    const findSidebarMeetingsLink = () => {
     console.log('Searching for Sidebar Meetings link...');
     
+    // Search by text content first (most reliable)
+    const links = document.querySelectorAll('a, button');
+    for (const link of links) {
+      const text = link.textContent?.toLowerCase() || '';
+      if (text.includes('meetings') && link.closest('[class*="sidebar"], nav, aside')) {
+        console.log('Found meetings link by text:', link);
+        return link;
+      }
+    }
+    
+    // Try specific selectors
     const selectors = [
       'a[href="/meetings"]',
       'a[href*="meetings"]',
-      '[data-testid="meetings-nav"]'
+      '[data-testid="meetings-nav"]',
+      // Look in sidebar context
+      '[class*="sidebar"] a:contains("Meetings")',
+      'nav a:contains("Meetings")'
     ];
     
     for (const selector of selectors) {
+      try {
         const element = document.querySelector(selector);
         if (element) {
-        console.log('Found sidebar meetings link:', element);
-            return element;
-          }
-    }
-    
-    // Search by text content
-    const links = document.querySelectorAll('a, button');
-    for (const link of links) {
-      if (link.textContent?.toLowerCase().includes('meetings') && link.closest('.sidebar, nav')) {
-        console.log('Found meetings link by text:', link);
-        return link;
+          console.log('Found sidebar meetings link:', element);
+          return element;
+        }
+      } catch (e) {
+        continue;
       }
     }
     
@@ -803,7 +812,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           return new Promise<void>((resolve) => {
             setTimeout(() => {
               const element = findMeetingsDashboardButton();
-              console.log('Meetings dashboard button found:', element);
+              console.log('Step 6 - Meetings dashboard button found:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -812,7 +821,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
               } else {
-                console.warn('Meetings dashboard button not found');
+                console.warn('Step 6 - Meetings dashboard button not found');
               }
               resolve();
             }, 100);
@@ -835,14 +844,17 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           },
           {
             text: 'Next',
-            action: () => tourRef.current?.next(),
+            action: () => {
+              console.log('Step 6 Next button clicked, proceeding to step 7');
+              tourRef.current?.next();
+            },
             classes: 'shepherd-button-primary'
           }
         ]
       });
 
       // Step 7: Sidebar Meetings Link
-      tourRef.current.addStep({
+      const sidebarMeetingsStep = {
         id: 'sidebar-meetings',
         title: 'Meetings Navigation',
         text: `
@@ -851,10 +863,6 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>Click on "Meetings" to view, manage, and review your past meeting recordings and transcripts.</p>
           </div>
         `,
-        attachTo: {
-          element: findSidebarMeetingsLink,
-          on: 'right'
-        },
         popperOptions: {
           modifiers: [
             {
@@ -869,6 +877,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           return new Promise<void>((resolve) => {
             setTimeout(() => {
               const element = findSidebarMeetingsLink();
+              console.log('Step 7 - Sidebar meetings element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -876,6 +885,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   block: 'center',
                   inline: 'nearest' 
                 });
+              } else {
+                console.warn('Step 7 - Sidebar meetings element not found, continuing anyway');
               }
               resolve();
             }, 100);
@@ -902,10 +913,21 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      });
+      };
 
-      // Step 8: Sidebar Agents Link
-      tourRef.current.addStep({
+      // Add attachTo only if element is found, otherwise show in center
+      const meetingsElement = findSidebarMeetingsLink();
+      if (meetingsElement) {
+        sidebarMeetingsStep.attachTo = {
+          element: meetingsElement,
+          on: 'right'
+        };
+      }
+
+      tourRef.current.addStep(sidebarMeetingsStep);
+
+      // Step 8: Sidebar Agents Link  
+      const sidebarAgentsStep = {
         id: 'sidebar-agents',
         title: 'Your Agents',
         text: `
@@ -914,10 +936,6 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>Build specialized agents with specific instructions, tools, and capabilities tailored to your needs.</p>
           </div>
         `,
-        attachTo: {
-          element: findSidebarAgentsLink,
-          on: 'right'
-        },
         popperOptions: {
           modifiers: [
             {
@@ -932,6 +950,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           return new Promise<void>((resolve) => {
             setTimeout(() => {
               const element = findSidebarAgentsLink();
+              console.log('Step 8 - Sidebar agents element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -939,6 +958,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   block: 'center',
                   inline: 'nearest' 
                 });
+              } else {
+                console.warn('Step 8 - Sidebar agents element not found, continuing anyway');
               }
               resolve();
             }, 100);
@@ -961,11 +982,25 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           },
           {
             text: 'Next',
-            action: () => tourRef.current?.next(),
+            action: () => {
+              console.log('Step 8 Next button clicked, proceeding to step 9');
+              tourRef.current?.next();
+            },
             classes: 'shepherd-button-primary'
           }
         ]
-      });
+      };
+
+      // Add attachTo only if element is found
+      const agentsElement = findSidebarAgentsLink();
+      if (agentsElement) {
+        sidebarAgentsStep.attachTo = {
+          element: agentsElement,
+          on: 'right'
+        };
+      }
+
+      tourRef.current.addStep(sidebarAgentsStep);
 
       // Step 9: Sidebar Marketplace/Agent Library
       tourRef.current.addStep({
@@ -977,24 +1012,11 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>Browse, try, and add pre-built agents to your library to expand your capabilities instantly.</p>
           </div>
         `,
-        attachTo: {
-          element: findSidebarMarketplaceLink,
-          on: 'right'
-        },
-        popperOptions: {
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [20, 0],
-              },
-            },
-          ],
-        },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
               const element = findSidebarMarketplaceLink();
+              console.log('Step 9 - Sidebar marketplace element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1002,6 +1024,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   block: 'center',
                   inline: 'nearest' 
                 });
+              } else {
+                console.warn('Step 9 - Sidebar marketplace element not found, continuing anyway');
               }
               resolve();
             }, 100);
@@ -1024,7 +1048,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           },
           {
             text: 'Next',
-            action: () => tourRef.current?.next(),
+            action: () => {
+              console.log('Step 9 Next button clicked, proceeding to step 10');
+              tourRef.current?.next();
+            },
             classes: 'shepherd-button-primary'
           }
         ]
@@ -1277,13 +1304,29 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       // Tour event handlers
       tourRef.current.on('complete', () => {
+        console.log('Tour completed successfully');
         cleanup();
         onComplete?.();
       });
 
       tourRef.current.on('cancel', () => {
+        console.log('Tour cancelled');
         cleanup();
         onComplete?.();
+      });
+
+      tourRef.current.on('show', (event) => {
+        console.log('Tour step shown:', event.step?.id);
+      });
+
+      tourRef.current.on('hide', (event) => {
+        console.log('Tour step hidden:', event.step?.id);
+      });
+
+      // Debug: Log tour steps
+      console.log('Total tour steps created:', tourRef.current.steps.length);
+      tourRef.current.steps.forEach((step, index) => {
+        console.log(`Step ${index + 1}:`, step.id);
       });
 
       // Start the tour
