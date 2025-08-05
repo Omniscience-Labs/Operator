@@ -192,7 +192,7 @@ export default function MarketplacePage() {
         </div>
 
         {isLoading ? (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 sm:gap-6">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="min-h-[400px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden">
                 <div className="p-6 space-y-4 h-full flex flex-col">
@@ -241,7 +241,7 @@ export default function MarketplacePage() {
             )}
           </div>
         ) : (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 sm:gap-6">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:gap-6">
             {agents.map((agent) => (
               <AgentProfileCard
                 key={agent.agent_id} 
