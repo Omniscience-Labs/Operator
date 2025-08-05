@@ -3487,23 +3487,39 @@ async def delete_agent_default_file(
     
     try:
         files_manager = AgentDefaultFilesManager()
-        success = await files_manager.delete_file(account_id, agent_id, filename)
+        storage_deletion_success = await files_manager.delete_file(account_id, agent_id, filename)
         
-        if success:
-            # Update agent's default_files JSONB
-            updated_files = [f for f in current_files if f['name'] != filename]
+        # Even if storage deletion reports failure, we should check if the file exists
+        # and update database metadata accordingly
+        if not storage_deletion_success:
+            logger.warning(f"Storage deletion reported failure for {filename}, but continuing with metadata update")
+        
+        # Always try to update the database metadata
+        # The file might have been deleted from storage even if we got an error response
+        updated_files = [f for f in current_files if f['name'] != filename]
+        
+        # Only update if the file was actually in the metadata
+        if len(updated_files) < len(current_files):
             await client.table('agents').update({
                 'default_files': updated_files
             }).eq('agent_id', agent_id).execute()
             
-            logger.info(f"Deleted default file {filename} for agent {agent_id}")
+            logger.info(f"Deleted default file {filename} from agent {agent_id} metadata")
             return {"message": "File deleted successfully"}
         else:
-            raise HTTPException(status_code=500, detail="Failed to delete file")
+            # File wasn't in metadata, but might have been in storage
+            if storage_deletion_success:
+                logger.info(f"File {filename} deleted from storage but wasn't in agent metadata")
+                return {"message": "File deleted from storage"}
+            else:
+                logger.warning(f"File {filename} not found in agent metadata and storage deletion failed")
+                raise HTTPException(status_code=404, detail="File not found")
             
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error deleting agent default file: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
 
 
 @router.get("/agents/{agent_id}/default-files")

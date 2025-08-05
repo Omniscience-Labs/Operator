@@ -56,11 +56,11 @@ class AgentDefaultFilesManager:
                 if 'Duplicate' in str(error) or '409' in str(error):
                     logger.info(f"File already exists, attempting to delete and re-upload: {file_path}")
                     # File exists, delete it first
-                    delete_response = await client.storage.from_(self.bucket_name).remove([file_path])
-                    logger.info(f"Delete response: {delete_response}")
-                    
-                    if delete_response.get('error'):
-                        logger.warning(f"Could not delete existing file {file_path}: {delete_response['error']}")
+                    try:
+                        delete_response = await client.storage.from_(self.bucket_name).remove([file_path])
+                        logger.info(f"Successfully deleted existing file: {file_path}")
+                    except Exception as delete_error:
+                        logger.warning(f"Could not delete existing file {file_path}: {delete_error}")
                         # Continue anyway, maybe the delete worked despite the error
                     
                     # Try uploading again
@@ -136,13 +136,16 @@ class AgentDefaultFilesManager:
             db = DBConnection()
             client = await db.client
             
-            response = await client.storage.from_(self.bucket_name).remove([file_path])
-            
-            if response.get('error'):
-                logger.error(f"Failed to delete file {file_path}: {response['error']}")
+            # Supabase storage remove operation
+            try:
+                response = await client.storage.from_(self.bucket_name).remove([file_path])
+                logger.info(f"Successfully deleted file from storage: {file_path}")
+                return True
+            except Exception as storage_error:
+                logger.error(f"Failed to delete file {file_path} from storage: {storage_error}")
+                # Even if storage deletion fails, we might want to continue
+                # to remove it from the database metadata
                 return False
-                
-            return True
             
         except Exception as e:
             logger.error(f"Error deleting agent default file: {e}")
