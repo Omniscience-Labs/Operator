@@ -277,35 +277,34 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     const findSidebarMeetingsLink = () => {
     console.log('Searching for Sidebar Meetings link...');
     
-    // Search by text content first (most reliable)
-    const links = document.querySelectorAll('a, button');
-    for (const link of links) {
-      const text = link.textContent?.toLowerCase() || '';
-      if (text.includes('meetings') && link.closest('[class*="sidebar"], nav, aside')) {
-        console.log('Found meetings link by text:', link);
+    // Wait for animations to complete
+    setTimeout(() => {}, 1000);
+    
+    // Most reliable - direct href selector
+    let element = document.querySelector('a[href="/meetings"]');
+    if (element) {
+      console.log('Found meetings link by href:', element);
+      return element;
+    }
+    
+    // Find by FileAudio icon (meetings use FileAudio icon)
+    const fileAudioIcons = document.querySelectorAll('.lucide-file-audio, svg[data-lucide="file-audio"]');
+    for (const icon of fileAudioIcons) {
+      const link = icon.closest('a');
+      if (link && link.getAttribute('href') === '/meetings') {
+        console.log('Found meetings link by FileAudio icon:', link);
         return link;
       }
     }
     
-    // Try specific selectors
-    const selectors = [
-      'a[href="/meetings"]',
-      'a[href*="meetings"]',
-      '[data-testid="meetings-nav"]',
-      // Look in sidebar context
-      '[class*="sidebar"] a:contains("Meetings")',
-      'nav a:contains("Meetings")'
-    ];
-    
-    for (const selector of selectors) {
-      try {
-        const element = document.querySelector(selector);
-        if (element) {
-          console.log('Found sidebar meetings link:', element);
-          return element;
-        }
-      } catch (e) {
-        continue;
+    // Search by text content in sidebar context
+    const links = document.querySelectorAll('a');
+    for (const link of links) {
+      const text = link.textContent?.toLowerCase() || '';
+      const href = link.getAttribute('href') || '';
+      if (text.includes('meetings') && href.includes('/meetings')) {
+        console.log('Found meetings link by text and href:', link);
+        return link;
       }
     }
     
@@ -330,12 +329,23 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           }
     }
     
+    // Find by Bot icon (agents use Bot icon)
+    const botIcons = document.querySelectorAll('.lucide-bot, svg[data-lucide="bot"]');
+    for (const icon of botIcons) {
+      const link = icon.closest('a');
+      if (link && link.getAttribute('href') === '/agents') {
+        console.log('Found agents link by Bot icon:', link);
+        return link;
+      }
+    }
+    
     // Search by text content
-    const links = document.querySelectorAll('a, button');
+    const links = document.querySelectorAll('a');
     for (const link of links) {
       const text = link.textContent?.toLowerCase() || '';
-      if ((text.includes('agents') || text.includes('team agents')) && link.closest('.sidebar, nav')) {
-        console.log('Found agents link by text:', link);
+      const href = link.getAttribute('href') || '';
+      if ((text.includes('agents') || text.includes('team agents')) && href.includes('/agents')) {
+        console.log('Found agents link by text and href:', link);
         return link;
       }
     }
@@ -361,12 +371,23 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       }
     }
     
+    // Find by Store icon (marketplace uses Store icon)
+    const storeIcons = document.querySelectorAll('.lucide-store, svg[data-lucide="store"]');
+    for (const icon of storeIcons) {
+      const link = icon.closest('a');
+      if (link && link.getAttribute('href') === '/marketplace') {
+        console.log('Found marketplace link by Store icon:', link);
+        return link;
+      }
+    }
+    
     // Search by text content
-    const links = document.querySelectorAll('a, button');
+    const links = document.querySelectorAll('a');
     for (const link of links) {
       const text = link.textContent?.toLowerCase() || '';
-      if ((text.includes('marketplace') || text.includes('library')) && link.closest('.sidebar, nav')) {
-        console.log('Found marketplace link by text:', link);
+      const href = link.getAttribute('href') || '';
+      if ((text.includes('marketplace') || text.includes('library')) && href.includes('/marketplace')) {
+        console.log('Found marketplace link by text and href:', link);
         return link;
       }
     }
@@ -378,31 +399,47 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
   const findSidebarTasksSection = () => {
     console.log('Searching for Sidebar Tasks/Past Chats section...');
     
+    // Look for the NavAgents component or any tasks-related section
     const selectors = [
       '[data-testid="sidebar-tasks"]',
       '.sidebar-tasks',
-      'div:has(> h3:contains("Tasks"))',
-      'div:has(> [class*="SidebarGroupLabel"]:contains("Tasks"))'
+      // Look for SidebarGroupLabel
+      '[class*="SidebarGroupLabel"]',
+      // Look for any group that contains tasks or chats
+      '[data-sidebar="group"]'
     ];
     
     for (const selector of selectors) {
-      try {
-        const element = document.querySelector(selector);
-        if (element) {
-          console.log('Found sidebar tasks section:', element);
+      const elements = document.querySelectorAll(selector);
+      for (const element of elements) {
+        const text = element.textContent?.toLowerCase() || '';
+        if (text.includes('tasks') || text.includes('chats') || text.includes('past')) {
+          console.log('Found tasks section by group text:', element);
           return element;
         }
-      } catch (e) {
-        continue;
       }
     }
     
-    // Search by text content
-    const elements = document.querySelectorAll('h2, h3, h4, [class*="GroupLabel"], [class*="group-label"]');
-    for (const element of elements) {
-      if (element.textContent?.toLowerCase().includes('tasks') && element.closest('.sidebar, nav')) {
-        console.log('Found tasks section by text:', element);
-        return element;
+    // Look for any section with MessagesSquare icons (chat icons)
+    const chatIcons = document.querySelectorAll('.lucide-messages-square, svg[data-lucide="messages-square"]');
+    if (chatIcons.length > 0) {
+      const firstChatIcon = chatIcons[0];
+      const section = firstChatIcon.closest('[data-sidebar="group"], .sidebar-group, [class*="SidebarGroup"]');
+      if (section) {
+        console.log('Found tasks section by chat icons:', section);
+        return section;
+      }
+    }
+    
+    // Fallback - look for any element containing "New Task" since that's in the NavAgents
+    const newTaskElements = document.querySelectorAll('*');
+    for (const element of newTaskElements) {
+      if (element.textContent?.includes('New Task')) {
+        const section = element.closest('[data-sidebar="group"], .sidebar-group, [class*="SidebarGroup"]');
+        if (section) {
+          console.log('Found tasks section by New Task button:', section);
+          return section;
+        }
       }
     }
     
@@ -429,13 +466,25 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       }
     }
     
+    // Look for Avatar components in sidebar footer area
+    const avatars = document.querySelectorAll('[class*="avatar"], img[alt*="profile"], img[alt*="user"]');
+    for (const avatar of avatars) {
+      const button = avatar.closest('button');
+      const isInSidebar = avatar.closest('.sidebar, nav, [data-sidebar]');
+      if (button && isInSidebar) {
+        console.log('Found user profile button by avatar:', button);
+        return button;
+      }
+    }
+    
     // Look for buttons in sidebar with user-related content
     const buttons = document.querySelectorAll('button');
     for (const button of buttons) {
-      const isInSidebar = button.closest('.sidebar, nav');
+      const isInSidebar = button.closest('.sidebar, nav, [data-sidebar]');
       const hasUserIcon = button.querySelector('.lucide-user, .lucide-avatar, svg[data-lucide="user"]');
-      if (isInSidebar && hasUserIcon) {
-        console.log('Found user profile button by icon:', button);
+      const isInFooter = button.closest('[data-sidebar="footer"], .sidebar-footer, [class*="SidebarFooter"]');
+      if (isInSidebar && (hasUserIcon || isInFooter)) {
+        console.log('Found user profile button by icon or footer:', button);
         return button;
       }
     }
@@ -875,6 +924,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
+            // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findSidebarMeetingsLink();
               console.log('Step 7 - Sidebar meetings element:', element);
@@ -889,7 +939,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                 console.warn('Step 7 - Sidebar meetings element not found, continuing anyway');
               }
               resolve();
-            }, 100);
+            }, 800);
           });
         },
         beforeHidePromise: () => {
@@ -948,6 +998,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
+            // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findSidebarAgentsLink();
               console.log('Step 8 - Sidebar agents element:', element);
@@ -962,7 +1013,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                 console.warn('Step 8 - Sidebar agents element not found, continuing anyway');
               }
               resolve();
-            }, 100);
+            }, 800);
           });
         },
         beforeHidePromise: () => {
@@ -1028,7 +1079,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                 console.warn('Step 9 - Sidebar marketplace element not found, continuing anyway');
               }
               resolve();
-            }, 100);
+            }, 800);
           });
         },
         beforeHidePromise: () => {
@@ -1083,8 +1134,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
+            // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findSidebarTasksSection();
+              console.log('Step 10 - Sidebar tasks section element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1092,9 +1145,11 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   block: 'center',
                   inline: 'nearest' 
                 });
+              } else {
+                console.warn('Step 10 - Sidebar tasks section element not found, continuing anyway');
               }
               resolve();
-            }, 100);
+            }, 800);
           });
         },
         beforeHidePromise: () => {
@@ -1146,8 +1201,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
+            // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findUserProfileButton();
+              console.log('Step 11 - User profile button element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1155,9 +1212,11 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   block: 'center',
                   inline: 'nearest' 
                 });
+              } else {
+                console.warn('Step 11 - User profile button element not found, continuing anyway');
               }
               resolve();
-            }, 100);
+            }, 800);
           });
         },
         beforeHidePromise: () => {
