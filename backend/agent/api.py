@@ -1623,15 +1623,8 @@ async def initiate_agent_with_files(
                 for failed_file in failed_uploads: message_content += f"- {failed_file}\n"
 
         # 4.5. Download Agent Default Files (if any)
-        logger.info(f"Checking for agent default files. Agent config: {agent_config is not None}")
-        if agent_config:
-            logger.info(f"Agent has default_files field: {'default_files' in agent_config}")
-            if 'default_files' in agent_config:
-                logger.info(f"Default files content: {agent_config['default_files']}")
-                
         if agent_config and agent_config.get('default_files'):
             try:
-                logger.info(f"Starting download of {len(agent_config['default_files'])} default files")
                 files_manager = AgentDefaultFilesManager()
                 downloaded_files = await files_manager.download_files_to_sandbox(
                     effective_account_id, 
@@ -1640,19 +1633,12 @@ async def initiate_agent_with_files(
                     sandbox
                 )
                 
-                if downloaded_files:
-                    logger.info(f"Downloaded {len(downloaded_files)} default files to sandbox: {downloaded_files}")
-                else:
-                    logger.info(f"No files were actually downloaded")
+                # Files downloaded silently to sandbox
+                pass
                     
             except Exception as e:
                 logger.error(f"Error downloading agent default files: {str(e)}")
                 # Don't fail the entire initiation, just log the error
-        else:
-            if agent_config:
-                logger.info(f"Agent config exists but no default files found")
-            else:
-                logger.info(f"No agent config provided")
 
         # 5. Add initial user message to thread
         message_id = str(uuid.uuid4())
@@ -2476,10 +2462,7 @@ async def publish_agent_to_marketplace(
     
     logger.info(f"Publishing agent {agent_id} with visibility: {publish_data.visibility}")
     logger.info(f"Team IDs received: {publish_data.team_ids}")
-    logger.info(f"Include knowledge bases: {publish_data.include_knowledge_bases}")
-    logger.info(f"Include custom MCP tools: {publish_data.include_custom_mcp_tools}")
-    logger.info(f"Include default files: {publish_data.include_default_files}")
-    logger.info(f"Managed agent: {publish_data.managed_agent}")
+    # Sharing preferences logged at debug level if needed
     
     client = await db.client
     
@@ -2704,7 +2687,7 @@ async def add_agent_to_library(
                             'default_files': copied_files
                         }).eq('agent_id', new_agent_id).execute()
                         
-                        logger.info(f"Copied {len(copied_files)} default files for agent {new_agent_id}")
+                        # Successfully copied default files
                         
                 except Exception as e:
                     logger.error(f"Error copying default files for agent {new_agent_id}: {str(e)}")
@@ -2839,7 +2822,7 @@ async def add_shared_agent_to_library(
                             'default_files': copied_files
                         }).eq('agent_id', new_agent_id).execute()
                         
-                        logger.info(f"Copied {len(copied_files)} default files for agent {new_agent_id}")
+                        # Successfully copied default files
                         
                 except Exception as e:
                     logger.error(f"Error copying default files for agent {new_agent_id}: {str(e)}")
@@ -3383,51 +3366,37 @@ async def upload_agent_default_file(
     
     try:
         files_manager = AgentDefaultFilesManager()
-        logger.info(f"Starting file upload for {file.filename}")
         file_metadata = await files_manager.upload_file(account_id, agent_id, file)
-        logger.info(f"File upload completed successfully, received metadata: {file_metadata}")
         
         # Update agent's default_files JSONB
-        logger.info(f"Starting database update for agent {agent_id} with file metadata: {file_metadata}")
         
         try:
             agent_result = await client.table('agents').select('default_files').eq('agent_id', agent_id).execute()
-            logger.info(f"Agent query result: {agent_result}")
             
             if not agent_result.data:
                 raise HTTPException(status_code=404, detail="Agent not found during file update")
             
             current_files = agent_result.data[0].get('default_files', [])
-            logger.info(f"Current files in database: {current_files}")
             
             # Remove existing file with same name
-            original_count = len(current_files)
+            # Remove existing file with same name
             current_files = [f for f in current_files if f['name'] != file.filename]
-            removed_count = original_count - len(current_files)
-            logger.info(f"Removed {removed_count} existing files with same name")
-            
             current_files.append(file_metadata)
-            logger.info(f"New files list: {current_files}")
             
             db_update_result = await client.table('agents').update({
                 'default_files': current_files
             }).eq('agent_id', agent_id).execute()
             
-            logger.info(f"Database update result: {db_update_result}")
-            
-            # Check if database update has error (APIResponse object doesn't have .get method)
+            # Check if database update has error
             if hasattr(db_update_result, 'error') and db_update_result.error:
                 raise RuntimeError(f"Database update failed: {db_update_result.error}")
             elif hasattr(db_update_result, 'data') and not db_update_result.data:
                 raise RuntimeError(f"Database update failed: No data returned")
-            
-            logger.info("Database update completed successfully")
                 
         except Exception as db_error:
             logger.error(f"Database operation failed: {db_error}")
             raise HTTPException(status_code=500, detail=f"Database update failed: {str(db_error)}")
         
-        logger.info(f"Uploaded default file {file.filename} for agent {agent_id}")
         return {"message": "File uploaded successfully", "file": file_metadata}
         
     except Exception as e:
@@ -3503,12 +3472,10 @@ async def delete_agent_default_file(
                 'default_files': updated_files
             }).eq('agent_id', agent_id).execute()
             
-            logger.info(f"Deleted default file {filename} from agent {agent_id} metadata")
             return {"message": "File deleted successfully"}
         else:
             # File wasn't in metadata, but might have been in storage
             if storage_deletion_success:
-                logger.info(f"File {filename} deleted from storage but wasn't in agent metadata")
                 return {"message": "File deleted from storage"}
             else:
                 logger.warning(f"File {filename} not found in agent metadata and storage deletion failed")

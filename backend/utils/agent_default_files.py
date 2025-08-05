@@ -25,7 +25,7 @@ class AgentDefaultFilesManager:
             content = await file.read()
             file_path = self._get_file_path(account_id, agent_id, file.filename)
             
-            logger.info(f"Attempting to upload file: {file_path} to bucket: {self.bucket_name}")
+            # logger.info(f"Attempting to upload file: {file_path} to bucket: {self.bucket_name}")
             
             # Upload to Supabase storage
             db = DBConnection()
@@ -38,7 +38,7 @@ class AgentDefaultFilesManager:
                 {"content-type": file.content_type or "application/octet-stream"}
             )
             
-            logger.info(f"Storage upload response: {storage_response}")
+            # logger.info(f"Storage upload response: {storage_response}")
             
             # Check if upload succeeded or failed
             upload_successful = False
@@ -46,31 +46,30 @@ class AgentDefaultFilesManager:
             # Handle different response types from Supabase storage
             if hasattr(storage_response, 'path'):
                 # UploadResponse object - upload was successful
-                logger.info(f"File upload successful for {file_path}")
-                logger.info(f"Successful upload response structure: {type(storage_response)} - {storage_response}")
+                # logger.info(f"File upload successful for {file_path}")
                 upload_successful = True
             elif storage_response and hasattr(storage_response, 'get') and storage_response.get('error'):
                 error = storage_response['error']
                 logger.error(f"Storage upload error details: {error}")
                 logger.error(f"Full storage response: {storage_response}")
                 if 'Duplicate' in str(error) or '409' in str(error):
-                    logger.info(f"File already exists, attempting to delete and re-upload: {file_path}")
+                    # logger.info(f"File already exists, attempting to delete and re-upload: {file_path}")
                     # File exists, delete it first
                     try:
                         delete_response = await client.storage.from_(self.bucket_name).remove([file_path])
-                        logger.info(f"Successfully deleted existing file: {file_path}")
+                        # logger.info(f"Successfully deleted existing file: {file_path}")
                     except Exception as delete_error:
                         logger.warning(f"Could not delete existing file {file_path}: {delete_error}")
                         # Continue anyway, maybe the delete worked despite the error
                     
                     # Try uploading again
-                    logger.info(f"Attempting second upload after delete")
+                    # logger.info(f"Attempting second upload after delete")
                     storage_response = await client.storage.from_(self.bucket_name).upload(
                         file_path,
                         content,
                         {"content-type": file.content_type or "application/octet-stream"}
                     )
-                    logger.info(f"Second upload response: {storage_response}")
+                    # logger.info(f"Second upload response: {storage_response}")
                     
                     # Check if second upload also failed
                     if storage_response.get('error'):
@@ -78,7 +77,7 @@ class AgentDefaultFilesManager:
                         # Provide a clear message for duplicate files
                         raise RuntimeError(f"Document '{file.filename}' already exists")
                     else:
-                        logger.info(f"File upload successful after removing duplicate: {file_path}")
+                        # logger.info(f"File upload successful after removing duplicate: {file_path}")
                         upload_successful = True
                 else:
                     # Different error, not a duplicate
@@ -101,7 +100,7 @@ class AgentDefaultFilesManager:
             # Get public URL (for internal use)
             try:
                 public_url = await client.storage.from_(self.bucket_name).get_public_url(file_path)
-                logger.info(f"Got public URL: {public_url}")
+                # logger.info(f"Got public URL: {public_url}")
             except Exception as url_error:
                 logger.error(f"Failed to get public URL: {url_error}")
                 public_url = f"/{self.bucket_name}/{file_path}"  # Fallback URL
@@ -116,7 +115,7 @@ class AgentDefaultFilesManager:
                 "public_url": public_url
             }
             
-            logger.info(f"Returning file metadata: {file_metadata}")
+            # logger.info(f"Returning file metadata: {file_metadata}")
             return file_metadata
             
         except Exception as e:
@@ -139,7 +138,7 @@ class AgentDefaultFilesManager:
             # Supabase storage remove operation
             try:
                 response = await client.storage.from_(self.bucket_name).remove([file_path])
-                logger.info(f"Successfully deleted file from storage: {file_path}")
+                # logger.info(f"Successfully deleted file from storage: {file_path}")
                 return True
             except Exception as storage_error:
                 logger.error(f"Failed to delete file {file_path} from storage: {storage_error}")
@@ -180,7 +179,7 @@ class AgentDefaultFilesManager:
                     )
                     
                     # If we reach here, upload was successful (no exception thrown)
-                    logger.info(f"Successfully copied file to {dest_path}")
+                    # logger.info(f"Successfully copied file to {dest_path}")
                     
                     # Update file metadata for new location
                     copied_file = file_info.copy()
@@ -220,7 +219,7 @@ class AgentDefaultFilesManager:
                 # Download from Supabase storage
                 try:
                     file_content = await client.storage.from_(self.bucket_name).download(storage_path)
-                    logger.info(f"Successfully downloaded file from storage: {storage_path}")
+                    # logger.info(f"Successfully downloaded file from storage: {storage_path}")
                 except Exception as e:
                     logger.warning(f"Failed to download file {storage_path}: {e}")
                     continue
@@ -229,7 +228,7 @@ class AgentDefaultFilesManager:
                 try:
                     sandbox.fs.upload_file(file_content, workspace_path)
                     downloaded_files.append(workspace_path)
-                    logger.info(f"Downloaded default file to sandbox: {workspace_path}")
+                    # logger.info(f"Downloaded default file to sandbox: {workspace_path}")
                 except Exception as e:
                     logger.warning(f"Failed to upload file to sandbox {workspace_path}: {e}")
             
