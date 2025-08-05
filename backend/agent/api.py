@@ -1623,8 +1623,15 @@ async def initiate_agent_with_files(
                 for failed_file in failed_uploads: message_content += f"- {failed_file}\n"
 
         # 4.5. Download Agent Default Files (if any)
+        logger.info(f"Checking for agent default files. Agent config: {agent_config is not None}")
+        if agent_config:
+            logger.info(f"Agent has default_files field: {'default_files' in agent_config}")
+            if 'default_files' in agent_config:
+                logger.info(f"Default files content: {agent_config['default_files']}")
+                
         if agent_config and agent_config.get('default_files'):
             try:
+                logger.info(f"Starting download of {len(agent_config['default_files'])} default files")
                 files_manager = AgentDefaultFilesManager()
                 downloaded_files = await files_manager.download_files_to_sandbox(
                     effective_account_id, 
@@ -1635,11 +1642,18 @@ async def initiate_agent_with_files(
                 
                 if downloaded_files:
                     message_content += f"\n\n[Agent Default Files Available]: {', '.join([f.split('/')[-1] for f in downloaded_files])}"
-                    logger.info(f"Downloaded {len(downloaded_files)} default files to sandbox")
+                    logger.info(f"Downloaded {len(downloaded_files)} default files to sandbox: {downloaded_files}")
+                else:
+                    logger.info(f"No files were actually downloaded")
                     
             except Exception as e:
                 logger.error(f"Error downloading agent default files: {str(e)}")
                 # Don't fail the entire initiation, just log the error
+        else:
+            if agent_config:
+                logger.info(f"Agent config exists but no default files found")
+            else:
+                logger.info(f"No agent config provided")
 
         # 5. Add initial user message to thread
         message_id = str(uuid.uuid4())
