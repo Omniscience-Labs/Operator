@@ -7,7 +7,6 @@ import { UploadedFile } from './chat-input';
 import { FileUploadHandler } from './file-upload-handler';
 import { VoiceRecorder } from './voice-recorder';
 import { MeetingRecorder } from './meeting-recorder';
-import { JoinOnlineMeetingsButton } from './join-online-meetings-button';
 import { ModelSelector } from './model-selector';
 import { ReasoningControl, ReasoningSettings } from './reasoning-control';
 import { SubscriptionStatus } from './_use-model-selection';
@@ -166,11 +165,6 @@ export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(
                 setUploadedFiles={setUploadedFiles}
                 setIsUploading={setIsUploading}
                 messages={messages}
-              />
-            )}
-            {!hideAttachments && (
-              <JoinOnlineMeetingsButton
-                disabled={loading || (disabled && !isAgentRunning)}
               />
             )}
             <IntegrationsDropdown
