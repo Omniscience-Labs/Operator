@@ -151,15 +151,16 @@ class AgentDefaultFilesManager:
                 dest_path = self._get_file_path(dest_account_id, dest_agent_id, file_info['name'])
                 
                 # Download from source
-                download_response = await client.storage.from_(self.bucket_name).download(source_path)
-                if download_response.get('error'):
-                    logger.warning(f"Failed to download source file {source_path}")
+                try:
+                    file_content = await client.storage.from_(self.bucket_name).download(source_path)
+                except Exception as e:
+                    logger.warning(f"Failed to download source file {source_path}: {e}")
                     continue
                 
                 # Upload to destination
                 upload_response = await client.storage.from_(self.bucket_name).upload(
                     dest_path,
-                    download_response['data'],
+                    file_content,
                     {"content-type": file_info.get('mime_type', 'application/octet-stream')}
                 )
                 
@@ -191,14 +192,16 @@ class AgentDefaultFilesManager:
                 workspace_path = f"/workspace/agent-defaults/{file_info['name']}"
                 
                 # Download from Supabase storage
-                download_response = await client.storage.from_(self.bucket_name).download(storage_path)
-                if download_response.get('error'):
-                    logger.warning(f"Failed to download file {storage_path}")
+                try:
+                    file_content = await client.storage.from_(self.bucket_name).download(storage_path)
+                    logger.info(f"Successfully downloaded file from storage: {storage_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to download file {storage_path}: {e}")
                     continue
                 
                 # Upload to sandbox
                 try:
-                    sandbox.fs.upload_file(download_response['data'], workspace_path)
+                    sandbox.fs.upload_file(file_content, workspace_path)
                     downloaded_files.append(workspace_path)
                     logger.info(f"Downloaded default file to sandbox: {workspace_path}")
                 except Exception as e:
