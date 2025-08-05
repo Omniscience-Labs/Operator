@@ -97,24 +97,54 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
   const findJoinOnlineMeetingButton = () => {
     const selectors = [
-      // Target the MeetingRecorder button specifically - the join online meeting button
-      'button:has(.lucide-file-audio)',
-      'button:has([data-lucide="file-audio"])',
-      // Fallback selectors for the join online meeting button
-      'button:has(.file-audio)',
+      // Target any button that might open the Join Online Meeting dialog
       'button[aria-label*="Join Online Meeting"]',
       'button[title*="Join Online Meeting"]',
+      'button[data-testid*="join-meeting"]',
+      'button[data-testid*="meeting-join"]',
+      // Look for buttons with music/audio icons
+      'button:has(.lucide-play)',
+      'button:has(.lucide-play-circle)',
+      'button:has(.lucide-music)',
+      'button:has(.lucide-audio-lines)',
+      'button:has(.lucide-volume-2)',
+      'button:has(.lucide-radio)',
+      // Fallback to the FileAudio icon button if no other found
+      'button:has(.lucide-file-audio)',
+      'button:has([data-lucide="file-audio"])',
+      'button:has(.file-audio)',
+      // Look in dashboard context
+      '.dashboard button:has(.lucide-play)',
+      '.dashboard button:has(.lucide-music)',
       // Target by class structure and context
       'button.h-7.rounded-md.text-muted-foreground:has(.lucide-file-audio)',
-      // Look in chat input context specifically
+      // Look in chat input context as fallback
       '.chat-input button:has(.lucide-file-audio)',
       '[data-testid="meeting-recorder"]',
       '.meeting-recorder button'
     ];
     
+    // Also search by text content
+    const buttons = document.querySelectorAll('button');
+    for (const button of buttons) {
+      const text = button.textContent?.toLowerCase() || '';
+      const title = button.getAttribute('title')?.toLowerCase() || '';
+      const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
+      
+      if (text.includes('join') && text.includes('meeting') ||
+          title.includes('join') && title.includes('meeting') ||
+          ariaLabel.includes('join') && ariaLabel.includes('meeting')) {
+        return button;
+      }
+    }
+    
     for (const selector of selectors) {
-      const element = document.querySelector(selector);
-      if (element) return element;
+      try {
+        const element = document.querySelector(selector);
+        if (element) return element;
+      } catch (e) {
+        continue;
+      }
     }
     return null;
   };
