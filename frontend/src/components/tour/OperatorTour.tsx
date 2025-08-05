@@ -776,15 +776,29 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       });
 
       // Step 6: Meetings Dashboard
-      const meetingsDashboardButton = findMeetingsDashboardButton();
-      const meetingsDashboardStepConfig: any = {
+      tourRef.current.addStep({
         id: 'meetings-dashboard',
         title: 'See All Meetings',
         text: `
           <div class="space-y-3">
-            <p>See all meetings from here</p>
+            <p>This is where you can access all your meetings!</p>
+            <p>Click on the Meetings link anytime to view, manage, and review your meeting recordings and transcripts.</p>
           </div>
         `,
+        attachTo: {
+          element: findMeetingsDashboardButton,
+          on: 'right'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',  
+              options: {
+                offset: [20, 0],
+              },
+            },
+          ],
+        },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
@@ -792,7 +806,6 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
               console.log('Meetings dashboard button found:', element);
               if (element) {
                 addHighlight(element);
-                // Ensure element is scrolled into view
                 element.scrollIntoView({ 
                   behavior: 'smooth', 
                   block: 'center',
@@ -802,7 +815,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                 console.warn('Meetings dashboard button not found');
               }
               resolve();
-            }, 600); // Slightly longer delay to account for navigation
+            }, 100);
           });
         },
         beforeHidePromise: () => {
@@ -817,40 +830,16 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         buttons: [
           {
             text: 'Back',
-            action: () => {
-              // Navigate back to dashboard before going back
-              window.location.href = '/dashboard';
-              setTimeout(() => {
-                tourRef.current?.back();
-              }, 500);
-            },
+            action: () => tourRef.current?.back(),
             classes: 'shepherd-button-secondary'
           },
           {
             text: 'Next',
-            action: () => {
-              // Navigate back to dashboard for the next step
-              window.location.href = '/dashboard';
-              setTimeout(() => {
-                tourRef.current?.next();
-              }, 500);
-            },
+            action: () => tourRef.current?.next(),
             classes: 'shepherd-button-primary'
           }
         ]
-      };
-
-      // Add attachTo only if we found the meetings dashboard button
-      if (meetingsDashboardButton) {
-        meetingsDashboardStepConfig.attachTo = {
-          element: meetingsDashboardButton,
-          on: 'right'
-        };
-      } else {
-        console.warn('Meetings dashboard button not found, showing step without attachment');
-      }
-
-      tourRef.current.addStep(meetingsDashboardStepConfig);
+      });
 
       // Step 7: Sidebar Meetings Link
       tourRef.current.addStep({
