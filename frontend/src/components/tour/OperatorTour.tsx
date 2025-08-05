@@ -32,7 +32,9 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
   const cleanup = useCallback(() => {
     if (tourRef.current) {
       try {
-        tourRef.current.complete();
+        // Don't call complete() here as it would trigger the 'complete' event again
+        // Just clean up the tour instance and references
+        tourRef.current.destroy?.();
         tourRef.current = null;
       } catch (error) {
         console.warn('Error cleaning up tour:', error);
