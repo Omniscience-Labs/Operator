@@ -6,11 +6,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Search, Settings2, Sparkles, BookOpen } from 'lucide-react';
+import { Loader2, Search, Settings2, Sparkles, BookOpen, FileText } from 'lucide-react';
 import { DEFAULT_AGENTPRESS_TOOLS, getToolDisplayName } from '../_data/tools';
 import { useCreateAgent } from '@/hooks/react-query/agents/use-agents';
 import { MCPConfigurationNew } from './mcp/mcp-configuration-new';
 import { AgentKnowledgeConfiguration } from './agent-knowledge-configuration';
+import { AgentDefaultFiles } from '@/components/agents/default-files/agent-default-files';
 
 interface AgentCreateRequest {
   name: string;
@@ -51,6 +52,7 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [formData, setFormData] = useState<AgentCreateRequest>(initialFormData);
+  const [createdAgentId, setCreatedAgentId] = useState<string | null>(null);
 
   const createAgentMutation = useCreateAgent();
   useEffect(() => {
@@ -58,6 +60,7 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
       setFormData(initialFormData);
       setSearchQuery('');
       setSelectedCategory('All');
+      setCreatedAgentId(null);
     }
   }, [isOpen]);
 
@@ -118,8 +121,8 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
     }
 
     try {
-      await createAgentMutation.mutateAsync(formData);
-      onOpenChange(false);
+      const result = await createAgentMutation.mutateAsync(formData);
+      setCreatedAgentId(result.agent_id);
       onAgentCreated?.();
     } catch (error) {
       console.error('Error creating agent:', error);
@@ -218,6 +221,12 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
                     <BookOpen className="h-4 w-4" />
                     Knowledge Bases
                   </TabsTrigger>
+                  <TabsTrigger 
+                    value="default-files" 
+                  >
+                    <FileText className="h-4 w-4" />
+                    Default Files
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="tools" className="flex-1 flex flex-col m-0 min-h-0">
@@ -309,6 +318,27 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
                     onKnowledgeBasesChange={(bases) => handleInputChange('knowledge_bases', bases)}
                   />
                 </TabsContent>
+
+                <TabsContent value="default-files" className="flex-1 m-0 p-6 overflow-y-auto">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold">Default File Attachments</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Upload files that will be automatically available in every new chat session with this agent.
+                      </p>
+                    </div>
+                    
+                    {createdAgentId ? (
+                      <AgentDefaultFiles agentId={createdAgentId} isEditable={true} />
+                    ) : (
+                      <div className="p-8 border border-dashed rounded-lg text-center text-sm text-muted-foreground">
+                        <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>Default files can be uploaded after creating the agent</p>
+                        <p className="text-xs mt-1">Create your agent first, then upload files in this section</p>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
               </Tabs>
             </div>
           </div>
@@ -322,21 +352,23 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
               disabled={createAgentMutation.isPending}
               className="px-6"
             >
-              Cancel
+              {createdAgentId ? 'Close' : 'Cancel'}
             </Button>
-            <Button 
-              onClick={handleSubmit}
-              disabled={createAgentMutation.isPending || !formData.name.trim()}
-            >
-              {createAgentMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating Agent
-                </>
-              ) : (
-                'Create Agent'
-              )}
-            </Button>
+            {!createdAgentId && (
+              <Button 
+                onClick={handleSubmit}
+                disabled={createAgentMutation.isPending || !formData.name.trim()}
+              >
+                {createAgentMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating Agent
+                  </>
+                ) : (
+                  'Create Agent'
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

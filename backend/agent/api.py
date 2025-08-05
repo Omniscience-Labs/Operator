@@ -26,6 +26,7 @@ from services.llm import make_llm_api_call
 from run_agent_background import run_agent_background, _cleanup_redis_response_list, update_agent_run_status
 from utils.constants import MODEL_NAME_ALIASES
 from flags.flags import is_enabled
+from utils.agent_default_files import AgentDefaultFilesManager
 
 # Initialize shared resources
 router = APIRouter()
@@ -172,7 +173,7 @@ async def cleanup():
 async def stop_agent_run(agent_run_id: str, error_message: Optional[str] = None):
     """Update database and publish stop signal to Redis."""
     logger.info(f"Stopping agent run: {agent_run_id}")
-    client = await db.client
+    client = db.client
     final_status = "failed" if error_message else "stopped"
 
     # Attempt to fetch final responses from Redis
@@ -232,7 +233,7 @@ async def stop_agent_run(agent_run_id: str, error_message: Optional[str] = None)
 # async def restore_running_agent_runs():
 #     """Mark agent runs that were still 'running' in the database as failed and clean up Redis resources."""
 #     logger.info("Restoring running agent runs after server restart")
-#     client = await db.client
+#     client = db.client
 #     running_agent_runs = await client.table('agent_runs').select('id').eq("status", "running").execute()
 
 #     for run in running_agent_runs.data:
@@ -382,7 +383,7 @@ async def start_agent(
     model_name = resolved_model
 
     logger.info(f"Starting new agent for thread: {thread_id} with config: model={model_name}, thinking={body.enable_thinking}, effort={body.reasoning_effort}, stream={body.stream}, context_manager={body.enable_context_manager} (Instance: {instance_id})")
-    client = await db.client
+    client = db.client
 
     await verify_thread_access(client, thread_id, user_id)
     thread_result = await client.table('threads').select('project_id', 'account_id', 'agent_id', 'metadata').eq('thread_id', thread_id).execute()
@@ -613,7 +614,7 @@ async def stop_agent(agent_run_id: str, user_id: str = Depends(get_current_user_
         agent_run_id=agent_run_id,
     )
     logger.info(f"Received request to stop agent run: {agent_run_id}")
-    client = await db.client
+    client = db.client
     await get_agent_run_with_access_check(client, agent_run_id, user_id)
     await stop_agent_run(agent_run_id)
     return {"status": "stopped"}
@@ -625,7 +626,7 @@ async def get_agent_runs(thread_id: str, user_id: str = Depends(get_current_user
         thread_id=thread_id,
     )
     logger.info(f"Fetching agent runs for thread: {thread_id}")
-    client = await db.client
+    client = db.client
     await verify_thread_access(client, thread_id, user_id)
     agent_runs = await client.table('agent_runs').select('*').eq("thread_id", thread_id).order('created_at', desc=True).execute()
     logger.debug(f"Found {len(agent_runs.data)} agent runs for thread: {thread_id}")
@@ -997,7 +998,7 @@ async def get_agent_run(agent_run_id: str, user_id: str = Depends(get_current_us
         agent_run_id=agent_run_id,
     )
     logger.info(f"Fetching agent run details: {agent_run_id}")
-    client = await db.client
+    client = db.client
     agent_run_data = await get_agent_run_with_access_check(client, agent_run_id, user_id)
     # Note: Responses are not included here by default, they are in the stream or DB
     return {
@@ -1016,7 +1017,7 @@ async def get_thread_agent(thread_id: str, user_id: str = Depends(get_current_us
         thread_id=thread_id,
     )
     logger.info(f"Fetching agent details for thread: {thread_id}")
-    client = await db.client
+    client = db.client
     
     try:
         # Verify thread access and get thread data including agent_id
@@ -1100,7 +1101,7 @@ async def stream_agent_run(
 ):
     """Stream the responses of an agent run using Redis Lists and Pub/Sub."""
     logger.info(f"Starting stream for agent run: {agent_run_id}")
-    client = await db.client
+    client = db.client
 
     user_id = await get_user_id_from_stream_auth(request, token)
     agent_run_data = await get_agent_run_with_access_check(client, agent_run_id, user_id)
@@ -1365,7 +1366,7 @@ async def initiate_agent_with_files(
     logger.info(f"Starting new agent in agent builder mode: {is_agent_builder}, target_agent_id: {target_agent_id}")
 
     logger.info(f"[\033[91mDEBUG\033[0m] Initiating new agent with prompt and {len(files)} files (Instance: {instance_id}), model: {model_name}, enable_thinking: {enable_thinking}")
-    client = await db.client
+    client = db.client
     
     # Determine the account_id to use
     effective_account_id = account_id if account_id else user_id  # Default to personal account if not specified
@@ -1621,6 +1622,25 @@ async def initiate_agent_with_files(
                 message_content += "\n\nThe following files failed to upload:\n"
                 for failed_file in failed_uploads: message_content += f"- {failed_file}\n"
 
+        # 4.5. Download Agent Default Files (if any)
+        if agent_config and agent_config.get('default_files'):
+            try:
+                files_manager = AgentDefaultFilesManager()
+                downloaded_files = await files_manager.download_files_to_sandbox(
+                    effective_account_id, 
+                    agent_config['agent_id'], 
+                    agent_config['default_files'], 
+                    sandbox
+                )
+                
+                if downloaded_files:
+                    message_content += f"\n\n[Agent Default Files Available]: {', '.join([f.split('/')[-1] for f in downloaded_files])}"
+                    logger.info(f"Downloaded {len(downloaded_files)} default files to sandbox")
+                    
+            except Exception as e:
+                logger.error(f"Error downloading agent default files: {str(e)}")
+                # Don't fail the entire initiation, just log the error
+
         # 5. Add initial user message to thread
         message_id = str(uuid.uuid4())
         message_payload = {"role": "user", "content": message_content}
@@ -1703,7 +1723,7 @@ async def get_agents(
         )
     logger.info(f"Fetching agents for user: {user_id} with page={page}, limit={limit}, search='{search}', sort_by={sort_by}, sort_order={sort_order}, account_id={account_id}")
     logger.info(f"Backend debug: user_id={user_id}, account_id={account_id}, using_team_context={account_id is not None and account_id != user_id}")
-    client = await db.client
+    client = db.client
     
     try:
         # Calculate offset
@@ -1947,7 +1967,7 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
         )
     
     logger.info(f"Fetching agent {agent_id} for user: {user_id}")
-    client = await db.client
+    client = db.client
     
     try:
         # Get agent with access check - only owner, public agents, or managed agents in user's library
@@ -2068,7 +2088,7 @@ async def create_agent(
             status_code=403, 
             detail="Custom agents currently disabled. This feature is not available at the moment."
         )
-    client = await db.client
+    client = db.client
     
     try:
         # If this is set as default, we need to unset other defaults first
@@ -2145,7 +2165,7 @@ async def update_agent(
             detail="Custom agent currently disabled. This feature is not available at the moment."
         )
     logger.info(f"Updating agent {agent_id} for user: {user_id}")
-    client = await db.client
+    client = db.client
     
     try:
         # First verify the agent exists and belongs to the user
@@ -2246,7 +2266,7 @@ async def delete_agent(agent_id: str, user_id: str = Depends(get_current_user_id
             detail="Custom agent currently disabled. This feature is not available at the moment."
         )
     logger.info(f"Deleting agent: {agent_id}")
-    client = await db.client
+    client = db.client
     
     try:
         # Verify agent ownership
@@ -2364,7 +2384,7 @@ async def get_marketplace_agents(
         )
     
     logger.info(f"Fetching marketplace agents with page={page}, limit={limit}, search='{search}', tags='{tags}', sort_by={sort_by}")
-    client = await db.client
+    client = db.client
     
     try:
         offset = (page - 1) * limit
@@ -2446,7 +2466,7 @@ async def publish_agent_to_marketplace(
     logger.info(f"Include custom MCP tools: {publish_data.include_custom_mcp_tools}")
     logger.info(f"Managed agent: {publish_data.managed_agent}")
     
-    client = await db.client
+    client = db.client
     
     try:
         # Verify agent ownership
@@ -2532,7 +2552,7 @@ async def unpublish_agent_from_marketplace(
         )
     
     logger.info(f"Unpublishing agent {agent_id} from marketplace")
-    client = await db.client
+    client = db.client
     
     try:
         # Verify agent ownership
@@ -2587,7 +2607,7 @@ async def remove_agent_from_library(
         )
 
     logger.info(f"Removing agent {agent_id} from user {user_id} library")
-    client = await db.client
+    client = db.client
     
     try:
         # Check if this is a managed agent in user's library
@@ -2625,7 +2645,7 @@ async def add_agent_to_library(
         )
 
     logger.info(f"Adding marketplace agent {agent_id} to user {user_id} library")
-    client = await db.client
+    client = db.client
     
     try:
         # Call the database function with user_id
@@ -2665,7 +2685,7 @@ async def add_shared_agent_to_library(
         )
 
     logger.info(f"Adding shared agent with token {token} to user {user_id} library")
-    client = await db.client
+    client = db.client
     
     try:
         # First, get the shared agent data to validate the token and get agent_id
@@ -2712,6 +2732,7 @@ async def add_shared_agent_to_library(
             knowledge_bases = agent_data.get('knowledge_bases', []) if sharing_preferences.get('include_knowledge_bases', True) else []
             configured_mcps = agent_data.get('configured_mcps', []) if sharing_preferences.get('include_custom_mcp_tools', True) else []
             custom_mcps = agent_data.get('custom_mcps', []) if sharing_preferences.get('include_custom_mcp_tools', True) else []
+            default_files = agent_data.get('default_files', []) if sharing_preferences.get('include_default_files', True) else []
             
             # Create the new agent
             new_agent_result = await client.table('agents').insert({
@@ -2723,6 +2744,7 @@ async def add_shared_agent_to_library(
                 'custom_mcps': custom_mcps,
                 'agentpress_tools': agent_data.get('agentpress_tools', {}),
                 'knowledge_bases': knowledge_bases,
+                'default_files': [],  # Will be populated after file copying
                 'is_default': False,
                 'is_public': False,
                 'visibility': 'private',
@@ -2734,7 +2756,8 @@ async def add_shared_agent_to_library(
                     'original_agent_id': agent_id,
                     'is_shared_agent': True,
                     'include_knowledge_bases': sharing_preferences.get('include_knowledge_bases', True),
-                    'include_custom_mcp_tools': sharing_preferences.get('include_custom_mcp_tools', True)
+                    'include_custom_mcp_tools': sharing_preferences.get('include_custom_mcp_tools', True),
+                    'include_default_files': sharing_preferences.get('include_default_files', True)
                 }
             }).execute()
             
@@ -2742,6 +2765,30 @@ async def add_shared_agent_to_library(
                 raise HTTPException(status_code=500, detail="Failed to create agent copy")
             
             new_agent_id = new_agent_result.data[0]['agent_id']
+            
+            # Copy default files if included in sharing preferences
+            if default_files:
+                try:
+                    files_manager = AgentDefaultFilesManager()
+                    copied_files = await files_manager.copy_files_for_agent_copy(
+                        agent_data['account_id'],  # Source account
+                        agent_id,                  # Source agent
+                        user_id,                   # Destination account 
+                        new_agent_id,              # Destination agent
+                        default_files
+                    )
+                    
+                    # Update the new agent with copied files metadata
+                    if copied_files:
+                        await client.table('agents').update({
+                            'default_files': copied_files
+                        }).eq('agent_id', new_agent_id).execute()
+                        
+                        logger.info(f"Copied {len(copied_files)} default files for agent {new_agent_id}")
+                        
+                except Exception as e:
+                    logger.error(f"Error copying default files for agent {new_agent_id}: {str(e)}")
+                    # Don't fail the entire operation, just log the error
             
             # Add to library
             await client.table('user_agent_library').insert({
@@ -2774,7 +2821,7 @@ async def get_user_agent_library(user_id: str = Depends(get_current_user_id_from
         )
 
     logger.info(f"Fetching agent library for user {user_id}")
-    client = await db.client
+    client = db.client
     
     try:
         result = await client.table('user_agent_library').select("""
@@ -2813,7 +2860,7 @@ async def get_agent_builder_chat_history(
         )
     
     logger.info(f"Fetching agent builder chat history for agent: {agent_id}")
-    client = await db.client
+    client = db.client
     
     try:
         # First verify the agent exists and belongs to the user
@@ -2872,7 +2919,7 @@ async def edit_message(
     )
     logger.info(f"Editing message {message_id} in thread {thread_id}")
     
-    client = await db.client
+    client = db.client
     
     try:
         # Verify thread access
@@ -2933,6 +2980,7 @@ class CreateAgentShareRequest(BaseModel):
     max_uses: Optional[int] = None  # For limited use links
     include_knowledge_bases: bool = True
     include_custom_mcp_tools: bool = True
+    include_default_files: bool = True
     managed_agent: bool = False
 
 class AgentShareResponse(BaseModel):
@@ -2967,7 +3015,7 @@ async def create_agent_share_link(
         )
     
     logger.info(f"Creating share link for agent {agent_id} by user {user_id}")
-    client = await db.client
+    client = db.client
     
     try:
         # Verify agent ownership
@@ -2990,6 +3038,7 @@ async def create_agent_share_link(
         sharing_preferences = {
             'include_knowledge_bases': share_data.include_knowledge_bases,
             'include_custom_mcp_tools': share_data.include_custom_mcp_tools,
+            'include_default_files': share_data.include_default_files,
             'managed_agent': share_data.managed_agent
         }
         
@@ -3042,7 +3091,7 @@ async def get_agent_share_links(
 ):
     """Get all share links for an agent."""
     logger.info(f"Getting share links for agent {agent_id}")
-    client = await db.client
+    client = db.client
     
     try:
         # Verify agent ownership
@@ -3092,7 +3141,7 @@ async def revoke_agent_share_link(
 ):
     """Revoke a specific agent share link."""
     logger.info(f"Revoking share link {share_id} for agent {agent_id}")
-    client = await db.client
+    client = db.client
     
     try:
         # Verify agent ownership
@@ -3128,7 +3177,7 @@ async def unshare_managed_agent(
 ):
     """Completely unshare a managed agent - revoke all share links and remove from all users' libraries."""
     logger.info(f"Unsharing managed agent {agent_id}")
-    client = await db.client
+    client = db.client
     
     try:
         # Verify agent ownership
@@ -3180,7 +3229,7 @@ async def get_shared_agent(
 ):
     """Get a shared agent by token."""
     logger.info(f"Accessing shared agent with token {token} by user {user_id}")
-    client = await db.client
+    client = db.client
     
     try:
         # Get shared agent data using database function
@@ -3240,3 +3289,203 @@ async def get_shared_agent(
     except Exception as e:
         logger.error(f"Error getting shared agent with token {token}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+# Agent Default Files Endpoints
+
+@router.post("/agents/{agent_id}/default-files")
+async def upload_agent_default_file(
+    agent_id: str,
+    file: UploadFile = File(...),
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Upload a default file for an agent."""
+    if not await is_enabled("custom_agents"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Custom agents currently disabled. This feature is not available at the moment."
+        )
+    
+    client = db.client
+    
+    # Verify agent ownership and get account_id
+    agent_result = await client.table('agents').select('account_id').eq('agent_id', agent_id).execute()
+    if not agent_result.data:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    account_id = agent_result.data[0]['account_id']
+    
+    # Check if user has owner access to account
+    if account_id != user_id:
+        # Check if user is owner of team account
+        team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', account_id).execute()
+        if not (team_access_check.data and team_access_check.data[0]['account_role'] == 'owner'):
+            raise HTTPException(status_code=403, detail="Access denied. You must own the agent to upload default files.")
+    
+    # Check file size (500MB limit)
+    if hasattr(file, 'size') and file.size and file.size > 500 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File size exceeds 500MB limit")
+    
+    try:
+        files_manager = AgentDefaultFilesManager()
+        file_metadata = await files_manager.upload_file(account_id, agent_id, file)
+        
+        # Update agent's default_files JSONB
+        agent_result = await client.table('agents').select('default_files').eq('agent_id', agent_id).execute()
+        current_files = agent_result.data[0].get('default_files', [])
+        
+        # Remove existing file with same name
+        current_files = [f for f in current_files if f['name'] != file.filename]
+        current_files.append(file_metadata)
+        
+        await client.table('agents').update({
+            'default_files': current_files
+        }).eq('agent_id', agent_id).execute()
+        
+        logger.info(f"Uploaded default file {file.filename} for agent {agent_id}")
+        return {"message": "File uploaded successfully", "file": file_metadata}
+        
+    except Exception as e:
+        logger.error(f"Error uploading agent default file: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/agents/{agent_id}/default-files/{filename}")
+async def delete_agent_default_file(
+    agent_id: str,
+    filename: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Delete a default file for an agent."""
+    if not await is_enabled("custom_agents"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Custom agents currently disabled. This feature is not available at the moment."
+        )
+    
+    client = db.client
+    
+    # Verify agent ownership and get data
+    agent_result = await client.table('agents').select('account_id', 'default_files').eq('agent_id', agent_id).execute()
+    if not agent_result.data:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    account_id = agent_result.data[0]['account_id']
+    current_files = agent_result.data[0].get('default_files', [])
+    
+    # Check if user has owner access to account
+    if account_id != user_id:
+        # Check if user is owner of team account
+        team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', account_id).execute()
+        if not (team_access_check.data and team_access_check.data[0]['account_role'] == 'owner'):
+            raise HTTPException(status_code=403, detail="Access denied. You must own the agent to delete default files.")
+    
+    try:
+        files_manager = AgentDefaultFilesManager()
+        success = await files_manager.delete_file(account_id, agent_id, filename)
+        
+        if success:
+            # Update agent's default_files JSONB
+            updated_files = [f for f in current_files if f['name'] != filename]
+            await client.table('agents').update({
+                'default_files': updated_files
+            }).eq('agent_id', agent_id).execute()
+            
+            logger.info(f"Deleted default file {filename} for agent {agent_id}")
+            return {"message": "File deleted successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to delete file")
+            
+    except Exception as e:
+        logger.error(f"Error deleting agent default file: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/agents/{agent_id}/default-files")
+async def list_agent_default_files(
+    agent_id: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """List default files for an agent."""
+    if not await is_enabled("custom_agents"):
+        raise HTTPException(
+            status_code=403, 
+            detail="Custom agents currently disabled. This feature is not available at the moment."
+        )
+    
+    client = db.client
+    
+    # Get agent data using similar access logic as get_agent endpoint
+    agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
+    if not agent_result.data:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    
+    agent_data = agent_result.data[0]
+    agent_account_id = agent_data.get('account_id')
+    is_managed_by_user = False
+    has_access = False
+    
+    # Check access: owner, public agent, team member, or managed agent in user's library
+    if not agent_account_id:
+        logger.error(f"Agent {agent_id} has no account_id set")
+        raise HTTPException(status_code=500, detail="Agent configuration error")
+    elif agent_account_id == user_id:
+        # User owns the agent (personal account case)
+        has_access = True
+        logger.info(f"User {user_id} owns agent {agent_id}")
+    elif agent_data.get('is_public', False):
+        # Public agent
+        has_access = True
+        logger.info(f"Agent {agent_id} is public")
+    else:
+        # Check if user is a member of the team account that owns the agent
+        try:
+            team_access_check = await client.schema('basejump').from_('account_user').select('account_role').eq('user_id', user_id).eq('account_id', agent_account_id).execute()
+            if team_access_check.data and len(team_access_check.data) > 0:
+                has_access = True
+                logger.info(f"User {user_id} has access to agent {agent_id} via team membership in {agent_account_id}")
+            else:
+                logger.info(f"User {user_id} is not a member of team {agent_account_id} that owns agent {agent_id}")
+        except Exception as e:
+            logger.error(f"Error checking team membership for user {user_id} in account {agent_account_id}: {str(e)}")
+        
+        # Also check if agent is shared with any teams the user belongs to
+        if not has_access:
+            try:
+                # Get all teams the user is a member of
+                user_teams = await client.schema('basejump').from_('account_user').select('account_id').eq('user_id', user_id).execute()
+                if user_teams.data:
+                    user_team_ids = [team['account_id'] for team in user_teams.data]
+                    # Check if agent is shared with any of these teams
+                    shared_check = await client.table('team_agents').select('*').eq('agent_id', agent_id).in_('team_account_id', user_team_ids).execute()
+                    if shared_check.data:
+                        has_access = True
+                        logger.info(f"User {user_id} has access to agent {agent_id} via team sharing")
+            except Exception as e:
+                logger.error(f"Error checking team sharing for user {user_id} and agent {agent_id}: {str(e)}")
+        
+        # If no team access, check library access
+        if not has_access:
+            # Check if user has this agent in their library (either managed or copied)
+            library_check = await client.table('user_agent_library').select('*').eq(
+                'user_account_id', user_id
+            ).eq('agent_id', agent_id).execute()
+            
+            if library_check.data:
+                has_access = True
+                # Check if it's a managed agent (agent_id == original_agent_id)
+                library_entry = library_check.data[0]
+                is_managed_by_user = (library_entry['agent_id'] == library_entry['original_agent_id'])
+    
+    if not has_access:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Apply sharing preferences if user doesn't own the agent and it's managed
+    default_files = agent_data.get('default_files', [])
+    if agent_data['account_id'] != user_id and is_managed_by_user:
+        # Check sharing preferences for managed agents
+        sharing_prefs = agent_data.get('sharing_preferences', {})
+        if not sharing_prefs.get('include_default_files', True):
+            default_files = []
+    
+    return {"files": default_files}

@@ -31,6 +31,7 @@ export type Agent = {
   sharing_preferences?: {
     include_knowledge_bases?: boolean;
     include_custom_mcp_tools?: boolean;
+    include_default_files?: boolean;
     managed_agent?: boolean;
     original_agent_id?: string;
     is_marketplace_agent?: boolean;
@@ -40,6 +41,14 @@ export type Agent = {
   avatar?: string;
   avatar_color?: string;
   knowledge_bases?: Array<{ name: string; index_name: string; description: string }>;
+  default_files?: Array<{
+    name: string;
+    storage_path: string;
+    size: number;
+    mime_type: string;
+    uploaded_at: string;
+    public_url?: string;
+  }>;
   is_managed?: boolean;  // True if this is a managed agent (live reference)
   is_owned?: boolean;    // True if user owns this agent
 };
@@ -92,6 +101,13 @@ export type AgentCreateRequest = {
   agentpress_tools?: Record<string, any>;
   is_default?: boolean;
   knowledge_bases?: Array<{ name: string; index_name: string; description: string }>;
+  default_files?: Array<{
+    name: string;
+    storage_path: string;
+    size: number;
+    mime_type: string;
+    uploaded_at: string;
+  }>;
 };
 
 export type AgentUpdateRequest = {
