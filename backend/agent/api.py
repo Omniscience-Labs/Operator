@@ -3395,9 +3395,20 @@ async def upload_agent_default_file(
         
         # Make error messages more user-friendly
         if "already exists" in error_message.lower():
-            error_message = f"File '{file.filename}' already exists and could not be replaced"
+            # Check if the message already contains the filename
+            if file.filename.lower() in error_message.lower():
+                # Use the error message as-is since it already mentions the file
+                pass
+            else:
+                error_message = f"Document '{file.filename}' already exists"
         elif "duplicate" in error_message.lower():
-            error_message = f"File '{file.filename}' already exists"
+            error_message = f"Document '{file.filename}' already exists"
+        elif "upload failed:" in error_message.lower():
+            # Remove redundant "Failed to upload file:" prefix if present
+            error_message = error_message.replace("Failed to upload file: Upload failed:", "").strip()
+            error_message = error_message.replace("Upload failed:", "").strip()
+            if not error_message:
+                error_message = f"Failed to upload '{file.filename}'"
         
         raise HTTPException(status_code=500, detail=error_message)
 

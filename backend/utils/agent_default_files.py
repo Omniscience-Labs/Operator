@@ -75,14 +75,20 @@ class AgentDefaultFilesManager:
                     # Check if second upload also failed
                     if storage_response.get('error'):
                         logger.error(f"Second upload also failed: {storage_response['error']}")
-                        raise RuntimeError(f"File '{file.filename}' could not be uploaded after removing existing file: {storage_response['error']}")
+                        # Provide a clear message for duplicate files
+                        raise RuntimeError(f"Document '{file.filename}' already exists")
                     else:
                         logger.info(f"File upload successful after removing duplicate: {file_path}")
                         upload_successful = True
                 else:
                     # Different error, not a duplicate
                     logger.error(f"Non-duplicate upload error: {storage_response['error']}")
-                    raise RuntimeError(f"Upload failed: {storage_response['error']}")
+                    # Check if it's actually a duplicate error with different wording
+                    error_str = str(storage_response['error']).lower()
+                    if 'already exists' in error_str or 'duplicate' in error_str or '409' in error_str:
+                        raise RuntimeError(f"Document '{file.filename}' already exists")
+                    else:
+                        raise RuntimeError(f"Upload failed: {storage_response['error']}")
             else:
                 # No error and no UploadResponse - unexpected case
                 logger.warning(f"Unexpected storage response format: {type(storage_response)} - {storage_response}")
@@ -115,7 +121,12 @@ class AgentDefaultFilesManager:
             
         except Exception as e:
             logger.error(f"Error uploading agent default file: {e}")
-            raise RuntimeError(f"Failed to upload file: {str(e)}")
+            # Pass through "already exists" messages without wrapping
+            error_msg = str(e)
+            if "already exists" in error_msg.lower():
+                raise RuntimeError(error_msg)
+            else:
+                raise RuntimeError(f"Failed to upload file: {error_msg}")
     
     async def delete_file(self, account_id: str, agent_id: str, filename: str) -> bool:
         """Delete a default file for an agent."""
@@ -158,20 +169,32 @@ class AgentDefaultFilesManager:
                     continue
                 
                 # Upload to destination
-                upload_response = await client.storage.from_(self.bucket_name).upload(
-                    dest_path,
-                    file_content,
-                    {"content-type": file_info.get('mime_type', 'application/octet-stream')}
-                )
-                
-                if upload_response.get('error'):
-                    logger.warning(f"Failed to copy file to {dest_path}")
+                try:
+                    upload_response = await client.storage.from_(self.bucket_name).upload(
+                        dest_path,
+                        file_content,
+                        {"content-type": file_info.get('mime_type', 'application/octet-stream')}
+                    )
+                    
+                    # If we reach here, upload was successful (no exception thrown)
+                    logger.info(f"Successfully copied file to {dest_path}")
+                    
+                    # Update file metadata for new location
+                    copied_file = file_info.copy()
+                    copied_file['storage_path'] = dest_path
+                    # Update the public URL for the new location
+                    try:
+                        public_url = await client.storage.from_(self.bucket_name).get_public_url(dest_path)
+                        copied_file['public_url'] = public_url
+                    except Exception as url_error:
+                        logger.warning(f"Failed to get public URL for copied file: {url_error}")
+                        copied_file['public_url'] = f"/{self.bucket_name}/{dest_path}"
+                    
+                    copied_files.append(copied_file)
+                    
+                except Exception as upload_error:
+                    logger.warning(f"Failed to copy file to {dest_path}: {upload_error}")
                     continue
-                
-                # Update file metadata for new location
-                copied_file = file_info.copy()
-                copied_file['storage_path'] = dest_path
-                copied_files.append(copied_file)
             
             return copied_files
             
