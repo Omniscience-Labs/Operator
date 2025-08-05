@@ -3360,8 +3360,13 @@ async def upload_agent_default_file(
             
             logger.info(f"Database update result: {db_update_result}")
             
-            if db_update_result.get('error'):
-                raise RuntimeError(f"Database update failed: {db_update_result['error']}")
+            # Check if database update has error (APIResponse object doesn't have .get method)
+            if hasattr(db_update_result, 'error') and db_update_result.error:
+                raise RuntimeError(f"Database update failed: {db_update_result.error}")
+            elif hasattr(db_update_result, 'data') and not db_update_result.data:
+                raise RuntimeError(f"Database update failed: No data returned")
+            
+            logger.info("Database update completed successfully")
                 
         except Exception as db_error:
             logger.error(f"Database operation failed: {db_error}")
