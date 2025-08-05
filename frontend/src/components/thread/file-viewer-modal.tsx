@@ -1548,11 +1548,11 @@ export function FileViewerModal({
                 </div>
               ) : (
                 <ScrollArea className="h-full w-full p-2">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 p-4">
                     {files.map((file) => (
                       <button
                         key={file.path}
-                        className={`flex flex-col items-center p-3 rounded-lg border hover:bg-muted/50 transition-colors ${selectedFilePath === file.path
+                        className={`flex flex-col items-center p-4 rounded-lg border hover:bg-muted/50 transition-colors ${selectedFilePath === file.path
                           ? 'bg-muted border-primary/20'
                           : ''
                           }`}
@@ -1567,14 +1567,14 @@ export function FileViewerModal({
                           }
                         }}
                       >
-                        <div className="w-12 h-12 flex items-center justify-center mb-1">
+                        <div className="w-16 h-16 flex items-center justify-center mb-2">
                           {file.is_dir ? (
-                            <Folder className="h-9 w-9 text-blue-500" />
+                            <Folder className="h-12 w-12 text-blue-500" />
                           ) : (
-                            <File className="h-8 w-8 text-muted-foreground" />
+                            <File className="h-11 w-11 text-muted-foreground" />
                           )}
                         </div>
-                        <span className="text-xs text-center font-medium truncate max-w-full">
+                        <span className="text-sm text-center font-medium truncate max-w-full">
                           {file.name}
                         </span>
                       </button>

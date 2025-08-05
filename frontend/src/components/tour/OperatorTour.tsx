@@ -274,6 +274,167 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     return null;
   };
 
+  const findSidebarMeetingsLink = () => {
+    console.log('Searching for Sidebar Meetings link...');
+    
+    const selectors = [
+      'a[href="/meetings"]',
+      'a[href*="meetings"]',
+      '[data-testid="meetings-nav"]'
+    ];
+    
+    for (const selector of selectors) {
+        const element = document.querySelector(selector);
+        if (element) {
+        console.log('Found sidebar meetings link:', element);
+            return element;
+          }
+    }
+    
+    // Search by text content
+    const links = document.querySelectorAll('a, button');
+    for (const link of links) {
+      if (link.textContent?.toLowerCase().includes('meetings') && link.closest('.sidebar, nav')) {
+        console.log('Found meetings link by text:', link);
+        return link;
+      }
+    }
+    
+    console.log('No sidebar meetings link found');
+    return null;
+  };
+
+  const findSidebarAgentsLink = () => {
+    console.log('Searching for Sidebar Agents link...');
+    
+    const selectors = [
+      'a[href="/agents"]',
+      'a[href*="agents"]',
+      '[data-testid="agents-nav"]'
+    ];
+    
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        console.log('Found sidebar agents link:', element);
+            return element;
+          }
+    }
+    
+    // Search by text content
+    const links = document.querySelectorAll('a, button');
+    for (const link of links) {
+      const text = link.textContent?.toLowerCase() || '';
+      if ((text.includes('agents') || text.includes('team agents')) && link.closest('.sidebar, nav')) {
+        console.log('Found agents link by text:', link);
+        return link;
+      }
+    }
+    
+    console.log('No sidebar agents link found');
+    return null;
+  };
+
+  const findSidebarMarketplaceLink = () => {
+    console.log('Searching for Sidebar Marketplace/Agent Library link...');
+    
+    const selectors = [
+      'a[href="/marketplace"]',
+      'a[href*="marketplace"]',
+      '[data-testid="marketplace-nav"]'
+    ];
+    
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        console.log('Found sidebar marketplace link:', element);
+        return element;
+      }
+    }
+    
+    // Search by text content
+    const links = document.querySelectorAll('a, button');
+    for (const link of links) {
+      const text = link.textContent?.toLowerCase() || '';
+      if ((text.includes('marketplace') || text.includes('library')) && link.closest('.sidebar, nav')) {
+        console.log('Found marketplace link by text:', link);
+        return link;
+      }
+    }
+    
+    console.log('No sidebar marketplace link found');
+    return null;
+  };
+
+  const findSidebarTasksSection = () => {
+    console.log('Searching for Sidebar Tasks/Past Chats section...');
+    
+    const selectors = [
+      '[data-testid="sidebar-tasks"]',
+      '.sidebar-tasks',
+      'div:has(> h3:contains("Tasks"))',
+      'div:has(> [class*="SidebarGroupLabel"]:contains("Tasks"))'
+    ];
+    
+    for (const selector of selectors) {
+      try {
+        const element = document.querySelector(selector);
+        if (element) {
+          console.log('Found sidebar tasks section:', element);
+          return element;
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+    
+    // Search by text content
+    const elements = document.querySelectorAll('h2, h3, h4, [class*="GroupLabel"], [class*="group-label"]');
+    for (const element of elements) {
+      if (element.textContent?.toLowerCase().includes('tasks') && element.closest('.sidebar, nav')) {
+        console.log('Found tasks section by text:', element);
+        return element;
+      }
+    }
+    
+    console.log('No sidebar tasks section found');
+    return null;
+  };
+
+  const findUserProfileButton = () => {
+    console.log('Searching for User Profile button...');
+    
+    const selectors = [
+      '[data-testid="user-profile"]',
+      '[data-testid="user-menu"]',
+      'button[aria-label*="profile"]',
+      'button[aria-label*="account"]',
+      'button[aria-label*="user"]'
+    ];
+    
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        console.log('Found user profile button:', element);
+        return element;
+      }
+    }
+    
+    // Look for buttons in sidebar with user-related content
+    const buttons = document.querySelectorAll('button');
+    for (const button of buttons) {
+      const isInSidebar = button.closest('.sidebar, nav');
+      const hasUserIcon = button.querySelector('.lucide-user, .lucide-avatar, svg[data-lucide="user"]');
+      if (isInSidebar && hasUserIcon) {
+        console.log('Found user profile button by icon:', button);
+        return button;
+      }
+    }
+    
+    console.log('No user profile button found');
+    return null;
+  };
+
 
   const startTour = async () => {
     if (isLoading) return;
@@ -691,7 +852,322 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.addStep(meetingsDashboardStepConfig);
 
-      // Step 7: New Task Button
+      // Step 7: Sidebar Meetings Link
+      tourRef.current.addStep({
+        id: 'sidebar-meetings',
+        title: 'Meetings Navigation',
+        text: `
+          <div class="space-y-3">
+            <p>Here in the sidebar, you can access all your meetings anytime!</p>
+            <p>Click on "Meetings" to view, manage, and review your past meeting recordings and transcripts.</p>
+          </div>
+        `,
+        attachTo: {
+          element: findSidebarMeetingsLink,
+          on: 'right'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [20, 0],
+              },
+            },
+          ],
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = findSidebarMeetingsLink();
+              if (element) {
+                addHighlight(element);
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = findSidebarMeetingsLink();
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => tourRef.current?.next(),
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 8: Sidebar Agents Link
+      tourRef.current.addStep({
+        id: 'sidebar-agents',
+        title: 'Your Agents',
+        text: `
+          <div class="space-y-3">
+            <p>This is where you can create and manage your custom AI agents!</p>
+            <p>Build specialized agents with specific instructions, tools, and capabilities tailored to your needs.</p>
+          </div>
+        `,
+        attachTo: {
+          element: findSidebarAgentsLink,
+          on: 'right'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [20, 0],
+              },
+            },
+          ],
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = findSidebarAgentsLink();
+              if (element) {
+                addHighlight(element);
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = findSidebarAgentsLink();
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => tourRef.current?.next(),
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 9: Sidebar Marketplace/Agent Library
+      tourRef.current.addStep({
+        id: 'sidebar-marketplace',
+        title: 'Agent Library',
+        text: `
+          <div class="space-y-3">
+            <p>Discover amazing agents created by the community in the Marketplace!</p>
+            <p>Browse, try, and add pre-built agents to your library to expand your capabilities instantly.</p>
+          </div>
+        `,
+        attachTo: {
+          element: findSidebarMarketplaceLink,
+          on: 'right'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [20, 0],
+              },
+            },
+          ],
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = findSidebarMarketplaceLink();
+              if (element) {
+                addHighlight(element);
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = findSidebarMarketplaceLink();
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => tourRef.current?.next(),
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 10: Sidebar Tasks/Past Chats
+      tourRef.current.addStep({
+        id: 'sidebar-tasks',
+        title: 'Your Tasks & Past Chats',
+        text: `
+          <div class="space-y-3">
+            <p>All your conversations and tasks are organized here!</p>
+            <p>Easily access your chat history, continue previous conversations, and manage your ongoing projects.</p>
+          </div>
+        `,
+        attachTo: {
+          element: findSidebarTasksSection,
+          on: 'right'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [20, 0],
+              },
+            },
+          ],
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = findSidebarTasksSection();
+              if (element) {
+                addHighlight(element);
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = findSidebarTasksSection();
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => tourRef.current?.next(),
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 11: User Profile
+      tourRef.current.addStep({
+        id: 'sidebar-profile',
+        title: 'Your Profile',
+        text: `
+          <div class="space-y-3">
+            <p>Access your profile settings, account management, and preferences here!</p>
+            <p>Manage your account, billing, team settings, and customize your Operator experience.</p>
+          </div>
+        `,
+        attachTo: {
+          element: findUserProfileButton,
+          on: 'right'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [20, 0],
+              },
+            },
+          ],
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = findUserProfileButton();
+              if (element) {
+                addHighlight(element);
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = findUserProfileButton();
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => tourRef.current?.next(),
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 12: New Task Button
       tourRef.current.addStep({
         id: 'new-task',
         title: 'Create a New Task',
@@ -770,7 +1246,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 8: Send Message
+      // Step 13: Send Message
       tourRef.current.addStep({
         id: 'send-message',
         title: 'Send Your Message',
