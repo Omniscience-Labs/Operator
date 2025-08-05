@@ -1744,7 +1744,7 @@ async def get_agents(
             # This includes: owned agents, team-shared agents, and public agents
             # Get a larger set first to allow for post-processing filters
             logger.info(f"Calling get_marketplace_agents with account_id={account_id}")
-            marketplace_result = await client.rpc('get_marketplace_agents', {
+            marketplace_result = client.rpc('get_marketplace_agents', {
                 'p_limit': limit * 3,  # Get more than needed for post-processing
                 'p_offset': 0,  # Always start from beginning for filtering
                 'p_search': search,
@@ -1797,7 +1797,7 @@ async def get_agents(
             
             # 2. Get managed agents (references from user_agent_library)
             # For managed agents, agent_id equals original_agent_id (indicating it's a reference, not a copy)
-            managed_query = await client.rpc('get_managed_agents_for_user', {
+            managed_query = client.rpc('get_managed_agents_for_user', {
                 'p_user_id': filter_account_id
             }).execute()
             
@@ -2392,7 +2392,7 @@ async def get_marketplace_agents(
         if tags:
             tags_array = [tag.strip() for tag in tags.split(',') if tag.strip()]
         
-        result = await client.rpc('get_marketplace_agents', {
+        result = client.rpc('get_marketplace_agents', {
             'p_search': search,
             'p_tags': tags_array,
             'p_limit': limit + 1,
@@ -2509,7 +2509,7 @@ async def publish_agent_to_marketplace(
         # Use the new database function that accepts user_id explicitly
         logger.info(f"Calling publish_agent_with_visibility_by_user with: agent_id={agent_id}, visibility={publish_data.visibility}, user_id={user_id}, team_ids={team_ids_for_db}")
         
-        result = await client.rpc('publish_agent_with_visibility_by_user', {
+        result = client.rpc('publish_agent_with_visibility_by_user', {
             'p_agent_id': agent_id,
             'p_visibility': publish_data.visibility,
             'p_user_id': user_id,
@@ -2569,7 +2569,7 @@ async def unpublish_agent_from_marketplace(
         is_managed_agent = agent_sharing_prefs.get('managed_agent', False)
         
         # Update agent to remove from marketplace using the new visibility function
-        await client.rpc('publish_agent_with_visibility_by_user', {
+        client.rpc('publish_agent_with_visibility_by_user', {
             'p_agent_id': agent_id,
             'p_visibility': 'private',
             'p_user_id': user_id,
@@ -2649,7 +2649,7 @@ async def add_agent_to_library(
     
     try:
         # Call the database function with user_id
-        result = await client.rpc('add_agent_to_library', {
+        result = client.rpc('add_agent_to_library', {
             'p_original_agent_id': agent_id,
             'p_user_account_id': user_id
         }).execute()
@@ -2689,7 +2689,7 @@ async def add_shared_agent_to_library(
     
     try:
         # First, get the shared agent data to validate the token and get agent_id
-        shared_result = await client.rpc('get_shared_agent', {
+        shared_result = client.rpc('get_shared_agent', {
             'p_token': token
         }).execute()
         
@@ -3043,7 +3043,7 @@ async def create_agent_share_link(
         }
         
         # Create share link using database function
-        result = await client.rpc('create_agent_share_link', {
+        result = client.rpc('create_agent_share_link', {
             'p_agent_id': agent_id,
             'p_share_type': share_data.share_type,
             'p_expires_in_hours': share_data.expires_in_hours,
@@ -3233,7 +3233,7 @@ async def get_shared_agent(
     
     try:
         # Get shared agent data using database function
-        result = await client.rpc('get_shared_agent', {
+        result = client.rpc('get_shared_agent', {
             'p_token': token
         }).execute()
         
