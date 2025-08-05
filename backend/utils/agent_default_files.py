@@ -29,14 +29,26 @@ class AgentDefaultFilesManager:
             db = DBConnection()
             client = await db.client
             
+            # First try to upload the file
             storage_response = await client.storage.from_(self.bucket_name).upload(
                 file_path,
                 content,
                 {"content-type": file.content_type or "application/octet-stream"}
             )
             
+            # If file already exists (409 Duplicate), try to update/replace it
             if storage_response.get('error'):
-                raise RuntimeError(f"Upload failed: {storage_response['error']}")
+                error = storage_response['error']
+                if 'Duplicate' in str(error) or '409' in str(error):
+                    # File exists, try to update it instead
+                    storage_response = await client.storage.from_(self.bucket_name).update(
+                        file_path,
+                        content,
+                        {"content-type": file.content_type or "application/octet-stream"}
+                    )
+                    
+                if storage_response.get('error'):
+                    raise RuntimeError(f"Upload failed: {storage_response['error']}")
             
             # Get public URL (for internal use)
             public_url = await client.storage.from_(self.bucket_name).get_public_url(file_path)
