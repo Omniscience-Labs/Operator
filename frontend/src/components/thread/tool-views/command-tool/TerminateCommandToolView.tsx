@@ -248,7 +248,7 @@ export function TerminateCommandToolView({
                       )}
                     </div>
                     <div className="p-4 max-h-96 overflow-auto scrollbar-hide">
-                      <pre className="text-xs text-zinc-600 dark:text-zinc-300 font-mono whitespace-pre-wrap break-all overflow-visible">
+                      <pre className="text-xs text-zinc-600 dark:text-zinc-300 font-mono whitespace-pre overflow-x-auto">
                         {linesToShow.map((line, index) => (
                           <div 
                             key={index} 

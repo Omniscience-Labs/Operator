@@ -184,7 +184,7 @@ export function GenericToolView({
                   </div>
                   <div className="border-muted bg-muted/20 rounded-lg overflow-hidden border">
                     <div className="p-4">
-                      <pre className="text-xs text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap break-words font-mono">
+                      <pre className="text-xs text-zinc-700 dark:text-zinc-300 whitespace-pre font-mono overflow-x-auto">
                         {formattedAssistantContent}
                       </pre>
                     </div>
@@ -200,7 +200,7 @@ export function GenericToolView({
                   </div>
                   <div className="border-muted bg-muted/20 rounded-lg overflow-hidden border">
                     <div className="p-4">
-                      <pre className="text-xs text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap break-words font-mono">
+                      <pre className="text-xs text-zinc-700 dark:text-zinc-300 whitespace-pre font-mono overflow-x-auto">
                         {formattedToolContent}
                       </pre>
                     </div>
