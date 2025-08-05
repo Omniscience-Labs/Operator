@@ -40,16 +40,16 @@ BEGIN
         RAISE EXCEPTION 'Agent not found' USING ERRCODE = 'P0002';
     END IF;
     
-    -- Get creator name from accounts using direct columns
-    SELECT
+    -- Get creator name using existing columns from basejump.accounts and auth.users
+    SELECT 
         COALESCE(
-            name,
-            full_name,
-            email,
+            a.name,
+            u.email,
             'Unknown'
         ) INTO creator_name
-    FROM basejump.accounts
-    WHERE id = share_record.creator_account_id;
+    FROM basejump.accounts a
+    LEFT JOIN auth.users u ON u.id = a.primary_owner_user_id
+    WHERE a.id = share_record.creator_account_id;
     
     -- Increment access count
     UPDATE agent_shares
