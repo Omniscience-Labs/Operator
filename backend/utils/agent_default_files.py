@@ -43,7 +43,13 @@ class AgentDefaultFilesManager:
             # Check if upload succeeded or failed
             upload_successful = False
             
-            if storage_response and storage_response.get('error'):
+            # Handle different response types from Supabase storage
+            if hasattr(storage_response, 'path'):
+                # UploadResponse object - upload was successful
+                logger.info(f"File upload successful for {file_path}")
+                logger.info(f"Successful upload response structure: {type(storage_response)} - {storage_response}")
+                upload_successful = True
+            elif storage_response and hasattr(storage_response, 'get') and storage_response.get('error'):
                 error = storage_response['error']
                 logger.error(f"Storage upload error details: {error}")
                 logger.error(f"Full storage response: {storage_response}")
@@ -78,9 +84,9 @@ class AgentDefaultFilesManager:
                     logger.error(f"Non-duplicate upload error: {storage_response['error']}")
                     raise RuntimeError(f"Upload failed: {storage_response['error']}")
             else:
-                logger.info(f"File upload successful for {file_path}")
-                logger.info(f"Successful upload response structure: {type(storage_response)} - {storage_response}")
-                upload_successful = True
+                # No error and no UploadResponse - unexpected case
+                logger.warning(f"Unexpected storage response format: {type(storage_response)} - {storage_response}")
+                upload_successful = False
             
             # Only proceed if upload was successful
             if not upload_successful:
