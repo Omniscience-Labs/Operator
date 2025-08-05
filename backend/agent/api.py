@@ -3331,6 +3331,7 @@ async def upload_agent_default_file(
         file_metadata = await files_manager.upload_file(account_id, agent_id, file)
         
         # Update agent's default_files JSONB
+        logger.info(f"Updating database for agent {agent_id} with file metadata: {file_metadata}")
         agent_result = await client.table('agents').select('default_files').eq('agent_id', agent_id).execute()
         current_files = agent_result.data[0].get('default_files', [])
         
@@ -3338,16 +3339,26 @@ async def upload_agent_default_file(
         current_files = [f for f in current_files if f['name'] != file.filename]
         current_files.append(file_metadata)
         
-        await client.table('agents').update({
+        db_update_result = await client.table('agents').update({
             'default_files': current_files
         }).eq('agent_id', agent_id).execute()
+        
+        logger.info(f"Database update result: {db_update_result}")
         
         logger.info(f"Uploaded default file {file.filename} for agent {agent_id}")
         return {"message": "File uploaded successfully", "file": file_metadata}
         
     except Exception as e:
         logger.error(f"Error uploading agent default file: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        error_message = str(e)
+        
+        # Make error messages more user-friendly
+        if "already exists" in error_message.lower():
+            error_message = f"File '{file.filename}' already exists and could not be replaced"
+        elif "duplicate" in error_message.lower():
+            error_message = f"File '{file.filename}' already exists"
+        
+        raise HTTPException(status_code=500, detail=error_message)
 
 
 @router.delete("/agents/{agent_id}/default-files/{filename}")

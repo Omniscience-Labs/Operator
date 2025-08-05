@@ -25,6 +25,8 @@ class AgentDefaultFilesManager:
             content = await file.read()
             file_path = self._get_file_path(account_id, agent_id, file.filename)
             
+            logger.info(f"Attempting to upload file: {file_path} to bucket: {self.bucket_name}")
+            
             # Upload to Supabase storage
             db = DBConnection()
             client = await db.client
@@ -36,19 +38,34 @@ class AgentDefaultFilesManager:
                 {"content-type": file.content_type or "application/octet-stream"}
             )
             
-            # If file already exists (409 Duplicate), try to update/replace it
-            if storage_response.get('error'):
+            logger.info(f"Storage upload response: {storage_response}")
+            
+            # Check if upload failed 
+            if storage_response and storage_response.get('error'):
                 error = storage_response['error']
+                logger.error(f"Storage upload error details: {error}")
+                logger.error(f"Full storage response: {storage_response}")
                 if 'Duplicate' in str(error) or '409' in str(error):
-                    # File exists, try to update it instead
-                    storage_response = await client.storage.from_(self.bucket_name).update(
+                    # File exists, delete it first
+                    delete_response = await client.storage.from_(self.bucket_name).remove([file_path])
+                    if delete_response.get('error'):
+                        logger.warning(f"Could not delete existing file {file_path}: {delete_response['error']}")
+                    
+                    # Try uploading again
+                    storage_response = await client.storage.from_(self.bucket_name).upload(
                         file_path,
                         content,
                         {"content-type": file.content_type or "application/octet-stream"}
                     )
                     
-                if storage_response.get('error'):
+                    # Check if second upload also failed
+                    if storage_response.get('error'):
+                        raise RuntimeError(f"File '{file.filename}' could not be uploaded after removing existing file: {storage_response['error']}")
+                else:
+                    # Different error, not a duplicate
                     raise RuntimeError(f"Upload failed: {storage_response['error']}")
+            else:
+                logger.info(f"File upload successful for {file_path}")
             
             # Get public URL (for internal use)
             public_url = await client.storage.from_(self.bucket_name).get_public_url(file_path)
