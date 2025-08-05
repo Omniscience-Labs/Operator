@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, Settings2, Sparkles, Check, Clock, Eye, Menu, BookOpen } from 'lucide-react';
+import { ArrowLeft, Loader2, Settings2, Sparkles, Check, Clock, Eye, Menu, BookOpen, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import { AgentMCPConfiguration } from '../../_components/agent-mcp-configuration
 import { toast } from 'sonner';
 import { AgentToolsConfiguration } from '../../_components/agent-tools-configuration';
 import { AgentKnowledgeConfiguration } from '../../_components/agent-knowledge-configuration';
+import { AgentDefaultFiles } from '@/components/agents/default-files';
 import { AgentPreview } from '../../_components/agent-preview';
 import { getAgentAvatar } from '../../_utils/get-agent-style';
 import { EditableText } from '@/components/ui/editable';
@@ -428,6 +429,25 @@ export default function AgentConfigurationPage() {
                         knowledgeBases={formData.knowledge_bases || []}
                         onKnowledgeBasesChange={(knowledgeBases) => handleFieldChange('knowledge_bases', knowledgeBases)}
                       />
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="default-files" className="border-b">
+                    <AccordionTrigger className="hover:no-underline text-sm md:text-base">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Default Files
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-4 overflow-x-hidden">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <p className="text-sm text-muted-foreground">
+                            Upload files that will be automatically available in every new chat session with this agent.
+                          </p>
+                        </div>
+                        <AgentDefaultFiles agentId={agentId} isEditable={true} />
+                      </div>
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
