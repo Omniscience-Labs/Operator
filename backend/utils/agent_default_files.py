@@ -40,38 +40,62 @@ class AgentDefaultFilesManager:
             
             logger.info(f"Storage upload response: {storage_response}")
             
-            # Check if upload failed 
+            # Check if upload succeeded or failed
+            upload_successful = False
+            
             if storage_response and storage_response.get('error'):
                 error = storage_response['error']
                 logger.error(f"Storage upload error details: {error}")
                 logger.error(f"Full storage response: {storage_response}")
                 if 'Duplicate' in str(error) or '409' in str(error):
+                    logger.info(f"File already exists, attempting to delete and re-upload: {file_path}")
                     # File exists, delete it first
                     delete_response = await client.storage.from_(self.bucket_name).remove([file_path])
+                    logger.info(f"Delete response: {delete_response}")
+                    
                     if delete_response.get('error'):
                         logger.warning(f"Could not delete existing file {file_path}: {delete_response['error']}")
+                        # Continue anyway, maybe the delete worked despite the error
                     
                     # Try uploading again
+                    logger.info(f"Attempting second upload after delete")
                     storage_response = await client.storage.from_(self.bucket_name).upload(
                         file_path,
                         content,
                         {"content-type": file.content_type or "application/octet-stream"}
                     )
+                    logger.info(f"Second upload response: {storage_response}")
                     
                     # Check if second upload also failed
                     if storage_response.get('error'):
+                        logger.error(f"Second upload also failed: {storage_response['error']}")
                         raise RuntimeError(f"File '{file.filename}' could not be uploaded after removing existing file: {storage_response['error']}")
+                    else:
+                        logger.info(f"File upload successful after removing duplicate: {file_path}")
+                        upload_successful = True
                 else:
                     # Different error, not a duplicate
+                    logger.error(f"Non-duplicate upload error: {storage_response['error']}")
                     raise RuntimeError(f"Upload failed: {storage_response['error']}")
             else:
                 logger.info(f"File upload successful for {file_path}")
+                logger.info(f"Successful upload response structure: {type(storage_response)} - {storage_response}")
+                upload_successful = True
+            
+            # Only proceed if upload was successful
+            if not upload_successful:
+                raise RuntimeError(f"Upload failed for unknown reason")
             
             # Get public URL (for internal use)
-            public_url = await client.storage.from_(self.bucket_name).get_public_url(file_path)
+            try:
+                public_url = await client.storage.from_(self.bucket_name).get_public_url(file_path)
+                logger.info(f"Got public URL: {public_url}")
+            except Exception as url_error:
+                logger.error(f"Failed to get public URL: {url_error}")
+                public_url = f"/{self.bucket_name}/{file_path}"  # Fallback URL
             
             # Return file metadata
-            return {
+            file_metadata = {
                 "name": file.filename,
                 "storage_path": file_path,
                 "size": len(content),
@@ -79,6 +103,9 @@ class AgentDefaultFilesManager:
                 "uploaded_at": datetime.now(timezone.utc).isoformat(),
                 "public_url": public_url
             }
+            
+            logger.info(f"Returning file metadata: {file_metadata}")
+            return file_metadata
             
         except Exception as e:
             logger.error(f"Error uploading agent default file: {e}")
