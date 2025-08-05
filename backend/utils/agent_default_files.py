@@ -29,7 +29,7 @@ class AgentDefaultFilesManager:
             db = DBConnection()
             client = await db.client
             
-            storage_response = client.storage.from_(self.bucket_name).upload(
+            storage_response = await client.storage.from_(self.bucket_name).upload(
                 file_path,
                 content,
                 {"content-type": file.content_type or "application/octet-stream"}
@@ -39,7 +39,7 @@ class AgentDefaultFilesManager:
                 raise RuntimeError(f"Upload failed: {storage_response['error']}")
             
             # Get public URL (for internal use)
-            public_url = client.storage.from_(self.bucket_name).get_public_url(file_path)
+            public_url = await client.storage.from_(self.bucket_name).get_public_url(file_path)
             
             # Return file metadata
             return {
@@ -63,7 +63,7 @@ class AgentDefaultFilesManager:
             db = DBConnection()
             client = await db.client
             
-            response = client.storage.from_(self.bucket_name).remove([file_path])
+            response = await client.storage.from_(self.bucket_name).remove([file_path])
             
             if response.get('error'):
                 logger.error(f"Failed to delete file {file_path}: {response['error']}")
@@ -89,13 +89,13 @@ class AgentDefaultFilesManager:
                 dest_path = self._get_file_path(dest_account_id, dest_agent_id, file_info['name'])
                 
                 # Download from source
-                download_response = client.storage.from_(self.bucket_name).download(source_path)
+                download_response = await client.storage.from_(self.bucket_name).download(source_path)
                 if download_response.get('error'):
                     logger.warning(f"Failed to download source file {source_path}")
                     continue
                 
                 # Upload to destination
-                upload_response = client.storage.from_(self.bucket_name).upload(
+                upload_response = await client.storage.from_(self.bucket_name).upload(
                     dest_path,
                     download_response['data'],
                     {"content-type": file_info.get('mime_type', 'application/octet-stream')}
@@ -129,7 +129,7 @@ class AgentDefaultFilesManager:
                 workspace_path = f"/workspace/agent-defaults/{file_info['name']}"
                 
                 # Download from Supabase storage
-                download_response = client.storage.from_(self.bucket_name).download(storage_path)
+                download_response = await client.storage.from_(self.bucket_name).download(storage_path)
                 if download_response.get('error'):
                     logger.warning(f"Failed to download file {storage_path}")
                     continue
