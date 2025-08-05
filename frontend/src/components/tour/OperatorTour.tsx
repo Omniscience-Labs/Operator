@@ -99,60 +99,47 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     console.log('Searching for join online meeting button...');
     
     const selectors = [
-      // Target any button that might open the Join Online Meeting dialog
-      'button[aria-label*="Join Online Meeting"]',
-      'button[title*="Join Online Meeting"]',
-      'button[data-testid*="join-meeting"]',
-      'button[data-testid*="meeting-join"]',
-      // Look for buttons with music/audio icons
-      'button:has(.lucide-play)',
-      'button:has(.lucide-play-circle)',
-      'button:has(.lucide-music)',
-      'button:has(.lucide-audio-lines)',
-      'button:has(.lucide-volume-2)',
-      'button:has(.lucide-radio)',
-      // Fallback to the FileAudio icon button if no other found
+      // Simple and broad selectors that should work
       'button:has(.lucide-file-audio)',
-      'button:has([data-lucide="file-audio"])',
-      'button:has(.file-audio)',
-      // Look in dashboard context
-      '.dashboard button:has(.lucide-play)',
-      '.dashboard button:has(.lucide-music)',
-      // Target by class structure and context
-      'button.h-7.rounded-md.text-muted-foreground:has(.lucide-file-audio)',
-      // Look in chat input context as fallback
-      '.chat-input button:has(.lucide-file-audio)',
-      '[data-testid="meeting-recorder"]',
-      '.meeting-recorder button'
+      'button:has(svg[data-lucide="file-audio"])',
+      'button svg.lucide-file-audio',
+      // Check all buttons with file-audio class or aria-label
+      'svg.lucide-file-audio',
+      '.lucide-file-audio',
+      // Generic button search
+      'button'
     ];
     
-    // Debug: Log all buttons on the page
-    const allButtons = document.querySelectorAll('button');
-    console.log(`Found ${allButtons.length} buttons on page`);
-    
-    // Also search by text content
+    // First check for data-testid (most reliable)
+    const testIdButton = document.querySelector('[data-testid="join-online-meeting-button"]');
+    if (testIdButton) {
+      console.log('Found Join Online Meeting button by testid:', testIdButton);
+      return testIdButton;
+    }
+
+    // Manual search through all buttons
     const buttons = document.querySelectorAll('button');
+    console.log(`Searching through ${buttons.length} buttons for meeting button`);
+    
     for (const button of buttons) {
-      const text = button.textContent?.toLowerCase() || '';
-      const title = button.getAttribute('title')?.toLowerCase() || '';
-      const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
-      
-      // Debug: Log interesting buttons
-      if (text.includes('join') || text.includes('meeting') || 
-          title.includes('join') || title.includes('meeting') ||
-          ariaLabel.includes('join') || ariaLabel.includes('meeting')) {
-        console.log('Found potential meeting button:', {
-          text,
-          title,
-          ariaLabel,
-          element: button
-        });
+      // Check if button has file-audio icon
+      const hasFileAudioIcon = button.querySelector('.lucide-file-audio, svg[data-lucide="file-audio"], [data-testid="lucide-file-audio"]');
+      if (hasFileAudioIcon) {
+        console.log('Found button with file-audio icon:', button);
+        return button;
       }
       
-      if (text.includes('join') && text.includes('meeting') ||
-          title.includes('join') && title.includes('meeting') ||
-          ariaLabel.includes('join') && ariaLabel.includes('meeting')) {
-        console.log('Found matching join meeting button:', button);
+      // Check tooltip text
+      const tooltip = button.getAttribute('title') || button.getAttribute('aria-label') || '';
+      if (tooltip.toLowerCase().includes('join') && tooltip.toLowerCase().includes('meeting')) {
+        console.log('Found button with join meeting tooltip:', button);
+        return button;
+      }
+      
+      // Check if button opens join meeting dialog (look for nearby tooltip)
+      const nextSibling = button.nextElementSibling;
+      if (nextSibling && nextSibling.textContent?.toLowerCase().includes('join online meeting')) {
+        console.log('Found button with join meeting tooltip nearby:', button);
         return button;
       }
     }
@@ -212,45 +199,78 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
   };
 
   const findNewTaskElement = () => {
-    const selectors = [
-      // Target LiquidButton components with specific class patterns
-      'button[class*="liquid-button"]:has(.lucide-plus)',
-      // Target by the specific class structure we found (expanded)
-      'button.h-8.px-3.bg-gray-100:has(.lucide-plus)',
-      'button.h-8.px-3:has(.lucide-plus)',
-      // Target collapsed version
-      'button.h-9.w-9.min-w-\\[2\\.25rem\\]:has(.lucide-plus)',
-      'button.h-9.w-9:has(.lucide-plus)',
-      // More specific targeting
-      'button:has(.lucide-plus):has(span[class*="ml-1"])',
-      // Fallback selectors
-      '[data-testid="new-task-button"]',
-      // Generic plus button in sidebar area
-      '.sidebar-content button:has(.lucide-plus)',
-      'nav button:has(.lucide-plus)',
-      // Last resort - any button with plus icon
-      'button:has(.lucide-plus)'
-    ];
+    console.log('Searching for New Task button...');
     
-    for (const selector of selectors) {
-      try {
-        const element = document.querySelector(selector);
-        if (element) {
-          // Additional check to make sure it's the right button
-          const textContent = element.textContent?.toLowerCase();
-          if (textContent?.includes('new task') || textContent?.includes('new') || element.querySelector('span[class*="sr-only"]')?.textContent?.includes('New Task')) {
-            return element;
-          }
-          // If no text check passes, still return first match as fallback
-          if (!document.querySelector('button:has(.lucide-plus):not(' + selector + ')')) {
-            return element;
-          }
-        }
-      } catch (e) {
-        // Skip invalid selectors
-        continue;
+    // Manual search through all buttons
+    const buttons = document.querySelectorAll('button');
+    console.log(`Searching through ${buttons.length} buttons for New Task button`);
+    
+    for (const button of buttons) {
+      const text = button.textContent?.toLowerCase() || '';
+      const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
+      const testId = button.getAttribute('data-testid') || '';
+      
+      // Check for "New Task" text content
+      if (text.includes('new task')) {
+        console.log('Found New Task button by text:', button);
+        return button;
+      }
+      
+      // Check for data-testid
+      if (testId === 'new-task-button') {
+        console.log('Found New Task button by testid:', button);
+        return button;
+      }
+      
+      // Check for aria-label
+      if (ariaLabel.includes('new task')) {
+        console.log('Found New Task button by aria-label:', button);
+        return button;
+      }
+      
+      // Check if button has plus icon and is in sidebar context
+      const hasPlus = button.querySelector('.lucide-plus, svg[data-lucide="plus"]');
+      const isInSidebar = button.closest('.sidebar, nav, [class*="sidebar"]');
+      if (hasPlus && isInSidebar) {
+        console.log('Found plus button in sidebar:', button);
+        return button;
       }
     }
+    
+    console.log('No New Task button found');
+    return null;
+  };
+
+  const findSendButton = () => {
+    console.log('Searching for Send button...');
+    
+    // Manual search through all buttons
+    const buttons = document.querySelectorAll('button');
+    console.log(`Searching through ${buttons.length} buttons for Send button`);
+    
+    for (const button of buttons) {
+      // Look for arrow-up icon (send button)
+      const hasArrowUp = button.querySelector('.lucide-arrow-up, svg[data-lucide="arrow-up"]');
+      if (hasArrowUp) {
+        console.log('Found Send button with arrow-up icon:', button);
+        return button;
+      }
+      
+      // Look for submit type
+      if (button.type === 'submit') {
+        console.log('Found submit button:', button);
+        return button;
+      }
+      
+      // Look for buttons in chat input area that might be send buttons
+      const isInChatInput = button.closest('[data-testid="chat-input"], .chat-input, form');
+      if (isInChatInput && (hasArrowUp || button.type === 'submit')) {
+        console.log('Found send button in chat input:', button);
+        return button;
+      }
+    }
+    
+    console.log('No Send button found');
     return null;
   };
 
@@ -506,8 +526,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       });
 
       // Step 5: Join Online Meeting Button
-      const joinMeetingButton = findJoinOnlineMeetingButton();
-      const joinMeetingStepConfig: any = {
+      tourRef.current.addStep({
         id: 'join-online-meeting',
         title: 'Join Online Meeting',
         text: `
@@ -516,6 +535,33 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>I can join meetings on your behalf to record and transcribe conversations for you.</p>
           </div>
         `,
+        attachTo: {
+          element: findJoinOnlineMeetingButton,
+          on: 'top'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [0, -20],
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 20,
+              },
+            },
+            {
+              name: 'flip',
+              options: {
+                fallbackPlacements: ['bottom', 'left', 'right'],
+              },
+            },
+          ],
+        },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
@@ -523,7 +569,6 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
               console.log('Join meeting button found:', element);
               if (element) {
                 addHighlight(element);
-                // Ensure element is scrolled into view with extra space
                 element.scrollIntoView({ 
                   behavior: 'smooth', 
                   block: 'center',
@@ -567,43 +612,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      };
-
-      // Add attachTo only if we found the button
-      if (joinMeetingButton) {
-        joinMeetingStepConfig.attachTo = {
-          element: joinMeetingButton,
-          on: 'top'
-        };
-        joinMeetingStepConfig.popperOptions = {
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [0, -20],
-              },
-            },
-            {
-              name: 'preventOverflow',
-              options: {
-                boundary: 'viewport',
-                padding: 20,
-              },
-            },
-            {
-              name: 'flip',
-              options: {
-                fallbackPlacements: ['bottom', 'left', 'right'],
-              },
-            },
-          ],
-        };
-      } else {
-        // If button not found, show step in center of screen
-        console.warn('Join online meeting button not found, showing step without attachment');
-      }
-
-      tourRef.current.addStep(joinMeetingStepConfig);
+      });
 
       // Step 6: Meetings Dashboard
       const meetingsDashboardButton = findMeetingsDashboardButton();
@@ -693,7 +702,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: 'button[class*="liquid-button"]:has(.lucide-plus), button.h-8.px-3:has(.lucide-plus), button.h-9.w-9:has(.lucide-plus), nav button:has(.lucide-plus)',
+          element: findNewTaskElement,
           on: 'right'
         },
         popperOptions: {
@@ -772,7 +781,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: 'button[type="submit"], .send-button, button:has(.send), button[aria-label*="send"]',
+          element: findSendButton,
           on: 'left'
         },
         popperOptions: {

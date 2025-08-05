@@ -47,6 +47,7 @@ export const MeetingRecorder: React.FC<MeetingRecorderProps> = ({
               onClick={handleClick}
               disabled={disabled}
               className="h-7 rounded-md text-muted-foreground"
+              data-testid="join-online-meeting-button"
             >
               <FileAudio className="h-4 w-4" />
             </Button>
