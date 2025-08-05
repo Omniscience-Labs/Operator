@@ -27,7 +27,7 @@ class AgentDefaultFilesManager:
             
             # Upload to Supabase storage
             db = DBConnection()
-            client = db.client
+            client = await db.client
             
             storage_response = client.storage.from_(self.bucket_name).upload(
                 file_path,
@@ -61,7 +61,7 @@ class AgentDefaultFilesManager:
             file_path = self._get_file_path(account_id, agent_id, filename)
             
             db = DBConnection()
-            client = db.client
+            client = await db.client
             
             response = client.storage.from_(self.bucket_name).remove([file_path])
             
@@ -81,7 +81,7 @@ class AgentDefaultFilesManager:
         """Copy default files when creating agent copy (unmanaged sharing)."""
         try:
             db = DBConnection()
-            client = db.client
+            client = await db.client
             copied_files = []
             
             for file_info in file_list:
@@ -121,7 +121,7 @@ class AgentDefaultFilesManager:
         """Download default files to sandbox /workspace/agent-defaults/ directory."""
         try:
             db = DBConnection()
-            client = db.client
+            client = await db.client
             downloaded_files = []
             
             for file_info in file_list:

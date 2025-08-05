@@ -173,7 +173,7 @@ async def cleanup():
 async def stop_agent_run(agent_run_id: str, error_message: Optional[str] = None):
     """Update database and publish stop signal to Redis."""
     logger.info(f"Stopping agent run: {agent_run_id}")
-    client = db.client
+    client = await db.client
     final_status = "failed" if error_message else "stopped"
 
     # Attempt to fetch final responses from Redis
@@ -233,7 +233,7 @@ async def stop_agent_run(agent_run_id: str, error_message: Optional[str] = None)
 # async def restore_running_agent_runs():
 #     """Mark agent runs that were still 'running' in the database as failed and clean up Redis resources."""
 #     logger.info("Restoring running agent runs after server restart")
-#     client = db.client
+#     client = await db.client
 #     running_agent_runs = await client.table('agent_runs').select('id').eq("status", "running").execute()
 
 #     for run in running_agent_runs.data:
@@ -383,7 +383,7 @@ async def start_agent(
     model_name = resolved_model
 
     logger.info(f"Starting new agent for thread: {thread_id} with config: model={model_name}, thinking={body.enable_thinking}, effort={body.reasoning_effort}, stream={body.stream}, context_manager={body.enable_context_manager} (Instance: {instance_id})")
-    client = db.client
+    client = await db.client
 
     await verify_thread_access(client, thread_id, user_id)
     thread_result = await client.table('threads').select('project_id', 'account_id', 'agent_id', 'metadata').eq('thread_id', thread_id).execute()
@@ -614,7 +614,7 @@ async def stop_agent(agent_run_id: str, user_id: str = Depends(get_current_user_
         agent_run_id=agent_run_id,
     )
     logger.info(f"Received request to stop agent run: {agent_run_id}")
-    client = db.client
+    client = await db.client
     await get_agent_run_with_access_check(client, agent_run_id, user_id)
     await stop_agent_run(agent_run_id)
     return {"status": "stopped"}
@@ -626,7 +626,7 @@ async def get_agent_runs(thread_id: str, user_id: str = Depends(get_current_user
         thread_id=thread_id,
     )
     logger.info(f"Fetching agent runs for thread: {thread_id}")
-    client = db.client
+    client = await db.client
     await verify_thread_access(client, thread_id, user_id)
     agent_runs = await client.table('agent_runs').select('*').eq("thread_id", thread_id).order('created_at', desc=True).execute()
     logger.debug(f"Found {len(agent_runs.data)} agent runs for thread: {thread_id}")
@@ -998,7 +998,7 @@ async def get_agent_run(agent_run_id: str, user_id: str = Depends(get_current_us
         agent_run_id=agent_run_id,
     )
     logger.info(f"Fetching agent run details: {agent_run_id}")
-    client = db.client
+    client = await db.client
     agent_run_data = await get_agent_run_with_access_check(client, agent_run_id, user_id)
     # Note: Responses are not included here by default, they are in the stream or DB
     return {
@@ -1017,7 +1017,7 @@ async def get_thread_agent(thread_id: str, user_id: str = Depends(get_current_us
         thread_id=thread_id,
     )
     logger.info(f"Fetching agent details for thread: {thread_id}")
-    client = db.client
+    client = await db.client
     
     try:
         # Verify thread access and get thread data including agent_id
@@ -1101,7 +1101,7 @@ async def stream_agent_run(
 ):
     """Stream the responses of an agent run using Redis Lists and Pub/Sub."""
     logger.info(f"Starting stream for agent run: {agent_run_id}")
-    client = db.client
+    client = await db.client
 
     user_id = await get_user_id_from_stream_auth(request, token)
     agent_run_data = await get_agent_run_with_access_check(client, agent_run_id, user_id)
@@ -1366,7 +1366,7 @@ async def initiate_agent_with_files(
     logger.info(f"Starting new agent in agent builder mode: {is_agent_builder}, target_agent_id: {target_agent_id}")
 
     logger.info(f"[\033[91mDEBUG\033[0m] Initiating new agent with prompt and {len(files)} files (Instance: {instance_id}), model: {model_name}, enable_thinking: {enable_thinking}")
-    client = db.client
+    client = await db.client
     
     # Determine the account_id to use
     effective_account_id = account_id if account_id else user_id  # Default to personal account if not specified
@@ -1723,7 +1723,7 @@ async def get_agents(
         )
     logger.info(f"Fetching agents for user: {user_id} with page={page}, limit={limit}, search='{search}', sort_by={sort_by}, sort_order={sort_order}, account_id={account_id}")
     logger.info(f"Backend debug: user_id={user_id}, account_id={account_id}, using_team_context={account_id is not None and account_id != user_id}")
-    client = db.client
+    client = await db.client
     
     try:
         # Calculate offset
@@ -1744,7 +1744,7 @@ async def get_agents(
             # This includes: owned agents, team-shared agents, and public agents
             # Get a larger set first to allow for post-processing filters
             logger.info(f"Calling get_marketplace_agents with account_id={account_id}")
-            marketplace_result = client.rpc('get_marketplace_agents', {
+            marketplace_result = await client.rpc('get_marketplace_agents', {
                 'p_limit': limit * 3,  # Get more than needed for post-processing
                 'p_offset': 0,  # Always start from beginning for filtering
                 'p_search': search,
@@ -1797,7 +1797,7 @@ async def get_agents(
             
             # 2. Get managed agents (references from user_agent_library)
             # For managed agents, agent_id equals original_agent_id (indicating it's a reference, not a copy)
-            managed_query = client.rpc('get_managed_agents_for_user', {
+            managed_query = await client.rpc('get_managed_agents_for_user', {
                 'p_user_id': filter_account_id
             }).execute()
             
@@ -1967,7 +1967,7 @@ async def get_agent(agent_id: str, user_id: str = Depends(get_current_user_id_fr
         )
     
     logger.info(f"Fetching agent {agent_id} for user: {user_id}")
-    client = db.client
+    client = await db.client
     
     try:
         # Get agent with access check - only owner, public agents, or managed agents in user's library
@@ -2088,7 +2088,7 @@ async def create_agent(
             status_code=403, 
             detail="Custom agents currently disabled. This feature is not available at the moment."
         )
-    client = db.client
+    client = await db.client
     
     try:
         # If this is set as default, we need to unset other defaults first
@@ -2165,7 +2165,7 @@ async def update_agent(
             detail="Custom agent currently disabled. This feature is not available at the moment."
         )
     logger.info(f"Updating agent {agent_id} for user: {user_id}")
-    client = db.client
+    client = await db.client
     
     try:
         # First verify the agent exists and belongs to the user
@@ -2266,7 +2266,7 @@ async def delete_agent(agent_id: str, user_id: str = Depends(get_current_user_id
             detail="Custom agent currently disabled. This feature is not available at the moment."
         )
     logger.info(f"Deleting agent: {agent_id}")
-    client = db.client
+    client = await db.client
     
     try:
         # Verify agent ownership
@@ -2384,7 +2384,7 @@ async def get_marketplace_agents(
         )
     
     logger.info(f"Fetching marketplace agents with page={page}, limit={limit}, search='{search}', tags='{tags}', sort_by={sort_by}")
-    client = db.client
+    client = await db.client
     
     try:
         offset = (page - 1) * limit
@@ -2392,7 +2392,7 @@ async def get_marketplace_agents(
         if tags:
             tags_array = [tag.strip() for tag in tags.split(',') if tag.strip()]
         
-        result = client.rpc('get_marketplace_agents', {
+        result = await client.rpc('get_marketplace_agents', {
             'p_search': search,
             'p_tags': tags_array,
             'p_limit': limit + 1,
@@ -2466,7 +2466,7 @@ async def publish_agent_to_marketplace(
     logger.info(f"Include custom MCP tools: {publish_data.include_custom_mcp_tools}")
     logger.info(f"Managed agent: {publish_data.managed_agent}")
     
-    client = db.client
+    client = await db.client
     
     try:
         # Verify agent ownership
@@ -2509,7 +2509,7 @@ async def publish_agent_to_marketplace(
         # Use the new database function that accepts user_id explicitly
         logger.info(f"Calling publish_agent_with_visibility_by_user with: agent_id={agent_id}, visibility={publish_data.visibility}, user_id={user_id}, team_ids={team_ids_for_db}")
         
-        result = client.rpc('publish_agent_with_visibility_by_user', {
+        result = await client.rpc('publish_agent_with_visibility_by_user', {
             'p_agent_id': agent_id,
             'p_visibility': publish_data.visibility,
             'p_user_id': user_id,
@@ -2552,7 +2552,7 @@ async def unpublish_agent_from_marketplace(
         )
     
     logger.info(f"Unpublishing agent {agent_id} from marketplace")
-    client = db.client
+    client = await db.client
     
     try:
         # Verify agent ownership
@@ -2569,7 +2569,7 @@ async def unpublish_agent_from_marketplace(
         is_managed_agent = agent_sharing_prefs.get('managed_agent', False)
         
         # Update agent to remove from marketplace using the new visibility function
-        client.rpc('publish_agent_with_visibility_by_user', {
+        await client.rpc('publish_agent_with_visibility_by_user', {
             'p_agent_id': agent_id,
             'p_visibility': 'private',
             'p_user_id': user_id,
@@ -2607,7 +2607,7 @@ async def remove_agent_from_library(
         )
 
     logger.info(f"Removing agent {agent_id} from user {user_id} library")
-    client = db.client
+    client = await db.client
     
     try:
         # Check if this is a managed agent in user's library
@@ -2645,11 +2645,11 @@ async def add_agent_to_library(
         )
 
     logger.info(f"Adding marketplace agent {agent_id} to user {user_id} library")
-    client = db.client
+    client = await db.client
     
     try:
         # Call the database function with user_id
-        result = client.rpc('add_agent_to_library', {
+        result = await client.rpc('add_agent_to_library', {
             'p_original_agent_id': agent_id,
             'p_user_account_id': user_id
         }).execute()
@@ -2685,11 +2685,11 @@ async def add_shared_agent_to_library(
         )
 
     logger.info(f"Adding shared agent with token {token} to user {user_id} library")
-    client = db.client
+    client = await db.client
     
     try:
         # First, get the shared agent data to validate the token and get agent_id
-        shared_result = client.rpc('get_shared_agent', {
+        shared_result = await client.rpc('get_shared_agent', {
             'p_token': token
         }).execute()
         
@@ -2821,7 +2821,7 @@ async def get_user_agent_library(user_id: str = Depends(get_current_user_id_from
         )
 
     logger.info(f"Fetching agent library for user {user_id}")
-    client = db.client
+    client = await db.client
     
     try:
         result = await client.table('user_agent_library').select("""
@@ -2860,7 +2860,7 @@ async def get_agent_builder_chat_history(
         )
     
     logger.info(f"Fetching agent builder chat history for agent: {agent_id}")
-    client = db.client
+    client = await db.client
     
     try:
         # First verify the agent exists and belongs to the user
@@ -2919,7 +2919,7 @@ async def edit_message(
     )
     logger.info(f"Editing message {message_id} in thread {thread_id}")
     
-    client = db.client
+    client = await db.client
     
     try:
         # Verify thread access
@@ -3015,7 +3015,7 @@ async def create_agent_share_link(
         )
     
     logger.info(f"Creating share link for agent {agent_id} by user {user_id}")
-    client = db.client
+    client = await db.client
     
     try:
         # Verify agent ownership
@@ -3043,7 +3043,7 @@ async def create_agent_share_link(
         }
         
         # Create share link using database function
-        result = client.rpc('create_agent_share_link', {
+        result = await client.rpc('create_agent_share_link', {
             'p_agent_id': agent_id,
             'p_share_type': share_data.share_type,
             'p_expires_in_hours': share_data.expires_in_hours,
@@ -3091,7 +3091,7 @@ async def get_agent_share_links(
 ):
     """Get all share links for an agent."""
     logger.info(f"Getting share links for agent {agent_id}")
-    client = db.client
+    client = await db.client
     
     try:
         # Verify agent ownership
@@ -3141,7 +3141,7 @@ async def revoke_agent_share_link(
 ):
     """Revoke a specific agent share link."""
     logger.info(f"Revoking share link {share_id} for agent {agent_id}")
-    client = db.client
+    client = await db.client
     
     try:
         # Verify agent ownership
@@ -3177,7 +3177,7 @@ async def unshare_managed_agent(
 ):
     """Completely unshare a managed agent - revoke all share links and remove from all users' libraries."""
     logger.info(f"Unsharing managed agent {agent_id}")
-    client = db.client
+    client = await db.client
     
     try:
         # Verify agent ownership
@@ -3229,11 +3229,11 @@ async def get_shared_agent(
 ):
     """Get a shared agent by token."""
     logger.info(f"Accessing shared agent with token {token} by user {user_id}")
-    client = db.client
+    client = await db.client
     
     try:
         # Get shared agent data using database function
-        result = client.rpc('get_shared_agent', {
+        result = await client.rpc('get_shared_agent', {
             'p_token': token
         }).execute()
         
@@ -3306,7 +3306,7 @@ async def upload_agent_default_file(
             detail="Custom agents currently disabled. This feature is not available at the moment."
         )
     
-    client = db.client
+    client = await db.client
     
     # Verify agent ownership and get account_id
     agent_result = await client.table('agents').select('account_id').eq('agent_id', agent_id).execute()
@@ -3363,7 +3363,7 @@ async def delete_agent_default_file(
             detail="Custom agents currently disabled. This feature is not available at the moment."
         )
     
-    client = db.client
+    client = await db.client
     
     # Verify agent ownership and get data
     agent_result = await client.table('agents').select('account_id', 'default_files').eq('agent_id', agent_id).execute()
@@ -3413,7 +3413,7 @@ async def list_agent_default_files(
             detail="Custom agents currently disabled. This feature is not available at the moment."
         )
     
-    client = db.client
+    client = await db.client
     
     # Get agent data using similar access logic as get_agent endpoint
     agent_result = await client.table('agents').select('*').eq('agent_id', agent_id).execute()
