@@ -95,21 +95,21 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     return null;
   };
 
-  const findMediaElement = () => {
+  const findJoinOnlineMeetingButton = () => {
     const selectors = [
-      // Most specific first - target the actual button with FileAudio icon
+      // Target the MeetingRecorder button specifically - the join online meeting button
       'button:has(.lucide-file-audio)',
       'button:has([data-lucide="file-audio"])',
-      // Fallback selectors
+      // Fallback selectors for the join online meeting button
       'button:has(.file-audio)',
-      'button:has([data-testid="meeting-recorder"])',
-      '.meeting-recorder button',
-      'button[aria-label*="meeting"]',
-      'button[aria-label*="audio"]',
-      'button[aria-label*="media"]',
-      '[data-tour="media"]',
-      // Target by class structure we found
-      'button.h-7.rounded-md.text-muted-foreground:has(.lucide-file-audio)'
+      'button[aria-label*="Join Online Meeting"]',
+      'button[title*="Join Online Meeting"]',
+      // Target by class structure and context
+      'button.h-7.rounded-md.text-muted-foreground:has(.lucide-file-audio)',
+      // Look in chat input context specifically
+      '.chat-input button:has(.lucide-file-audio)',
+      '[data-testid="meeting-recorder"]',
+      '.meeting-recorder button'
     ];
     
     for (const selector of selectors) {
@@ -451,13 +451,13 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 5: Join Meeting Button
+      // Step 5: Join Online Meeting Button
       tourRef.current.addStep({
-        id: 'join-meeting',
-        title: 'Join Meeting',
+        id: 'join-online-meeting',
+        title: 'Join Online Meeting',
         text: `
           <div class="space-y-3">
-            <p>Join meeting</p>
+            <p>Join online meeting</p>
           </div>
         `,
         attachTo: {
@@ -490,7 +490,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
-              const element = findMediaElement();
+              const element = findJoinOnlineMeetingButton();
               if (element) {
                 addHighlight(element);
                 // Ensure element is scrolled into view with extra space
@@ -506,7 +506,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeHidePromise: () => {
           return new Promise<void>((resolve) => {
-            const element = findMediaElement();
+            const element = findJoinOnlineMeetingButton();
             if (element) {
               removeHighlight(element);
             }
