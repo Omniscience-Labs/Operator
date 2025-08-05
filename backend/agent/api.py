@@ -3328,22 +3328,44 @@ async def upload_agent_default_file(
     
     try:
         files_manager = AgentDefaultFilesManager()
+        logger.info(f"Starting file upload for {file.filename}")
         file_metadata = await files_manager.upload_file(account_id, agent_id, file)
+        logger.info(f"File upload completed successfully, received metadata: {file_metadata}")
         
         # Update agent's default_files JSONB
-        logger.info(f"Updating database for agent {agent_id} with file metadata: {file_metadata}")
-        agent_result = await client.table('agents').select('default_files').eq('agent_id', agent_id).execute()
-        current_files = agent_result.data[0].get('default_files', [])
+        logger.info(f"Starting database update for agent {agent_id} with file metadata: {file_metadata}")
         
-        # Remove existing file with same name
-        current_files = [f for f in current_files if f['name'] != file.filename]
-        current_files.append(file_metadata)
-        
-        db_update_result = await client.table('agents').update({
-            'default_files': current_files
-        }).eq('agent_id', agent_id).execute()
-        
-        logger.info(f"Database update result: {db_update_result}")
+        try:
+            agent_result = await client.table('agents').select('default_files').eq('agent_id', agent_id).execute()
+            logger.info(f"Agent query result: {agent_result}")
+            
+            if not agent_result.data:
+                raise HTTPException(status_code=404, detail="Agent not found during file update")
+            
+            current_files = agent_result.data[0].get('default_files', [])
+            logger.info(f"Current files in database: {current_files}")
+            
+            # Remove existing file with same name
+            original_count = len(current_files)
+            current_files = [f for f in current_files if f['name'] != file.filename]
+            removed_count = original_count - len(current_files)
+            logger.info(f"Removed {removed_count} existing files with same name")
+            
+            current_files.append(file_metadata)
+            logger.info(f"New files list: {current_files}")
+            
+            db_update_result = await client.table('agents').update({
+                'default_files': current_files
+            }).eq('agent_id', agent_id).execute()
+            
+            logger.info(f"Database update result: {db_update_result}")
+            
+            if db_update_result.get('error'):
+                raise RuntimeError(f"Database update failed: {db_update_result['error']}")
+                
+        except Exception as db_error:
+            logger.error(f"Database operation failed: {db_error}")
+            raise HTTPException(status_code=500, detail=f"Database update failed: {str(db_error)}")
         
         logger.info(f"Uploaded default file {file.filename} for agent {agent_id}")
         return {"message": "File uploaded successfully", "file": file_metadata}
