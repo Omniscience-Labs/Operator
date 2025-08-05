@@ -99,6 +99,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     console.log('Searching for join online meeting button...');
     
     const selectors = [
+      // Target the new Join Online Meetings button first
+      '[data-testid="join-online-meetings-button"]',
+      '.join-online-meetings-btn',
+      'button:has(.lucide-video)',
       // Target any button that might open the Join Online Meeting dialog
       'button[aria-label*="Join Online Meeting"]',
       'button[title*="Join Online Meeting"]',
@@ -509,10 +513,11 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       const joinMeetingButton = findJoinOnlineMeetingButton();
       const joinMeetingStepConfig: any = {
         id: 'join-online-meeting',
-        title: 'Join Online Meeting',
+        title: 'Join Online Meetings',
         text: `
           <div class="space-y-3">
-            <p>Join online meeting</p>
+            <p>Click this button to join online meetings like Zoom, Google Meet, or Microsoft Teams!</p>
+            <p>I can join meetings on your behalf to record and transcribe conversations for you.</p>
           </div>
         `,
         beforeShowPromise: () => {
