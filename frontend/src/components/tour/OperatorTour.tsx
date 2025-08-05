@@ -163,40 +163,37 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
   };
 
   const findMeetingsDashboardButton = () => {
-    const selectors = [
-      // Target the meetings link in the sidebar
-      'a[href="/meetings"]',
-      'a[href="/meetings"] button',
-      'a[href="/meetings"] .sidebar-menu-button',
-      // Fallback selectors looking for meetings text
-      'a:has-text("Meetings")',
-      '[href="/meetings"]',
-      // Look for FileAudio icon in sidebar context
-      '.sidebar a:has(.lucide-file-audio)',
-      'nav a:has(.lucide-file-audio)',
-      // Generic fallback
-      'a[href*="meetings"]'
-    ];
+    console.log('Searching for Meetings Dashboard button...');
     
-    for (const selector of selectors) {
-      try {
-        const element = document.querySelector(selector);
-        if (element) return element;
-      } catch (e) {
-        // Skip invalid selectors like :has-text
-        continue;
-      }
+    // Most reliable - direct href selector
+    let element = document.querySelector('a[href="/meetings"]');
+    if (element) {
+      console.log('Found meetings dashboard by href:', element);
+      return element;
     }
     
-    // Manual search for meetings link by text content
-    const links = document.querySelectorAll('a');
-    for (const link of links) {
-      if (link.textContent?.toLowerCase().includes('meetings') && 
-          (link.getAttribute('href') === '/meetings' || link.getAttribute('href')?.includes('meetings'))) {
+    // Find by FileAudio icon (meetings use FileAudio icon)
+    const fileAudioIcons = document.querySelectorAll('.lucide-file-audio, svg[data-lucide="file-audio"]');
+    for (const icon of fileAudioIcons) {
+      const link = icon.closest('a');
+      if (link && link.getAttribute('href') === '/meetings') {
+        console.log('Found meetings dashboard by FileAudio icon:', link);
         return link;
       }
     }
     
+    // Search by text content in sidebar context
+    const links = document.querySelectorAll('a');
+    for (const link of links) {
+      const text = link.textContent?.toLowerCase() || '';
+      const href = link.getAttribute('href') || '';
+      if (text.includes('meetings') && href.includes('/meetings')) {
+        console.log('Found meetings dashboard by text and href:', link);
+        return link;
+      }
+    }
+    
+    console.log('No meetings dashboard button found');
     return null;
   };
 
@@ -324,7 +321,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     ];
     
     for (const selector of selectors) {
-      const element = document.querySelector(selector);
+        const element = document.querySelector(selector);
       if (element) {
         console.log('Found sidebar agents link:', element);
             return element;
@@ -366,11 +363,11 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     ];
     
     for (const selector of selectors) {
-      const element = document.querySelector(selector);
-      if (element) {
+        const element = document.querySelector(selector);
+        if (element) {
         console.log('Found sidebar marketplace link:', element);
-        return element;
-      }
+            return element;
+          }
     }
     
     // Find by Store icon (marketplace uses Store icon)
@@ -417,9 +414,9 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         const text = element.textContent?.toLowerCase() || '';
         if (text.includes('tasks') || text.includes('chats') || text.includes('past')) {
           console.log('Found tasks section by group text:', element);
-          return element;
+            return element;
+          }
         }
-      }
     }
     
     // Look for any section with MessagesSquare icons (chat icons)
@@ -836,7 +833,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       });
 
       // Step 6: Meetings Dashboard
-      tourRef.current.addStep({
+      const meetingsDashboardStep: any = {
         id: 'meetings-dashboard',
         title: 'See All Meetings',
         text: `
@@ -845,14 +842,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>Click on the Meetings link anytime to view, manage, and review your meeting recordings and transcripts.</p>
           </div>
         `,
-        attachTo: {
-          element: findMeetingsDashboardButton,
-          on: 'right'
-        },
         popperOptions: {
           modifiers: [
             {
-              name: 'offset',  
+              name: 'offset',
               options: {
                 offset: [20, 0],
               },
@@ -861,6 +854,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
+            // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findMeetingsDashboardButton();
               console.log('Step 6 - Meetings dashboard button found:', element);
@@ -872,10 +866,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
               } else {
-                console.warn('Step 6 - Meetings dashboard button not found');
+                console.warn('Step 6 - Meetings dashboard button not found, continuing anyway');
               }
               resolve();
-            }, 100);
+            }, 800);
           });
         },
         beforeHidePromise: () => {
@@ -902,7 +896,18 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      });
+      };
+
+      // Add attachTo only if element is found
+      const meetingsDashboardElement = findMeetingsDashboardButton();
+      if (meetingsDashboardElement) {
+        meetingsDashboardStep.attachTo = {
+          element: meetingsDashboardElement,
+          on: 'right'
+        };
+      }
+
+      tourRef.current.addStep(meetingsDashboardStep);
 
       // Step 7: Sidebar Meetings Link
       const sidebarMeetingsStep: any = {
@@ -937,7 +942,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   block: 'center',
                   inline: 'nearest' 
                 });
-              } else {
+      } else {
                 console.warn('Step 7 - Sidebar meetings element not found, continuing anyway');
               }
               resolve();
@@ -1067,7 +1072,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         `,
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
-            setTimeout(() => {
+              setTimeout(() => {
               const element = findSidebarMarketplaceLink();
               console.log('Step 9 - Sidebar marketplace element:', element);
               if (element) {
@@ -1103,7 +1108,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             text: 'Next',
             action: () => {
               console.log('Step 9 Next button clicked, proceeding to step 10');
-              tourRef.current?.next();
+                tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
           }
@@ -1147,7 +1152,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   block: 'center',
                   inline: 'nearest' 
                 });
-              } else {
+      } else {
                 console.warn('Step 10 - Sidebar tasks section element not found, continuing anyway');
               }
               resolve();
