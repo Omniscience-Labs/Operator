@@ -451,13 +451,13 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 5: Join Online Meetings Button
+      // Step 5: Join Meeting Button
       tourRef.current.addStep({
-        id: 'join-online-meetings',
-        title: 'Join Online Meetings',
+        id: 'join-meeting',
+        title: 'Join Meeting',
         text: `
           <div class="space-y-3">
-            <p>This is how you directly join a meeting! Click this button to join Zoom, Teams, or any online meeting with an AI bot that will record and transcribe everything for you.</p>
+            <p>Join meeting</p>
           </div>
         `,
         attachTo: {
@@ -540,11 +540,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 6: Meetings Dashboard
       tourRef.current.addStep({
         id: 'meetings-dashboard',
-        title: 'Meetings Dashboard',
+        title: 'See All Meetings',
         text: `
           <div class="space-y-3">
-            <p>View all meetings here! This is your meetings dashboard where you can organize, search, and manage all your recorded conversations.</p>
-            <p>Create new meetings, organize them in folders, and access all your transcripts from one central location.</p>
+            <p>See all meetings from here</p>
           </div>
         `,
         attachTo: {
