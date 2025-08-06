@@ -1060,8 +1060,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.addStep(sidebarAgentsStep);
 
-      // Step 9: Sidebar Marketplace/Agent Library
-      tourRef.current.addStep({
+      // Step 9: Sidebar Marketplace/Agent Library - FIXED
+      const marketplaceStep: any = {
         id: 'sidebar-marketplace',
         title: 'Agent Library',
         text: `
@@ -1070,9 +1070,19 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>Browse, try, and add pre-built agents to your library to expand your capabilities instantly.</p>
           </div>
         `,
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [20, 0],
+              },
+            },
+          ],
+        },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
-              setTimeout(() => {
+            setTimeout(() => {
               const element = findSidebarMarketplaceLink();
               console.log('Step 9 - Sidebar marketplace element:', element);
               if (element) {
@@ -1108,15 +1118,26 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             text: 'Next',
             action: () => {
               console.log('Step 9 Next button clicked, proceeding to step 10');
-                tourRef.current?.next();
+              tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
           }
         ]
-      });
+      };
 
-      // Step 10: Sidebar Tasks/Past Chats
-      tourRef.current.addStep({
+      // Add attachTo only if element is found, otherwise show in center
+      const marketplaceElement = findSidebarMarketplaceLink();
+      if (marketplaceElement) {
+        marketplaceStep.attachTo = {
+          element: marketplaceElement,
+          on: 'right'
+        };
+      }
+
+      tourRef.current.addStep(marketplaceStep);
+
+      // Step 10: Sidebar Tasks/Past Chats - FIXED
+      const tasksStep: any = {
         id: 'sidebar-tasks',
         title: 'Your Tasks & Past Chats',
         text: `
@@ -1125,10 +1146,6 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>Easily access your chat history, continue previous conversations, and manage your ongoing projects.</p>
           </div>
         `,
-        attachTo: {
-          element: findSidebarTasksSection,
-          on: 'right'
-        },
         popperOptions: {
           modifiers: [
             {
@@ -1141,7 +1158,6 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
-            // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findSidebarTasksSection();
               console.log('Step 10 - Sidebar tasks section element:', element);
@@ -1152,7 +1168,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   block: 'center',
                   inline: 'nearest' 
                 });
-      } else {
+              } else {
                 console.warn('Step 10 - Sidebar tasks section element not found, continuing anyway');
               }
               resolve();
@@ -1180,10 +1196,21 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      });
+      };
 
-      // Step 11: User Profile
-      tourRef.current.addStep({
+      // Add attachTo only if element is found
+      const tasksElement = findSidebarTasksSection();
+      if (tasksElement) {
+        tasksStep.attachTo = {
+          element: tasksElement,
+          on: 'right'
+        };
+      }
+
+      tourRef.current.addStep(tasksStep);
+
+      // Step 11: User Profile - FIXED
+      const profileStep: any = {
         id: 'sidebar-profile',
         title: 'Your Profile',
         text: `
@@ -1192,10 +1219,6 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>Manage your account, billing, team settings, and customize your Operator experience.</p>
           </div>
         `,
-        attachTo: {
-          element: findUserProfileButton,
-          on: 'right'
-        },
         popperOptions: {
           modifiers: [
             {
@@ -1208,7 +1231,6 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
-            // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findUserProfileButton();
               console.log('Step 11 - User profile button element:', element);
@@ -1247,10 +1269,21 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      });
+      };
 
-      // Step 12: New Task Button
-      tourRef.current.addStep({
+      // Add attachTo only if element is found
+      const profileElement = findUserProfileButton();
+      if (profileElement) {
+        profileStep.attachTo = {
+          element: profileElement,
+          on: 'right'
+        };
+      }
+
+      tourRef.current.addStep(profileStep);
+
+      // Step 12: New Task Button - FIXED
+      const newTaskStep: any = {
         id: 'new-task',
         title: 'Create a New Task',
         text: `
@@ -1259,16 +1292,12 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>You can add a title, description, and due date to organize your work efficiently.</p>
           </div>
         `,
-        attachTo: {
-          element: findNewTaskElement,
-          on: 'right'
-        },
         popperOptions: {
           modifiers: [
             {
               name: 'offset',
               options: {
-                offset: [20, 0], // Position popup to the right of the button with proper spacing
+                offset: [20, 0],
               },
             },
             {
@@ -1292,7 +1321,6 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
               const element = findNewTaskElement();
               if (element) {
                 addHighlight(element);
-                // Ensure element is scrolled into view with extra space
                 element.scrollIntoView({ 
                   behavior: 'smooth', 
                   block: 'center',
@@ -1326,10 +1354,21 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      });
+      };
 
-      // Step 13: Send Message
-      tourRef.current.addStep({
+      // Add attachTo only if element is found
+      const newTaskElement = findNewTaskElement();
+      if (newTaskElement) {
+        newTaskStep.attachTo = {
+          element: newTaskElement,
+          on: 'right'
+        };
+      }
+
+      tourRef.current.addStep(newTaskStep);
+
+      // Step 13: Send Message - FIXED
+      const sendStep: any = {
         id: 'send-message',
         title: 'Send Your Message',
         text: `
@@ -1338,10 +1377,6 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>I'll analyze your request and provide helpful responses, execute tasks, or ask clarifying questions if needed.</p>
           </div>
         `,
-        attachTo: {
-          element: findSendButton,
-          on: 'left'
-        },
         popperOptions: {
           modifiers: [
             {
@@ -1366,7 +1401,18 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      });
+      };
+
+      // Add attachTo only if element is found
+      const sendElement = findSendButton();
+      if (sendElement) {
+        sendStep.attachTo = {
+          element: sendElement,
+          on: 'left'
+        };
+      }
+
+      tourRef.current.addStep(sendStep);
 
       // Tour event handlers
       tourRef.current.on('complete', () => {
