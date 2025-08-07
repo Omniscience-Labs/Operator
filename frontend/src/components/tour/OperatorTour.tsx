@@ -274,40 +274,73 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
   };
 
     const findSidebarMeetingsLink = () => {
-    console.log('Searching for Sidebar Meetings link...');
+    console.log('🔍 Searching for Sidebar Meetings link...');
     
-    // Wait for animations to complete
-    setTimeout(() => {}, 1000);
+    // Enhanced search with multiple strategies and better timing
+    const searchStrategies = [
+      // Strategy 1: Direct href selector (most reliable)
+      () => document.querySelector('a[href="/meetings"]'),
+      
+      // Strategy 2: FileAudio icon with meetings href
+      () => {
+        const fileAudioIcons = document.querySelectorAll('.lucide-file-audio, svg[data-lucide="file-audio"], [data-testid="meetings-icon"]');
+        for (const icon of fileAudioIcons) {
+          const link = icon.closest('a');
+          if (link && (link.getAttribute('href') === '/meetings' || link.href?.endsWith('/meetings'))) {
+            return link;
+          }
+        }
+        return null;
+      },
+      
+      // Strategy 3: Sidebar navigation context with meetings text
+      () => {
+        const sidebarNavs = document.querySelectorAll('nav, [role="navigation"], .sidebar, [data-sidebar]');
+        for (const nav of sidebarNavs) {
+          const links = nav.querySelectorAll('a');
+          for (const link of links) {
+            const text = link.textContent?.toLowerCase() || '';
+            const href = link.getAttribute('href') || '';
+            if (text.includes('meetings') && (href.includes('/meetings') || href === '/meetings')) {
+              return link;
+            }
+          }
+        }
+        return null;
+      },
+      
+      // Strategy 4: Any link with meetings text and proper href
+      () => {
+        const links = document.querySelectorAll('a[href*="/meetings"], a[href="/meetings"]');
+        for (const link of links) {
+          const text = link.textContent?.toLowerCase() || '';
+          if (text.includes('meetings') || link.querySelector('.lucide-file-audio')) {
+            return link;
+          }
+        }
+        return null;
+      },
+      
+      // Strategy 5: Fallback - any meetings link
+      () => {
+        return document.querySelector('a[href="/meetings"], a[href*="/meetings"]');
+      }
+    ];
     
-    // Most reliable - direct href selector
-    let element = document.querySelector('a[href="/meetings"]');
-    if (element) {
-      console.log('Found meetings link by href:', element);
-      return element;
-    }
-    
-    // Find by FileAudio icon (meetings use FileAudio icon)
-    const fileAudioIcons = document.querySelectorAll('.lucide-file-audio, svg[data-lucide="file-audio"]');
-    for (const icon of fileAudioIcons) {
-      const link = icon.closest('a');
-      if (link && link.getAttribute('href') === '/meetings') {
-        console.log('Found meetings link by FileAudio icon:', link);
-        return link;
+    // Try each strategy
+    for (let i = 0; i < searchStrategies.length; i++) {
+      try {
+        const element = searchStrategies[i]();
+        if (element && element.offsetParent !== null) { // Check if element is visible
+          console.log(`✅ Found meetings link using strategy ${i + 1}:`, element);
+          return element;
+        }
+      } catch (error) {
+        console.warn(`⚠️ Strategy ${i + 1} failed:`, error);
       }
     }
     
-    // Search by text content in sidebar context
-    const links = document.querySelectorAll('a');
-    for (const link of links) {
-      const text = link.textContent?.toLowerCase() || '';
-      const href = link.getAttribute('href') || '';
-      if (text.includes('meetings') && href.includes('/meetings')) {
-        console.log('Found meetings link by text and href:', link);
-        return link;
-      }
-    }
-    
-    console.log('No sidebar meetings link found');
+    console.log('❌ No sidebar meetings link found after trying all strategies');
     return null;
   };
 
@@ -912,11 +945,20 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 7: Sidebar Meetings Link
       const sidebarMeetingsStep: any = {
         id: 'sidebar-meetings',
-        title: 'Meetings Navigation',
+        title: '🎙️ Meetings Hub',
         text: `
-          <div class="space-y-3">
-            <p>Here in the sidebar, you can access all your meetings anytime!</p>
-            <p>Click on "Meetings" to view, manage, and review your past meeting recordings and transcripts.</p>
+          <div class="space-y-4">
+            <p><strong>Your Meeting Command Center!</strong></p>
+            <p>This is where you can:</p>
+            <ul class="list-disc list-inside space-y-1 text-sm">
+              <li>📝 View all your meeting recordings and transcripts</li>
+              <li>🔍 Search through past meeting content</li>
+              <li>📊 Review meeting analytics and insights</li>
+              <li>🎯 Access AI-generated meeting summaries</li>
+            </ul>
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-3 mt-3">
+              <p class="text-sm"><strong>💡 Pro Tip:</strong> You can quickly search for specific topics discussed across all your meetings using the search feature!</p>
+            </div>
           </div>
         `,
         popperOptions: {
@@ -924,29 +966,51 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             {
               name: 'offset',
               options: {
-                offset: [20, 0],
+                offset: [25, 10],
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 16,
               },
             },
           ],
         },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
-            // Wait for sidebar animations to complete (up to 0.6s + buffer)
-            setTimeout(() => {
+            // Enhanced timing with multiple attempts
+            let attempts = 0;
+            const maxAttempts = 5;
+            
+            const tryFindElement = () => {
+              attempts++;
               const element = findSidebarMeetingsLink();
-              console.log('Step 7 - Sidebar meetings element:', element);
-              if (element) {
+              console.log(`🔍 Step 7 - Attempt ${attempts} - Sidebar meetings element:`, element);
+              
+              if (element && element.offsetParent !== null) {
+                // Element found and visible
                 addHighlight(element);
                 element.scrollIntoView({ 
                   behavior: 'smooth', 
                   block: 'center',
                   inline: 'nearest' 
                 });
-      } else {
-                console.warn('Step 7 - Sidebar meetings element not found, continuing anyway');
+                console.log('✅ Step 7 - Successfully found and highlighted meetings link');
+                resolve();
+              } else if (attempts < maxAttempts) {
+                // Try again after a short delay
+                setTimeout(tryFindElement, 300);
+              } else {
+                // Max attempts reached, continue anyway
+                console.warn('⚠️ Step 7 - Meetings element not found after all attempts, continuing tour');
+                resolve();
               }
-              resolve();
-            }, 800);
+            };
+            
+            // Start searching after initial delay for animations
+            setTimeout(tryFindElement, 600);
           });
         },
         beforeHidePromise: () => {
@@ -954,6 +1018,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             const element = findSidebarMeetingsLink();
             if (element) {
               removeHighlight(element);
+              console.log('✅ Step 7 - Removed highlight from meetings link');
             }
             resolve();
           });
@@ -965,7 +1030,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-secondary'
           },
           {
-            text: 'Next',
+            text: 'Got it! 👍',
             action: () => tourRef.current?.next(),
             classes: 'shepherd-button-primary'
           }
