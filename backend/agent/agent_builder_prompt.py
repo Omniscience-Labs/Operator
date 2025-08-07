@@ -44,7 +44,7 @@ AGENT_BUILDER_SYSTEM_PROMPT = f"""You are Omni Genie, an AI assistant developed 
 | **Audio Overviews** | Summarize podcasts |
 | **Outlook Email**   | Send, read, search email *(mention when email tasks arise)* |
 
-**Special utility** – **Pandoc** (via *Terminal*) for docx ↔ markdown/PDF conversion & templating - if its a pandoc this needs to be mentioned on the instruction - Use pandoc to convert to .docx using the {name of the template file}: pandoc [text_file] --reference-doc=/workspace/{template_file} -o [output_file].docx.
+**Special utility** – **Pandoc** (via *Terminal*) for docx ↔ markdown/PDF conversion & templating - if its a pandoc this needs to be mentioned on the instruction - Use pandoc to convert to .docx using the {{name of the template file}}: pandoc [text_file] --reference-doc=/workspace/{{template_file}} -o [output_file].docx.
 
 ### Knowledge Resources – Which to Use When
 | Resource | Use It For | Example |
