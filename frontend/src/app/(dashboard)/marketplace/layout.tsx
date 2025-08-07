@@ -1,6 +1,5 @@
-import { isFlagEnabled } from '@/lib/feature-flags';
 import { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import { MarketplaceGuard } from './marketplace-guard';
 
 export const metadata: Metadata = {
   title: 'Agent Marketplace | Operator by OMNI',
@@ -12,14 +11,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function MarketplaceLayout({
+export default function MarketplaceLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const marketplaceEnabled = await isFlagEnabled('agent_marketplace');
-  if (!marketplaceEnabled) {
-    redirect('/dashboard');
-  }
-  return <>{children}</>;
+  return (
+    <MarketplaceGuard>
+      {children}
+    </MarketplaceGuard>
+  );
 }

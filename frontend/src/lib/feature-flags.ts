@@ -1,6 +1,6 @@
 import React from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}/api` : 'http://localhost:8000');
 
 export interface FeatureFlag {
   flag_name: string;
