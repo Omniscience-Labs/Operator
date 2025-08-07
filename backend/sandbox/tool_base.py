@@ -75,6 +75,16 @@ class SandboxToolsBase(Tool):
             raise RuntimeError("Sandbox not initialized. Call _ensure_sandbox() first.")
         return self._sandbox
 
+    @sandbox.setter
+    def sandbox(self, value: Sandbox) -> None:  # type: ignore[valid-type]
+        """Allow tests to set a mocked sandbox via property assignment."""
+        self._sandbox = value
+
+    @sandbox.deleter
+    def sandbox(self) -> None:  # type: ignore[no-redef]
+        """Allow tests to delete mocked sandbox property."""
+        self._sandbox = None
+
     @property
     def sandbox_id(self) -> str:
         """Get the sandbox ID, ensuring it exists."""

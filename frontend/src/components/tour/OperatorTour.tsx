@@ -331,7 +331,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
     for (let i = 0; i < searchStrategies.length; i++) {
       try {
         const element = searchStrategies[i]();
-        if (element && element.offsetParent !== null) { // Check if element is visible
+        if (element instanceof HTMLElement && element.offsetParent !== null) { // Check if element is visible
           console.log(`✅ Found meetings link using strategy ${i + 1}:`, element);
           return element;
         }

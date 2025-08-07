@@ -88,12 +88,18 @@ class ToolResult:
     
     Attributes:
         success (bool): Whether the tool execution succeeded
-        output (str): Output message or error description
+        output (str): Human-readable output or error description
         metadata (Dict[str, Any]): Additional metadata for the result
+        content (Any): Structured payload (for backwards compatibility with older tests)
+        data (Any): Alias for structured payload commonly used by tests
+        error (Optional[str]): Error message when success is False
     """
     success: bool
     output: str
     metadata: Dict[str, Any] = field(default_factory=dict)
+    content: Any = None
+    data: Any = None
+    error: Optional[str] = None
 
 class Tool(ABC):
     """Abstract base class for all tools.
@@ -142,10 +148,32 @@ class Tool(ABC):
         """
         if isinstance(data, str):
             text = data
+            structured = None
         else:
             text = json.dumps(data, indent=2)
+            structured = data
         logger.debug(f"Created success response for {self.__class__.__name__}")
-        return ToolResult(success=True, output=text)
+        # Build content/data fields: keep content as human-readable string;
+        # expose parsed dict via `data` for programmatic access when available.
+        content_value = text
+        data_value: Optional[Dict[str, Any]] = None
+        if isinstance(structured, dict):
+            data_value = structured
+        else:
+            try:
+                parsed = json.loads(text)
+                if isinstance(parsed, dict):
+                    data_value = parsed
+            except Exception:
+                pass
+
+        return ToolResult(
+            success=True,
+            output=text,
+            metadata=structured if isinstance(structured, dict) else {},
+            content=content_value,
+            data=data_value,
+        )
 
     def fail_response(self, msg: str) -> ToolResult:
         """Create a failed tool result.
@@ -157,7 +185,7 @@ class Tool(ABC):
             ToolResult with success=False and error message
         """
         logger.debug(f"Tool {self.__class__.__name__} returned failed result: {msg}")
-        return ToolResult(success=False, output=msg)
+        return ToolResult(success=False, output=msg, error=msg, content=msg)
 
 def _add_schema(func, schema: ToolSchema):
     """Helper to add schema to a function."""

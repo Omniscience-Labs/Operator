@@ -52,15 +52,13 @@ class MockProcess:
 
 
 @pytest.fixture
-async def excel_tool():
+def excel_tool():
     """Create a mock Excel tool for testing"""
     thread_manager = AsyncMock()
     tool = SandboxExcelTool("test_project", thread_manager)
-    
     # Mock the sandbox
     tool._sandbox = MockSandbox()
     tool.workspace_path = "/workspace"
-    
     return tool
 
 
