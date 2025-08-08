@@ -16,6 +16,7 @@ type Props = {
   accountId: string;
   returnUrl: string;
 };
+//test
 
 export default function AccountBillingStatus({ accountId, returnUrl }: Props) {
   const { session, isLoading: authLoading } = useAuth();
