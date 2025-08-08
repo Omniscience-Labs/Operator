@@ -27,5 +27,13 @@ export const createClient = () => {
     supabaseUrl = `http://${supabaseUrl}`;
   }
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        ...(process.env.NEXT_PUBLIC_SUPABASE_BRANCH
+          ? { 'x-supabase-branch': process.env.NEXT_PUBLIC_SUPABASE_BRANCH }
+          : {}),
+      },
+    },
+  });
 };

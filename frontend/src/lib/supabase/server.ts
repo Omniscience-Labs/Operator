@@ -33,5 +33,12 @@ export const createClient = async () => {
         }
       },
     },
+    global: {
+      headers: {
+        ...(process.env.NEXT_PUBLIC_SUPABASE_BRANCH
+          ? { 'x-supabase-branch': process.env.NEXT_PUBLIC_SUPABASE_BRANCH }
+          : {}),
+      },
+    },
   });
 };
