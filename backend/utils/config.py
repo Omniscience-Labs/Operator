@@ -225,8 +225,8 @@ class Configuration:
             
             # Excel operations (sb_excel_tool)
             "create_workbook": 2.0,
-            "write_data": 1.5,
-            "read_data": 1.5,
+            "write_data": 0.3,
+            "read_data": 0.3,
             "list_sheets": 1.0,
             
             # Vision (sb_vision_tool)
