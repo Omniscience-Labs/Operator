@@ -646,6 +646,7 @@ export default function ThreadPage({
         isMobile={isMobile}
         initialLoadCompleted={initialLoadCompleted}
         agentName={agent?.name || 'Operator'}
+        agent={agent}
       >
         <ThreadContent
           messages={messages}

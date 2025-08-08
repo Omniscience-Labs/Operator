@@ -36,6 +36,7 @@ interface ToolCallSidePanelProps {
   messages?: ApiMessageType[];
   agentStatus: string;
   project?: Project;
+  agent?: { knowledge_bases?: Array<{ name?: string; index_name?: string; description?: string }> };
   renderAssistantMessage?: (
     assistantContent?: string,
     toolContent?: string,
@@ -65,6 +66,7 @@ export function ToolCallSidePanel({
   messages,
   agentStatus,
   project,
+  agent,
   isLoading = false,
   externalNavigateToIndex,
   agentName,
@@ -596,6 +598,7 @@ export function ToolCallSidePanel({
         isSuccess={isSuccess}
         isStreaming={isStreaming}
         project={project}
+        agent={agent}
         messages={messages}
         agentStatus={agentStatus}
         currentIndex={displayIndex}

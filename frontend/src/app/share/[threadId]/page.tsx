@@ -917,6 +917,7 @@ export default function ThreadPage({
         externalNavigateToIndex={externalNavIndex}
         project={project}
         onFileClick={handleOpenFileViewer}
+        // No agent object available in shared view; omit agent registry badge
       />
 
       <FileViewerModal
