@@ -38,9 +38,34 @@ function KnowledgeBaseCard({ knowledgeBase }: KnowledgeBaseCardProps) {
   );
 }
 
-export function ListKnowledgeBasesToolView({ toolContent }: ToolViewProps) {
-  const data = extractListKnowledgeBasesData(toolContent);
-  
+export function ListKnowledgeBasesToolView({ toolContent, agent }: ToolViewProps) {
+  // Try tool output first
+  let data = extractListKnowledgeBasesData(toolContent);
+
+  // If tool output missing or empty, fall back to registry metadata
+  if (!data || (data && data.count === 0)) {
+    const registry = agent?.knowledge_bases || [];
+    if (registry.length > 0) {
+      const transformed: KnowledgeBase[] = registry.map((kb) => {
+        const displayName = kb.name || kb.index_name || 'Knowledge Base';
+        const indexName = kb.index_name || (kb.name ? kb.name.toLowerCase().replace(/\s+/g, '-') : 'unknown');
+        const searchMethod = `search_${(displayName).replace(/[\-\s]+/g, '_').toLowerCase()}`;
+        return {
+          name: displayName,
+          index_name: indexName,
+          description: kb.description || 'No description provided',
+          search_method: searchMethod,
+        };
+      });
+
+      data = {
+        message: 'Using configured knowledge bases from registry',
+        knowledge_bases: transformed,
+        count: transformed.length,
+      } as ListKnowledgeBasesData;
+    }
+  }
+
   if (!data) {
     return (
       <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -49,7 +74,7 @@ export function ListKnowledgeBasesToolView({ toolContent }: ToolViewProps) {
           <span className="font-medium">Error loading knowledge bases</span>
         </div>
         <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-          Unable to parse the knowledge bases data. Please check the tool output format.
+          Unable to parse the knowledge bases data.
         </p>
       </div>
     );
