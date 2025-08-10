@@ -7,6 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useCurrentAccount } from '@/hooks/use-current-account';
 import { useAccounts } from '@/hooks/use-accounts';
+import { getAgentAvatar } from '@/app/(dashboard)/agents/_utils/get-agent-style';
 import './AgentProfileCard.css';
 
 // Simple Agent interface matching existing codebase
@@ -57,18 +58,7 @@ interface AgentProfileCardProps {
   isAddedToLibrary?: boolean;
 }
 
-const getAgentAvatar = (agentId: string) => {
-  const avatars = ['🤖', '🎭', '🧠', '⚡', '🔥', '🌟', '🚀', '💎', '🎯', '🎪', '🎨', '🔮', '🌈', '⭐', '🎵'];
-  const colors = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6366F1', '#14B8A6', '#F97316', '#8B5CF6', '#06B6D4'];
-  
-  const avatarIndex = parseInt(agentId?.slice(-2), 16) % avatars.length;
-  const colorIndex = parseInt(agentId?.slice(-3, -1), 16) % colors.length;
-  
-  return {
-    avatar: avatars[avatarIndex] || '🤖',
-    color: colors[colorIndex] || '#3B82F6'
-  };
-};
+
 
 const getToolsCount = (agent: Agent) => {
   const mcpCount = agent.configured_mcps?.length || 0;
