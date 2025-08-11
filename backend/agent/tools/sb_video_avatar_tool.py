@@ -98,7 +98,8 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         raise Exception(f"HeyGen API error {response.status}: {error_text}")
                     
                     data = await response.json()
-                    token = data.get('token', '')
+                    # HeyGen API returns token in data.data.token structure
+                    token = data.get('data', {}).get('token', '') or data.get('token', '')
                     if not token:
                         raise Exception(f"No token returned from HeyGen API. Response: {data}")
                     return token
