@@ -82,6 +82,39 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             logger.info(f"HeyGen API key loaded: {self.heygen_api_key[:10]}...")
             logger.info(f"HeyGen API base: {self.heygen_api_base}")
 
+    async def _get_valid_voice_id(self, voice_id: str) -> str:
+        """Get a valid voice ID, fetching available voices if needed."""
+        if voice_id and voice_id != "default":
+            return voice_id
+        
+        try:
+            # Try to get available voices
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self.heygen_api_base}/v2/voices",
+                    headers={
+                        "x-api-key": self.heygen_api_key,
+                        "accept": "application/json"
+                    }
+                ) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        voices = result.get("data", {}).get("voices", [])
+                        if voices:
+                            # Return the first available voice
+                            first_voice = voices[0]
+                            voice_id = first_voice.get('voice_id')
+                            voice_name = first_voice.get('name', first_voice.get('voice_name', 'Unknown'))
+                            logger.info(f"Using first available voice: {voice_name} ({voice_id})")
+                            return voice_id
+        except Exception as e:
+            logger.warning(f"Could not fetch voices: {e}")
+        
+        # Fallback to a commonly available voice ID or the original hardcoded one
+        fallback_voice = "1bd001e7e50f421d891986aad5158bc8"
+        logger.warning(f"Using fallback voice ID: {fallback_voice}")
+        return fallback_voice
+
     async def _create_session_token(self) -> str:
         """Create a session token for HeyGen API."""
         if not self.heygen_api_key:
@@ -702,7 +735,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                     },
                     "voice_id": {
                         "type": "string", 
-                        "description": "Voice ID for the avatar's speech",
+                        "description": "Voice ID for the avatar's speech. Use 'default' to auto-select first available voice, or use list_available_voices to see all options",
                         "default": "default"
                     },
                     "video_title": {
@@ -815,7 +848,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         "voice": {
                             "type": "text",
                             "input_text": text,
-                            "voice_id": voice_id if voice_id != "default" else "1bd001e7e50f421d891986aad5158bc8"
+                            "voice_id": await self._get_valid_voice_id(voice_id)
                         },
                         "background": {
                             "type": "color",
@@ -1332,6 +1365,121 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         except Exception as e:
             logger.error(f"Error in close_avatar_session: {str(e)}", exc_info=True)
             return self.fail_response(f"Avatar session closure failed: {str(e)}")
+
+    @openapi_schema({
+        "type": "function", 
+        "function": {
+            "name": "list_available_voices",
+            "description": "List available HeyGen voices that can be used for video generation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of voices to return (default: 10)",
+                        "default": 10,
+                        "minimum": 1,
+                        "maximum": 50
+                    }
+                },
+                "required": []
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="list-available-voices",
+        mappings=[
+            {"param_name": "limit", "node_type": "attribute", "path": ".", "required": False}
+        ],
+        example='''
+        <function_calls>
+        <invoke name="list_available_voices">
+        <parameter name="limit">10</parameter>
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def list_available_voices(self, limit: int = 10) -> ToolResult:
+        """List available HeyGen voices for video generation.
+        
+        Args:
+            limit: Maximum number of voices to return
+            
+        Returns:
+            ToolResult with list of available voices
+        """
+        try:
+            if not self.heygen_api_key:
+                return self.fail_response("HeyGen API key not configured.")
+            
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(
+                        f"{self.heygen_api_base}/v2/voices",
+                        headers={
+                            "x-api-key": self.heygen_api_key,
+                            "accept": "application/json"
+                        }
+                    ) as response:
+                        if response.status != 200:
+                            error_text = await response.text()
+                            return self.fail_response(f"Failed to fetch voices: {response.status} - {error_text}")
+                        
+                        result = await response.json()
+                        voices = result.get("data", {}).get("voices", [])
+                        
+                        if not voices:
+                            return self.fail_response("No voices available from HeyGen API")
+                        
+                        # Limit the results
+                        limited_voices = voices[:limit]
+                        
+                        message = f"🎤 **Available HeyGen Voices** (showing {len(limited_voices)} of {len(voices)})\n\n"
+                        
+                        for voice in limited_voices:
+                            voice_id = voice.get('voice_id', 'Unknown ID')
+                            voice_name = voice.get('name', voice.get('voice_name', 'Unknown'))
+                            language = voice.get('language', voice.get('language_code', 'Unknown'))
+                            gender = voice.get('gender', 'Unknown')
+                            
+                            message += f"• **{voice_name}** (`{voice_id}`)\n"
+                            message += f"  - Language: {language}\n"
+                            message += f"  - Gender: {gender}\n\n"
+                        
+                        # Save voice list to workspace for reference
+                        voices_file = f"{self.workspace_path}/available_voices.json"
+                        voices_data = {
+                            "timestamp": "2025-01-27T00:00:00Z",
+                            "total_voices": len(voices),
+                            "voices": [
+                                {
+                                    "voice_id": v.get('voice_id'),
+                                    "name": v.get('name', v.get('voice_name')),
+                                    "language": v.get('language', v.get('language_code')),
+                                    "gender": v.get('gender'),
+                                    "preview_url": v.get('preview_audio_url', v.get('preview_url'))
+                                }
+                                for v in voices
+                            ]
+                        }
+                        
+                        self.sandbox.fs.write_file(voices_file, json.dumps(voices_data, indent=2), "644")
+                        
+                        message += f"\n📄 **Voice list saved to:** `{voices_file}`\n"
+                        message += f"Use any `voice_id` from this list in the `generate_avatar_video` function."
+                        
+                        return ToolResult(
+                            success=True,
+                            content=message
+                        )
+                        
+            except Exception as e:
+                logger.error(f"Error fetching voices: {e}")
+                return self.fail_response(f"Error fetching voices from HeyGen API: {str(e)}")
+                
+        except Exception as e:
+            logger.error(f"Unexpected error in list_available_voices: {e}")
+            return self.fail_response(f"Unexpected error: {str(e)}")
 
     @openapi_schema({
         "type": "function", 
