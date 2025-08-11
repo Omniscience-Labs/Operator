@@ -799,7 +799,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                     "wait_for_completion": {
                         "type": "boolean",
                         "description": "If true, wait for video completion and auto-download to workspace (takes 1-3 minutes)",
-                        "default": False
+                        "default": True
                     },
                     "max_wait_time": {
                         "type": "integer",
@@ -844,7 +844,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                                   voice_id: str = "default", 
                                   video_title: str = "AI Avatar Video",
                                   background_color: str = "#ffffff",
-                                  wait_for_completion: bool = False,
+                                  wait_for_completion: bool = True,
                                   max_wait_time: int = 300) -> ToolResult:
         """Generate a downloadable MP4 video with an avatar speaking the provided text.
         
@@ -997,13 +997,11 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         
                         message += f"⏳ **Status: Processing** (typically 1-3 minutes)\n\n"
                         
-                        message += f"📥 **How to Get Your MP4 Video:**\n"
-                        message += f"**Option 1 - Manual Check:**\n"
-                        message += f"1. **Wait 2-3 minutes** for HeyGen to process the video\n"
-                        message += f"2. **Check status**: Use `check_video_status('{video_id}')` \n"
-                        message += f"3. **Download**: When status = 'completed', video auto-downloads to workspace\n\n"
-                        message += f"**Option 2 - Auto-Wait (Recommended):**\n"
-                        message += f"Use `download_completed_video('{video_id}')` to automatically wait and download\n\n"
+                        message += f"⏳ **Auto-Wait Enabled:** Video will automatically download to workspace when ready\n\n"
+                        message += f"📥 **Alternative Options:**\n"
+                        message += f"**Manual Check:**\n"
+                        message += f"1. **Check status**: Use `check_video_status('{video_id}')` \n"
+                        message += f"2. **Manual download**: Use `download_completed_video('{video_id}')` \n\n"
                         
                         message += f"📁 **Video info saved to:** `videos/{video_id}_info.json`\n\n"
                         
@@ -1012,7 +1010,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         
                         # If wait_for_completion is True, automatically wait and download
                         if wait_for_completion:
-                            message += f"\n\n⏳ **Auto-waiting for completion** (max {max_wait_time}s)...\n"
+                            message += f"\n\n⏳ **Auto-waiting for video completion** (max {max_wait_time}s)...\n"
                             
                             # Use the download_completed_video method to wait and download
                             download_result = await self.download_completed_video(video_id, max_wait_time)
