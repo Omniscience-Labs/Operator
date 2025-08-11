@@ -2092,7 +2092,18 @@ async def create_agent(
             "is_default": agent_data.is_default or False,
             "knowledge_bases": agent_data.knowledge_bases or [],
             "avatar": agent_data.avatar,
-            "avatar_color": agent_data.avatar_color
+            "avatar_color": agent_data.avatar_color,
+            # Add missing required columns with defaults
+            "visibility": "private",
+            "is_public": False,
+            "tags": [],
+            "download_count": 0,
+            "sharing_preferences": {
+                "include_knowledge_bases": True,
+                "include_custom_mcp_tools": True,
+                "managed_agent": False,
+                "disable_customization": False
+            }
         }
         
         new_agent = await client.table('agents').insert(insert_data).execute()
