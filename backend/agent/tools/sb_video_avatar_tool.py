@@ -115,6 +115,36 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         logger.warning(f"Using fallback voice ID: {fallback_voice}")
         return fallback_voice
 
+    async def _get_video_details_from_list(self, video_id: str) -> Optional[Dict[str, Any]]:
+        """Get video details using the working v1/video.list endpoint."""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self.heygen_api_base}/v1/video.list",
+                    headers={
+                        "x-api-key": self.heygen_api_key,
+                        "Accept": "application/json"
+                    }
+                ) as response:
+                    if response.status != 200:
+                        logger.error(f"Failed to get video list: {response.status}")
+                        return None
+                    
+                    result = await response.json()
+                    videos = result.get("data", {}).get("videos", [])
+                    
+                    # Find the specific video
+                    for video in videos:
+                        if video.get("video_id") == video_id:
+                            return video
+                    
+                    logger.warning(f"Video {video_id} not found in video list")
+                    return None
+                    
+        except Exception as e:
+            logger.error(f"Exception getting video details: {e}")
+            return None
+
     async def _download_video_to_workspace(self, video_url: str, video_id: str) -> Optional[str]:
         """Download video from HeyGen to workspace and return the local path."""
         try:
@@ -1081,110 +1111,97 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             if not self.heygen_api_key:
                 return self.fail_response("HeyGen API key not configured.")
             
-            # Check video status via HeyGen API
+            # Check video status via HeyGen API using the working v1/video.list endpoint
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(
-                        f"{self.heygen_api_base}/v2/video/{video_id}",
-                        headers={
-                            "x-api-key": self.heygen_api_key,
-                            "Accept": "application/json"
-                        }
-                    ) as response:
-                        if response.status != 200:
-                            error_text = await response.text()
-                            logger.error(f"HeyGen API error - Status: {response.status}, URL: {response.url}, Headers: {dict(response.headers)}, Body: {error_text}")
-                            return self.fail_response(f"Failed to check video status: {response.status} - {error_text}. URL attempted: {response.url}")
-                        
-                        result = await response.json()
-                        logger.info(f"HeyGen video status response: {result}")
-                        
-                        data = result.get("data", {})
-                        status = data.get("status", "unknown")
-                        video_url = data.get("video_url", "")
-                        error_msg = data.get("error", "")
-                        
-                        # Update video info file
-                        videos_dir = f"{self.workspace_path}/videos"
-                        video_file = f"{videos_dir}/{video_id}_info.json"
-                        
-                        try:
-                            # Read existing info
-                            existing_content = self.sandbox.fs.read_file(video_file)
-                            video_info = json.loads(existing_content.decode())
-                            
-                            # Update with latest status
-                            video_info.update({
-                                "status": status,
-                                "video_url": video_url,
-                                "error": error_msg,
-                                "checked_at": data.get("updated_at", "")
-                            })
-                            
-                            # Save updated info
-                            self.sandbox.fs.upload_file(
-                                json.dumps(video_info, indent=2).encode(),
-                                video_file
-                            )
-                        except Exception as e:
-                            logger.warning(f"Could not update video info file: {e}")
-                        
-                        message = f"🎬 **Video Status Check: {video_id}**\n\n"
-                        
-                        if status == "completed":
-                            message += f"✅ **Status: COMPLETED!**\n\n"
-                            message += f"🎉 **Your avatar video is ready!**\n"
-                            
-                            # Try to download the video to workspace
-                            if video_url:
-                                try:
-                                    downloaded_path = await self._download_video_to_workspace(video_url, video_id)
-                                    if downloaded_path:
-                                        message += f"📁 **Downloaded to workspace:** `{downloaded_path}`\n"
-                                        message += f"📥 **Original URL:** {video_url}\n\n"
-                                        message += f"🎭 **Your AI avatar video is ready in the workspace!**\n"
-                                        message += f"💡 You can now access the video file directly from your workspace."
-                                    else:
-                                        message += f"📥 **Download URL:** {video_url}\n\n"
-                                        message += f"💡 **Instructions:**\n"
-                                        message += f"1. Click the URL above to download your MP4 video\n"
-                                        message += f"2. The video will be downloaded to your device\n"
-                                        message += f"3. You can now share it anywhere!\n\n"
-                                        message += f"🎭 **Your AI avatar video is ready to watch and share!**"
-                                except Exception as e:
-                                    logger.warning(f"Failed to download video to workspace: {e}")
-                                    message += f"📥 **Download URL:** {video_url}\n\n"
-                                    message += f"💡 **Instructions:**\n"
-                                    message += f"1. Click the URL above to download your MP4 video\n"
-                                    message += f"2. The video will be downloaded to your device\n"
-                                    message += f"3. You can now share it anywhere!\n\n"
-                                    message += f"🎭 **Your AI avatar video is ready to watch and share!**"
-                            else:
-                                message += f"⚠️ **No download URL provided in response**"
-                            
-                        elif status == "processing":
-                            message += f"⏳ **Status: PROCESSING**\n\n"
-                            message += f"🔄 Your video is still being generated...\n"
-                            message += f"⏱️ This usually takes 1-3 minutes total.\n\n"
-                            message += f"💡 **Next Steps:**\n"
-                            message += f"• Wait another 30-60 seconds\n"
-                            message += f"• Run this command again to check status\n"
-                            message += f"• The download URL will appear when ready!"
-                            
-                        elif status == "error" or error_msg:
-                            message += f"❌ **Status: ERROR**\n\n"
-                            message += f"🚨 **Error:** {error_msg}\n\n"
-                            message += f"💡 **Suggestions:**\n"
-                            message += f"• Try generating a new video\n"
-                            message += f"• Check if your text is too long\n"
-                            message += f"• Ensure avatar_id and voice_id are valid"
-                            
-                        else:
-                            message += f"❓ **Status: {status.upper()}**\n\n"
-                            message += f"🔍 **Raw Response:** {result}\n\n"
-                            message += f"💡 Please try checking again in a few moments."
-                        
-                        return self.success_response(message)
+                video_details = await self._get_video_details_from_list(video_id)
+                
+                if not video_details:
+                    return self.fail_response(f"Video {video_id} not found. It may have been deleted or never existed.")
+                
+                status = video_details.get("status", "unknown")
+                video_title = video_details.get("video_title", "")
+                created_at = video_details.get("created_at", "")
+                
+                # For completed videos, we need to get the download URL
+                # The list endpoint doesn't include the video_url, so we'll need to handle this differently
+                video_url = ""
+                error_msg = ""
+                
+                logger.info(f"HeyGen video status from list: status={status}, title={video_title}")
+                
+                # Update video info file
+                videos_dir = f"{self.workspace_path}/videos"
+                video_file = f"{videos_dir}/{video_id}_info.json"
+                
+                try:
+                    # Create videos directory if it doesn't exist
+                    self.sandbox.fs.create_folder(videos_dir, "755")
+                    
+                    # Read existing info or create new
+                    video_info = {}
+                    try:
+                        existing_content = self.sandbox.fs.read_file(video_file)
+                        video_info = json.loads(existing_content.decode())
+                    except:
+                        pass  # File doesn't exist yet
+                    
+                    # Update with latest status
+                    video_info.update({
+                        "video_id": video_id,
+                        "status": status,
+                        "video_title": video_title,
+                        "created_at": created_at,
+                        "checked_at": int(asyncio.get_event_loop().time()),
+                        "video_url": video_url,
+                        "error": error_msg
+                    })
+                    
+                    # Save updated info
+                    self.sandbox.fs.upload_file(
+                        json.dumps(video_info, indent=2).encode(),
+                        video_file
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not update video info file: {e}")
+                
+                message = f"🎬 **Video Status Check: {video_id}**\n\n"
+                
+                if status == "completed":
+                    message += f"✅ **Status: COMPLETED!**\n\n"
+                    message += f"🎉 **Your avatar video is ready!**\n"
+                    message += f"📹 **Title:** {video_title}\n\n"
+                    
+                    # For completed videos, we need to provide instructions since we can't get the direct URL
+                    message += f"⚠️ **Note:** HeyGen's individual video API is currently having issues.\n"
+                    message += f"📋 **To download your video:**\n"
+                    message += f"1. Go to [HeyGen Dashboard](https://app.heygen.com/)\n"
+                    message += f"2. Find your video titled: '{video_title}'\n"
+                    message += f"3. Click download to get your MP4 file\n\n"
+                    message += f"🎭 **Your AI avatar video is ready to watch and share!**"
+                    
+                elif status == "processing":
+                    message += f"⏳ **Status: PROCESSING**\n\n"
+                    message += f"🔄 Your video is still being generated...\n"
+                    message += f"⏱️ This usually takes 1-3 minutes total.\n\n"
+                    message += f"💡 **Next Steps:**\n"
+                    message += f"• Wait another 30-60 seconds\n"
+                    message += f"• Run this command again to check status\n"
+                    message += f"• The download URL will appear when ready!"
+                    
+                elif status == "error" or error_msg:
+                    message += f"❌ **Status: ERROR**\n\n"
+                    message += f"🚨 **Error:** {error_msg}\n\n"
+                    message += f"💡 **Suggestions:**\n"
+                    message += f"• Try generating a new video\n"
+                    message += f"• Check if your text is too long\n"
+                    message += f"• Ensure avatar_id and voice_id are valid"
+                    
+                else:
+                    message += f"❓ **Status: {status.upper()}**\n\n"
+                    message += f"📹 **Title:** {video_title}\n\n"
+                    message += f"💡 Please try checking again in a few moments."
+                
+                return self.success_response(message)
                         
             except Exception as e:
                 logger.error(f"Error calling HeyGen status API: {str(e)}")
@@ -1258,73 +1275,62 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             
             while True:
                 try:
-                    # Check current status
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(
-                            f"{self.heygen_api_base}/v2/video/{video_id}",
-                            headers={
-                                "x-api-key": self.heygen_api_key,
-                                "Accept": "application/json"
-                            }
-                        ) as response:
-                            if response.status != 200:
-                                error_text = await response.text()
-                                return self.fail_response(f"Failed to check video status: {response.status} - {error_text}")
+                    # Check current status using working endpoint
+                    video_details = await self._get_video_details_from_list(video_id)
+                    
+                    if not video_details:
+                        return self.fail_response(f"Video {video_id} not found. It may have been deleted or never existed.")
+                    
+                    status = video_details.get("status", "unknown")
+                    video_title = video_details.get("video_title", "")
+                    video_url = ""  # The list endpoint doesn't provide download URLs
+                    error_msg = ""
                             
-                            result = await response.json()
-                            data = result.get("data", {})
-                            status = data.get("status", "unknown")
-                            video_url = data.get("video_url", "")
-                            error_msg = data.get("error", "")
-                            
-                            if status == "completed" and video_url:
-                                # Video is ready, download it
-                                message += f"✅ **Video completed! Downloading...**\n\n"
-                                
-                                downloaded_path = await self._download_video_to_workspace(video_url, video_id)
-                                if downloaded_path:
-                                    message += f"🎉 **Download successful!**\n\n"
-                                    message += f"📁 **Local path:** `{downloaded_path}`\n"
-                                    message += f"📥 **Original URL:** {video_url}\n\n"
-                                    message += f"🎭 **Your AI avatar video is ready in the workspace!**\n"
-                                    message += f"💡 You can now access and use the video file directly."
-                                    
-                                    return ToolResult(success=True, content=message)
-                                else:
-                                    message += f"❌ **Download failed, but video is ready**\n\n"
-                                    message += f"📥 **Direct URL:** {video_url}\n"
-                                    message += f"💡 You can download manually from the URL above."
-                                    return ToolResult(success=True, content=message)
-                            
-                            elif status == "error" or error_msg:
-                                message += f"❌ **Video generation failed**\n\n"
-                                message += f"🚨 **Error:** {error_msg}\n"
-                                return self.fail_response(message)
-                            
-                            elif status == "processing":
-                                # Still processing, continue waiting
-                                elapsed = asyncio.get_event_loop().time() - start_time
-                                if elapsed > max_wait_time:
-                                    message += f"⏰ **Timeout reached ({max_wait_time}s)**\n\n"
-                                    message += f"🔄 Video is still processing. Use check_video_status to check manually.\n"
-                                    message += f"📋 **Current status:** {status}"
-                                    return ToolResult(success=True, content=message)
-                                
-                                # Wait before next check
-                                await asyncio.sleep(check_interval)
-                                continue
-                            
-                            else:
-                                # Unknown status, continue waiting
-                                elapsed = asyncio.get_event_loop().time() - start_time
-                                if elapsed > max_wait_time:
-                                    message += f"⏰ **Timeout reached**\n\n"
-                                    message += f"❓ **Final status:** {status}\n"
-                                    message += f"🔍 Use check_video_status for more details."
-                                    return ToolResult(success=True, content=message)
-                                
-                                await asyncio.sleep(check_interval)
-                                continue
+                    if status == "completed":
+                        # Video is ready but we can't auto-download due to HeyGen API issues
+                        message += f"✅ **Video completed!**\n\n"
+                        message += f"🎉 **Your avatar video is ready!**\n"
+                        message += f"📹 **Title:** {video_title}\n\n"
+                        
+                        # Provide manual download instructions
+                        message += f"⚠️ **Note:** HeyGen's individual video API is currently having issues.\n"
+                        message += f"📋 **To download your video:**\n"
+                        message += f"1. Go to [HeyGen Dashboard](https://app.heygen.com/)\n"
+                        message += f"2. Find your video titled: '{video_title}'\n"
+                        message += f"3. Click download to get your MP4 file\n\n"
+                        message += f"🎭 **Your AI avatar video is ready to watch and share!**"
+                        
+                        return ToolResult(success=True, content=message)
+                    
+                    elif status == "error" or error_msg:
+                        message += f"❌ **Video generation failed**\n\n"
+                        message += f"🚨 **Error:** {error_msg}\n"
+                        return self.fail_response(message)
+                    
+                    elif status == "processing":
+                        # Still processing, continue waiting
+                        elapsed = asyncio.get_event_loop().time() - start_time
+                        if elapsed > max_wait_time:
+                            message += f"⏰ **Timeout reached ({max_wait_time}s)**\n\n"
+                            message += f"🔄 Video is still processing. Use check_video_status to check manually.\n"
+                            message += f"📋 **Current status:** {status}"
+                            return ToolResult(success=True, content=message)
+                        
+                        # Wait before next check
+                        await asyncio.sleep(check_interval)
+                        continue
+                    
+                    else:
+                        # Unknown status, continue waiting
+                        elapsed = asyncio.get_event_loop().time() - start_time
+                        if elapsed > max_wait_time:
+                            message += f"⏰ **Timeout reached**\n\n"
+                            message += f"❓ **Final status:** {status}\n"
+                            message += f"🔍 Use check_video_status for more details."
+                            return ToolResult(success=True, content=message)
+                        
+                        await asyncio.sleep(check_interval)
+                        continue
                                 
                 except Exception as e:
                     logger.error(f"Error during video status check: {e}")
