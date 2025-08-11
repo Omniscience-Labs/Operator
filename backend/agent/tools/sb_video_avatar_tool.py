@@ -1085,11 +1085,12 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(
-                        f"{self.heygen_api_base}/v2/videos/{video_id}",
+                        f"{self.heygen_api_base}/v1/video_status",
                         headers={
                             "x-api-key": self.heygen_api_key,
                             "Accept": "application/json"
-                        }
+                        },
+                        params={"video_id": video_id}
                     ) as response:
                         if response.status != 200:
                             error_text = await response.text()
@@ -1260,11 +1261,12 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                     # Check current status
                     async with aiohttp.ClientSession() as session:
                         async with session.get(
-                            f"{self.heygen_api_base}/v2/videos/{video_id}",
+                            f"{self.heygen_api_base}/v1/video_status",
                             headers={
                                 "x-api-key": self.heygen_api_key,
                                 "Accept": "application/json"
-                            }
+                            },
+                            params={"video_id": video_id}
                         ) as response:
                             if response.status != 200:
                                 error_text = await response.text()
