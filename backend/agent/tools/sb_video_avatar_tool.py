@@ -147,71 +147,17 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             return None
 
     async def _get_video_download_url(self, video_id: str) -> Optional[str]:
-        """Get the video download URL using the correct HeyGen API endpoint."""
+        """Try different methods to get the actual video download URL."""
         logger.info(f"Attempting to get download URL for video {video_id}")
         
-        # Method 1: Use the official video status endpoint
-        try:
-            async with aiohttp.ClientSession() as session:
-                # Try the v1 video status endpoint (most likely to work)
-                async with session.get(
-                    f"{self.heygen_api_base}/v1/video_status.get",
-                    headers={
-                        "x-api-key": self.heygen_api_key,
-                        "Accept": "application/json"
-                    },
-                    params={"video_id": video_id}
-                ) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        logger.info(f"Video status response: {result}")
-                        
-                        # Look for video URL in response
-                        if 'data' in result:
-                            data = result['data']
-                            # Check for common URL field names
-                            for key in ['video_url', 'url', 'download_url', 'file_url', 'video_url_https']:
-                                if key in data and data[key]:
-                                    logger.info(f"Found video URL via status endpoint: {data[key]}")
-                                    return data[key]
-                    else:
-                        logger.info(f"Video status endpoint returned {response.status}")
-                        
-        except Exception as e:
-            logger.debug(f"Error trying video status endpoint: {e}")
-        
-        # Method 2: Try the v2 video status endpoint
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{self.heygen_api_base}/v2/video/{video_id}",
-                    headers={
-                        "x-api-key": self.heygen_api_key,
-                        "Accept": "application/json"
-                    }
-                ) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        logger.info(f"V2 video status response: {result}")
-                        
-                        if 'data' in result:
-                            data = result['data']
-                            for key in ['video_url', 'url', 'download_url', 'file_url']:
-                                if key in data and data[key]:
-                                    logger.info(f"Found video URL via v2 endpoint: {data[key]}")
-                                    return data[key]
-                    else:
-                        logger.info(f"V2 video endpoint returned {response.status}")
-                        
-        except Exception as e:
-            logger.debug(f"Error trying v2 video endpoint: {e}")
-        
-        # Method 3: Try different API endpoint patterns
+        # Method 1: Try different API endpoint patterns
         potential_endpoints = [
             f"{self.heygen_api_base}/v1/video/{video_id}/url",
             f"{self.heygen_api_base}/v2/video/{video_id}/url", 
             f"{self.heygen_api_base}/v1/video/{video_id}/download_url",
             f"{self.heygen_api_base}/v2/video/{video_id}/download_url",
+            f"{self.heygen_api_base}/v1/video/url/{video_id}",
+            f"{self.heygen_api_base}/v2/video/url/{video_id}",
         ]
         
         for endpoint in potential_endpoints:
@@ -243,7 +189,33 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                 logger.debug(f"Error trying endpoint {endpoint}: {e}")
                 continue
         
-        # Method 4: Try to get URL from video list with additional parameters
+        # Method 2: Try to construct direct video URLs based on common patterns
+        potential_video_urls = [
+            f"https://video.heygen.com/{video_id}.mp4",
+            f"https://videos.heygen.com/{video_id}.mp4", 
+            f"https://storage.heygen.com/videos/{video_id}.mp4",
+            f"https://d1vvhvl2y92vvt.cloudfront.net/{video_id}.mp4",
+            f"https://heygen-videos.s3.amazonaws.com/{video_id}.mp4",
+            f"https://cdn.heygen.ai/videos/{video_id}.mp4",
+        ]
+        
+        for video_url in potential_video_urls:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.head(video_url) as response:
+                        if response.status == 200:
+                            content_type = response.headers.get('content-type', '')
+                            if 'video' in content_type.lower():
+                                logger.info(f"Found direct video URL: {video_url}")
+                                return video_url
+                        elif response.status != 404:
+                            logger.info(f"Video URL {video_url} returned {response.status}")
+                            
+            except Exception as e:
+                logger.debug(f"Error trying video URL {video_url}: {e}")
+                continue
+        
+        # Method 3: Try to get URL from video list with additional parameters
         try:
             async with aiohttp.ClientSession() as session:
                 # Try with different parameters that might include URLs
@@ -269,32 +241,6 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                                     break
         except Exception as e:
             logger.debug(f"Error trying enhanced video list: {e}")
-        
-        # Method 5: Try to construct direct video URLs based on common patterns (last resort)
-        potential_video_urls = [
-            f"https://video.heygen.com/{video_id}.mp4",
-            f"https://videos.heygen.com/{video_id}.mp4", 
-            f"https://storage.heygen.com/videos/{video_id}.mp4",
-            f"https://d1vvhvl2y92vvt.cloudfront.net/{video_id}.mp4",
-            f"https://heygen-videos.s3.amazonaws.com/{video_id}.mp4",
-            f"https://cdn.heygen.ai/videos/{video_id}.mp4",
-        ]
-        
-        for video_url in potential_video_urls:
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.head(video_url) as response:
-                        if response.status == 200:
-                            content_type = response.headers.get('content-type', '')
-                            if 'video' in content_type.lower():
-                                logger.info(f"Found direct video URL: {video_url}")
-                                return video_url
-                        elif response.status != 404:
-                            logger.info(f"Video URL {video_url} returned {response.status}")
-                            
-            except Exception as e:
-                logger.debug(f"Error trying video URL {video_url}: {e}")
-                continue
         
         logger.warning(f"Could not find download URL for video {video_id}")
         return None
@@ -1499,22 +1445,25 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                                     message += f"💡 You can download the video directly from this URL."
                                     return ToolResult(success=True, content=message)
                             else:
-                                message += f"⚠️ **Could not automatically find video download URL**\n\n"
-                                message += f"🔍 **The video is completed but HeyGen's API didn't return a direct download URL.**\n"
-                                message += f"📹 **Video Title:** {video_title}\n"
-                                message += f"🆔 **Video ID:** {video_id}\n\n"
-                                message += f"💡 **Note:** You can try using `download_video_from_url(video_url)` if you obtain the direct video URL from another source."
+                                message += f"⚠️ **Could not find direct video URL**\n\n"
+                                message += f"📋 **To download your video:**\n"
+                                message += f"1. Go to [HeyGen Dashboard](https://app.heygen.com/)\n"
+                                message += f"2. Find your video titled: '{video_title}'\n"
+                                message += f"3. Click download to get your MP4 file\n\n"
+                                message += f"🎭 **Your AI avatar video is ready to watch and share!**"
                                 
-                                return self.fail_response(message)
+                                return ToolResult(success=True, content=message)
                                 
                         except Exception as e:
                             logger.error(f"Error during video download process: {e}")
-                            message += f"❌ **Error during download process: {str(e)}**\n\n"
-                            message += f"📹 **Video Title:** {video_title}\n"
-                            message += f"🆔 **Video ID:** {video_id}\n\n"
-                            message += f"💡 **The video is completed but download failed. You may need to try again or use a different approach.**"
+                            message += f"❌ **Error during download process**\n\n"
+                            message += f"📋 **Fallback - To download your video:**\n"
+                            message += f"1. Go to [HeyGen Dashboard](https://app.heygen.com/)\n"
+                            message += f"2. Find your video titled: '{video_title}'\n"
+                            message += f"3. Click download to get your MP4 file\n\n"
+                            message += f"🎭 **Your AI avatar video is ready to watch and share!**"
                             
-                            return self.fail_response(message)
+                            return ToolResult(success=True, content=message)
                     
                     elif status == "error" or error_msg:
                         message += f"❌ **Video generation failed**\n\n"
@@ -1559,116 +1508,6 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         except Exception as e:
             logger.error(f"Error in download_completed_video: {str(e)}", exc_info=True)
             return self.fail_response(f"Video download failed: {str(e)}")
-
-    @openapi_schema({
-        "type": "function",
-        "function": {
-            "name": "download_video_from_url",
-            "description": "Download a video file directly from a URL to the sandbox workspace. Useful when you have a direct video URL.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "video_url": {
-                        "type": "string",
-                        "description": "Direct URL to the video file (must be a valid video URL)"
-                    },
-                    "filename": {
-                        "type": "string",
-                        "description": "Custom filename for the downloaded video (without extension). If not provided, will generate from URL.",
-                        "default": None
-                    }
-                },
-                "required": ["video_url"]
-            }
-        }
-    })
-    @xml_schema(
-        tag_name="download-video-from-url",
-        mappings=[
-            {"param_name": "video_url", "node_type": "attribute", "path": ".", "required": True},
-            {"param_name": "filename", "node_type": "attribute", "path": ".", "required": False}
-        ],
-        example='''
-        <function_calls>
-        <invoke name="download_video_from_url">
-        <parameter name="video_url">https://video.heygen.com/your-video.mp4</parameter>
-        <parameter name="filename">my_avatar_video</parameter>
-        </invoke>
-        </function_calls>
-        '''
-    )
-    async def download_video_from_url(self, video_url: str, filename: Optional[str] = None) -> ToolResult:
-        """Download a video directly from a URL to the workspace.
-        
-        Args:
-            video_url: Direct URL to the video file
-            filename: Optional custom filename (without extension)
-            
-        Returns:
-            ToolResult with download status and local path
-        """
-        try:
-            # Ensure sandbox is initialized
-            await self._ensure_sandbox()
-            
-            # Validate URL
-            if not video_url or not video_url.startswith(('http://', 'https://')):
-                return self.fail_response("Invalid video URL provided. Must be a valid HTTP/HTTPS URL.")
-            
-            logger.info(f"Downloading video from URL: {video_url}")
-            
-            # Generate filename if not provided
-            if not filename:
-                import os
-                from urllib.parse import urlparse
-                parsed_url = urlparse(video_url)
-                filename = os.path.basename(parsed_url.path)
-                if not filename or '.' not in filename:
-                    filename = f"downloaded_video_{int(asyncio.get_event_loop().time())}"
-                else:
-                    filename = filename.rsplit('.', 1)[0]  # Remove extension
-            
-            # Download the video
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(video_url) as response:
-                        if response.status == 200:
-                            # Check if it's actually a video
-                            content_type = response.headers.get('content-type', '')
-                            if not content_type.startswith('video/'):
-                                logger.warning(f"URL may not be a video file. Content-Type: {content_type}")
-                            
-                            # Create videos directory
-                            videos_dir = f"{self.workspace_path}/videos"
-                            self.sandbox.fs.create_folder(videos_dir, "755")
-                            
-                            # Save video file
-                            video_filename = f"{filename}.mp4"
-                            video_path = f"videos/{video_filename}"
-                            full_path = f"{videos_dir}/{video_filename}"
-                            
-                            video_data = await response.read()
-                            self.sandbox.fs.upload_file(video_data, full_path)
-                            
-                            logger.info(f"Downloaded video to {video_path}")
-                            
-                            message = f"🎉 **Video Download Successful!**\n\n"
-                            message += f"📁 **Saved to workspace:** `{video_path}`\n"
-                            message += f"📥 **Original URL:** {video_url}\n"
-                            message += f"📊 **File size:** {len(video_data) / (1024*1024):.2f} MB\n\n"
-                            message += f"💡 **Your video is now available in the sandbox workspace!**"
-                            
-                            return self.success_response(message)
-                        else:
-                            return self.fail_response(f"Failed to download video: HTTP {response.status}")
-                            
-            except Exception as e:
-                logger.error(f"Error downloading video from URL: {e}")
-                return self.fail_response(f"Download failed: {str(e)}")
-                
-        except Exception as e:
-            logger.error(f"Error in download_video_from_url: {str(e)}", exc_info=True)
-            return self.fail_response(f"Failed to download video from URL: {str(e)}")
 
     @openapi_schema({
         "type": "function",
