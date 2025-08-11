@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 from utils.config import config, EnvMode
 import asyncio
+import aiohttp
 from utils.logger import logger, structlog
 import time
 import os
