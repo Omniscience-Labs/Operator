@@ -284,11 +284,37 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         session_data = await response.json()
                         logger.info(f"HeyGen session creation response: {session_data}")
                         
+                        # Extract session info from HeyGen response structure
+                        # HeyGen API may return data in different structures
+                        data_section = session_data.get("data", session_data)
+                        session_id = (
+                            session_data.get("session_id") or 
+                            data_section.get("session_id") or
+                            session_data.get("sessionId") or
+                            data_section.get("sessionId")
+                        )
+                        websocket_url = (
+                            session_data.get("url") or 
+                            data_section.get("url") or
+                            session_data.get("websocket_url") or
+                            data_section.get("websocket_url")
+                        )
+                        access_token = (
+                            session_data.get("access_token") or
+                            data_section.get("access_token") or
+                            session_data.get("token") or
+                            data_section.get("token")
+                        )
+                        
+                        if not session_id:
+                            logger.error(f"No session_id found in HeyGen response: {session_data}")
+                            return self.fail_response(f"HeyGen API did not return a session_id. Response: {session_data}")
+                        
                         # Store session information
                         self.active_sessions[session_name] = {
-                            "session_id": session_data.get("session_id"),
-                            "access_token": session_data.get("access_token"),
-                            "websocket_url": session_data.get("url"),
+                            "session_id": session_id,
+                            "access_token": access_token,
+                            "websocket_url": websocket_url,
                             "config": session_config,
                             "token": session_token,
                             "status": "created",
@@ -303,7 +329,9 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         session_file = f"{avatars_dir}/{session_name}_session.json"
                         session_info = {
                             "session_name": session_name,
-                            "session_id": session_data.get("session_id"),
+                            "session_id": session_id,
+                            "websocket_url": websocket_url,
+                            "access_token": access_token,
                             "config": session_config,
                             "created_at": session_data.get("created_at", ""),
                             "status": "active"
@@ -316,7 +344,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         
                         message = f"🎭 Avatar session '{session_name}' created successfully!\n\n"
                         message += f"Session Details:\n"
-                        message += f"- Session ID: {session_data.get('session_id')}\n"
+                        message += f"- Session ID: {session_id}\n"
                         message += f"- Avatar: {avatar_id}\n"
                         message += f"- Voice: {voice_id} ({voice_emotion.lower()}, rate: {voice_rate})\n"
                         message += f"- Quality: {quality}\n"
