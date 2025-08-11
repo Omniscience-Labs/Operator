@@ -1087,7 +1087,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(
-                        f"{self.heygen_api_base}/v2/video/{video_id}",
+                        f"{self.heygen_api_base}/v2/videos/{video_id}",
                         headers={
                             "x-api-key": self.heygen_api_key,
                             "Accept": "application/json"
@@ -1262,7 +1262,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                     # Check current status
                     async with aiohttp.ClientSession() as session:
                         async with session.get(
-                            f"{self.heygen_api_base}/v2/video/{video_id}",
+                            f"{self.heygen_api_base}/v2/videos/{video_id}",
                             headers={
                                 "x-api-key": self.heygen_api_key,
                                 "Accept": "application/json"
