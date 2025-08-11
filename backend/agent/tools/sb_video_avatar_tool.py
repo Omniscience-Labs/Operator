@@ -1085,16 +1085,16 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(
-                        f"{self.heygen_api_base}/v1/video_status",
+                        f"{self.heygen_api_base}/v2/video/{video_id}",
                         headers={
                             "x-api-key": self.heygen_api_key,
                             "Accept": "application/json"
-                        },
-                        params={"video_id": video_id}
+                        }
                     ) as response:
                         if response.status != 200:
                             error_text = await response.text()
-                            return self.fail_response(f"Failed to check video status: {response.status} - {error_text}")
+                            logger.error(f"HeyGen API error - Status: {response.status}, URL: {response.url}, Headers: {dict(response.headers)}, Body: {error_text}")
+                            return self.fail_response(f"Failed to check video status: {response.status} - {error_text}. URL attempted: {response.url}")
                         
                         result = await response.json()
                         logger.info(f"HeyGen video status response: {result}")
@@ -1261,12 +1261,11 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                     # Check current status
                     async with aiohttp.ClientSession() as session:
                         async with session.get(
-                            f"{self.heygen_api_base}/v1/video_status",
+                            f"{self.heygen_api_base}/v2/video/{video_id}",
                             headers={
                                 "x-api-key": self.heygen_api_key,
                                 "Accept": "application/json"
-                            },
-                            params={"video_id": video_id}
+                            }
                         ) as response:
                             if response.status != 200:
                                 error_text = await response.text()
