@@ -366,6 +366,204 @@ async def health_check():
         "instance_id": instance_id
     }
 
+@app.get("/api/test-heygen-html")
+async def test_heygen_html_generation():
+    """Test HTML generation for HeyGen avatars"""
+    # Mock session data for testing
+    mock_session_info = {
+        "token": "eyJ0b2tlbiI6ImFmZGIwNjc4LTU5ODEtNGZkZi1hOTU5LWI1YjQ3YWYwNDRiYSIsImV4cGlyZXNfYXQiOjE3MzkzMDYyNTd9",
+        "session_id": "test-session-id-12345"
+    }
+    
+    mock_session_id = "6ea1c367-76d4-11f0-bfdc-2a73d2a884be"
+    mock_session_name = "test_avatar"
+    mock_text = "Hello World!"
+    
+    # Generate the same HTML template that avatar_speak would create
+    html_snippet = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HeyGen Avatar - {mock_session_name}</title>
+    <script src="https://cdn.jsdelivr.net/npm/@heygen/streaming-avatar@2.0.16/dist/streaming-avatar.umd.js"></script>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }}
+        #avatar-container {{
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }}
+        #avatar-video {{
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            border-radius: 8px;
+            background: #000;
+        }}
+        button {{
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }}
+        button:hover {{
+            background: #0056b3;
+        }}
+        button:disabled {{
+            background: #ccc;
+            cursor: not-allowed;
+        }}
+        .status {{
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }}
+        .status.loading {{
+            background: #fff3cd;
+            color: #856404;
+        }}
+        .status.success {{
+            background: #d4edda;
+            color: #155724;
+        }}
+        .status.error {{
+            background: #f8d7da;
+            color: #721c24;
+        }}
+    </style>
+</head>
+<body>
+    <div id="avatar-container">
+        <h1>HeyGen Avatar - {mock_session_name}</h1>
+        <div id="status" class="status loading">Initializing avatar...</div>
+        <video id="avatar-video" autoplay playsinline muted></video>
+        <br>
+        <button id="speak-btn" onclick="speakText()" disabled>Say: "{mock_text}"</button>
+        <button id="init-btn" onclick="initializeAvatar()" style="display:none;">Retry Initialize</button>
+    </div>
+    
+    <script>
+        let streamingAvatar;
+        const statusDiv = document.getElementById('status');
+        const speakBtn = document.getElementById('speak-btn');
+        const initBtn = document.getElementById('init-btn');
+        const videoElement = document.getElementById('avatar-video');
+        
+        function updateStatus(message, type = 'loading') {{
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${{type}}`;
+        }}
+        
+        async function initializeAvatar() {{
+            try {{
+                updateStatus('Loading HeyGen SDK...', 'loading');
+                
+                // Check if SDK loaded
+                if (typeof StreamingAvatar === 'undefined') {{
+                    throw new Error('HeyGen SDK failed to load');
+                }}
+                
+                updateStatus('Creating avatar session...', 'loading');
+                
+                // Create new avatar session (don't reuse existing session)
+                streamingAvatar = new StreamingAvatar({{
+                    token: '{mock_session_info.get("token", "")}'
+                }});
+                
+                // Set up event listeners
+                streamingAvatar.on('avatar_start_talking', () => {{
+                    updateStatus('Avatar is speaking...', 'success');
+                }});
+                
+                streamingAvatar.on('avatar_stop_talking', () => {{
+                    updateStatus('Avatar finished speaking', 'success');
+                }});
+                
+                streamingAvatar.on('stream_ready', () => {{
+                    updateStatus('Avatar ready!', 'success');
+                    speakBtn.disabled = false;
+                }});
+                
+                streamingAvatar.on('stream_disconnected', () => {{
+                    updateStatus('Avatar disconnected', 'error');
+                    speakBtn.disabled = true;
+                    initBtn.style.display = 'inline-block';
+                }});
+                
+                // Create and start avatar
+                const sessionInfo = await streamingAvatar.createStartAvatar({{
+                    quality: 'medium',
+                    avatarName: 'default',
+                    language: 'en'
+                }});
+                
+                // Connect video stream
+                if (sessionInfo && sessionInfo.mediaStream) {{
+                    videoElement.srcObject = sessionInfo.mediaStream;
+                    updateStatus('Avatar connected successfully!', 'success');
+                    speakBtn.disabled = false;
+                }} else {{
+                    throw new Error('No media stream received from avatar');
+                }}
+                
+            }} catch (error) {{
+                console.error('Avatar initialization error:', error);
+                updateStatus(`Error: ${{error.message}}`, 'error');
+                initBtn.style.display = 'inline-block';
+            }}
+        }}
+        
+        async function speakText() {{
+            if (!streamingAvatar) {{
+                updateStatus('Avatar not initialized', 'error');
+                return;
+            }}
+            
+            try {{
+                speakBtn.disabled = true;
+                updateStatus('Sending text to avatar...', 'loading');
+                
+                await streamingAvatar.speak({{
+                    text: "{mock_text}",
+                    task_type: "REPEAT"
+                }});
+                
+                updateStatus('Text sent successfully!', 'success');
+            }} catch (error) {{
+                console.error('Speak error:', error);
+                updateStatus(`Speak error: ${{error.message}}`, 'error');
+            }} finally {{
+                speakBtn.disabled = false;
+            }}
+        }}
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {{
+            setTimeout(initializeAvatar, 1000); // Wait 1 second for SDK to load
+        }});
+        
+        // Debug info
+        console.log('Session ID: {mock_session_id}');
+        console.log('Token (first 20 chars):', '{mock_session_info.get("token", "")}'.substring(0, 20) + '...');
+    </script>
+</body>
+</html>
+    """
+    
+    return Response(content=html_snippet, media_type="text/html")
+
 @app.get("/api/test-heygen-connectivity")
 async def test_heygen_connectivity():
     """Test HeyGen API connectivity from Render servers"""
