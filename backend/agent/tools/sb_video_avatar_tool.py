@@ -765,13 +765,51 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             
             logger.info(f"Generating avatar video with text: {text[:50]}...")
             
+            # First, get available avatars to ensure we use a valid one
+            try:
+                async with aiohttp.ClientSession() as avatar_session:
+                    async with avatar_session.get(
+                        f"{self.heygen_api_base}/v2/avatars",
+                        headers={
+                            "x-api-key": self.heygen_api_key,
+                            "accept": "application/json"
+                        }
+                    ) as avatar_response:
+                        if avatar_response.status != 200:
+                            logger.warning(f"Could not fetch avatars: {avatar_response.status}")
+                            # Use provided avatar_id as fallback
+                            actual_avatar_id = avatar_id
+                        else:
+                            avatars_data = await avatar_response.json()
+                            avatars = avatars_data.get("data", {}).get("avatars", [])
+                            
+                            if avatars:
+                                # If avatar_id is 'default', use the first available avatar
+                                if avatar_id == "default":
+                                    actual_avatar_id = avatars[0]["avatar_id"]
+                                    logger.info(f"Using avatar: {actual_avatar_id} ({avatars[0].get('avatar_name', 'Unknown')})")
+                                else:
+                                    # Check if provided avatar_id exists
+                                    avatar_exists = any(a["avatar_id"] == avatar_id for a in avatars)
+                                    if avatar_exists:
+                                        actual_avatar_id = avatar_id
+                                    else:
+                                        actual_avatar_id = avatars[0]["avatar_id"]
+                                        logger.warning(f"Avatar {avatar_id} not found, using {actual_avatar_id}")
+                            else:
+                                actual_avatar_id = avatar_id
+                                logger.warning("No avatars found, using provided avatar_id")
+            except Exception as e:
+                logger.warning(f"Error fetching avatars: {e}, using provided avatar_id")
+                actual_avatar_id = avatar_id
+
             # Prepare video generation request
             video_request = {
                 "video_inputs": [
                     {
                         "character": {
                             "type": "avatar",
-                            "avatar_id": avatar_id,
+                            "avatar_id": actual_avatar_id,
                             "avatar_style": "normal"
                         },
                         "voice": {
@@ -794,11 +832,14 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                 "test": False  # Set to False for production videos
             }
             
-            # Generate video via HeyGen API
+            # Generate video via HeyGen API using direct video generation
             try:
                 async with aiohttp.ClientSession() as session:
+                    # Use direct video generation API
+                    logger.info(f"Generating video with avatar: {actual_avatar_id}")
+                    
                     async with session.post(
-                        f"{self.heygen_api_base}/v1/video.generate",
+                        f"{self.heygen_api_base}/v2/video/generate",
                         headers={
                             "x-api-key": self.heygen_api_key,
                             "Content-Type": "application/json"
@@ -824,11 +865,13 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                             "video_id": video_id,
                             "title": video_title,
                             "text": text,
-                            "avatar_id": avatar_id,
+                            "avatar_id": actual_avatar_id,
+                            "original_avatar_id": avatar_id,
                             "voice_id": voice_id,
                             "status": "processing",
                             "created_at": result.get("data", {}).get("created_at", ""),
-                            "background_color": background_color
+                            "background_color": background_color,
+                            "video_request": video_request  # Store the full request for debugging
                         }
                         
                         video_file = f"{videos_dir}/{video_id}_info.json"
@@ -837,26 +880,29 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                             video_file
                         )
                         
-                        message = f"🎬 Avatar video generation started successfully!\n\n"
+                        message = f"🎬 **MP4 Video Generation Started Successfully!**\n\n"
                         message += f"📋 **Video Details:**\n"
-                        message += f"• Video ID: {video_id}\n"
+                        message += f"• Video ID: `{video_id}`\n"
                         message += f"• Title: {video_title}\n"
                         message += f"• Text: \"{text}\"\n"
-                        message += f"• Avatar: {avatar_id}\n"
+                        message += f"• Avatar: {actual_avatar_id}\n"
+                        if actual_avatar_id != avatar_id:
+                            message += f"• Original Avatar Request: {avatar_id} (auto-corrected)\n"
                         message += f"• Voice: {voice_id}\n"
                         message += f"• Background: {background_color}\n\n"
                         
-                        message += f"⏳ **Status: Processing**\n"
-                        message += f"Video generation typically takes 1-3 minutes.\n\n"
+                        message += f"⏳ **Status: Processing** (1-3 minutes)\n\n"
+                        
+                        message += f"📥 **How to Get Your MP4 Video:**\n"
+                        message += f"1. **Wait 1-3 minutes** for processing to complete\n"
+                        message += f"2. **Check status**: Use `check_video_status('{video_id}')` \n"
+                        message += f"3. **Download**: When status = 'completed', you'll get a download URL\n"
+                        message += f"4. **Click the URL** to download your MP4 file to your device\n\n"
                         
                         message += f"📁 **Video info saved to:** `videos/{video_id}_info.json`\n\n"
                         
-                        message += f"🔍 **Next Steps:**\n"
-                        message += f"1. Wait 1-3 minutes for processing\n"
-                        message += f"2. Use 'check_video_status' to get the download URL\n"
-                        message += f"3. Download your MP4 video file!\n\n"
-                        
-                        message += f"💡 **This creates an actual MP4 video file** that you can download and share anywhere!"
+                        message += f"🎯 **Important**: The MP4 file will be hosted by HeyGen and delivered via download URL.\n"
+                        message += f"💡 **This creates an actual MP4 video file** that you can save and share anywhere!"
                         
                         return self.success_response(message)
                         
@@ -915,7 +961,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(
-                        f"{self.heygen_api_base}/v1/video_status.get?video_id={video_id}",
+                        f"{self.heygen_api_base}/v1/video_status/{video_id}",
                         headers={
                             "x-api-key": self.heygen_api_key,
                             "Accept": "application/json"
@@ -1288,6 +1334,104 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             return self.fail_response(f"Avatar session closure failed: {str(e)}")
 
     @openapi_schema({
+        "type": "function", 
+        "function": {
+            "name": "list_available_avatars",
+            "description": "List available HeyGen avatars that can be used for video generation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of avatars to return (default: 10)",
+                        "default": 10,
+                        "minimum": 1,
+                        "maximum": 50
+                    }
+                },
+                "required": []
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="list-available-avatars",
+        mappings=[
+            {"param_name": "limit", "node_type": "attribute", "path": ".", "required": False}
+        ],
+        example='''
+        <function_calls>
+        <invoke name="list_available_avatars">
+        <parameter name="limit">10</parameter>
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def list_available_avatars(self, limit: int = 10) -> ToolResult:
+        """List available HeyGen avatars for video generation.
+        
+        Args:
+            limit: Maximum number of avatars to return
+            
+        Returns:
+            ToolResult with list of available avatars
+        """
+        try:
+            if not self.heygen_api_key:
+                return self.fail_response("HeyGen API key not configured.")
+            
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(
+                        f"{self.heygen_api_base}/v2/avatars",
+                        headers={
+                            "x-api-key": self.heygen_api_key,
+                            "accept": "application/json"
+                        }
+                    ) as response:
+                        if response.status != 200:
+                            error_text = await response.text()
+                            return self.fail_response(f"Failed to fetch avatars: {response.status} - {error_text}")
+                        
+                        result = await response.json()
+                        avatars = result.get("data", {}).get("avatars", [])
+                        
+                        if not avatars:
+                            return self.fail_response("No avatars available from HeyGen API")
+                        
+                        # Limit the results
+                        limited_avatars = avatars[:limit]
+                        
+                        message = f"👤 **Available HeyGen Avatars** (showing {len(limited_avatars)} of {len(avatars)})\n\n"
+                        
+                        for i, avatar in enumerate(limited_avatars, 1):
+                            avatar_id = avatar.get("avatar_id", "unknown")
+                            avatar_name = avatar.get("avatar_name", "Unnamed")
+                            gender = avatar.get("gender", "Unknown")
+                            preview_image = avatar.get("preview_image_url", "")
+                            
+                            message += f"**{i}. {avatar_name}**\n"
+                            message += f"   • ID: `{avatar_id}`\n"
+                            message += f"   • Gender: {gender}\n"
+                            if preview_image:
+                                message += f"   • Preview: {preview_image}\n"
+                            message += f"\n"
+                        
+                        if len(avatars) > limit:
+                            message += f"💡 **Tip**: Use `list_available_avatars(limit={len(avatars)})` to see all {len(avatars)} avatars\n\n"
+                        
+                        message += f"🎬 **Usage**: Use any avatar ID in `generate_avatar_video(avatar_id='avatar_id_here')`"
+                        
+                        return self.success_response(message)
+                        
+            except Exception as e:
+                logger.error(f"Error calling HeyGen avatars API: {str(e)}")
+                return self.fail_response(f"Failed to fetch avatars: {str(e)}")
+                
+        except Exception as e:
+            logger.error(f"Error in list_available_avatars: {str(e)}", exc_info=True)
+            return self.fail_response(f"Avatar listing failed: {str(e)}")
+
+    @openapi_schema({
         "type": "function",
         "function": {
             "name": "list_avatar_sessions",
@@ -1425,6 +1569,13 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                 "description": "Close and terminate an active avatar session",
                 "parameters": [
                     {"name": "session_name", "type": "str", "description": "Avatar session name", "required": True}
+                ]
+            },
+            {
+                "name": "list_available_avatars",
+                "description": "List available HeyGen avatars that can be used for video generation", 
+                "parameters": [
+                    {"name": "limit", "type": "int", "description": "Maximum number of avatars to return", "required": False}
                 ]
             },
             {
