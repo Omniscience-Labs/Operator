@@ -150,7 +150,59 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         """Try different methods to get the actual video download URL."""
         logger.info(f"Attempting to get download URL for video {video_id}")
         
-        # Method 1: Try different API endpoint patterns
+        # Method 1: Try the official video status endpoint first
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self.heygen_api_base}/v1/video_status.get",
+                    headers={
+                        "x-api-key": self.heygen_api_key,
+                        "Accept": "application/json"
+                    },
+                    params={"video_id": video_id}
+                ) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        logger.info(f"Video status response: {result}")
+                        
+                        # Look for video URL in response
+                        if 'data' in result:
+                            data = result['data']
+                            for key in ['video_url', 'url', 'download_url', 'file_url', 'video_url_https']:
+                                if key in data and data[key]:
+                                    logger.info(f"Found video URL via status endpoint: {data[key]}")
+                                    return data[key]
+                    else:
+                        logger.debug(f"Video status endpoint returned {response.status}")
+        except Exception as e:
+            logger.debug(f"Error trying video status endpoint: {e}")
+        
+        # Method 2: Try the v2 video details endpoint
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self.heygen_api_base}/v2/video/{video_id}",
+                    headers={
+                        "x-api-key": self.heygen_api_key,
+                        "Accept": "application/json"
+                    }
+                ) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        logger.info(f"V2 video details response: {result}")
+                        
+                        if 'data' in result:
+                            data = result['data']
+                            for key in ['video_url', 'url', 'download_url', 'file_url']:
+                                if key in data and data[key]:
+                                    logger.info(f"Found video URL via v2 endpoint: {data[key]}")
+                                    return data[key]
+                    else:
+                        logger.debug(f"V2 video endpoint returned {response.status}")
+        except Exception as e:
+            logger.debug(f"Error trying v2 video endpoint: {e}")
+        
+        # Method 3: Try different API endpoint patterns
         potential_endpoints = [
             f"{self.heygen_api_base}/v1/video/{video_id}/url",
             f"{self.heygen_api_base}/v2/video/{video_id}/url", 
@@ -189,7 +241,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                 logger.debug(f"Error trying endpoint {endpoint}: {e}")
                 continue
         
-        # Method 2: Try to construct direct video URLs based on common patterns
+        # Method 4: Try to construct direct video URLs based on common patterns
         potential_video_urls = [
             f"https://video.heygen.com/{video_id}.mp4",
             f"https://videos.heygen.com/{video_id}.mp4", 
@@ -215,7 +267,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                 logger.debug(f"Error trying video URL {video_url}: {e}")
                 continue
         
-        # Method 3: Try to get URL from video list with additional parameters
+        # Method 5: Try to get URL from video list with additional parameters
         try:
             async with aiohttp.ClientSession() as session:
                 # Try with different parameters that might include URLs
