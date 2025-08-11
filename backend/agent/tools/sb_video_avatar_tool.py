@@ -282,6 +282,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                             return self.fail_response(f"Failed to create avatar session: {response.status} - {error_text}")
                         
                         session_data = await response.json()
+                        logger.info(f"HeyGen session creation response: {session_data}")
                         
                         # Store session information
                         self.active_sessions[session_name] = {
@@ -413,6 +414,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                 return self.fail_response(f"Avatar session '{session_name}' not found. Create a session first using 'create_avatar_session'.")
             
             session_info = self.active_sessions[session_name]
+            logger.info(f"Avatar speak session_info: {session_info}")
             
             # Prepare speak request
             speak_request = {
@@ -423,11 +425,16 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             
             # Send speak command via HeyGen API
             try:
+                # Use access_token if available, otherwise fallback to session token
+                auth_token = session_info.get('access_token') or session_info.get('token')
+                if not auth_token:
+                    return self.fail_response(f"No authentication token found for session '{session_name}'")
+                
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
                         f"{self.heygen_api_base}/v1/streaming.task",
                         headers={
-                            "Authorization": f"Bearer {session_info['access_token']}",
+                            "Authorization": f"Bearer {auth_token}",
                             "Content-Type": "application/json"
                         },
                         json=speak_request
