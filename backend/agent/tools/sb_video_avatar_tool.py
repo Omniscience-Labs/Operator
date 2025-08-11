@@ -10,6 +10,7 @@ import os
 import json
 import asyncio
 import aiohttp
+import re
 from typing import Optional, Dict, Any, List, Union
 from agentpress.tool import ToolResult, openapi_schema, xml_schema
 from sandbox.tool_base import SandboxToolsBase
@@ -144,6 +145,105 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         except Exception as e:
             logger.error(f"Exception getting video details: {e}")
             return None
+
+    async def _get_video_download_url(self, video_id: str) -> Optional[str]:
+        """Try different methods to get the actual video download URL."""
+        logger.info(f"Attempting to get download URL for video {video_id}")
+        
+        # Method 1: Try different API endpoint patterns
+        potential_endpoints = [
+            f"{self.heygen_api_base}/v1/video/{video_id}/url",
+            f"{self.heygen_api_base}/v2/video/{video_id}/url", 
+            f"{self.heygen_api_base}/v1/video/{video_id}/download_url",
+            f"{self.heygen_api_base}/v2/video/{video_id}/download_url",
+            f"{self.heygen_api_base}/v1/video/url/{video_id}",
+            f"{self.heygen_api_base}/v2/video/url/{video_id}",
+        ]
+        
+        for endpoint in potential_endpoints:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(
+                        endpoint,
+                        headers={
+                            "x-api-key": self.heygen_api_key,
+                            "Accept": "application/json"
+                        }
+                    ) as response:
+                        if response.status == 200:
+                            result = await response.json()
+                            logger.info(f"Success with endpoint {endpoint}: {result}")
+                            
+                            # Look for video URL in response
+                            if 'data' in result:
+                                data = result['data']
+                                for key in ['video_url', 'url', 'download_url', 'file_url']:
+                                    if key in data and data[key]:
+                                        logger.info(f"Found video URL: {data[key]}")
+                                        return data[key]
+                            
+                        elif response.status != 404:
+                            logger.info(f"Endpoint {endpoint} returned {response.status}")
+                            
+            except Exception as e:
+                logger.debug(f"Error trying endpoint {endpoint}: {e}")
+                continue
+        
+        # Method 2: Try to construct direct video URLs based on common patterns
+        potential_video_urls = [
+            f"https://video.heygen.com/{video_id}.mp4",
+            f"https://videos.heygen.com/{video_id}.mp4", 
+            f"https://storage.heygen.com/videos/{video_id}.mp4",
+            f"https://d1vvhvl2y92vvt.cloudfront.net/{video_id}.mp4",
+            f"https://heygen-videos.s3.amazonaws.com/{video_id}.mp4",
+            f"https://cdn.heygen.ai/videos/{video_id}.mp4",
+        ]
+        
+        for video_url in potential_video_urls:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.head(video_url) as response:
+                        if response.status == 200:
+                            content_type = response.headers.get('content-type', '')
+                            if 'video' in content_type.lower():
+                                logger.info(f"Found direct video URL: {video_url}")
+                                return video_url
+                        elif response.status != 404:
+                            logger.info(f"Video URL {video_url} returned {response.status}")
+                            
+            except Exception as e:
+                logger.debug(f"Error trying video URL {video_url}: {e}")
+                continue
+        
+        # Method 3: Try to get URL from video list with additional parameters
+        try:
+            async with aiohttp.ClientSession() as session:
+                # Try with different parameters that might include URLs
+                for params in ["?include_urls=true", "?with_urls=1", "?full=true", "?details=true"]:
+                    async with session.get(
+                        f"{self.heygen_api_base}/v1/video.list{params}",
+                        headers={
+                            "x-api-key": self.heygen_api_key,
+                            "Accept": "application/json"
+                        }
+                    ) as response:
+                        if response.status == 200:
+                            result = await response.json()
+                            videos = result.get("data", {}).get("videos", [])
+                            
+                            for video in videos:
+                                if video.get("video_id") == video_id:
+                                    # Look for any URL fields
+                                    for key in video:
+                                        if 'url' in key.lower() and video[key]:
+                                            logger.info(f"Found URL in video list: {video[key]}")
+                                            return video[key]
+                                    break
+        except Exception as e:
+            logger.debug(f"Error trying enhanced video list: {e}")
+        
+        logger.warning(f"Could not find download URL for video {video_id}")
+        return None
 
     async def _download_video_to_workspace(self, video_url: str, video_id: str) -> Optional[str]:
         """Download video from HeyGen to workspace and return the local path."""
@@ -1171,13 +1271,42 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                     message += f"🎉 **Your avatar video is ready!**\n"
                     message += f"📹 **Title:** {video_title}\n\n"
                     
-                    # For completed videos, we need to provide instructions since we can't get the direct URL
-                    message += f"⚠️ **Note:** HeyGen's individual video API is currently having issues.\n"
-                    message += f"📋 **To download your video:**\n"
-                    message += f"1. Go to [HeyGen Dashboard](https://app.heygen.com/)\n"
-                    message += f"2. Find your video titled: '{video_title}'\n"
-                    message += f"3. Click download to get your MP4 file\n\n"
-                    message += f"🎭 **Your AI avatar video is ready to watch and share!**"
+                    # Try to get the actual video download URL and download it
+                    message += f"🔍 **Attempting to download video to workspace...**\n\n"
+                    
+                    try:
+                        video_url = await self._get_video_download_url(video_id)
+                        
+                        if video_url:
+                            message += f"✅ **Found video URL!** Downloading...\n\n"
+                            
+                            downloaded_path = await self._download_video_to_workspace(video_url, video_id)
+                            if downloaded_path:
+                                message += f"🎉 **Download successful!**\n\n"
+                                message += f"📁 **Video saved to workspace:** `{downloaded_path}`\n"
+                                message += f"📥 **Original URL:** {video_url}\n\n"
+                                message += f"🎭 **Your AI avatar video is ready in the workspace!**\n"
+                                message += f"💡 You can now access and download the MP4 file directly from the workspace."
+                            else:
+                                message += f"❌ **Download failed, but video URL found**\n\n"
+                                message += f"📥 **Direct URL:** {video_url}\n\n"
+                                message += f"💡 You can download the video directly from this URL."
+                        else:
+                            message += f"⚠️ **Could not find direct video URL**\n\n"
+                            message += f"📋 **To download your video:**\n"
+                            message += f"1. Go to [HeyGen Dashboard](https://app.heygen.com/)\n"
+                            message += f"2. Find your video titled: '{video_title}'\n"
+                            message += f"3. Click download to get your MP4 file\n\n"
+                            message += f"🎭 **Your AI avatar video is ready to watch and share!**"
+                            
+                    except Exception as e:
+                        logger.error(f"Error during video download process: {e}")
+                        message += f"❌ **Error during download process**\n\n"
+                        message += f"📋 **To download your video:**\n"
+                        message += f"1. Go to [HeyGen Dashboard](https://app.heygen.com/)\n"
+                        message += f"2. Find your video titled: '{video_title}'\n"
+                        message += f"3. Click download to get your MP4 file\n\n"
+                        message += f"🎭 **Your AI avatar video is ready to watch and share!**"
                     
                 elif status == "processing":
                     message += f"⏳ **Status: PROCESSING**\n\n"
@@ -1287,20 +1416,54 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                     error_msg = ""
                             
                     if status == "completed":
-                        # Video is ready but we can't auto-download due to HeyGen API issues
+                        # Video is ready - try to download it directly
                         message += f"✅ **Video completed!**\n\n"
                         message += f"🎉 **Your avatar video is ready!**\n"
                         message += f"📹 **Title:** {video_title}\n\n"
                         
-                        # Provide manual download instructions
-                        message += f"⚠️ **Note:** HeyGen's individual video API is currently having issues.\n"
-                        message += f"📋 **To download your video:**\n"
-                        message += f"1. Go to [HeyGen Dashboard](https://app.heygen.com/)\n"
-                        message += f"2. Find your video titled: '{video_title}'\n"
-                        message += f"3. Click download to get your MP4 file\n\n"
-                        message += f"🎭 **Your AI avatar video is ready to watch and share!**"
+                        # Try to get the actual video download URL and download it
+                        message += f"🔍 **Searching for direct video download URL...**\n\n"
                         
-                        return ToolResult(success=True, content=message)
+                        try:
+                            video_url = await self._get_video_download_url(video_id)
+                            
+                            if video_url:
+                                message += f"✅ **Found direct video URL!** Downloading to workspace...\n\n"
+                                
+                                downloaded_path = await self._download_video_to_workspace(video_url, video_id)
+                                if downloaded_path:
+                                    message += f"🎉 **Download successful!**\n\n"
+                                    message += f"📁 **Video saved to workspace:** `{downloaded_path}`\n"
+                                    message += f"📥 **Original URL:** {video_url}\n\n"
+                                    message += f"🎭 **Your AI avatar video is ready in the workspace!**\n"
+                                    message += f"💡 You can now access and download the MP4 file directly."
+                                    
+                                    return ToolResult(success=True, content=message)
+                                else:
+                                    message += f"❌ **Download failed, but video URL found**\n\n"
+                                    message += f"📥 **Direct video URL:** {video_url}\n\n"
+                                    message += f"💡 You can download the video directly from this URL."
+                                    return ToolResult(success=True, content=message)
+                            else:
+                                message += f"⚠️ **Could not find direct video URL**\n\n"
+                                message += f"📋 **To download your video:**\n"
+                                message += f"1. Go to [HeyGen Dashboard](https://app.heygen.com/)\n"
+                                message += f"2. Find your video titled: '{video_title}'\n"
+                                message += f"3. Click download to get your MP4 file\n\n"
+                                message += f"🎭 **Your AI avatar video is ready to watch and share!**"
+                                
+                                return ToolResult(success=True, content=message)
+                                
+                        except Exception as e:
+                            logger.error(f"Error during video download process: {e}")
+                            message += f"❌ **Error during download process**\n\n"
+                            message += f"📋 **Fallback - To download your video:**\n"
+                            message += f"1. Go to [HeyGen Dashboard](https://app.heygen.com/)\n"
+                            message += f"2. Find your video titled: '{video_title}'\n"
+                            message += f"3. Click download to get your MP4 file\n\n"
+                            message += f"🎭 **Your AI avatar video is ready to watch and share!**"
+                            
+                            return ToolResult(success=True, content=message)
                     
                     elif status == "error" or error_msg:
                         message += f"❌ **Video generation failed**\n\n"
