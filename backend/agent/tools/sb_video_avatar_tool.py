@@ -118,6 +118,9 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
     async def _download_video_to_workspace(self, video_url: str, video_id: str) -> Optional[str]:
         """Download video from HeyGen to workspace and return the local path."""
         try:
+            # Ensure sandbox is initialized
+            await self._ensure_sandbox()
+            
             async with aiohttp.ClientSession() as session:
                 async with session.get(video_url) as response:
                     if response.status == 200:
@@ -512,6 +515,9 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             ToolResult with speaking command status
         """
         try:
+            # Ensure sandbox is initialized
+            await self._ensure_sandbox()
+            
             # Check if session exists
             if session_name not in self.active_sessions:
                 return self.fail_response(f"Avatar session '{session_name}' not found. Create a session first using 'create_avatar_session'.")
@@ -848,11 +854,16 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             voice_id: Voice ID for speech
             video_title: Title for the video
             background_color: Background color (hex)
+            wait_for_completion: If true, wait for completion and download
+            max_wait_time: Maximum time to wait in seconds
             
         Returns:
             ToolResult with video generation status and download URL
         """
         try:
+            # Ensure sandbox is initialized
+            await self._ensure_sandbox()
+            
             if not self.heygen_api_key:
                 return self.fail_response("HeyGen API key not configured. Please set HEYGEN_API_KEY in environment variables.")
             
@@ -1066,6 +1077,9 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             ToolResult with video status and download URL if ready
         """
         try:
+            # Ensure sandbox is initialized
+            await self._ensure_sandbox()
+            
             if not self.heygen_api_key:
                 return self.fail_response("HeyGen API key not configured.")
             
@@ -1231,6 +1245,9 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             ToolResult with download status and local path
         """
         try:
+            # Ensure sandbox is initialized
+            await self._ensure_sandbox()
+            
             if not self.heygen_api_key:
                 return self.fail_response("HeyGen API key not configured.")
             
@@ -1549,6 +1566,9 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             ToolResult with session closure status
         """
         try:
+            # Ensure sandbox is initialized
+            await self._ensure_sandbox()
+            
             # Check if session exists
             if session_name not in self.active_sessions:
                 return self.fail_response(f"Avatar session '{session_name}' not found.")
@@ -1652,6 +1672,9 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             ToolResult with list of available voices
         """
         try:
+            # Ensure sandbox is initialized
+            await self._ensure_sandbox()
+            
             if not self.heygen_api_key:
                 return self.fail_response("HeyGen API key not configured.")
             
