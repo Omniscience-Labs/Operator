@@ -815,7 +815,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         "voice": {
                             "type": "text",
                             "input_text": text,
-                            "voice_id": voice_id
+                            "voice_id": voice_id if voice_id != "default" else "1bd001e7e50f421d891986aad5158bc8"
                         },
                         "background": {
                             "type": "color",
