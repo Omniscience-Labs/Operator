@@ -115,6 +115,48 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         logger.warning(f"Using fallback voice ID: {fallback_voice}")
         return fallback_voice
 
+    async def _download_video_to_workspace(self, video_url: str, video_id: str) -> Optional[str]:
+        """Download video from HeyGen to workspace and return the local path."""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(video_url) as response:
+                    if response.status == 200:
+                        # Create videos directory if it doesn't exist
+                        videos_dir = f"{self.workspace_path}/videos"
+                        self.sandbox.fs.create_folder(videos_dir, "755")
+                        
+                        # Save video file
+                        filename = f"{video_id}.mp4"
+                        video_path = f"videos/{filename}"
+                        full_path = f"{videos_dir}/{filename}"
+                        
+                        video_data = await response.read()
+                        self.sandbox.fs.upload_file(video_data, full_path)
+                        
+                        # Update video info with local path
+                        video_info_file = f"{videos_dir}/{video_id}_info.json"
+                        try:
+                            existing_content = self.sandbox.fs.read_file(video_info_file)
+                            video_info = json.loads(existing_content.decode())
+                            video_info["local_path"] = video_path
+                            video_info["downloaded_at"] = "2025-01-27T00:00:00Z"
+                            
+                            self.sandbox.fs.upload_file(
+                                json.dumps(video_info, indent=2).encode(),
+                                video_info_file
+                            )
+                        except Exception as e:
+                            logger.warning(f"Could not update video info with local path: {e}")
+                        
+                        logger.info(f"Downloaded video {video_id} to {video_path}")
+                        return video_path
+                    else:
+                        logger.error(f"Failed to download video: HTTP {response.status}")
+                        return None
+        except Exception as e:
+            logger.error(f"Error downloading video: {e}")
+            return None
+
     async def _create_session_token(self) -> str:
         """Create a session token for HeyGen API."""
         if not self.heygen_api_key:
@@ -994,7 +1036,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(
-                        f"{self.heygen_api_base}/v1/video_status/{video_id}",
+                        f"{self.heygen_api_base}/v2/video/{video_id}",
                         headers={
                             "x-api-key": self.heygen_api_key,
                             "Accept": "application/json"
@@ -1042,12 +1084,33 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         if status == "completed":
                             message += f"✅ **Status: COMPLETED!**\n\n"
                             message += f"🎉 **Your avatar video is ready!**\n"
-                            message += f"📥 **Download URL:** {video_url}\n\n"
-                            message += f"💡 **Instructions:**\n"
-                            message += f"1. Click the URL above to download your MP4 video\n"
-                            message += f"2. The video will be downloaded to your device\n"
-                            message += f"3. You can now share it anywhere!\n\n"
-                            message += f"🎭 **Your AI avatar video is ready to watch and share!**"
+                            
+                            # Try to download the video to workspace
+                            if video_url:
+                                try:
+                                    downloaded_path = await self._download_video_to_workspace(video_url, video_id)
+                                    if downloaded_path:
+                                        message += f"📁 **Downloaded to workspace:** `{downloaded_path}`\n"
+                                        message += f"📥 **Original URL:** {video_url}\n\n"
+                                        message += f"🎭 **Your AI avatar video is ready in the workspace!**\n"
+                                        message += f"💡 You can now access the video file directly from your workspace."
+                                    else:
+                                        message += f"📥 **Download URL:** {video_url}\n\n"
+                                        message += f"💡 **Instructions:**\n"
+                                        message += f"1. Click the URL above to download your MP4 video\n"
+                                        message += f"2. The video will be downloaded to your device\n"
+                                        message += f"3. You can now share it anywhere!\n\n"
+                                        message += f"🎭 **Your AI avatar video is ready to watch and share!**"
+                                except Exception as e:
+                                    logger.warning(f"Failed to download video to workspace: {e}")
+                                    message += f"📥 **Download URL:** {video_url}\n\n"
+                                    message += f"💡 **Instructions:**\n"
+                                    message += f"1. Click the URL above to download your MP4 video\n"
+                                    message += f"2. The video will be downloaded to your device\n"
+                                    message += f"3. You can now share it anywhere!\n\n"
+                                    message += f"🎭 **Your AI avatar video is ready to watch and share!**"
+                            else:
+                                message += f"⚠️ **No download URL provided in response**"
                             
                         elif status == "processing":
                             message += f"⏳ **Status: PROCESSING**\n\n"
@@ -1080,6 +1143,149 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         except Exception as e:
             logger.error(f"Error in check_video_status: {str(e)}", exc_info=True)
             return self.fail_response(f"Video status check failed: {str(e)}")
+
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "download_completed_video",
+            "description": "Download a completed HeyGen video to the workspace. Automatically checks status and downloads when ready.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "video_id": {
+                        "type": "string",
+                        "description": "Video ID returned from generate_avatar_video"
+                    },
+                    "max_wait_time": {
+                        "type": "integer",
+                        "description": "Maximum time to wait for completion in seconds (default: 300 = 5 minutes)",
+                        "default": 300,
+                        "minimum": 30,
+                        "maximum": 600
+                    }
+                },
+                "required": ["video_id"]
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="download-completed-video",
+        mappings=[
+            {"param_name": "video_id", "node_type": "attribute", "path": ".", "required": True},
+            {"param_name": "max_wait_time", "node_type": "attribute", "path": ".", "required": False}
+        ],
+        example='''
+        <function_calls>
+        <invoke name="download_completed_video">
+        <parameter name="video_id">your-video-id-here</parameter>
+        <parameter name="max_wait_time">300</parameter>
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def download_completed_video(self, video_id: str, max_wait_time: int = 300) -> ToolResult:
+        """Download a completed video, waiting for completion if necessary.
+        
+        Args:
+            video_id: Video ID from generate_avatar_video
+            max_wait_time: Maximum seconds to wait for completion
+            
+        Returns:
+            ToolResult with download status and local path
+        """
+        try:
+            if not self.heygen_api_key:
+                return self.fail_response("HeyGen API key not configured.")
+            
+            start_time = asyncio.get_event_loop().time()
+            check_interval = 10  # Check every 10 seconds
+            
+            message = f"🎬 **Downloading Video: {video_id}**\n\n"
+            message += f"⏳ Checking status and waiting for completion...\n\n"
+            
+            while True:
+                try:
+                    # Check current status
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(
+                            f"{self.heygen_api_base}/v2/video/{video_id}",
+                            headers={
+                                "x-api-key": self.heygen_api_key,
+                                "Accept": "application/json"
+                            }
+                        ) as response:
+                            if response.status != 200:
+                                error_text = await response.text()
+                                return self.fail_response(f"Failed to check video status: {response.status} - {error_text}")
+                            
+                            result = await response.json()
+                            data = result.get("data", {})
+                            status = data.get("status", "unknown")
+                            video_url = data.get("video_url", "")
+                            error_msg = data.get("error", "")
+                            
+                            if status == "completed" and video_url:
+                                # Video is ready, download it
+                                message += f"✅ **Video completed! Downloading...**\n\n"
+                                
+                                downloaded_path = await self._download_video_to_workspace(video_url, video_id)
+                                if downloaded_path:
+                                    message += f"🎉 **Download successful!**\n\n"
+                                    message += f"📁 **Local path:** `{downloaded_path}`\n"
+                                    message += f"📥 **Original URL:** {video_url}\n\n"
+                                    message += f"🎭 **Your AI avatar video is ready in the workspace!**\n"
+                                    message += f"💡 You can now access and use the video file directly."
+                                    
+                                    return ToolResult(success=True, content=message)
+                                else:
+                                    message += f"❌ **Download failed, but video is ready**\n\n"
+                                    message += f"📥 **Direct URL:** {video_url}\n"
+                                    message += f"💡 You can download manually from the URL above."
+                                    return ToolResult(success=True, content=message)
+                            
+                            elif status == "error" or error_msg:
+                                message += f"❌ **Video generation failed**\n\n"
+                                message += f"🚨 **Error:** {error_msg}\n"
+                                return self.fail_response(message)
+                            
+                            elif status == "processing":
+                                # Still processing, continue waiting
+                                elapsed = asyncio.get_event_loop().time() - start_time
+                                if elapsed > max_wait_time:
+                                    message += f"⏰ **Timeout reached ({max_wait_time}s)**\n\n"
+                                    message += f"🔄 Video is still processing. Use check_video_status to check manually.\n"
+                                    message += f"📋 **Current status:** {status}"
+                                    return ToolResult(success=True, content=message)
+                                
+                                # Wait before next check
+                                await asyncio.sleep(check_interval)
+                                continue
+                            
+                            else:
+                                # Unknown status, continue waiting
+                                elapsed = asyncio.get_event_loop().time() - start_time
+                                if elapsed > max_wait_time:
+                                    message += f"⏰ **Timeout reached**\n\n"
+                                    message += f"❓ **Final status:** {status}\n"
+                                    message += f"🔍 Use check_video_status for more details."
+                                    return ToolResult(success=True, content=message)
+                                
+                                await asyncio.sleep(check_interval)
+                                continue
+                                
+                except Exception as e:
+                    logger.error(f"Error during video status check: {e}")
+                    elapsed = asyncio.get_event_loop().time() - start_time
+                    if elapsed > max_wait_time:
+                        return self.fail_response(f"Timeout waiting for video completion: {str(e)}")
+                    
+                    # Wait and retry
+                    await asyncio.sleep(check_interval)
+                    continue
+                    
+        except Exception as e:
+            logger.error(f"Error in download_completed_video: {str(e)}", exc_info=True)
+            return self.fail_response(f"Video download failed: {str(e)}")
 
     @openapi_schema({
         "type": "function",
