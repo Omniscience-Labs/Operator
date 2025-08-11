@@ -789,6 +789,18 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         "type": "string",
                         "description": "Background color for the video (hex code)",
                         "default": "#ffffff"
+                    },
+                    "wait_for_completion": {
+                        "type": "boolean",
+                        "description": "If true, wait for video completion and auto-download to workspace (takes 1-3 minutes)",
+                        "default": False
+                    },
+                    "max_wait_time": {
+                        "type": "integer",
+                        "description": "Maximum time to wait for completion in seconds (default: 300 = 5 minutes)",
+                        "default": 300,
+                        "minimum": 60,
+                        "maximum": 600
                     }
                 },
                 "required": ["text"]
@@ -802,7 +814,9 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             {"param_name": "avatar_id", "node_type": "attribute", "path": ".", "required": False},
             {"param_name": "voice_id", "node_type": "attribute", "path": ".", "required": False},
             {"param_name": "video_title", "node_type": "attribute", "path": ".", "required": False},
-            {"param_name": "background_color", "node_type": "attribute", "path": ".", "required": False}
+            {"param_name": "background_color", "node_type": "attribute", "path": ".", "required": False},
+            {"param_name": "wait_for_completion", "node_type": "attribute", "path": ".", "required": False},
+            {"param_name": "max_wait_time", "node_type": "attribute", "path": ".", "required": False}
         ],
         example='''
         <function_calls>
@@ -811,6 +825,8 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         <parameter name="voice_id">default</parameter>
         <parameter name="video_title">Hello World Video</parameter>
         <parameter name="background_color">#f0f0f0</parameter>
+        <parameter name="wait_for_completion">true</parameter>
+        <parameter name="max_wait_time">300</parameter>
         <parameter name="text">Hello World! This is my first AI avatar video.</parameter>
         </invoke>
         </function_calls>
@@ -821,7 +837,9 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                                   avatar_id: str = "default",
                                   voice_id: str = "default", 
                                   video_title: str = "AI Avatar Video",
-                                  background_color: str = "#ffffff") -> ToolResult:
+                                  background_color: str = "#ffffff",
+                                  wait_for_completion: bool = False,
+                                  max_wait_time: int = 300) -> ToolResult:
         """Generate a downloadable MP4 video with an avatar speaking the provided text.
         
         Args:
@@ -966,18 +984,37 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         message += f"• Voice: {voice_id}\n"
                         message += f"• Background: {background_color}\n\n"
                         
-                        message += f"⏳ **Status: Processing** (1-3 minutes)\n\n"
+                        message += f"⏳ **Status: Processing** (typically 1-3 minutes)\n\n"
                         
                         message += f"📥 **How to Get Your MP4 Video:**\n"
-                        message += f"1. **Wait 1-3 minutes** for processing to complete\n"
+                        message += f"**Option 1 - Manual Check:**\n"
+                        message += f"1. **Wait 2-3 minutes** for HeyGen to process the video\n"
                         message += f"2. **Check status**: Use `check_video_status('{video_id}')` \n"
-                        message += f"3. **Download**: When status = 'completed', you'll get a download URL\n"
-                        message += f"4. **Click the URL** to download your MP4 file to your device\n\n"
+                        message += f"3. **Download**: When status = 'completed', video auto-downloads to workspace\n\n"
+                        message += f"**Option 2 - Auto-Wait (Recommended):**\n"
+                        message += f"Use `download_completed_video('{video_id}')` to automatically wait and download\n\n"
                         
                         message += f"📁 **Video info saved to:** `videos/{video_id}_info.json`\n\n"
                         
                         message += f"🎯 **Important**: The MP4 file will be hosted by HeyGen and delivered via download URL.\n"
                         message += f"💡 **This creates an actual MP4 video file** that you can save and share anywhere!"
+                        
+                        # If wait_for_completion is True, automatically wait and download
+                        if wait_for_completion:
+                            message += f"\n\n⏳ **Auto-waiting for completion** (max {max_wait_time}s)...\n"
+                            
+                            # Use the download_completed_video method to wait and download
+                            download_result = await self.download_completed_video(video_id, max_wait_time)
+                            
+                            if download_result.success:
+                                message += f"\n\n✅ **Video completed and downloaded!**\n"
+                                message += download_result.content
+                                return self.success_response(message)
+                            else:
+                                message += f"\n\n⚠️ **Auto-download failed, but video is generating:**\n"
+                                message += download_result.content
+                                message += f"\n\n💡 **You can manually check status with:** `check_video_status('{video_id}')`"
+                                return self.success_response(message)
                         
                         return self.success_response(message)
                         
