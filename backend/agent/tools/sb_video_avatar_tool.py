@@ -686,6 +686,325 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
     @openapi_schema({
         "type": "function",
         "function": {
+            "name": "generate_avatar_video",
+            "description": "Generate a downloadable MP4 video file with an avatar speaking the provided text. This creates an actual video file that can be downloaded and shared, unlike the streaming version.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "Text for the avatar to speak in the video"
+                    },
+                    "avatar_id": {
+                        "type": "string",
+                        "description": "HeyGen avatar ID to use. Use 'default' or specific avatar IDs from HeyGen",
+                        "default": "default"
+                    },
+                    "voice_id": {
+                        "type": "string", 
+                        "description": "Voice ID for the avatar's speech",
+                        "default": "default"
+                    },
+                    "video_title": {
+                        "type": "string",
+                        "description": "Title for the generated video",
+                        "default": "AI Avatar Video"
+                    },
+                    "background_color": {
+                        "type": "string",
+                        "description": "Background color for the video (hex code)",
+                        "default": "#ffffff"
+                    }
+                },
+                "required": ["text"]
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="generate-avatar-video",
+        mappings=[
+            {"param_name": "text", "node_type": "content", "path": ".", "required": True},
+            {"param_name": "avatar_id", "node_type": "attribute", "path": ".", "required": False},
+            {"param_name": "voice_id", "node_type": "attribute", "path": ".", "required": False},
+            {"param_name": "video_title", "node_type": "attribute", "path": ".", "required": False},
+            {"param_name": "background_color", "node_type": "attribute", "path": ".", "required": False}
+        ],
+        example='''
+        <function_calls>
+        <invoke name="generate_avatar_video">
+        <parameter name="avatar_id">default</parameter>
+        <parameter name="voice_id">default</parameter>
+        <parameter name="video_title">Hello World Video</parameter>
+        <parameter name="background_color">#f0f0f0</parameter>
+        <parameter name="text">Hello World! This is my first AI avatar video.</parameter>
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def generate_avatar_video(self,
+                                  text: str,
+                                  avatar_id: str = "default",
+                                  voice_id: str = "default", 
+                                  video_title: str = "AI Avatar Video",
+                                  background_color: str = "#ffffff") -> ToolResult:
+        """Generate a downloadable MP4 video with an avatar speaking the provided text.
+        
+        Args:
+            text: Text for the avatar to speak
+            avatar_id: Avatar ID to use
+            voice_id: Voice ID for speech
+            video_title: Title for the video
+            background_color: Background color (hex)
+            
+        Returns:
+            ToolResult with video generation status and download URL
+        """
+        try:
+            if not self.heygen_api_key:
+                return self.fail_response("HeyGen API key not configured. Please set HEYGEN_API_KEY in environment variables.")
+            
+            logger.info(f"Generating avatar video with text: {text[:50]}...")
+            
+            # Prepare video generation request
+            video_request = {
+                "video_inputs": [
+                    {
+                        "character": {
+                            "type": "avatar",
+                            "avatar_id": avatar_id,
+                            "avatar_style": "normal"
+                        },
+                        "voice": {
+                            "type": "text",
+                            "input_text": text,
+                            "voice_id": voice_id
+                        },
+                        "background": {
+                            "type": "color",
+                            "value": background_color
+                        }
+                    }
+                ],
+                "dimension": {
+                    "width": 1280,
+                    "height": 720
+                },
+                "aspect_ratio": "16:9",
+                "title": video_title,
+                "test": False  # Set to False for production videos
+            }
+            
+            # Generate video via HeyGen API
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(
+                        f"{self.heygen_api_base}/v1/video.generate",
+                        headers={
+                            "x-api-key": self.heygen_api_key,
+                            "Content-Type": "application/json"
+                        },
+                        json=video_request
+                    ) as response:
+                        if response.status != 200:
+                            error_text = await response.text()
+                            return self.fail_response(f"Failed to generate video: {response.status} - {error_text}")
+                        
+                        result = await response.json()
+                        logger.info(f"HeyGen video generation response: {result}")
+                        
+                        video_id = result.get("data", {}).get("video_id")
+                        if not video_id:
+                            return self.fail_response(f"No video_id returned from HeyGen API. Response: {result}")
+                        
+                        # Save video info to workspace
+                        videos_dir = f"{self.workspace_path}/videos"
+                        self.sandbox.fs.create_folder(videos_dir, "755")
+                        
+                        video_info = {
+                            "video_id": video_id,
+                            "title": video_title,
+                            "text": text,
+                            "avatar_id": avatar_id,
+                            "voice_id": voice_id,
+                            "status": "processing",
+                            "created_at": result.get("data", {}).get("created_at", ""),
+                            "background_color": background_color
+                        }
+                        
+                        video_file = f"{videos_dir}/{video_id}_info.json"
+                        self.sandbox.fs.upload_file(
+                            json.dumps(video_info, indent=2).encode(),
+                            video_file
+                        )
+                        
+                        message = f"🎬 Avatar video generation started successfully!\n\n"
+                        message += f"📋 **Video Details:**\n"
+                        message += f"• Video ID: {video_id}\n"
+                        message += f"• Title: {video_title}\n"
+                        message += f"• Text: \"{text}\"\n"
+                        message += f"• Avatar: {avatar_id}\n"
+                        message += f"• Voice: {voice_id}\n"
+                        message += f"• Background: {background_color}\n\n"
+                        
+                        message += f"⏳ **Status: Processing**\n"
+                        message += f"Video generation typically takes 1-3 minutes.\n\n"
+                        
+                        message += f"📁 **Video info saved to:** `videos/{video_id}_info.json`\n\n"
+                        
+                        message += f"🔍 **Next Steps:**\n"
+                        message += f"1. Wait 1-3 minutes for processing\n"
+                        message += f"2. Use 'check_video_status' to get the download URL\n"
+                        message += f"3. Download your MP4 video file!\n\n"
+                        
+                        message += f"💡 **This creates an actual MP4 video file** that you can download and share anywhere!"
+                        
+                        return self.success_response(message)
+                        
+            except Exception as e:
+                logger.error(f"Error calling HeyGen video API: {str(e)}")
+                return self.fail_response(f"Failed to call HeyGen video generation API: {str(e)}")
+                
+        except Exception as e:
+            logger.error(f"Error in generate_avatar_video: {str(e)}", exc_info=True)
+            return self.fail_response(f"Video generation failed: {str(e)}")
+
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "check_video_status",
+            "description": "Check the status of a generated avatar video and get the download URL when ready.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "video_id": {
+                        "type": "string",
+                        "description": "Video ID returned from generate_avatar_video"
+                    }
+                },
+                "required": ["video_id"]
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="check-video-status",
+        mappings=[
+            {"param_name": "video_id", "node_type": "attribute", "path": ".", "required": True}
+        ],
+        example='''
+        <function_calls>
+        <invoke name="check_video_status">
+        <parameter name="video_id">your-video-id-here</parameter>
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def check_video_status(self, video_id: str) -> ToolResult:
+        """Check the status of a generated video and get download URL.
+        
+        Args:
+            video_id: Video ID from generate_avatar_video
+            
+        Returns:
+            ToolResult with video status and download URL if ready
+        """
+        try:
+            if not self.heygen_api_key:
+                return self.fail_response("HeyGen API key not configured.")
+            
+            # Check video status via HeyGen API
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(
+                        f"{self.heygen_api_base}/v1/video_status.get?video_id={video_id}",
+                        headers={
+                            "x-api-key": self.heygen_api_key,
+                            "Accept": "application/json"
+                        }
+                    ) as response:
+                        if response.status != 200:
+                            error_text = await response.text()
+                            return self.fail_response(f"Failed to check video status: {response.status} - {error_text}")
+                        
+                        result = await response.json()
+                        logger.info(f"HeyGen video status response: {result}")
+                        
+                        data = result.get("data", {})
+                        status = data.get("status", "unknown")
+                        video_url = data.get("video_url", "")
+                        error_msg = data.get("error", "")
+                        
+                        # Update video info file
+                        videos_dir = f"{self.workspace_path}/videos"
+                        video_file = f"{videos_dir}/{video_id}_info.json"
+                        
+                        try:
+                            # Read existing info
+                            existing_content = self.sandbox.fs.read_file(video_file)
+                            video_info = json.loads(existing_content.decode())
+                            
+                            # Update with latest status
+                            video_info.update({
+                                "status": status,
+                                "video_url": video_url,
+                                "error": error_msg,
+                                "checked_at": data.get("updated_at", "")
+                            })
+                            
+                            # Save updated info
+                            self.sandbox.fs.upload_file(
+                                json.dumps(video_info, indent=2).encode(),
+                                video_file
+                            )
+                        except Exception as e:
+                            logger.warning(f"Could not update video info file: {e}")
+                        
+                        message = f"🎬 **Video Status Check: {video_id}**\n\n"
+                        
+                        if status == "completed":
+                            message += f"✅ **Status: COMPLETED!**\n\n"
+                            message += f"🎉 **Your avatar video is ready!**\n"
+                            message += f"📥 **Download URL:** {video_url}\n\n"
+                            message += f"💡 **Instructions:**\n"
+                            message += f"1. Click the URL above to download your MP4 video\n"
+                            message += f"2. The video will be downloaded to your device\n"
+                            message += f"3. You can now share it anywhere!\n\n"
+                            message += f"🎭 **Your AI avatar video is ready to watch and share!**"
+                            
+                        elif status == "processing":
+                            message += f"⏳ **Status: PROCESSING**\n\n"
+                            message += f"🔄 Your video is still being generated...\n"
+                            message += f"⏱️ This usually takes 1-3 minutes total.\n\n"
+                            message += f"💡 **Next Steps:**\n"
+                            message += f"• Wait another 30-60 seconds\n"
+                            message += f"• Run this command again to check status\n"
+                            message += f"• The download URL will appear when ready!"
+                            
+                        elif status == "error" or error_msg:
+                            message += f"❌ **Status: ERROR**\n\n"
+                            message += f"🚨 **Error:** {error_msg}\n\n"
+                            message += f"💡 **Suggestions:**\n"
+                            message += f"• Try generating a new video\n"
+                            message += f"• Check if your text is too long\n"
+                            message += f"• Ensure avatar_id and voice_id are valid"
+                            
+                        else:
+                            message += f"❓ **Status: {status.upper()}**\n\n"
+                            message += f"🔍 **Raw Response:** {result}\n\n"
+                            message += f"💡 Please try checking again in a few moments."
+                        
+                        return self.success_response(message)
+                        
+            except Exception as e:
+                logger.error(f"Error calling HeyGen status API: {str(e)}")
+                return self.fail_response(f"Failed to check video status: {str(e)}")
+                
+        except Exception as e:
+            logger.error(f"Error in check_video_status: {str(e)}", exc_info=True)
+            return self.fail_response(f"Video status check failed: {str(e)}")
+
+    @openapi_schema({
+        "type": "function",
+        "function": {
             "name": "start_voice_chat",
             "description": "Start an interactive voice chat session with the avatar. This enables real-time conversation where the avatar can listen and respond to user speech.",
             "parameters": {
