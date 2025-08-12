@@ -56,10 +56,9 @@ const extractFromNewFormat = (content: any): {
         urls = args.urls;
         url = urls[0];
       } else if (typeof args.urls === 'string') {
-        // Treat single string as single URL (don't split by comma)
-        // This fixes the issue where URLs with commas get split incorrectly
-        urls = [args.urls];
-        url = args.urls;
+        // For web scraping, we DO want to split by comma since multiple URLs are expected
+        urls = args.urls.split(',').map(u => u.trim());
+        url = urls[0];
       }
     }
 
