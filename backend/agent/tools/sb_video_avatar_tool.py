@@ -33,33 +33,99 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
 
     name: str = "sb_video_avatar_tool"
     
-    # Predefined avatar-voice combinations for consistent, high-quality results
-    AVATAR_VOICE_PRESETS = {
-        "professional_male": {
-            "avatar_id": "Wayne_20240711",  # Professional male avatar
-            "voice_id": "2EiwWnXFnvU5JabPnv8n",  # Professional male voice
-            "description": "Professional male presenter - ideal for business content"
+    # Available avatar options for user selection
+    AVATAR_OPTIONS = {
+        "wayne_professional": {
+            "avatar_id": "Wayne_20240711",
+            "name": "Wayne (Professional Male)",
+            "description": "Professional businessman in suit",
+            "category": "professional",
+            "gender": "male"
         },
-        "professional_female": {
-            "avatar_id": "Susan_20240711",  # Professional female avatar  
-            "voice_id": "21m00Tcm4TlvDq8ikWAM",  # Professional female voice
-            "description": "Professional female presenter - great for educational content"
+        "susan_professional": {
+            "avatar_id": "Susan_20240711", 
+            "name": "Susan (Professional Female)",
+            "description": "Professional businesswoman",
+            "category": "professional", 
+            "gender": "female"
         },
-        "casual_male": {
-            "avatar_id": "Josh_20240711",  # Casual male avatar
-            "voice_id": "pNInz6obpgDQGcFmaJgB",  # Casual male voice
-            "description": "Casual male presenter - perfect for friendly, approachable content"
+        "josh_casual": {
+            "avatar_id": "Josh_20240711",
+            "name": "Josh (Casual Male)",
+            "description": "Friendly casual presenter",
+            "category": "casual",
+            "gender": "male"
         },
-        "casual_female": {
-            "avatar_id": "Anna_20240711",  # Casual female avatar
-            "voice_id": "XB0fDUnXU5powFXDhCwa",  # Casual female voice  
-            "description": "Casual female presenter - ideal for conversational content"
+        "anna_casual": {
+            "avatar_id": "Anna_20240711",
+            "name": "Anna (Casual Female)", 
+            "description": "Approachable casual presenter",
+            "category": "casual",
+            "gender": "female"
         },
-        "news_anchor": {
-            "avatar_id": "Tyler_20240711",  # News anchor style avatar
-            "voice_id": "29vD33N1CtxCmqQRPOHJ",  # News anchor voice
-            "description": "News anchor style - perfect for news, updates, and announcements"
+        "tyler_news": {
+            "avatar_id": "Tyler_20240711",
+            "name": "Tyler (News Anchor)",
+            "description": "Professional news anchor style",
+            "category": "news",
+            "gender": "male"
         }
+    }
+    
+    # Available voice options for user selection
+    VOICE_OPTIONS = {
+        "professional_male_1": {
+            "voice_id": "2EiwWnXFnvU5JabPnv8n",
+            "name": "Professional Male Voice",
+            "description": "Clear, authoritative business voice",
+            "gender": "male",
+            "accent": "american"
+        },
+        "professional_female_1": {
+            "voice_id": "21m00Tcm4TlvDq8ikWAM",
+            "name": "Professional Female Voice", 
+            "description": "Warm, professional female voice",
+            "gender": "female",
+            "accent": "american"
+        },
+        "casual_male_1": {
+            "voice_id": "pNInz6obpgDQGcFmaJgB",
+            "name": "Casual Male Voice",
+            "description": "Friendly, conversational male voice",
+            "gender": "male", 
+            "accent": "american"
+        },
+        "casual_female_1": {
+            "voice_id": "XB0fDUnXU5powFXDhCwa",
+            "name": "Casual Female Voice",
+            "description": "Warm, approachable female voice",
+            "gender": "female",
+            "accent": "american"
+        },
+        "news_anchor_1": {
+            "voice_id": "29vD33N1CtxCmqQRPOHJ", 
+            "name": "News Anchor Voice",
+            "description": "Clear, broadcast-quality voice",
+            "gender": "male",
+            "accent": "american"
+        }
+    }
+    
+    # Avatar position options
+    POSITION_OPTIONS = {
+        "center": {"name": "Center", "description": "Avatar centered in frame"},
+        "left": {"name": "Left", "description": "Avatar positioned on left side"},
+        "right": {"name": "Right", "description": "Avatar positioned on right side"}
+    }
+    
+    # Background color options
+    BACKGROUND_OPTIONS = {
+        "white": {"name": "White", "hex": "#FFFFFF", "description": "Clean white background"},
+        "light_gray": {"name": "Light Gray", "hex": "#F5F5F5", "description": "Subtle light gray"},
+        "dark_gray": {"name": "Dark Gray", "hex": "#2D2D2D", "description": "Professional dark gray"},
+        "blue": {"name": "Blue", "hex": "#4A90E2", "description": "Professional blue"},
+        "green": {"name": "Green", "hex": "#50C878", "description": "Fresh green"},
+        "custom": {"name": "Custom", "hex": "", "description": "Custom hex color"}
     }
     description: str = """
     Generate videos with AI avatars that can speak any text with natural speech and lip sync.
@@ -414,20 +480,47 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         "type": "string",
                         "description": "Unique name for this avatar session (used for management and reference)"
                     },
-                    "preset": {
+                    "selected_avatar": {
                         "type": "string",
-                        "description": "Use a predefined avatar-voice combination. Options: 'professional_male', 'professional_female', 'casual_male', 'casual_female', 'news_anchor'. If specified, overrides avatar_id and voice_id",
-                        "enum": ["professional_male", "professional_female", "casual_male", "casual_female", "news_anchor"]
+                        "description": "Avatar option key from available avatars (e.g., 'wayne_professional', 'susan_professional') or 'custom' to use custom_avatar_id",
+                        "enum": ["wayne_professional", "susan_professional", "josh_casual", "anna_casual", "tyler_news", "custom"]
                     },
-                    "avatar_id": {
-                        "type": "string",
-                        "description": "HeyGen avatar ID to use. Use 'default' for the default avatar, or specify a custom avatar ID from your HeyGen account. Ignored if preset is specified",
-                        "default": "default"
+                    "selected_voice": {
+                        "type": "string", 
+                        "description": "Voice option key from available voices (e.g., 'professional_male_1') or 'elevenlabs'/'custom_heygen' for custom voices",
+                        "enum": ["professional_male_1", "professional_female_1", "casual_male_1", "casual_female_1", "news_anchor_1", "elevenlabs", "custom_heygen"]
                     },
-                    "voice_id": {
+                    "custom_avatar_id": {
                         "type": "string",
-                        "description": "Voice ID for the avatar's speech. Use HeyGen voice IDs from the List Voices API. Ignored if preset is specified",
-                        "default": "default"
+                        "description": "Custom HeyGen avatar ID (used when selected_avatar is 'custom')",
+                        "default": ""
+                    },
+                    "custom_voice_id": {
+                        "type": "string",
+                        "description": "Custom HeyGen voice ID (used when selected_voice is 'custom_heygen')",
+                        "default": ""
+                    },
+                    "elevenlabs_voice_id": {
+                        "type": "string",
+                        "description": "ElevenLabs voice ID for premium quality (used when selected_voice is 'elevenlabs')",
+                        "default": ""
+                    },
+                    "selected_position": {
+                        "type": "string",
+                        "description": "Avatar position in frame",
+                        "enum": ["center", "left", "right"],
+                        "default": "center"
+                    },
+                    "selected_background": {
+                        "type": "string",
+                        "description": "Background option key",
+                        "enum": ["white", "light_gray", "dark_gray", "blue", "green", "custom"],
+                        "default": "white"
+                    },
+                    "custom_background_hex": {
+                        "type": "string",
+                        "description": "Custom background hex color (used when selected_background is 'custom')",
+                        "default": ""
                     },
                     "voice_rate": {
                         "type": "number",
@@ -550,21 +643,29 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             
             # Check if we have a custom agent with video avatar settings
             agent_config = await self._get_agent_avatar_config()
-            if agent_config and not preset:  # Only use agent config if no preset specified
-                if agent_config.get("avatar_preset"):
-                    # Use agent's preset
-                    preset_config = self.AVATAR_VOICE_PRESETS.get(agent_config["avatar_preset"])
-                    if preset_config:
-                        avatar_id = preset_config["avatar_id"]
-                        voice_id = preset_config["voice_id"]
-                        logger.info(f"Using agent's preset '{agent_config['avatar_preset']}': {preset_config['description']}")
-                else:
-                    # Use agent's custom avatar/voice IDs
-                    if agent_config.get("video_avatar_id"):
-                        avatar_id = agent_config["video_avatar_id"]
-                    if agent_config.get("video_voice_id"):
-                        voice_id = agent_config["video_voice_id"]
-                    logger.info(f"Using custom agent avatar settings: avatar={avatar_id}, voice={voice_id}")
+            if agent_config and agent_config.get("video_avatar_enabled") and not preset:
+                # Get avatar ID
+                if agent_config.get("selected_avatar"):
+                    if agent_config["selected_avatar"] == "custom":
+                        avatar_id = agent_config.get("custom_avatar_id", "default")
+                    else:
+                        avatar_option = self.AVATAR_OPTIONS.get(agent_config["selected_avatar"])
+                        if avatar_option:
+                            avatar_id = avatar_option["avatar_id"]
+                
+                # Get voice ID
+                if agent_config.get("selected_voice"):
+                    if agent_config["selected_voice"] == "elevenlabs":
+                        # Handle ElevenLabs voice separately in video generation
+                        pass
+                    elif agent_config["selected_voice"] == "custom_heygen":
+                        voice_id = agent_config.get("custom_voice_id", "default")
+                    else:
+                        voice_option = self.VOICE_OPTIONS.get(agent_config["selected_voice"])
+                        if voice_option:
+                            voice_id = voice_option["voice_id"]
+                
+                logger.info(f"Using agent's custom avatar configuration: avatar={avatar_id}, voice={voice_id}")
             
             # Check if session name already exists
             if session_name in self.active_sessions:
@@ -742,6 +843,81 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
             logger.error(f"Error listing avatar presets: {str(e)}")
             return self.fail_response(f"Failed to list avatar presets: {str(e)}")
 
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "list_avatar_options",
+            "description": "List all available avatar, voice, position, and background options for video avatar customization",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="list-avatar-options",
+        mappings=[],
+        example='''
+        <function_calls>
+        <invoke name="list_avatar_options">
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def list_avatar_options(self) -> ToolResult:
+        """List all available customization options for video avatars.
+        
+        Returns:
+            ToolResult with comprehensive avatar customization options
+        """
+        try:
+            message = "🎭 **Avatar Customization Options**\n\n"
+            
+            # Avatar Options
+            message += "## 👤 **Available Avatars**\n"
+            for key, avatar in self.AVATAR_OPTIONS.items():
+                message += f"**{avatar['name']}** (`{key}`)\n"
+                message += f"  • {avatar['description']}\n"
+                message += f"  • Category: {avatar['category'].title()}\n"
+                message += f"  • Gender: {avatar['gender'].title()}\n\n"
+            
+            # Voice Options
+            message += "## 🎤 **Available Voices**\n"
+            for key, voice in self.VOICE_OPTIONS.items():
+                message += f"**{voice['name']}** (`{key}`)\n"
+                message += f"  • {voice['description']}\n"
+                message += f"  • Gender: {voice['gender'].title()}\n"
+                message += f"  • Accent: {voice['accent'].title()}\n\n"
+            
+            # Position Options
+            message += "## 📍 **Avatar Positions**\n"
+            for key, position in self.POSITION_OPTIONS.items():
+                message += f"**{position['name']}** (`{key}`)\n"
+                message += f"  • {position['description']}\n\n"
+            
+            # Background Options
+            message += "## 🎨 **Background Colors**\n"
+            for key, bg in self.BACKGROUND_OPTIONS.items():
+                message += f"**{bg['name']}** (`{key}`)\n"
+                message += f"  • {bg['description']}\n"
+                if bg['hex']:
+                    message += f"  • Color: {bg['hex']}\n"
+                message += "\n"
+            
+            message += "## 🔧 **Custom Options**\n"
+            message += "• **Custom Avatar**: Provide your own HeyGen avatar ID\n"
+            message += "• **ElevenLabs Voice**: Use your own ElevenLabs voice ID for premium quality\n"
+            message += "• **Custom Background**: Use any hex color code\n\n"
+            
+            message += "💡 **Usage**: Configure these options in your agent settings or specify them when creating avatar sessions."
+            
+            return self.success_response(message)
+            
+        except Exception as e:
+            logger.error(f"Error listing avatar options: {str(e)}")
+            return self.fail_response(f"Failed to list avatar options: {str(e)}")
+
     async def _get_agent_avatar_config(self) -> Optional[Dict[str, Any]]:
         """Get avatar configuration for the current custom agent if available."""
         try:
@@ -758,7 +934,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         return None
                     
                     result = await client.table('agents').select(
-                        'video_avatar_id, video_voice_id, elevenlabs_voice_id, avatar_preset, video_avatar_settings'
+                        'video_avatar_enabled, selected_avatar, selected_voice, selected_position, selected_background, custom_avatar_id, custom_voice_id, elevenlabs_voice_id, custom_background_hex, video_avatar_settings'
                     ).eq('agent_id', agent_id).single().execute()
                     
                     if result.data:
@@ -883,24 +1059,29 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                 avatar_id = preset_config["avatar_id"]
                 voice_id = preset_config["voice_id"]
                 logger.info(f"Using override preset '{override_preset}': {preset_config['description']}")
-            elif agent_config:
-                # Use agent's configuration
-                if agent_config.get("avatar_preset") and agent_config["avatar_preset"] in self.AVATAR_VOICE_PRESETS:
-                    preset_config = self.AVATAR_VOICE_PRESETS[agent_config["avatar_preset"]]
-                    avatar_id = preset_config["avatar_id"]
-                    voice_id = preset_config["voice_id"]
-                    logger.info(f"Using agent's preset '{agent_config['avatar_preset']}'")
-                else:
-                    # Use custom settings
-                    if agent_config.get("video_avatar_id"):
-                        avatar_id = agent_config["video_avatar_id"]
-                    if agent_config.get("elevenlabs_voice_id"):
-                        # Use ElevenLabs for high-quality TTS
+            elif agent_config and agent_config.get("video_avatar_enabled"):
+                # Use agent's granular configuration
+                # Get avatar ID
+                if agent_config.get("selected_avatar"):
+                    if agent_config["selected_avatar"] == "custom":
+                        avatar_id = agent_config.get("custom_avatar_id", "default")
+                    else:
+                        avatar_option = self.AVATAR_OPTIONS.get(agent_config["selected_avatar"])
+                        if avatar_option:
+                            avatar_id = avatar_option["avatar_id"]
+                
+                # Get voice configuration
+                if agent_config.get("selected_voice"):
+                    if agent_config["selected_voice"] == "elevenlabs":
                         use_elevenlabs = True
-                        elevenlabs_voice_id = agent_config["elevenlabs_voice_id"]
+                        elevenlabs_voice_id = agent_config.get("elevenlabs_voice_id")
                         logger.info(f"Using ElevenLabs voice: {elevenlabs_voice_id}")
-                    elif agent_config.get("video_voice_id"):
-                        voice_id = agent_config["video_voice_id"]
+                    elif agent_config["selected_voice"] == "custom_heygen":
+                        voice_id = agent_config.get("custom_voice_id", "default")
+                    else:
+                        voice_option = self.VOICE_OPTIONS.get(agent_config["selected_voice"])
+                        if voice_option:
+                            voice_id = voice_option["voice_id"]
             
             # If using ElevenLabs, generate audio first then use it with avatar
             if use_elevenlabs and elevenlabs_voice_id:

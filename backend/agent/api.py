@@ -61,10 +61,15 @@ class AgentCreateRequest(BaseModel):
     avatar: Optional[str] = None
     avatar_color: Optional[str] = None
     # Video avatar settings
-    video_avatar_id: Optional[str] = None
-    video_voice_id: Optional[str] = None
+    video_avatar_enabled: Optional[bool] = False
+    selected_avatar: Optional[str] = None
+    selected_voice: Optional[str] = None
+    selected_position: Optional[str] = "center"
+    selected_background: Optional[str] = "white"
+    custom_avatar_id: Optional[str] = None
+    custom_voice_id: Optional[str] = None
     elevenlabs_voice_id: Optional[str] = None
-    avatar_preset: Optional[str] = None
+    custom_background_hex: Optional[str] = None
     video_avatar_settings: Optional[Dict[str, Any]] = None
 
 class AgentUpdateRequest(BaseModel):
@@ -79,10 +84,15 @@ class AgentUpdateRequest(BaseModel):
     avatar: Optional[str] = None
     avatar_color: Optional[str] = None
     # Video avatar settings
-    video_avatar_id: Optional[str] = None
-    video_voice_id: Optional[str] = None
+    video_avatar_enabled: Optional[bool] = False
+    selected_avatar: Optional[str] = None
+    selected_voice: Optional[str] = None
+    selected_position: Optional[str] = "center"
+    selected_background: Optional[str] = "white"
+    custom_avatar_id: Optional[str] = None
+    custom_voice_id: Optional[str] = None
     elevenlabs_voice_id: Optional[str] = None
-    avatar_preset: Optional[str] = None
+    custom_background_hex: Optional[str] = None
     video_avatar_settings: Optional[Dict[str, Any]] = None
 
 class AgentResponse(BaseModel):
@@ -2114,10 +2124,15 @@ async def create_agent(
             "avatar": agent_data.avatar,
             "avatar_color": agent_data.avatar_color,
             # Video avatar settings
-            "video_avatar_id": agent_data.video_avatar_id,
-            "video_voice_id": agent_data.video_voice_id,
+            "video_avatar_enabled": agent_data.video_avatar_enabled or False,
+            "selected_avatar": agent_data.selected_avatar,
+            "selected_voice": agent_data.selected_voice,
+            "selected_position": agent_data.selected_position or "center",
+            "selected_background": agent_data.selected_background or "white",
+            "custom_avatar_id": agent_data.custom_avatar_id,
+            "custom_voice_id": agent_data.custom_voice_id,
             "elevenlabs_voice_id": agent_data.elevenlabs_voice_id,
-            "avatar_preset": agent_data.avatar_preset,
+            "custom_background_hex": agent_data.custom_background_hex,
             "video_avatar_settings": agent_data.video_avatar_settings or {},
             # Add missing required columns with defaults
             "visibility": "private",

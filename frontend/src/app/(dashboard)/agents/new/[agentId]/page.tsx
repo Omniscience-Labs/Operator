@@ -28,6 +28,38 @@ import { cn } from '@/lib/utils';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
+// Avatar and voice options (matching backend)
+const AVATAR_OPTIONS = {
+  "wayne_professional": { name: "Wayne (Professional Male)", description: "Professional businessman in suit" },
+  "susan_professional": { name: "Susan (Professional Female)", description: "Professional businesswoman" },
+  "josh_casual": { name: "Josh (Casual Male)", description: "Friendly casual presenter" },
+  "anna_casual": { name: "Anna (Casual Female)", description: "Approachable casual presenter" },
+  "tyler_news": { name: "Tyler (News Anchor)", description: "Professional news anchor style" }
+};
+
+const VOICE_OPTIONS = {
+  "professional_male_1": { name: "Professional Male Voice", description: "Clear, authoritative business voice" },
+  "professional_female_1": { name: "Professional Female Voice", description: "Warm, professional female voice" },
+  "casual_male_1": { name: "Casual Male Voice", description: "Friendly, conversational male voice" },
+  "casual_female_1": { name: "Casual Female Voice", description: "Warm, approachable female voice" },
+  "news_anchor_1": { name: "News Anchor Voice", description: "Clear, broadcast-quality voice" }
+};
+
+const POSITION_OPTIONS = {
+  "center": { name: "Center", description: "Avatar centered in frame" },
+  "left": { name: "Left", description: "Avatar positioned on left side" },
+  "right": { name: "Right", description: "Avatar positioned on right side" }
+};
+
+const BACKGROUND_OPTIONS = {
+  "white": { name: "White", hex: "#FFFFFF", description: "Clean white background" },
+  "light_gray": { name: "Light Gray", hex: "#F5F5F5", description: "Subtle light gray" },
+  "dark_gray": { name: "Dark Gray", hex: "#2D2D2D", description: "Professional dark gray" },
+  "blue": { name: "Blue", hex: "#4A90E2", description: "Professional blue" },
+  "green": { name: "Green", hex: "#50C878", description: "Fresh green" },
+  "custom": { name: "Custom", hex: "", description: "Custom hex color" }
+};
+
 export default function AgentConfigurationPage() {
   const params = useParams();
   const router = useRouter();
@@ -54,10 +86,15 @@ export default function AgentConfigurationPage() {
     avatar_color: '',
     knowledge_bases: [],
     // Video avatar settings
-    video_avatar_id: '',
-    video_voice_id: '',
+    video_avatar_enabled: false,
+    selected_avatar: '',
+    selected_voice: '',
+    selected_position: 'center',
+    selected_background: 'white',
+    custom_avatar_id: '',
+    custom_voice_id: '',
     elevenlabs_voice_id: '',
-    avatar_preset: '',
+    custom_background_hex: '',
     video_avatar_settings: {},
   });
 
@@ -91,10 +128,15 @@ export default function AgentConfigurationPage() {
         avatar_color: agentData.avatar_color || '',
         knowledge_bases: agentData.knowledge_bases || [],
         // Video avatar settings
-        video_avatar_id: agentData.video_avatar_id || '',
-        video_voice_id: agentData.video_voice_id || '',
+        video_avatar_enabled: agentData.video_avatar_enabled || false,
+        selected_avatar: agentData.selected_avatar || '',
+        selected_voice: agentData.selected_voice || '',
+        selected_position: agentData.selected_position || 'center',
+        selected_background: agentData.selected_background || 'white',
+        custom_avatar_id: agentData.custom_avatar_id || '',
+        custom_voice_id: agentData.custom_voice_id || '',
         elevenlabs_voice_id: agentData.elevenlabs_voice_id || '',
-        avatar_preset: agentData.avatar_preset || '',
+        custom_background_hex: agentData.custom_background_hex || '',
         video_avatar_settings: agentData.video_avatar_settings || {},
       };
       setFormData(initialData);
@@ -453,97 +495,203 @@ export default function AgentConfigurationPage() {
                     <AccordionContent className="pb-4 space-y-4">
                       <div>
                         <p className="text-sm text-muted-foreground mb-4">
-                          Configure your agent's video avatar appearance and voice for video generation
+                          Enable and customize your agent's video avatar for video generation
                         </p>
                       </div>
 
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="avatar-preset" className="text-sm font-medium">
-                            Avatar Preset
+                      {/* Video Avatar Toggle */}
+                      <div className="flex items-center justify-between p-4 border rounded-lg">
+                        <div>
+                          <Label htmlFor="video-avatar-enabled" className="text-sm font-medium">
+                            Enable Video Avatar
                           </Label>
-                          <select
-                            id="avatar-preset"
-                            value={formData.avatar_preset || ''}
-                            onChange={(e) => handleFieldChange('avatar_preset', e.target.value)}
-                            className="w-full h-10 px-3 border border-input bg-background rounded-md text-sm"
-                          >
-                            <option value="">Select a preset...</option>
-                            <option value="professional_male">Professional Male</option>
-                            <option value="professional_female">Professional Female</option>
-                            <option value="casual_male">Casual Male</option>
-                            <option value="casual_female">Casual Female</option>
-                            <option value="news_anchor">News Anchor</option>
-                          </select>
                           <p className="text-xs text-muted-foreground">
-                            Choose a predefined avatar-voice combination for consistent quality
+                            Allow this agent to generate videos with a custom avatar
                           </p>
                         </div>
-
-                        <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
-                          <strong>OR</strong> configure custom settings below (will override preset)
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="video-avatar-id" className="text-sm font-medium">
-                              Custom Avatar ID
-                            </Label>
-                            <Input
-                              id="video-avatar-id"
-                              value={formData.video_avatar_id || ''}
-                              onChange={(e) => handleFieldChange('video_avatar_id', e.target.value)}
-                              placeholder="e.g., Wayne_20240711"
-                              className="h-10"
-                            />
-                            <p className="text-xs text-muted-foreground">
-                              HeyGen avatar ID for video generation
-                            </p>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="elevenlabs-voice-id" className="text-sm font-medium">
-                              ElevenLabs Voice ID
-                            </Label>
-                            <Input
-                              id="elevenlabs-voice-id"
-                              value={formData.elevenlabs_voice_id || ''}
-                              onChange={(e) => handleFieldChange('elevenlabs_voice_id', e.target.value)}
-                              placeholder="e.g., 21m00Tcm4TlvDq8ikWAM"
-                              className="h-10"
-                            />
-                            <p className="text-xs text-muted-foreground">
-                              ElevenLabs voice ID for high-quality custom voice synthesis
-                            </p>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="video-voice-id" className="text-sm font-medium">
-                              HeyGen Voice ID (Alternative)
-                            </Label>
-                            <Input
-                              id="video-voice-id"
-                              value={formData.video_voice_id || ''}
-                              onChange={(e) => handleFieldChange('video_voice_id', e.target.value)}
-                              placeholder="e.g., 2EiwWnXFnvU5JabPnv8n"
-                              className="h-10"
-                            />
-                            <p className="text-xs text-muted-foreground">
-                              HeyGen voice ID (used if no ElevenLabs voice specified)
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-md">
-                          <h4 className="font-medium text-blue-900 mb-2">💡 Configuration Tips</h4>
-                          <ul className="text-sm text-blue-800 space-y-1">
-                            <li>• <strong>Presets</strong>: Easiest option with tested avatar-voice combinations</li>
-                            <li>• <strong>ElevenLabs</strong>: Highest quality custom voices (requires API key)</li>
-                            <li>• <strong>HeyGen Voice</strong>: Good quality, built into the platform</li>
-                            <li>• <strong>Priority</strong>: Preset → ElevenLabs → HeyGen Voice → Default</li>
-                          </ul>
-                        </div>
+                        <Switch
+                          id="video-avatar-enabled"
+                          checked={formData.video_avatar_enabled || false}
+                          onCheckedChange={(checked) => handleFieldChange('video_avatar_enabled', checked)}
+                        />
                       </div>
+
+                      {/* Avatar Configuration (shown when enabled) */}
+                      {formData.video_avatar_enabled && (
+                        <div className="space-y-6 border-t pt-6">
+                          {/* Avatar Selection */}
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="selected-avatar" className="text-sm font-medium">
+                                Choose Avatar
+                              </Label>
+                              <select
+                                id="selected-avatar"
+                                value={formData.selected_avatar || ''}
+                                onChange={(e) => handleFieldChange('selected_avatar', e.target.value)}
+                                className="w-full h-10 px-3 border border-input bg-background rounded-md text-sm"
+                              >
+                                <option value="">Select an avatar...</option>
+                                {Object.entries(AVATAR_OPTIONS).map(([key, avatar]) => (
+                                  <option key={key} value={key}>
+                                    {avatar.name} - {avatar.description}
+                                  </option>
+                                ))}
+                                <option value="custom">🎨 Custom Avatar (specify ID below)</option>
+                              </select>
+                            </div>
+
+                            {/* Custom Avatar ID (shown when custom is selected) */}
+                            {formData.selected_avatar === 'custom' && (
+                              <div className="space-y-2">
+                                <Label htmlFor="custom-avatar-id" className="text-sm font-medium">
+                                  Custom Avatar ID
+                                </Label>
+                                <Input
+                                  id="custom-avatar-id"
+                                  value={formData.custom_avatar_id || ''}
+                                  onChange={(e) => handleFieldChange('custom_avatar_id', e.target.value)}
+                                  placeholder="e.g., Wayne_20240711"
+                                  className="h-10"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Enter your custom HeyGen avatar ID
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Voice Selection */}
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="selected-voice" className="text-sm font-medium">
+                                Choose Voice
+                              </Label>
+                              <select
+                                id="selected-voice"
+                                value={formData.selected_voice || ''}
+                                onChange={(e) => handleFieldChange('selected_voice', e.target.value)}
+                                className="w-full h-10 px-3 border border-input bg-background rounded-md text-sm"
+                              >
+                                <option value="">Select a voice...</option>
+                                {Object.entries(VOICE_OPTIONS).map(([key, voice]) => (
+                                  <option key={key} value={key}>
+                                    {voice.name} - {voice.description}
+                                  </option>
+                                ))}
+                                <option value="elevenlabs">🎤 ElevenLabs Voice (premium quality)</option>
+                                <option value="custom_heygen">🎵 Custom HeyGen Voice</option>
+                              </select>
+                            </div>
+
+                            {/* ElevenLabs Voice ID */}
+                            {formData.selected_voice === 'elevenlabs' && (
+                              <div className="space-y-2">
+                                <Label htmlFor="elevenlabs-voice-id" className="text-sm font-medium">
+                                  ElevenLabs Voice ID
+                                </Label>
+                                <Input
+                                  id="elevenlabs-voice-id"
+                                  value={formData.elevenlabs_voice_id || ''}
+                                  onChange={(e) => handleFieldChange('elevenlabs_voice_id', e.target.value)}
+                                  placeholder="e.g., 21m00Tcm4TlvDq8ikWAM"
+                                  className="h-10"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Enter your ElevenLabs voice ID for premium quality
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Custom HeyGen Voice ID */}
+                            {formData.selected_voice === 'custom_heygen' && (
+                              <div className="space-y-2">
+                                <Label htmlFor="custom-voice-id" className="text-sm font-medium">
+                                  Custom HeyGen Voice ID
+                                </Label>
+                                <Input
+                                  id="custom-voice-id"
+                                  value={formData.custom_voice_id || ''}
+                                  onChange={(e) => handleFieldChange('custom_voice_id', e.target.value)}
+                                  placeholder="e.g., 2EiwWnXFnvU5JabPnv8n"
+                                  className="h-10"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Enter your custom HeyGen voice ID
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Position and Background */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="selected-position" className="text-sm font-medium">
+                                Avatar Position
+                              </Label>
+                              <select
+                                id="selected-position"
+                                value={formData.selected_position || 'center'}
+                                onChange={(e) => handleFieldChange('selected_position', e.target.value)}
+                                className="w-full h-10 px-3 border border-input bg-background rounded-md text-sm"
+                              >
+                                {Object.entries(POSITION_OPTIONS).map(([key, position]) => (
+                                  <option key={key} value={key}>
+                                    {position.name} - {position.description}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="selected-background" className="text-sm font-medium">
+                                Background Color
+                              </Label>
+                              <select
+                                id="selected-background"
+                                value={formData.selected_background || 'white'}
+                                onChange={(e) => handleFieldChange('selected_background', e.target.value)}
+                                className="w-full h-10 px-3 border border-input bg-background rounded-md text-sm"
+                              >
+                                {Object.entries(BACKGROUND_OPTIONS).map(([key, bg]) => (
+                                  <option key={key} value={key}>
+                                    {bg.name} {bg.hex && `(${bg.hex})`}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Custom Background Hex */}
+                          {formData.selected_background === 'custom' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="custom-background-hex" className="text-sm font-medium">
+                                Custom Background Color
+                              </Label>
+                              <Input
+                                id="custom-background-hex"
+                                value={formData.custom_background_hex || ''}
+                                onChange={(e) => handleFieldChange('custom_background_hex', e.target.value)}
+                                placeholder="#4A90E2"
+                                className="h-10"
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Enter a hex color code (e.g., #4A90E2)
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="bg-blue-50 border border-blue-200 p-4 rounded-md">
+                            <h4 className="font-medium text-blue-900 mb-2">💡 Configuration Tips</h4>
+                            <ul className="text-sm text-blue-800 space-y-1">
+                              <li>• Choose from curated avatars or use your own custom HeyGen avatar</li>
+                              <li>• ElevenLabs voices provide the highest quality but require an API key</li>
+                              <li>• Position and background can be customized for your brand</li>
+                              <li>• Settings are saved automatically as you make changes</li>
+                            </ul>
+                          </div>
+                        </div>
+                      )}
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
