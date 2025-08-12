@@ -1616,7 +1616,15 @@ async def initiate_agent_with_files(
 
             if successful_uploads:
                 message_content += "\n\n" if message_content else ""
-                for file_path in successful_uploads: message_content += f"[Uploaded File: {file_path}]\n"
+                if len(successful_uploads) == 1:
+                    # Use quotes to clearly delineate the filename for the agent
+                    file_name = os.path.basename(successful_uploads[0])
+                    message_content += f"[Uploaded 1 File: \"{file_name}\"]\n"
+                else:
+                    message_content += f"[Uploaded {len(successful_uploads)} Files:]\n"
+                    for file_path in successful_uploads:
+                        file_name = os.path.basename(file_path)
+                        message_content += f"[Uploaded File: \"{file_name}\"]\n"
             if failed_uploads:
                 message_content += "\n\nThe following files failed to upload:\n"
                 for failed_file in failed_uploads: message_content += f"- {failed_file}\n"

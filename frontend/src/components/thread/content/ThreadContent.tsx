@@ -219,6 +219,29 @@ export function renderMarkdownContent(
                 const attachments = attachmentsMatch 
                     ? [attachmentsMatch[1].trim()].filter(a => a.length > 0)
                     : [];
+                
+                // Also check for uploaded file format in the content
+                const uploadedFileMatches = rawXml.match(/\[Uploaded (?:\d+ )?File: (.*?)\]/g);
+                if (uploadedFileMatches) {
+                    uploadedFileMatches.forEach(match => {
+                        const pathMatch = match.match(/\[Uploaded (?:\d+ )?File: (.*?)\]/);
+                        if (pathMatch && pathMatch[1]) {
+                            let filePath = pathMatch[1];
+                            
+                            // Remove quotes if present (new format)
+                            if (filePath.startsWith('"') && filePath.endsWith('"')) {
+                                filePath = filePath.slice(1, -1);
+                            }
+                            
+                            // If it's just a filename, prepend workspace path
+                            if (!filePath.startsWith('/workspace/')) {
+                                filePath = `/workspace/${filePath}`;
+                            }
+                            
+                            attachments.push(filePath);
+                        }
+                    });
+                }
 
             // Extract content from the ask tag
             const contentMatch = rawXml.match(/<ask[^>]*>([\s\S]*?)<\/ask>/i);
@@ -549,12 +572,28 @@ export const ThreadContent: React.FC<ThreadContentProps> = ({
             if (message.type === 'user') {
                 try {
                     const content = typeof message.content === 'string' ? message.content : '';
-                    const attachmentsMatch = content.match(/\[Uploaded File: (.*?)\]/g);
+                    
+                    // Handle both old and new formats
+                    // New format: [Uploaded 1 File: "filename"] or [Uploaded File: "filename"]
+                    // Old format: [Uploaded File: /path/to/filename]
+                    const attachmentsMatch = content.match(/\[Uploaded (?:\d+ )?File: (.*?)\]/g);
                     if (attachmentsMatch) {
                         attachmentsMatch.forEach(match => {
-                            const pathMatch = match.match(/\[Uploaded File: (.*?)\]/);
+                            const pathMatch = match.match(/\[Uploaded (?:\d+ )?File: (.*?)\]/);
                             if (pathMatch && pathMatch[1]) {
-                                allAttachments.push(pathMatch[1]);
+                                let filePath = pathMatch[1];
+                                
+                                // Remove quotes if present (new format)
+                                if (filePath.startsWith('"') && filePath.endsWith('"')) {
+                                    filePath = filePath.slice(1, -1);
+                                }
+                                
+                                // If it's just a filename (new format), prepend workspace path
+                                if (!filePath.startsWith('/workspace/')) {
+                                    filePath = `/workspace/${filePath}`;
+                                }
+                                
+                                allAttachments.push(filePath);
                             }
                         });
                     }
