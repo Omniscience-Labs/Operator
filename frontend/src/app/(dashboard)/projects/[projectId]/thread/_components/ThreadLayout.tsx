@@ -39,6 +39,7 @@ interface ThreadLayoutProps {
   isMobile: boolean;
   initialLoadCompleted: boolean;
   agentName?: string;
+  agent?: { knowledge_bases?: Array<{ name?: string; index_name?: string; description?: string }> };
 }
 
 export function ThreadLayout({
@@ -72,7 +73,8 @@ export function ThreadLayout({
   debugMode,
   isMobile,
   initialLoadCompleted,
-  agentName
+  agentName,
+  agent
 }: ThreadLayoutProps) {
   return (
     <div className="flex h-screen">
@@ -112,6 +114,7 @@ export function ThreadLayout({
         currentIndex={currentToolIndex}
         onNavigate={onSidePanelNavigate}
         project={project || undefined}
+        agent={agent}
         renderAssistantMessage={renderAssistantMessage}
         renderToolResult={renderToolResult}
         isLoading={!initialLoadCompleted || isLoading}

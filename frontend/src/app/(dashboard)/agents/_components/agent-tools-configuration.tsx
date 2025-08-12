@@ -15,8 +15,8 @@ export const AgentToolsConfiguration = ({ tools, onToolsChange }: AgentToolsConf
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const getToolBadge = (toolName: string) => {
-    // Add "new" badge to Excel tool, Audio transcription tool, Data providers tool, and Audio overviews tool
-    if (toolName === 'sb_excel_tool' || toolName === 'sb_audio_transcription_tool' || toolName === 'data_providers_tool' || toolName === 'sb_podcast_tool') {
+    // Add "new" badge to Excel tool, Audio transcription tool, Data providers tool, Audio overviews tool, and Video Avatar tool
+    if (toolName === 'sb_excel_tool' || toolName === 'sb_audio_transcription_tool' || toolName === 'data_providers_tool' || toolName === 'sb_podcast_tool' || toolName === 'sb_video_avatar_tool') {
       return <Badge variant="new" className="ml-2 h-4 text-xs">New</Badge>;
     }
     // Add "beta" badge to PDF form filling tool

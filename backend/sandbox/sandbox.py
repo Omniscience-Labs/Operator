@@ -1,3 +1,6 @@
+import asyncio
+import aiohttp
+from typing import Optional
 from daytona_sdk import Daytona, DaytonaConfig, CreateSandboxFromImageParams, Sandbox, SessionExecuteRequest, Resources, SandboxState
 from dotenv import load_dotenv
 from utils.logger import logger
@@ -50,7 +53,7 @@ async def get_or_start_sandbox(sandbox_id: str):
                 sandbox = daytona.get(sandbox_id)
                 
                 # Start supervisord in a session when restarting
-                start_supervisord_session(sandbox)
+                await start_supervisord_session_with_wait(sandbox)
             except Exception as e:
                 logger.error(f"Error starting sandbox: {e}")
                 raise e
@@ -62,8 +65,60 @@ async def get_or_start_sandbox(sandbox_id: str):
         logger.error(f"Error retrieving or starting sandbox: {str(e)}")
         raise e
 
+async def start_supervisord_session_with_wait(sandbox: Sandbox):
+    """Start supervisord in a session and wait for HTTP server to be ready."""
+    session_id = "supervisord-session"
+    try:
+        logger.info(f"Creating session {session_id} for supervisord")
+        sandbox.process.create_session(session_id)
+        
+        # Execute supervisord command
+        sandbox.process.execute_session_command(session_id, SessionExecuteRequest(
+            command="exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf",
+            var_async=True
+        ))
+        logger.info(f"Supervisord started in session {session_id}")
+        
+        # Wait for HTTP server to be ready
+        await wait_for_http_server(sandbox)
+        
+    except Exception as e:
+        logger.error(f"Error starting supervisord session: {str(e)}")
+        raise e
+
+async def wait_for_http_server(sandbox: Sandbox, max_wait_time: int = 60):
+    """Wait for the HTTP server on port 8080 to be ready."""
+    logger.info("Waiting for HTTP server to be ready...")
+    
+    # Get the sandbox URL and construct health check URL
+    sandbox_url = sandbox.sandbox_url
+    if not sandbox_url:
+        logger.warning("No sandbox URL available, skipping health check")
+        return
+    
+    # Remove port if present and add 8080
+    base_url = sandbox_url.replace(':8080', '')
+    health_url = f"{base_url}:8080/health"
+    
+    start_time = asyncio.get_event_loop().time()
+    
+    async with aiohttp.ClientSession() as session:
+        while (asyncio.get_event_loop().time() - start_time) < max_wait_time:
+            try:
+                async with session.get(health_url, timeout=aiohttp.ClientTimeout(total=5)) as response:
+                    if response.status == 200:
+                        logger.info("HTTP server is ready!")
+                        return
+            except Exception as e:
+                logger.debug(f"Health check failed: {e}")
+            
+            # Wait 2 seconds before next attempt
+            await asyncio.sleep(2)
+    
+    logger.warning(f"HTTP server did not become ready within {max_wait_time} seconds")
+
 def start_supervisord_session(sandbox: Sandbox):
-    """Start supervisord in a session."""
+    """Start supervisord in a session (legacy sync version)."""
     session_id = "supervisord-session"
     try:
         logger.info(f"Creating session {session_id} for supervisord")

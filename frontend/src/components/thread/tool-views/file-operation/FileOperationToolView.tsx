@@ -132,7 +132,7 @@ export function FileOperationToolView({
 
   const htmlPreviewUrl =
     isHtml && project?.sandbox?.sandbox_url && processedFilePath
-      ? constructHtmlPreviewUrl(project.sandbox.sandbox_url, processedFilePath)
+      ? constructHtmlPreviewUrl(project.sandbox.sandbox_url, processedFilePath, project.id)
       : undefined;
 
   const FileIcon = getFileIcon(fileName);

@@ -69,6 +69,9 @@ export function CsvRenderer({
     const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage] = useState(50); 
+    
+    // Generate unique instance ID to prevent key conflicts across multiple CSV renderers
+    const instanceId = useMemo(() => crypto.randomUUID(), []);
 
     const parsedData = parseCSV(content);
     const isEmpty = parsedData.data.length === 0;
@@ -217,7 +220,7 @@ export function CsvRenderer({
                                 <DropdownMenuSeparator />
                                 {parsedData.headers.map(header => (
                                     <DropdownMenuCheckboxItem
-                                        key={header}
+                                        key={`${instanceId}-${header}`}
                                         checked={!hiddenColumns.has(header)}
                                         onCheckedChange={() => toggleColumnVisibility(header)}
                                     >
@@ -250,7 +253,7 @@ export function CsvRenderer({
                             <tr>
                                 {visibleHeaders.map((header, index) => (
                                     <th 
-                                        key={header} 
+                                        key={`${instanceId}-${header}`} 
                                         className="px-4 py-3 text-left font-medium border-b border-border bg-muted/50 backdrop-blur-sm"
                                         style={{ width: '150px', minWidth: '150px' }}
                                     >
@@ -270,14 +273,14 @@ export function CsvRenderer({
                         <tbody>
                             {paginatedData.map((row: any, rowIndex) => (
                                 <tr 
-                                    key={startIndex + rowIndex} 
+                                    key={`${instanceId}-${startIndex + rowIndex}`} 
                                     className="border-b border-border hover:bg-muted/30 transition-colors"
                                 >
                                     {visibleHeaders.map((header, cellIndex) => {
                                         const value = row[header];
                                         return (
                                             <td 
-                                                key={`${startIndex + rowIndex}-${cellIndex}`} 
+                                                key={`${instanceId}-${startIndex + rowIndex}-${cellIndex}`} 
                                                 className={cn(
                                                     "px-4 py-3 text-sm border-r border-border last:border-r-0",
                                                     getCellClassName(value)
@@ -348,7 +351,7 @@ export function CsvRenderer({
                                     
                                     return (
                                         <Button
-                                            key={pageNum}
+                                            key={`${instanceId}-${pageNum}`}
                                             variant={currentPage === pageNum ? "default" : "outline"}
                                             size="sm"
                                             onClick={() => setCurrentPage(pageNum)}

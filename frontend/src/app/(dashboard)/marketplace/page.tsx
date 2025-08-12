@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, Download, Star, Calendar, User, Tags, TrendingUp, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMarketplaceAgents, useAddAgentToLibrary } from '@/hooks/react-query/marketplace/use-marketplace';
+import { useMarketplaceAgents, useAddAgentToLibrary, useUserAgentLibrary } from '@/hooks/react-query/marketplace/use-marketplace';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 
@@ -18,6 +19,7 @@ import { useCurrentAccount } from '@/hooks/use-current-account';
 type SortOption = 'newest' | 'popular' | 'most_downloaded' | 'name';
 
 export default function MarketplacePage() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -36,10 +38,16 @@ export default function MarketplacePage() {
   }), [page, searchQuery, selectedTags, sortBy, currentAccount]);
 
   const { data: agentsResponse, isLoading, error } = useMarketplaceAgents(queryParams);
+  const { data: userLibrary } = useUserAgentLibrary();
   const addToLibraryMutation = useAddAgentToLibrary();
 
   const agents = agentsResponse?.agents || [];
   const pagination = agentsResponse?.pagination;
+
+  // Helper function to check if an agent is already in user's library
+  const isAgentInLibrary = (agentId: string) => {
+    return userLibrary?.some(libraryItem => libraryItem.original_agent_id === agentId) || false;
+  };
 
   React.useEffect(() => {
     setPage(1);
@@ -71,6 +79,11 @@ export default function MarketplacePage() {
 
   const handleHighlightChange = (agentId: string | null) => {
     setHighlightedAgentId(agentId);
+  };
+
+  const handleAgentClick = (agentId: string) => {
+    // Navigate to dashboard with the selected agent
+    router.push(`/dashboard?agent_id=${agentId}`);
   };
 
 
@@ -179,7 +192,7 @@ export default function MarketplacePage() {
         </div>
 
         {isLoading ? (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 sm:gap-6">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="min-h-[400px] bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden">
                 <div className="p-6 space-y-4 h-full flex flex-col">
@@ -201,22 +214,43 @@ export default function MarketplacePage() {
             ))}
           </div>
         ) : agents.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">
-              {searchQuery || selectedTags.length > 0
-                ? "No agents found matching your criteria. Try adjusting your search or filters."
-                : "No agents are currently available in the marketplace."}
-            </p>
+          <div className="text-center py-12 space-y-6">
+            <div className="space-y-3">
+              <p className="text-muted-foreground">
+                {searchQuery || selectedTags.length > 0
+                  ? "No agents found matching your criteria. Try adjusting your search or filters."
+                  : "No agents are currently available in the marketplace."}
+              </p>
+              {!searchQuery && selectedTags.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Be the first to share your agents with your community!
+                </p>
+              )}
+            </div>
+            {!searchQuery && selectedTags.length === 0 && (
+              <Button 
+                onClick={() => {
+                  // Navigate to agents page and trigger tour
+                  window.location.href = '/agents?tour=publish';
+                }}
+                className="gap-2"
+              >
+                <Globe className="h-4 w-4" />
+                Add Agent to Marketplace
+              </Button>
+            )}
           </div>
         ) : (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 sm:gap-6">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:gap-6">
             {agents.map((agent) => (
               <AgentProfileCard
                 key={agent.agent_id} 
                 agent={agent}
                 mode="marketplace"
                 onAddToLibrary={(agentId) => handleAddToLibrary(agentId, agent.name)}
+                onChat={handleAgentClick}
                 isLoading={addingAgentId === agent.agent_id}
+                isAddedToLibrary={isAgentInLibrary(agent.agent_id)}
                 enableTilt={true}
                 isHighlighted={highlightedAgentId === agent.agent_id}
                 onHighlightChange={handleHighlightChange}

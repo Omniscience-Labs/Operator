@@ -28,7 +28,7 @@ import { UnifiedMessage, ApiMessageType, ToolCallInput, Project } from '../_type
 import { useThreadData, useToolCalls, useBilling, useKeyboardShortcuts } from '../_hooks';
 import { ThreadError, UpgradeDialog, ThreadLayout } from '../_components';
 import { useVncPreloader } from '@/hooks/useVncPreloader';
-import { useAgent } from '@/hooks/react-query/agents/use-agents';
+import { useAgent, useThreadAgent } from '@/hooks/react-query/agents/use-agents';
 import { useAgentStatus } from '@/contexts/AgentStatusContext';
 
 export default function ThreadPage({
@@ -128,6 +128,8 @@ export default function ThreadPage({
   const startAgentMutation = useStartAgentMutation();
   const stopAgentMutation = useStopAgentMutation();
   const { data: agent } = useAgent(threadQuery.data?.agent_id);
+  const { data: threadAgent } = useThreadAgent(threadId);
+  const effectiveAgent = agent || threadAgent?.agent;
   const { updateThreadStatus } = useAgentStatus();
 
   const { data: subscriptionData } = useSubscription();
@@ -602,7 +604,7 @@ export default function ThreadPage({
         debugMode={debugMode}
         isMobile={isMobile}
         initialLoadCompleted={initialLoadCompleted}
-        agentName={agent?.name || 'Operator'}
+        agentName={effectiveAgent?.name || 'Operator'}
       >
         <ThreadError error={error} />
       </ThreadLayout>
@@ -645,7 +647,8 @@ export default function ThreadPage({
         debugMode={debugMode}
         isMobile={isMobile}
         initialLoadCompleted={initialLoadCompleted}
-        agentName={agent?.name || 'Operator'}
+        agentName={effectiveAgent?.name || 'Operator'}
+        agent={agent}
       >
         <ThreadContent
           messages={messages}
@@ -659,8 +662,8 @@ export default function ThreadPage({
           sandboxId={sandboxId}
           project={project}
           debugMode={debugMode}
-          agentName={agent?.name || 'Operator'}
-          agentAvatar={agent?.avatar}
+          agentName={effectiveAgent?.name || 'Operator'}
+          agentAvatar={effectiveAgent?.avatar}
           isSidePanelOpen={isSidePanelOpen}
           isLeftSidebarOpen={leftSidebarState !== 'collapsed'}
           onScrollStateChange={handleScrollStateChange}
@@ -683,7 +686,7 @@ export default function ThreadPage({
               value={newMessage}
               onChange={setNewMessage}
               onSubmit={handleSubmitMessage}
-              placeholder={`Describe a task for ${agent?.name || 'Operator'}...`}
+              placeholder={`Describe a task for ${effectiveAgent?.name || 'Operator'}...`}
               loading={isSending}
               disabled={isSending || agentStatus === 'running' || agentStatus === 'connecting'}
               isAgentRunning={agentStatus === 'running' || agentStatus === 'connecting'}
@@ -692,7 +695,7 @@ export default function ThreadPage({
               onFileBrowse={handleOpenFileViewer}
               sandboxId={sandboxId || undefined}
               messages={messages}
-              agentName={agent?.name || 'Operator'}
+              agentName={effectiveAgent?.name || 'Operator'}
 
             />
           </div>

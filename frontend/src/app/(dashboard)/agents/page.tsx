@@ -16,7 +16,7 @@ import { AgentsList } from './_components/agents-list';
 import { AgentProfileCard } from '@/components/ProfileCard/AgentProfileCard';
 import { LoadingState } from './_components/loading-state';
 import { Pagination } from './_components/pagination';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { DEFAULT_AGENTPRESS_TOOLS } from './_data/tools';
 import { AgentsParams } from '@/hooks/react-query/agents/utils';
 import { useFeatureFlags } from '@/lib/feature-flags';
@@ -27,6 +27,7 @@ import { useCurrentAccount } from '@/hooks/use-current-account';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTour } from '@/components/tour/TourContext';
 import { AgentsPageTour } from '@/components/tour/AgentsPageTour';
+import { PublishAgentTour } from '@/components/tour/PublishAgentTour';
 
 type ViewMode = 'grid' | 'list';
 type SortOption = 'name' | 'created_at' | 'updated_at' | 'tools_count';
@@ -41,6 +42,7 @@ interface FilterOptions {
 
 export default function AgentsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
   const currentAccount = useCurrentAccount();
@@ -48,6 +50,7 @@ export default function AgentsPage() {
 
   const [publishDialogAgent, setPublishDialogAgent] = useState<any>(null);
   const [shareDialogAgent, setShareDialogAgent] = useState<any>(null);
+  const [showPublishTour, setShowPublishTour] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [highlightedAgentId, setHighlightedAgentId] = useState<string | null>(null);
   
@@ -148,6 +151,23 @@ export default function AgentsPage() {
   React.useEffect(() => {
     setPage(1);
   }, [searchQuery, sortBy, sortOrder, filters]);
+
+  // Detect tour=publish query parameter
+  React.useEffect(() => {
+    const tourParam = searchParams.get('tour');
+    if (tourParam === 'publish' && !showPublishTour) {
+      // Small delay to ensure page is loaded
+      const timer = setTimeout(() => {
+        setShowPublishTour(true);
+        // Clean up the URL by removing the query parameter
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('tour');
+        router.replace(newUrl.pathname, { scroll: false });
+      }, 200);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, showPublishTour, router]);
 
   const handleDeleteAgent = async (agentId: string) => {
     try {
@@ -404,6 +424,15 @@ export default function AgentsPage() {
           onComplete={() => {
             setHasCompletedAgentsTour(true);
             console.log('Agents tour completed');
+          }}
+        />
+
+        {/* Publish Agent Tour */}
+        <PublishAgentTour
+          isActive={showPublishTour}
+          onComplete={() => {
+            setShowPublishTour(false);
+            console.log('Publish tour completed');
           }}
         />
       </div>

@@ -395,6 +395,7 @@ export function NavAgents() {
                 size="sm"
                 className="h-8 px-3 bg-gray-100 dark:bg-gray-800 text-black dark:text-white hover:text-white dark:hover:text-black border-none shadow-sm hover:shadow-md transition-shadow [--liquid-button-color:black] dark:[--liquid-button-color:white] mb-2"
                 onClick={() => window.location.href = '/dashboard'}
+                data-testid="new-task-button"
               >
                 <Plus className="h-4 w-4" />
                 <span className="ml-1 text-sm font-medium">New Task</span>
@@ -413,6 +414,7 @@ export function NavAgents() {
                   size="sm"
                   className="h-9 w-9 min-w-[2.25rem] bg-gray-100 dark:bg-gray-800 text-black dark:text-white hover:text-white dark:hover:text-black border-none shadow-sm hover:shadow-md transition-shadow flex items-center justify-center [--liquid-button-color:black] dark:[--liquid-button-color:white] mb-2"
                   onClick={() => window.location.href = '/dashboard'}
+                  data-testid="new-task-button"
                 >
                   <Plus className="h-4 w-4" />
                   <span className="sr-only">New Task</span>

@@ -323,6 +323,17 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({
         ],
         className
       )}
+      onClick={(e) => {
+        // Handle card click in marketplace mode - navigate to chat with the agent
+        if (mode === 'marketplace') {
+          const target = e.target as HTMLElement;
+          const isClickingButton = target.closest('button') !== null;
+          
+          if (!isClickingButton) {
+            onChat?.(agent.agent_id);
+          }
+        }
+      }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onTouchStart={handleTouchStart}

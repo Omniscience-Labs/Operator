@@ -142,6 +142,34 @@ async def llen(key: str) -> int:
     return await redis_client.llen(key)
 
 
+# Hash operations
+async def hset(key: str, mapping: dict = None, **kwargs):
+    """Set field in a hash."""
+    redis_client = await get_client()
+    if mapping:
+        return await redis_client.hset(key, mapping=mapping)
+    else:
+        return await redis_client.hset(key, **kwargs)
+
+
+async def hget(key: str, field: str):
+    """Get field value from a hash."""
+    redis_client = await get_client()
+    return await redis_client.hget(key, field)
+
+
+async def hgetall(key: str) -> dict:
+    """Get all fields and values from a hash."""
+    redis_client = await get_client()
+    return await redis_client.hgetall(key)
+
+
+async def hdel(key: str, *fields):
+    """Delete fields from a hash."""
+    redis_client = await get_client()
+    return await redis_client.hdel(key, *fields)
+
+
 # Key management
 async def expire(key: str, time: int):
     """Set a key's time to live in seconds."""

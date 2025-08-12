@@ -149,6 +149,10 @@ class Configuration:
     FIRECRAWL_API_KEY: str
     FIRECRAWL_URL: Optional[str] = "https://api.firecrawl.dev"
     
+    # HeyGen configuration
+    HEYGEN_API_KEY: Optional[str] = None
+    HEYGEN_API_BASE: Optional[str] = None
+    
     # Stripe configuration
     STRIPE_SECRET_KEY: Optional[str] = None
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
@@ -221,8 +225,8 @@ class Configuration:
             
             # Excel operations (sb_excel_tool)
             "create_workbook": 2.0,
-            "write_data": 1.5,
-            "read_data": 1.5,
+            "write_data": 0.3,
+            "read_data": 0.3,
             "list_sheets": 1.0,
             
             # Vision (sb_vision_tool)
@@ -296,6 +300,14 @@ class Configuration:
             
             # MCP tools (variable cost)
             "call_mcp_tool": 1.0,  # Base cost, can be overridden per server
+            
+            # HeyGen Video Avatar operations
+            "create_avatar_session": 5.0,     # High cost for session creation
+            "avatar_speak": 2.0,              # Moderate cost for text-to-speech
+            "start_voice_chat": 3.0,          # Higher cost for voice chat setup
+            "stop_voice_chat": 0.5,           # Low cost for stopping chat
+            "close_avatar_session": 0.5,      # Low cost for cleanup
+            "list_avatar_sessions": 0.3,      # Low cost for listing
             
             # Default cost for unspecified tools
             "default": 0.5

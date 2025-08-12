@@ -8,6 +8,9 @@ export interface ToolViewProps {
   isSuccess?: boolean;
   isStreaming?: boolean;
   project?: Project;
+  agent?: {
+    knowledge_bases?: Array<{ name?: string; index_name?: string; description?: string }>;
+  };
   name?: string;
   messages?: any[];
   agentStatus?: string;

@@ -30,6 +30,7 @@ export function BrowserToolView({
   isSuccess = true,
   isStreaming = false,
   project,
+  agent,
   agentStatus = 'idle',
   messages = [],
   currentIndex = 0,
@@ -158,6 +159,9 @@ export function BrowserToolView({
   const isRunning = isStreaming || agentStatus === 'running';
   const isLastToolCall = currentIndex === totalCalls - 1;
 
+  // Registry/Metadata: derive knowledge base count directly from agent metadata
+  const kbCount = Array.isArray(agent?.knowledge_bases) ? agent!.knowledge_bases!.length : 0;
+
   const vncIframe = useMemo(() => {
     if (!vncPreviewUrl) return null;
 
@@ -280,6 +284,15 @@ export function BrowserToolView({
             </div>
           </div>
           
+          {!isRunning && kbCount > 0 && (
+            <Badge 
+              variant="secondary"
+              className="bg-gradient-to-b from-violet-200 to-violet-100 text-violet-700 dark:from-violet-800/50 dark:to-violet-900/60 dark:text-violet-300"
+            >
+              {kbCount} knowledge base{kbCount !== 1 ? 's' : ''} connected
+            </Badge>
+          )}
+
           {!isRunning && (
             <Badge 
               variant="secondary" 

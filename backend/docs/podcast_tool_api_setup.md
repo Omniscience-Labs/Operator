@@ -8,7 +8,7 @@ Add these environment variables to your `.env` file:
 
 ```bash
 # Podcastfy FastAPI Configuration
-PODCASTFY_API_URL=https://podcastfy-8x6a.onrender.com  # Your deployed FastAPI instance
+PODCASTFY_API_URL=https://podcastfy-omni.onrender.com  # Your deployed FastAPI instance
 ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
 
 # LLM API Keys (at least one is required)
