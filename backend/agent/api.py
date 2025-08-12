@@ -119,6 +119,43 @@ class AgentResponse(BaseModel):
     is_managed: Optional[bool] = False  # True if this is a managed agent (live reference)
     is_owned: Optional[bool] = True  # True if user owns this agent
 
+class CustomAvatarPresetCreateRequest(BaseModel):
+    preset_name: str
+    description: Optional[str] = None
+    avatar_type: str = "heygen"  # 'heygen' or 'custom'
+    avatar_id: str
+    voice_type: str = "heygen"  # 'heygen', 'elevenlabs', or 'custom'  
+    voice_id: str
+    position: str = "center"  # 'center', 'left', 'right'
+    background_type: str = "preset"  # 'preset' or 'custom'
+    background_value: str = "white"  # preset key or hex color
+
+class CustomAvatarPresetUpdateRequest(BaseModel):
+    preset_name: Optional[str] = None
+    description: Optional[str] = None
+    avatar_type: Optional[str] = None
+    avatar_id: Optional[str] = None
+    voice_type: Optional[str] = None
+    voice_id: Optional[str] = None
+    position: Optional[str] = None
+    background_type: Optional[str] = None
+    background_value: Optional[str] = None
+
+class CustomAvatarPresetResponse(BaseModel):
+    preset_id: str
+    account_id: str
+    preset_name: str
+    description: Optional[str] = None
+    avatar_type: str
+    avatar_id: str
+    voice_type: str
+    voice_id: str
+    position: str
+    background_type: str
+    background_value: str
+    created_at: str
+    updated_at: str
+
 class PaginationInfo(BaseModel):
     page: int
     limit: int
@@ -3292,3 +3329,182 @@ async def get_shared_agent(
     except Exception as e:
         logger.error(f"Error getting shared agent with token {token}: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+# Custom Avatar Presets endpoints
+
+@router.get("/custom-avatar-presets", response_model=List[CustomAvatarPresetResponse])
+async def get_custom_avatar_presets(user_id: str = Depends(get_current_user_id_from_jwt)):
+    """Get all custom avatar presets for the current user."""
+    logger.info(f"Getting custom avatar presets for user: {user_id}")
+    client = await db.client
+    
+    try:
+        result = await client.table('custom_avatar_presets').select('*').eq('account_id', user_id).order('created_at', desc=True).execute()
+        
+        presets = []
+        for preset_data in result.data:
+            presets.append(CustomAvatarPresetResponse(
+                preset_id=preset_data['preset_id'],
+                account_id=preset_data['account_id'],
+                preset_name=preset_data['preset_name'],
+                description=preset_data.get('description'),
+                avatar_type=preset_data['avatar_type'],
+                avatar_id=preset_data['avatar_id'],
+                voice_type=preset_data['voice_type'],
+                voice_id=preset_data['voice_id'],
+                position=preset_data['position'],
+                background_type=preset_data['background_type'],
+                background_value=preset_data['background_value'],
+                created_at=preset_data['created_at'],
+                updated_at=preset_data['updated_at']
+            ))
+        
+        return presets
+        
+    except Exception as e:
+        logger.error(f"Error fetching custom avatar presets: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch custom avatar presets: {str(e)}")
+
+@router.post("/custom-avatar-presets", response_model=CustomAvatarPresetResponse)
+async def create_custom_avatar_preset(
+    preset_data: CustomAvatarPresetCreateRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Create a new custom avatar preset."""
+    logger.info(f"Creating custom avatar preset for user: {user_id}")
+    client = await db.client
+    
+    try:
+        # Check if preset name already exists for this user
+        existing = await client.table('custom_avatar_presets').select('preset_id').eq('account_id', user_id).eq('preset_name', preset_data.preset_name).execute()
+        
+        if existing.data:
+            raise HTTPException(status_code=400, detail=f"Preset with name '{preset_data.preset_name}' already exists")
+        
+        insert_data = {
+            "account_id": user_id,
+            "preset_name": preset_data.preset_name,
+            "description": preset_data.description,
+            "avatar_type": preset_data.avatar_type,
+            "avatar_id": preset_data.avatar_id,
+            "voice_type": preset_data.voice_type,
+            "voice_id": preset_data.voice_id,
+            "position": preset_data.position,
+            "background_type": preset_data.background_type,
+            "background_value": preset_data.background_value
+        }
+        
+        result = await client.table('custom_avatar_presets').insert(insert_data).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to create custom avatar preset")
+        
+        preset = result.data[0]
+        return CustomAvatarPresetResponse(
+            preset_id=preset['preset_id'],
+            account_id=preset['account_id'],
+            preset_name=preset['preset_name'],
+            description=preset.get('description'),
+            avatar_type=preset['avatar_type'],
+            avatar_id=preset['avatar_id'],
+            voice_type=preset['voice_type'],
+            voice_id=preset['voice_id'],
+            position=preset['position'],
+            background_type=preset['background_type'],
+            background_value=preset['background_value'],
+            created_at=preset['created_at'],
+            updated_at=preset['updated_at']
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating custom avatar preset: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create custom avatar preset: {str(e)}")
+
+@router.put("/custom-avatar-presets/{preset_id}", response_model=CustomAvatarPresetResponse)
+async def update_custom_avatar_preset(
+    preset_id: str,
+    preset_data: CustomAvatarPresetUpdateRequest,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Update a custom avatar preset."""
+    logger.info(f"Updating custom avatar preset {preset_id} for user: {user_id}")
+    client = await db.client
+    
+    try:
+        # Check if preset exists and belongs to user
+        existing = await client.table('custom_avatar_presets').select('*').eq('preset_id', preset_id).eq('account_id', user_id).single().execute()
+        
+        if not existing.data:
+            raise HTTPException(status_code=404, detail="Custom avatar preset not found")
+        
+        # Check if new preset name conflicts (if changing name)
+        if preset_data.preset_name and preset_data.preset_name != existing.data['preset_name']:
+            name_conflict = await client.table('custom_avatar_presets').select('preset_id').eq('account_id', user_id).eq('preset_name', preset_data.preset_name).execute()
+            
+            if name_conflict.data:
+                raise HTTPException(status_code=400, detail=f"Preset with name '{preset_data.preset_name}' already exists")
+        
+        # Build update data (only include non-None values)
+        update_data = {}
+        for field, value in preset_data.dict(exclude_unset=True).items():
+            if value is not None:
+                update_data[field] = value
+        
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No valid fields to update")
+        
+        result = await client.table('custom_avatar_presets').update(update_data).eq('preset_id', preset_id).eq('account_id', user_id).execute()
+        
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to update custom avatar preset")
+        
+        preset = result.data[0]
+        return CustomAvatarPresetResponse(
+            preset_id=preset['preset_id'],
+            account_id=preset['account_id'],
+            preset_name=preset['preset_name'],
+            description=preset.get('description'),
+            avatar_type=preset['avatar_type'],
+            avatar_id=preset['avatar_id'],
+            voice_type=preset['voice_type'],
+            voice_id=preset['voice_id'],
+            position=preset['position'],
+            background_type=preset['background_type'],
+            background_value=preset['background_value'],
+            created_at=preset['created_at'],
+            updated_at=preset['updated_at']
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating custom avatar preset: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update custom avatar preset: {str(e)}")
+
+@router.delete("/custom-avatar-presets/{preset_id}")
+async def delete_custom_avatar_preset(
+    preset_id: str,
+    user_id: str = Depends(get_current_user_id_from_jwt)
+):
+    """Delete a custom avatar preset."""
+    logger.info(f"Deleting custom avatar preset {preset_id} for user: {user_id}")
+    client = await db.client
+    
+    try:
+        # Check if preset exists and belongs to user
+        existing = await client.table('custom_avatar_presets').select('preset_id').eq('preset_id', preset_id).eq('account_id', user_id).single().execute()
+        
+        if not existing.data:
+            raise HTTPException(status_code=404, detail="Custom avatar preset not found")
+        
+        await client.table('custom_avatar_presets').delete().eq('preset_id', preset_id).eq('account_id', user_id).execute()
+        
+        return {"message": "Custom avatar preset deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting custom avatar preset: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete custom avatar preset: {str(e)}")

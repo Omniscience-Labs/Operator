@@ -11,6 +11,7 @@ import { DEFAULT_AGENTPRESS_TOOLS, getToolDisplayName } from '../_data/tools';
 import { useCreateAgent } from '@/hooks/react-query/agents/use-agents';
 import { MCPConfigurationNew } from './mcp/mcp-configuration-new';
 import { AgentKnowledgeConfiguration } from './agent-knowledge-configuration';
+import { CustomPresetManager } from './custom-preset-manager';
 
 interface AgentCreateRequest {
   name: string;
@@ -578,6 +579,33 @@ export const CreateAgentDialog = ({ isOpen, onOpenChange, onAgentCreated }: Crea
                             <li>• Position and background can be customized for your brand</li>
                             <li>• All settings can be changed later in the agent editor</li>
                           </ul>
+                        </div>
+
+                        {/* Custom Preset Manager */}
+                        <div className="border-t pt-6 mt-6">
+                          <CustomPresetManager 
+                            onPresetSelect={(preset) => {
+                              // Apply preset to form data
+                              handleInputChange('selected_avatar', preset.avatar_type === 'custom' ? 'custom' : preset.avatar_id);
+                              handleInputChange('selected_voice', preset.voice_type);
+                              handleInputChange('selected_position', preset.position);
+                              handleInputChange('selected_background', preset.background_type === 'custom' ? 'custom' : preset.background_value);
+                              
+                              if (preset.avatar_type === 'custom') {
+                                handleInputChange('custom_avatar_id', preset.avatar_id);
+                              }
+                              
+                              if (preset.voice_type === 'elevenlabs') {
+                                handleInputChange('elevenlabs_voice_id', preset.voice_id);
+                              } else if (preset.voice_type === 'custom') {
+                                handleInputChange('custom_voice_id', preset.voice_id);
+                              }
+                              
+                              if (preset.background_type === 'custom') {
+                                handleInputChange('custom_background_hex', preset.background_value);
+                              }
+                            }}
+                          />
                         </div>
                       </div>
                     )}

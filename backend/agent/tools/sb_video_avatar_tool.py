@@ -874,6 +874,19 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         try:
             message = "🎭 **Avatar Customization Options**\n\n"
             
+            # Custom Presets (if any)
+            custom_presets = await self._get_custom_presets()
+            if custom_presets:
+                message += "## ⭐ **Your Custom Presets**\n"
+                for preset_name, preset in custom_presets.items():
+                    message += f"**{preset_name}** (Custom)\n"
+                    if preset.get('description'):
+                        message += f"  • {preset['description']}\n"
+                    message += f"  • Avatar: {preset['avatar_id']}\n"
+                    message += f"  • Voice: {preset['voice_id']}\n"
+                    message += f"  • Position: {preset['position']}\n"
+                    message += f"  • Background: {preset['background_value']}\n\n"
+            
             # Avatar Options
             message += "## 👤 **Available Avatars**\n"
             for key, avatar in self.AVATAR_OPTIONS.items():
@@ -945,6 +958,31 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         except Exception as e:
             logger.debug(f"Could not fetch agent avatar config: {str(e)}")
             return None
+
+    async def _get_custom_presets(self) -> Dict[str, Any]:
+        """Get custom avatar presets for the current user."""
+        try:
+            # Check if we have access to the current user through thread manager
+            if hasattr(self, 'thread_manager') and self.thread_manager:
+                # For now, we'll need to get user_id from the thread manager or context
+                # This is a simplified version - in production you'd get the user_id properly
+                try:
+                    from utils.db import db
+                    client = await db.client
+                    
+                    # We'll need to get the user_id from the thread context
+                    # For now, return empty dict - this will be enhanced when we have proper user context
+                    return {}
+                    
+                except ImportError:
+                    logger.debug("Could not import db module")
+                    return {}
+            
+            return {}
+            
+        except Exception as e:
+            logger.debug(f"Could not fetch custom presets: {str(e)}")
+            return {}
 
     async def _generate_elevenlabs_audio(self, text: str, voice_id: str) -> Optional[bytes]:
         """Generate audio using ElevenLabs TTS."""

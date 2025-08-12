@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, Settings2, Sparkles, Check, Clock, Eye, Menu, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -18,6 +20,7 @@ import { getAgentAvatar } from '../../_utils/get-agent-style';
 import { EditableText } from '@/components/ui/editable';
 import { StylePicker } from '../../_components/style-picker';
 import { useSidebar } from '@/components/ui/sidebar';
+import { CustomPresetManager } from '../../_components/custom-preset-manager';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AgentBuilderChat } from '../../_components/agent-builder-chat';
 import { useFeatureFlags } from '@/lib/feature-flags';
@@ -689,6 +692,33 @@ export default function AgentConfigurationPage() {
                               <li>• Position and background can be customized for your brand</li>
                               <li>• Settings are saved automatically as you make changes</li>
                             </ul>
+                          </div>
+
+                          {/* Custom Preset Manager */}
+                          <div className="border-t pt-6 mt-6">
+                            <CustomPresetManager 
+                              onPresetSelect={(preset) => {
+                                // Apply preset to form data
+                                handleFieldChange('selected_avatar', preset.avatar_type === 'custom' ? 'custom' : preset.avatar_id);
+                                handleFieldChange('selected_voice', preset.voice_type);
+                                handleFieldChange('selected_position', preset.position);
+                                handleFieldChange('selected_background', preset.background_type === 'custom' ? 'custom' : preset.background_value);
+                                
+                                if (preset.avatar_type === 'custom') {
+                                  handleFieldChange('custom_avatar_id', preset.avatar_id);
+                                }
+                                
+                                if (preset.voice_type === 'elevenlabs') {
+                                  handleFieldChange('elevenlabs_voice_id', preset.voice_id);
+                                } else if (preset.voice_type === 'custom') {
+                                  handleFieldChange('custom_voice_id', preset.voice_id);
+                                }
+                                
+                                if (preset.background_type === 'custom') {
+                                  handleFieldChange('custom_background_hex', preset.background_value);
+                                }
+                              }}
+                            />
                           </div>
                         </div>
                       )}
