@@ -26,7 +26,6 @@ import { AgentBuilderChat } from '../../_components/agent-builder-chat';
 import { useFeatureFlags } from '@/lib/feature-flags';
 import { LiquidButton } from '@/components/animate-ui/buttons/liquid';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
