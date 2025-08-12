@@ -60,6 +60,12 @@ class AgentCreateRequest(BaseModel):
     knowledge_bases: Optional[List[Dict[str, Any]]] = []
     avatar: Optional[str] = None
     avatar_color: Optional[str] = None
+    # Video avatar settings
+    video_avatar_id: Optional[str] = None
+    video_voice_id: Optional[str] = None
+    elevenlabs_voice_id: Optional[str] = None
+    avatar_preset: Optional[str] = None
+    video_avatar_settings: Optional[Dict[str, Any]] = None
 
 class AgentUpdateRequest(BaseModel):
     name: Optional[str] = None
@@ -72,6 +78,12 @@ class AgentUpdateRequest(BaseModel):
     knowledge_bases: Optional[List[Dict[str, Any]]] = None
     avatar: Optional[str] = None
     avatar_color: Optional[str] = None
+    # Video avatar settings
+    video_avatar_id: Optional[str] = None
+    video_voice_id: Optional[str] = None
+    elevenlabs_voice_id: Optional[str] = None
+    avatar_preset: Optional[str] = None
+    video_avatar_settings: Optional[Dict[str, Any]] = None
 
 class AgentResponse(BaseModel):
     agent_id: str
@@ -2101,6 +2113,12 @@ async def create_agent(
             "knowledge_bases": agent_data.knowledge_bases or [],
             "avatar": agent_data.avatar,
             "avatar_color": agent_data.avatar_color,
+            # Video avatar settings
+            "video_avatar_id": agent_data.video_avatar_id,
+            "video_voice_id": agent_data.video_voice_id,
+            "elevenlabs_voice_id": agent_data.elevenlabs_voice_id,
+            "avatar_preset": agent_data.avatar_preset,
+            "video_avatar_settings": agent_data.video_avatar_settings or {},
             # Add missing required columns with defaults
             "visibility": "private",
             "is_public": False,

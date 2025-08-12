@@ -153,6 +153,9 @@ class Configuration:
     HEYGEN_API_KEY: Optional[str] = None
     HEYGEN_API_BASE: Optional[str] = None
     
+    # ElevenLabs configuration for high-quality TTS
+    ELEVENLABS_API_KEY: Optional[str] = None
+    
     # Stripe configuration
     STRIPE_SECRET_KEY: Optional[str] = None
     STRIPE_WEBHOOK_SECRET: Optional[str] = None

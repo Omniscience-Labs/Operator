@@ -32,6 +32,35 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
     """
 
     name: str = "sb_video_avatar_tool"
+    
+    # Predefined avatar-voice combinations for consistent, high-quality results
+    AVATAR_VOICE_PRESETS = {
+        "professional_male": {
+            "avatar_id": "Wayne_20240711",  # Professional male avatar
+            "voice_id": "2EiwWnXFnvU5JabPnv8n",  # Professional male voice
+            "description": "Professional male presenter - ideal for business content"
+        },
+        "professional_female": {
+            "avatar_id": "Susan_20240711",  # Professional female avatar  
+            "voice_id": "21m00Tcm4TlvDq8ikWAM",  # Professional female voice
+            "description": "Professional female presenter - great for educational content"
+        },
+        "casual_male": {
+            "avatar_id": "Josh_20240711",  # Casual male avatar
+            "voice_id": "pNInz6obpgDQGcFmaJgB",  # Casual male voice
+            "description": "Casual male presenter - perfect for friendly, approachable content"
+        },
+        "casual_female": {
+            "avatar_id": "Anna_20240711",  # Casual female avatar
+            "voice_id": "XB0fDUnXU5powFXDhCwa",  # Casual female voice  
+            "description": "Casual female presenter - ideal for conversational content"
+        },
+        "news_anchor": {
+            "avatar_id": "Tyler_20240711",  # News anchor style avatar
+            "voice_id": "29vD33N1CtxCmqQRPOHJ",  # News anchor voice
+            "description": "News anchor style - perfect for news, updates, and announcements"
+        }
+    }
     description: str = """
     Generate videos with AI avatars that can speak any text with natural speech and lip sync.
     
@@ -53,9 +82,15 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
     Features:
     - AI video generation with realistic avatars
     - Text-to-speech with natural lip synchronization  
+    - Predefined avatar-voice presets for consistent quality
+    - Custom agent avatar and ElevenLabs voice integration
     - Customizable avatar appearance and voice settings
     - Real-time conversation capabilities
     - Interactive video sessions
+    
+    NEW: Use predefined presets (professional_male, professional_female, casual_male, 
+    casual_female, news_anchor) for consistent, high-quality avatar-voice combinations.
+    Custom agents can have their own avatar and ElevenLabs voice configured.
     
     Perfect for creating engaging videos, presentations, educational content, 
     marketing materials, demos, explainers, and interactive demonstrations.
@@ -379,14 +414,19 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
                         "type": "string",
                         "description": "Unique name for this avatar session (used for management and reference)"
                     },
+                    "preset": {
+                        "type": "string",
+                        "description": "Use a predefined avatar-voice combination. Options: 'professional_male', 'professional_female', 'casual_male', 'casual_female', 'news_anchor'. If specified, overrides avatar_id and voice_id",
+                        "enum": ["professional_male", "professional_female", "casual_male", "casual_female", "news_anchor"]
+                    },
                     "avatar_id": {
                         "type": "string",
-                        "description": "HeyGen avatar ID to use. Use 'default' for the default avatar, or specify a custom avatar ID from your HeyGen account",
+                        "description": "HeyGen avatar ID to use. Use 'default' for the default avatar, or specify a custom avatar ID from your HeyGen account. Ignored if preset is specified",
                         "default": "default"
                     },
                     "voice_id": {
                         "type": "string",
-                        "description": "Voice ID for the avatar's speech. Use HeyGen voice IDs from the List Voices API",
+                        "description": "Voice ID for the avatar's speech. Use HeyGen voice IDs from the List Voices API. Ignored if preset is specified",
                         "default": "default"
                     },
                     "voice_rate": {
@@ -439,6 +479,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         tag_name="create-avatar-session",
         mappings=[
             {"param_name": "session_name", "node_type": "attribute", "path": ".", "required": True},
+            {"param_name": "preset", "node_type": "attribute", "path": ".", "required": False},
             {"param_name": "avatar_id", "node_type": "attribute", "path": ".", "required": False},
             {"param_name": "voice_id", "node_type": "attribute", "path": ".", "required": False},
             {"param_name": "voice_rate", "node_type": "attribute", "path": ".", "required": False},
@@ -453,8 +494,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         <function_calls>
         <invoke name="create_avatar_session">
         <parameter name="session_name">customer_service_avatar</parameter>
-        <parameter name="avatar_id">default</parameter>
-        <parameter name="voice_id">en-US-AriaNeural</parameter>
+        <parameter name="preset">professional_female</parameter>
         <parameter name="voice_rate">1.0</parameter>
         <parameter name="voice_emotion">FRIENDLY</parameter>
         <parameter name="quality">high</parameter>
@@ -468,6 +508,7 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
     )
     async def create_avatar_session(self,
                                   session_name: str,
+                                  preset: Optional[str] = None,
                                   avatar_id: str = "default",
                                   voice_id: str = "default",
                                   voice_rate: float = 1.0,
@@ -497,6 +538,33 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         try:
             # Ensure sandbox is initialized
             await self._ensure_sandbox()
+            
+            # Handle preset selection - override avatar_id and voice_id if preset is specified
+            if preset and preset in self.AVATAR_VOICE_PRESETS:
+                preset_config = self.AVATAR_VOICE_PRESETS[preset]
+                avatar_id = preset_config["avatar_id"]
+                voice_id = preset_config["voice_id"]
+                logger.info(f"Using preset '{preset}': {preset_config['description']}")
+            elif preset:
+                return self.fail_response(f"Unknown preset '{preset}'. Available presets: {', '.join(self.AVATAR_VOICE_PRESETS.keys())}")
+            
+            # Check if we have a custom agent with video avatar settings
+            agent_config = await self._get_agent_avatar_config()
+            if agent_config and not preset:  # Only use agent config if no preset specified
+                if agent_config.get("avatar_preset"):
+                    # Use agent's preset
+                    preset_config = self.AVATAR_VOICE_PRESETS.get(agent_config["avatar_preset"])
+                    if preset_config:
+                        avatar_id = preset_config["avatar_id"]
+                        voice_id = preset_config["voice_id"]
+                        logger.info(f"Using agent's preset '{agent_config['avatar_preset']}': {preset_config['description']}")
+                else:
+                    # Use agent's custom avatar/voice IDs
+                    if agent_config.get("video_avatar_id"):
+                        avatar_id = agent_config["video_avatar_id"]
+                    if agent_config.get("video_voice_id"):
+                        voice_id = agent_config["video_voice_id"]
+                    logger.info(f"Using custom agent avatar settings: avatar={avatar_id}, voice={voice_id}")
             
             # Check if session name already exists
             if session_name in self.active_sessions:
@@ -627,6 +695,248 @@ class SandboxVideoAvatarTool(SandboxToolsBase):
         except Exception as e:
             logger.error(f"Error in create_avatar_session: {str(e)}", exc_info=True)
             return self.fail_response(f"Avatar session creation failed: {str(e)}")
+
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "list_avatar_presets",
+            "description": "List available predefined avatar-voice combinations with descriptions",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="list-avatar-presets",
+        mappings=[],
+        example='''
+        <function_calls>
+        <invoke name="list_avatar_presets">
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def list_avatar_presets(self) -> ToolResult:
+        """List available predefined avatar-voice combinations.
+        
+        Returns:
+            ToolResult with available presets and their descriptions
+        """
+        try:
+            message = "🎭 **Available Avatar-Voice Presets**\n\n"
+            
+            for preset_name, config in self.AVATAR_VOICE_PRESETS.items():
+                message += f"**{preset_name}**\n"
+                message += f"  • {config['description']}\n"
+                message += f"  • Avatar: {config['avatar_id']}\n"
+                message += f"  • Voice: {config['voice_id']}\n\n"
+            
+            message += "💡 **Usage**: Use any preset name in `create_avatar_session(preset='preset_name')`\n"
+            message += "📝 **Example**: `create_avatar_session(session_name='my_avatar', preset='professional_female')`"
+            
+            return self.success_response(message)
+            
+        except Exception as e:
+            logger.error(f"Error listing avatar presets: {str(e)}")
+            return self.fail_response(f"Failed to list avatar presets: {str(e)}")
+
+    async def _get_agent_avatar_config(self) -> Optional[Dict[str, Any]]:
+        """Get avatar configuration for the current custom agent if available."""
+        try:
+            # Check if we have access to the current agent ID through thread manager
+            if hasattr(self, 'thread_manager') and self.thread_manager:
+                agent_id = getattr(self.thread_manager, 'agent_id', None)
+                if agent_id:
+                    # Use the existing database connection pattern from other tools
+                    try:
+                        from utils.db import db
+                        client = await db.client
+                    except ImportError:
+                        logger.debug("Could not import db module")
+                        return None
+                    
+                    result = await client.table('agents').select(
+                        'video_avatar_id, video_voice_id, elevenlabs_voice_id, avatar_preset, video_avatar_settings'
+                    ).eq('agent_id', agent_id).single().execute()
+                    
+                    if result.data:
+                        return result.data
+            
+            return None
+            
+        except Exception as e:
+            logger.debug(f"Could not fetch agent avatar config: {str(e)}")
+            return None
+
+    async def _generate_elevenlabs_audio(self, text: str, voice_id: str) -> Optional[bytes]:
+        """Generate audio using ElevenLabs TTS."""
+        try:
+            elevenlabs_key = os.getenv('ELEVENLABS_API_KEY')
+            if not elevenlabs_key:
+                logger.warning("ElevenLabs API key not configured")
+                return None
+            
+            url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+            
+            headers = {
+                "Accept": "audio/mpeg",
+                "Content-Type": "application/json",
+                "xi-api-key": elevenlabs_key
+            }
+            
+            data = {
+                "text": text,
+                "model_id": "eleven_monolingual_v1",
+                "voice_settings": {
+                    "stability": 0.5,
+                    "similarity_boost": 0.5
+                }
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, json=data, headers=headers) as response:
+                    if response.status == 200:
+                        return await response.read()
+                    else:
+                        logger.error(f"ElevenLabs API error: {response.status}")
+                        return None
+                        
+        except Exception as e:
+            logger.error(f"Error generating ElevenLabs audio: {str(e)}")
+            return None
+
+    @openapi_schema({
+        "type": "function",
+        "function": {
+            "name": "create_custom_avatar_video",
+            "description": "Create a video with custom agent's avatar and ElevenLabs voice. This uses the agent's configured avatar and voice settings for personalized videos.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "Text for the avatar to speak in the video"
+                    },
+                    "video_title": {
+                        "type": "string",
+                        "description": "Title for the generated video",
+                        "default": "Custom Agent Video"
+                    },
+                    "override_preset": {
+                        "type": "string",
+                        "description": "Override agent's default preset with a specific one",
+                        "enum": ["professional_male", "professional_female", "casual_male", "casual_female", "news_anchor"]
+                    }
+                },
+                "required": ["text"]
+            }
+        }
+    })
+    @xml_schema(
+        tag_name="create-custom-avatar-video",
+        mappings=[
+            {"param_name": "text", "node_type": "content", "path": ".", "required": True},
+            {"param_name": "video_title", "node_type": "attribute", "path": ".", "required": False},
+            {"param_name": "override_preset", "node_type": "attribute", "path": ".", "required": False}
+        ],
+        example='''
+        <function_calls>
+        <invoke name="create_custom_avatar_video">
+        <parameter name="video_title">Welcome Message</parameter>
+        <parameter name="text">Hello! Welcome to our platform. I'm here to help you with any questions you might have.</parameter>
+        </invoke>
+        </function_calls>
+        '''
+    )
+    async def create_custom_avatar_video(self,
+                                       text: str,
+                                       video_title: str = "Custom Agent Video",
+                                       override_preset: Optional[str] = None) -> ToolResult:
+        """Create a video using custom agent's avatar and voice settings.
+        
+        Args:
+            text: Text for the avatar to speak
+            video_title: Title for the video
+            override_preset: Override agent's preset with a specific one
+            
+        Returns:
+            ToolResult with video creation status and download link
+        """
+        try:
+            # Ensure sandbox is initialized
+            await self._ensure_sandbox()
+            
+            # Get agent configuration
+            agent_config = await self._get_agent_avatar_config()
+            
+            # Determine avatar and voice settings
+            avatar_id = "default"
+            voice_id = "default"
+            use_elevenlabs = False
+            elevenlabs_voice_id = None
+            
+            if override_preset and override_preset in self.AVATAR_VOICE_PRESETS:
+                # Use override preset
+                preset_config = self.AVATAR_VOICE_PRESETS[override_preset]
+                avatar_id = preset_config["avatar_id"]
+                voice_id = preset_config["voice_id"]
+                logger.info(f"Using override preset '{override_preset}': {preset_config['description']}")
+            elif agent_config:
+                # Use agent's configuration
+                if agent_config.get("avatar_preset") and agent_config["avatar_preset"] in self.AVATAR_VOICE_PRESETS:
+                    preset_config = self.AVATAR_VOICE_PRESETS[agent_config["avatar_preset"]]
+                    avatar_id = preset_config["avatar_id"]
+                    voice_id = preset_config["voice_id"]
+                    logger.info(f"Using agent's preset '{agent_config['avatar_preset']}'")
+                else:
+                    # Use custom settings
+                    if agent_config.get("video_avatar_id"):
+                        avatar_id = agent_config["video_avatar_id"]
+                    if agent_config.get("elevenlabs_voice_id"):
+                        # Use ElevenLabs for high-quality TTS
+                        use_elevenlabs = True
+                        elevenlabs_voice_id = agent_config["elevenlabs_voice_id"]
+                        logger.info(f"Using ElevenLabs voice: {elevenlabs_voice_id}")
+                    elif agent_config.get("video_voice_id"):
+                        voice_id = agent_config["video_voice_id"]
+            
+            # If using ElevenLabs, generate audio first then use it with avatar
+            if use_elevenlabs and elevenlabs_voice_id:
+                audio_content = await self._generate_elevenlabs_audio(text, elevenlabs_voice_id)
+                if audio_content:
+                    # Save audio to workspace
+                    audio_dir = f"{self.workspace_path}/audio"
+                    self.sandbox.fs.create_folder(audio_dir, "755")
+                    
+                    import time
+                    audio_filename = f"custom_voice_{int(time.time())}.mp3"
+                    audio_path = f"{audio_dir}/{audio_filename}"
+                    self.sandbox.fs.upload_file(audio_content, audio_path)
+                    
+                    message = f"🎵 **Custom ElevenLabs Audio Generated**\n\n"
+                    message += f"📁 **Audio File**: {audio_filename}\n"
+                    message += f"🎤 **Voice ID**: {elevenlabs_voice_id}\n"
+                    message += f"📝 **Text**: {text[:100]}{'...' if len(text) > 100 else ''}\n\n"
+                    message += f"💡 The audio has been generated with your custom ElevenLabs voice and saved to the workspace.\n"
+                    message += f"🎬 For video generation with this audio, you can use the HeyGen avatar video tool with the audio file."
+                    
+                    return self.success_response(message)
+                else:
+                    return self.fail_response("Failed to generate ElevenLabs audio. Please check your API key and voice ID.")
+            
+            # Use HeyGen avatar video generation
+            return await self.generate_avatar_video(
+                text=text,
+                avatar_id=avatar_id,
+                voice_id=voice_id,
+                video_title=video_title
+            )
+            
+        except Exception as e:
+            logger.error(f"Error creating custom avatar video: {str(e)}")
+            return self.fail_response(f"Failed to create custom avatar video: {str(e)}")
 
     @openapi_schema({
         "type": "function",
