@@ -46,10 +46,12 @@ const extractFromNewFormat = (content: any): {
 
     let attachments: string[] | null = null;
     if (args.attachments) {
-      if (typeof args.attachments === 'string') {
-        attachments = args.attachments.split(',').map(a => a.trim()).filter(a => a.length > 0);
-      } else if (Array.isArray(args.attachments)) {
+      if (Array.isArray(args.attachments)) {
         attachments = args.attachments;
+      } else if (typeof args.attachments === 'string') {
+        // Treat single string as single attachment (don't split by comma)
+        // This fixes the issue where filenames with commas get split incorrectly
+        attachments = [args.attachments];
       }
     }
 
@@ -102,7 +104,9 @@ const extractFromLegacyFormat = (content: any): {
       if (Array.isArray(toolData.arguments.attachments)) {
         attachments = toolData.arguments.attachments;
       } else if (typeof toolData.arguments.attachments === 'string') {
-        attachments = toolData.arguments.attachments.split(',').map(a => a.trim()).filter(a => a.length > 0);
+        // Treat single string as single attachment (don't split by comma)
+        // This fixes the issue where filenames with commas get split incorrectly
+        attachments = [toolData.arguments.attachments];
       }
     }
     
@@ -121,7 +125,10 @@ const extractFromLegacyFormat = (content: any): {
   let attachments: string[] | null = null;
   const attachmentsMatch = contentStr.match(/attachments=["']([^"']*)["']/i);
   if (attachmentsMatch) {
-    attachments = attachmentsMatch[1].split(',').map(a => a.trim()).filter(a => a.length > 0);
+    // Treat the matched string as a single attachment (don't split by comma)
+    // This fixes the issue where filenames with commas get split incorrectly
+    const attachmentValue = attachmentsMatch[1].trim();
+    attachments = attachmentValue ? [attachmentValue] : null;
   }
 
   let text: string | null = null;

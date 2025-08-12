@@ -54,7 +54,7 @@ class MessageTool(Tool):
 4. Do you have any dietary restrictions I should be aware of?
 
 This information will help me make sure the cake meets your expectations for the celebration.</parameter>
-        <parameter name="attachments">recipes/chocolate_cake.txt,photos/cake_examples.jpg</parameter>
+        <parameter name="attachments">["recipes/chocolate_cake.txt", "photos/cake_examples.jpg"]</parameter>
         </invoke>
         </function_calls>
         '''

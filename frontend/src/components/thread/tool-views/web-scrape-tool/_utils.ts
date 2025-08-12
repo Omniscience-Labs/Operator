@@ -52,12 +52,14 @@ const extractFromNewFormat = (content: any): {
     let url: string | null = null;
     
     if (args.urls) {
-      if (typeof args.urls === 'string') {
-        urls = args.urls.split(',').map(u => u.trim());
-        url = urls[0];
-      } else if (Array.isArray(args.urls)) {
+      if (Array.isArray(args.urls)) {
         urls = args.urls;
         url = urls[0];
+      } else if (typeof args.urls === 'string') {
+        // Treat single string as single URL (don't split by comma)
+        // This fixes the issue where URLs with commas get split incorrectly
+        urls = [args.urls];
+        url = args.urls;
       }
     }
 

@@ -69,7 +69,10 @@ export function CompleteToolView({
 
         const attachmentsMatch = contentStr.match(/attachments=["']([^"']*)["']/i);
         if (attachmentsMatch) {
-          const attachments = attachmentsMatch[1].split(',').map(a => a.trim()).filter(a => a.length > 0);
+          // Treat the matched string as a single attachment (don't split by comma)
+          // This fixes the issue where filenames with commas get split incorrectly
+          const attachmentValue = attachmentsMatch[1].trim();
+          const attachments = attachmentValue ? [attachmentValue] : [];
           setCompleteData(prev => ({ ...prev, attachments }));
         }
 

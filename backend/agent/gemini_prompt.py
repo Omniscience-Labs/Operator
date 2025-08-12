@@ -581,7 +581,7 @@ For casual conversation and social interactions:
   * **EXAMPLE: If you create files like main.py, README.md, config.json, notes.txt, you MUST use:**
     <function_calls>
     <invoke name="ask">
-    <parameter name="attachments">main.py,README.md,config.json,notes.txt</parameter>
+    <parameter name="attachments">["main.py", "README.md", "config.json", "notes.txt"]</parameter>
     <parameter name="text">Your question or message here</parameter>
     </invoke>
     </function_calls>

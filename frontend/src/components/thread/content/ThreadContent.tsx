@@ -130,7 +130,7 @@ export function renderMarkdownContent(
                     
                     // Convert single attachment to array for consistent handling
                     const attachmentArray = Array.isArray(attachments) ? attachments : 
-                                          (typeof attachments === 'string' ? attachments.split(',').map(a => a.trim()) : []);
+                                          (typeof attachments === 'string' ? [attachments] : []);
                     
                     // Render ask tool content with attachment UI
                     contentParts.push(
@@ -215,10 +215,10 @@ export function renderMarkdownContent(
 
         if (toolName === 'ask') {
             // Extract attachments from the XML attributes
-            const attachmentsMatch = rawXml.match(/attachments=["']([^"']*)["']/i);
-            const attachments = attachmentsMatch
-                ? attachmentsMatch[1].split(',').map(a => a.trim())
-                : [];
+                            const attachmentsMatch = rawXml.match(/attachments=["']([^"']*)["']/i);
+                const attachments = attachmentsMatch 
+                    ? [attachmentsMatch[1].trim()].filter(a => a.length > 0)
+                    : [];
 
             // Extract content from the ask tag
             const contentMatch = rawXml.match(/<ask[^>]*>([\s\S]*?)<\/ask>/i);
