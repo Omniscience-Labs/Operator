@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { backendApi } from '@/lib/api-client';
 
 export interface CustomAvatarPreset {
   preset_id: string;
@@ -46,7 +46,7 @@ export const useCustomAvatarPresets = () => {
   return useQuery({
     queryKey: ['custom-avatar-presets'],
     queryFn: async (): Promise<CustomAvatarPreset[]> => {
-      const response = await apiClient.get('/api/agents/custom-avatar-presets');
+      const response = await backendApi.get('/api/custom-avatar-presets');
       return response.data;
     },
   });
@@ -58,7 +58,7 @@ export const useCreateCustomAvatarPreset = () => {
   
   return useMutation({
     mutationFn: async (data: CreateCustomAvatarPresetRequest): Promise<CustomAvatarPreset> => {
-      const response = await apiClient.post('/api/agents/custom-avatar-presets', data);
+      const response = await backendApi.post('/api/custom-avatar-presets', data);
       return response.data;
     },
     onSuccess: () => {
@@ -79,7 +79,7 @@ export const useUpdateCustomAvatarPreset = () => {
       preset_id: string; 
       data: UpdateCustomAvatarPresetRequest 
     }): Promise<CustomAvatarPreset> => {
-      const response = await apiClient.put(`/api/agents/custom-avatar-presets/${preset_id}`, data);
+      const response = await backendApi.put(`/api/custom-avatar-presets/${preset_id}`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -94,7 +94,7 @@ export const useDeleteCustomAvatarPreset = () => {
   
   return useMutation({
     mutationFn: async (preset_id: string): Promise<{ message: string }> => {
-      const response = await apiClient.delete(`/api/agents/custom-avatar-presets/${preset_id}`);
+      const response = await backendApi.delete(`/api/custom-avatar-presets/${preset_id}`);
       return response.data;
     },
     onSuccess: () => {
