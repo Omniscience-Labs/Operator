@@ -4,6 +4,7 @@ services:
     name: Operator-worker
     runtime: docker
     repo: https://github.com/Omniscience-Labs/Operator
+    branch: main
     plan: pro
     region: oregon
     dockerCommand: python -m dramatiq run_agent_background
@@ -23,6 +24,7 @@ services:
     name: Operator-backend
     runtime: docker
     repo: https://github.com/Omniscience-Labs/Operator
+    branch: main
     plan: pro
     region: oregon
     dockerContext: .
