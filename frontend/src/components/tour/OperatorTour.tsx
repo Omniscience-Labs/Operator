@@ -599,7 +599,29 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: 'button[data-slot="dropdown-menu-trigger"], button:has(.lucide-chevron-down):has(.lucide-square-pen), button[aria-haspopup="menu"]:has(.lucide-chevron-down)',
+          element: () => {
+            // Use the same logic as in beforeShowPromise to find the exact button
+            const dropdownTrigger = document.querySelector('button[data-slot="dropdown-menu-trigger"]') as HTMLElement;
+            if (dropdownTrigger) {
+              const hasChevronDown = dropdownTrigger.querySelector('.lucide-chevron-down, svg.lucide-chevron-down');
+              const hasSquarePen = dropdownTrigger.querySelector('.lucide-square-pen, svg.lucide-square-pen');
+              if (hasChevronDown && hasSquarePen) {
+                return dropdownTrigger;
+              }
+            }
+            
+            // Fallback to any button with both icons
+            const buttons = document.querySelectorAll('button');
+            for (const button of buttons) {
+              const hasSquarePen = button.querySelector('.lucide-square-pen, svg.lucide-square-pen');
+              const hasChevronDown = button.querySelector('.lucide-chevron-down, svg.lucide-chevron-down');
+              if (hasSquarePen && hasChevronDown) {
+                return button as HTMLElement;
+              }
+            }
+            
+            return null;
+          },
           on: 'bottom'
         },
         popperOptions: {
@@ -1246,13 +1268,42 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Step 10: Sidebar Marketplace/Agent Library
       tourRef.current.addStep({
         id: 'sidebar-marketplace',
-        title: 'Agent Library',
+        title: 'Marketplace',
         text: `
           <div class="space-y-3">
             <p>Discover amazing agents created by the community in the Marketplace!</p>
             <p>Browse, try, and add pre-built agents to your library to expand your capabilities instantly.</p>
           </div>
         `,
+        attachTo: {
+          element: () => {
+            // Use the same logic as findSidebarMarketplaceLink
+            const selectors = [
+              'a[href="/marketplace"]',
+              'a[href*="marketplace"]',
+              '[data-testid="marketplace-nav"]'
+            ];
+            
+            for (const selector of selectors) {
+              const element = document.querySelector(selector);
+              if (element) {
+                return element as HTMLElement;
+              }
+            }
+            
+            // Find by Store icon
+            const storeIcons = document.querySelectorAll('.lucide-store, svg[data-lucide="store"]');
+            for (const icon of storeIcons) {
+              const link = icon.closest('a');
+              if (link && link.getAttribute('href') === '/marketplace') {
+                return link as HTMLElement;
+              }
+            }
+            
+            return null;
+          },
+          on: 'right'
+        },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
