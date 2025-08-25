@@ -996,7 +996,86 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 7: Join Online Meeting Button
+      // Step 7: New Task Button
+      tourRef.current.addStep({
+        id: 'new-task',
+        title: 'Create a New Task',
+        text: `
+          <div class="space-y-3">
+            <p>This is the "New Task" button! Click here to create a new task in your workspace.</p>
+            <p>You can add a title, description, and due date to organize your work efficiently.</p>
+          </div>
+        `,
+        attachTo: {
+          element: findNewTaskElement,
+          on: 'right'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [20, 0], // Position popup to the right of the button with proper spacing
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 20,
+              },
+            },
+            {
+              name: 'flip',
+              options: {
+                fallbackPlacements: ['left', 'top', 'bottom'],
+              },
+            },
+          ],
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = findNewTaskElement();
+              if (element) {
+                addHighlight(element);
+                // Ensure element is scrolled into view with extra space
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = findNewTaskElement();
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 8: Join Online Meeting Button
       tourRef.current.addStep({
         id: 'join-online-meeting',
         title: 'Join Online Meeting',
@@ -1079,9 +1158,9 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 8: Meetings Hub (keeping the enhanced version only)
+      // Step 9: Meetings Hub (keeping the enhanced version only)
 
-      // Step 8: Sidebar Meetings Link - Enhanced  
+      // Step 9: Sidebar Meetings Link - Enhanced  
       const sidebarMeetingsStep: any = {
         id: 'sidebar-meetings',
         title: '🎙️ Meetings Hub',
@@ -1126,19 +1205,19 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             const tryFindElement = () => {
               attempts++;
               const element = findSidebarMeetingsLink();
-              console.log(`🔍 Step 8 - Attempt ${attempts} - Sidebar meetings element:`, element);
+              console.log(`🔍 Step 9 - Attempt ${attempts} - Sidebar meetings element:`, element);
               
               if (element && element.offsetParent !== null) {
                 // Element found and visible - highlight but don't scroll
                 addHighlight(element);
-                console.log('✅ Step 8 - Successfully found and highlighted meetings link');
+                console.log('✅ Step 9 - Successfully found and highlighted meetings link');
                 resolve();
               } else if (attempts < maxAttempts) {
                 // Try again after a short delay
                 setTimeout(tryFindElement, 300);
               } else {
                 // Max attempts reached, continue anyway
-                console.warn('⚠️ Step 8 - Meetings element not found after all attempts, continuing tour');
+                console.warn('⚠️ Step 9 - Meetings element not found after all attempts, continuing tour');
               resolve();
               }
             };
@@ -1152,7 +1231,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             const element = findSidebarMeetingsLink();
             if (element) {
               removeHighlight(element);
-              console.log('✅ Step 8 - Removed highlight from meetings link');
+              console.log('✅ Step 9 - Removed highlight from meetings link');
             }
             resolve();
           });
@@ -1161,7 +1240,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Back',
             action: () => {
-              console.log('Step 8 (sidebar-meetings) Back button clicked');
+              console.log('Step 9 (sidebar-meetings) Back button clicked');
               tourRef.current?.back();
             },
             classes: 'shepherd-button-secondary'
@@ -1169,7 +1248,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Got it! 👍',
             action: () => {
-              console.log('Step 8 (sidebar-meetings) Next button clicked, proceeding to step 9');
+              console.log('Step 9 (sidebar-meetings) Next button clicked, proceeding to step 10');
               tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
@@ -1188,7 +1267,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.addStep(sidebarMeetingsStep);
 
-      // Step 9: Sidebar Agents Link  
+      // Step 10: Sidebar Agents Link  
       const sidebarAgentsStep: any = {
         id: 'sidebar-agents',
         title: 'Your Agents',
@@ -1213,7 +1292,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findSidebarAgentsLink();
-              console.log('Step 9 - Sidebar agents element:', element);
+              console.log('Step 10 - Sidebar agents element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1222,7 +1301,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
               } else {
-                console.warn('Step 9 - Sidebar agents element not found, continuing anyway');
+                console.warn('Step 10 - Sidebar agents element not found, continuing anyway');
               }
               resolve();
             }, 800);
@@ -1265,7 +1344,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.addStep(sidebarAgentsStep);
 
-      // Step 10: Sidebar Marketplace/Agent Library
+      // Step 11: Sidebar Marketplace/Agent Library
       tourRef.current.addStep({
         id: 'sidebar-marketplace',
         title: 'Marketplace',
@@ -1308,7 +1387,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           return new Promise<void>((resolve) => {
             setTimeout(() => {
               const element = findSidebarMarketplaceLink();
-              console.log('Step 10 - Sidebar marketplace element:', element);
+              console.log('Step 11 - Sidebar marketplace element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1317,7 +1396,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
               } else {
-                console.warn('Step 10 - Sidebar marketplace element not found, continuing anyway');
+                console.warn('Step 11 - Sidebar marketplace element not found, continuing anyway');
               }
               resolve();
             }, 800);
@@ -1341,7 +1420,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Next',
             action: () => {
-              console.log('Step 10 Next button clicked, proceeding to step 11');
+              console.log('Step 11 Next button clicked, proceeding to step 12');
               tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
@@ -1349,7 +1428,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 11: Sidebar Tasks/Past Chats
+      // Step 12: Sidebar Tasks/Past Chats
       tourRef.current.addStep({
         id: 'sidebar-tasks',
         title: 'Your Tasks & Past Chats',
@@ -1378,7 +1457,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findSidebarTasksSection();
-              console.log('Step 11 - Sidebar tasks section element:', element);
+              console.log('Step 12 - Sidebar tasks section element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1387,7 +1466,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
               } else {
-                console.warn('Step 11 - Sidebar tasks section element not found, continuing anyway');
+                console.warn('Step 12 - Sidebar tasks section element not found, continuing anyway');
               }
               resolve();
             }, 800);
@@ -1416,7 +1495,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 12: User Profile
+      // Step 13: User Profile
       tourRef.current.addStep({
         id: 'sidebar-profile',
         title: 'Your Profile',
@@ -1445,7 +1524,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findUserProfileButton();
-              console.log('Step 12 - User profile button element:', element);
+              console.log('Step 13 - User profile button element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1454,7 +1533,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
               } else {
-                console.warn('Step 12 - User profile button element not found, continuing anyway');
+                console.warn('Step 13 - User profile button element not found, continuing anyway');
               }
               resolve();
             }, 800);
@@ -1476,91 +1555,14 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-secondary'
           },
           {
-            text: 'Next',
-            action: () => tourRef.current?.next(),
+            text: 'Finish Tour',
+            action: () => tourRef.current?.complete(),
             classes: 'shepherd-button-primary'
           }
         ]
       });
 
-      // Step 13: New Task Button
-      tourRef.current.addStep({
-        id: 'new-task',
-        title: 'Create a New Task',
-        text: `
-          <div class="space-y-3">
-            <p>This is the "New Task" button! Click here to create a new task in your workspace.</p>
-            <p>You can add a title, description, and due date to organize your work efficiently.</p>
-          </div>
-        `,
-        attachTo: {
-          element: findNewTaskElement,
-          on: 'right'
-        },
-        popperOptions: {
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [20, 0], // Position popup to the right of the button with proper spacing
-              },
-            },
-            {
-              name: 'preventOverflow',
-              options: {
-                boundary: 'viewport',
-                padding: 20,
-              },
-            },
-            {
-              name: 'flip',
-              options: {
-                fallbackPlacements: ['left', 'top', 'bottom'],
-              },
-            },
-          ],
-        },
-        beforeShowPromise: () => {
-          return new Promise<void>((resolve) => {
-            setTimeout(() => {
-              const element = findNewTaskElement();
-              if (element) {
-                addHighlight(element);
-                // Ensure element is scrolled into view with extra space
-                element.scrollIntoView({ 
-                  behavior: 'smooth', 
-                  block: 'center',
-                  inline: 'nearest' 
-                });
-              }
-              resolve();
-            }, 100);
-          });
-        },
-        beforeHidePromise: () => {
-          return new Promise<void>((resolve) => {
-            const element = findNewTaskElement();
-            if (element) {
-              removeHighlight(element);
-            }
-            resolve();
-          });
-        },
-        buttons: [
-          {
-            text: 'Back',
-            action: () => tourRef.current?.back(),
-            classes: 'shepherd-button-secondary'
-          },
-          {
-            text: 'Finish Tour',
-            action: () => {
-              tourRef.current?.complete();
-            },
-            classes: 'shepherd-button-primary'
-          }
-        ]
-      });
+
 
 
 
