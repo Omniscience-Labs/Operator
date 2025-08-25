@@ -996,86 +996,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 7: New Task Button
-      tourRef.current.addStep({
-        id: 'new-task',
-        title: 'Create a New Task',
-        text: `
-          <div class="space-y-3">
-            <p>This is the "New Task" button! Click here to create a new task in your workspace.</p>
-            <p>You can add a title, description, and due date to organize your work efficiently.</p>
-          </div>
-        `,
-        attachTo: {
-          element: findNewTaskElement,
-          on: 'right'
-        },
-        popperOptions: {
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [20, 0], // Position popup to the right of the button with proper spacing
-              },
-            },
-            {
-              name: 'preventOverflow',
-              options: {
-                boundary: 'viewport',
-                padding: 20,
-              },
-            },
-            {
-              name: 'flip',
-              options: {
-                fallbackPlacements: ['left', 'top', 'bottom'],
-              },
-            },
-          ],
-        },
-        beforeShowPromise: () => {
-          return new Promise<void>((resolve) => {
-            setTimeout(() => {
-              const element = findNewTaskElement();
-              if (element) {
-                addHighlight(element);
-                // Ensure element is scrolled into view with extra space
-                element.scrollIntoView({ 
-                  behavior: 'smooth', 
-                  block: 'center',
-                  inline: 'nearest' 
-                });
-              }
-              resolve();
-            }, 100);
-          });
-        },
-        beforeHidePromise: () => {
-          return new Promise<void>((resolve) => {
-            const element = findNewTaskElement();
-            if (element) {
-              removeHighlight(element);
-            }
-            resolve();
-          });
-        },
-        buttons: [
-          {
-            text: 'Back',
-            action: () => tourRef.current?.back(),
-            classes: 'shepherd-button-secondary'
-          },
-          {
-            text: 'Next',
-            action: () => {
-              tourRef.current?.next();
-            },
-            classes: 'shepherd-button-primary'
-          }
-        ]
-      });
-
-      // Step 8: Join Online Meeting Button
+      // Step 7: Join Online Meeting Button
       tourRef.current.addStep({
         id: 'join-online-meeting',
         title: 'Join Online Meeting',
@@ -1152,6 +1073,85 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
               // Just proceed to next step without navigating
               console.log('Step 7 Next button clicked, proceeding to step 8');
                 tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 8: New Task Button
+      tourRef.current.addStep({
+        id: 'new-task',
+        title: 'Create a New Task',
+        text: `
+          <div class="space-y-3">
+            <p>This is the "New Task" button! Click here to create a new task in your workspace.</p>
+            <p>You can add a title, description, and due date to organize your work efficiently.</p>
+          </div>
+        `,
+        attachTo: {
+          element: findNewTaskElement,
+          on: 'right'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [20, 0], // Position popup to the right of the button with proper spacing
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 20,
+              },
+            },
+            {
+              name: 'flip',
+              options: {
+                fallbackPlacements: ['left', 'top', 'bottom'],
+              },
+            },
+          ],
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = findNewTaskElement();
+              if (element) {
+                addHighlight(element);
+                // Ensure element is scrolled into view with extra space
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = findNewTaskElement();
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
           }
