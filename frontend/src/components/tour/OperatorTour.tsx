@@ -624,7 +624,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         title: 'Choose Your Agent',
         text: `
           <div class="space-y-3">
-            <p>Click this dropdown to choose from different types of agents!</p>
+            <p><strong>Click the dropdown button first!</strong> This will open the agent selection menu.</p>
             <p>Each agent has unique capabilities:</p>
             <ul>
               <li>• <strong>Operator:</strong> General-purpose AI assistant</li>
@@ -634,32 +634,6 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>Switch between agents to get the best help for your specific task!</p>
           </div>
         `,
-        attachTo: {
-          element: () => {
-            // Look for agent selector dropdown - button with pen and bot icon
-            const buttons = document.querySelectorAll('button');
-            for (const button of buttons) {
-              const hasPenIcon = button.querySelector('.lucide-pen, .lucide-edit, .lucide-settings, svg[data-lucide="pen"], svg[data-lucide="edit"], svg[data-lucide="settings"]');
-              const hasBotIcon = button.querySelector('.lucide-bot, svg[data-lucide="bot"]');
-              const hasChevronDown = button.querySelector('.lucide-chevron-down, svg[data-lucide="chevron-down"]');
-              
-              if ((hasPenIcon || hasChevronDown) && hasBotIcon) {
-                return button;
-              }
-            }
-            
-            // Fallback: Look for any button with bot icon and dropdown
-            const botButtons = document.querySelectorAll('button:has(.lucide-bot), button:has(svg[data-lucide="bot"])');
-            for (const button of botButtons) {
-              if (button.querySelector('.lucide-chevron-down, svg[data-lucide="chevron-down"]')) {
-                return button;
-              }
-            }
-            
-            return null;
-          },
-          on: 'bottom'
-        },
         popperOptions: {
           modifiers: [
             {
@@ -686,7 +660,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
-              // Look for agent selector dropdown - button with pen and bot icon
+              // Find and click the agent dropdown button first
               const findAgentSelectorButton = () => {
                 console.log('🔍 Searching for agent selector button with pen and bot icons...');
                 
@@ -703,22 +677,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   }
                 }
                 
-                // Fallback: Look for any button near chat input that has dropdown behavior
-                const chatArea = document.querySelector('textarea, input[placeholder*="message"], .chat-input');
-                if (chatArea) {
-                  const chatContainer = chatArea.closest('form, .chat-container, [class*="chat"]');
-                  if (chatContainer) {
-                    const nearbyButtons = chatContainer.querySelectorAll('button[role="combobox"], button[aria-haspopup="listbox"], button:has(.lucide-chevron-down)');
-                    for (const button of nearbyButtons) {
-                      if (button.querySelector('.lucide-bot, svg[data-lucide="bot"]')) {
-                        console.log('✅ Found agent selector by proximity to chat:', button);
-                        return button;
-                      }
-                    }
-                  }
-                }
-                
-                // Final fallback: any button with bot icon and dropdown indicator
+                // Fallback: Look for any button with bot icon and dropdown indicator
                 const allButtons = document.querySelectorAll('button:has(.lucide-bot), button:has(svg[data-lucide="bot"])');
                 for (const button of allButtons) {
                   if (button.querySelector('.lucide-chevron-down, svg[data-lucide="chevron-down"]')) {
@@ -731,25 +690,46 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                 return null;
               };
               
-              const element = findAgentSelectorButton();
-              if (element) {
-                addHighlight(element);
-                element.scrollIntoView({ 
-                  behavior: 'smooth', 
-                  block: 'center',
-                  inline: 'nearest' 
-                });
+              const button = findAgentSelectorButton();
+              if (button) {
+                // Click the button to open the dropdown
+                console.log('🖱️ Clicking agent selector button to open dropdown');
+                button.click();
+                
+                // Wait a moment for dropdown to appear, then highlight it
+                setTimeout(() => {
+                  const dropdown = document.querySelector('[role="listbox"], [role="menu"], .dropdown-menu, [class*="dropdown"], [class*="popover"]');
+                  if (dropdown) {
+                    console.log('✅ Found agent dropdown menu:', dropdown);
+                    addHighlight(dropdown);
+                  } else {
+                    console.log('⚠️ Dropdown menu not found, highlighting button instead');
+                    addHighlight(button);
+                  }
+                  resolve();
+                }, 200);
+              } else {
+                console.log('❌ Could not find agent selector button');
+                resolve();
               }
-              resolve();
             }, 100);
           });
         },
         beforeHidePromise: () => {
           return new Promise<void>((resolve) => {
-            // Remove highlight from agent selector
+            // Remove highlight from agent selector and close dropdown
             document.querySelectorAll('.shepherd-highlight').forEach(el => {
               removeHighlight(el);
             });
+            
+            // Close dropdown if it's open by clicking elsewhere or pressing escape
+            const dropdown = document.querySelector('[role="listbox"], [role="menu"], .dropdown-menu, [class*="dropdown"], [class*="popover"]');
+            if (dropdown) {
+              // Try to close dropdown by clicking outside or pressing escape
+              document.body.click(); // Click outside to close
+              console.log('🔄 Closed agent dropdown menu');
+            }
+            
             resolve();
           });
         },
@@ -1010,84 +990,9 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 6: Meetings Dashboard
-      const meetingsDashboardStep: any = {
-        id: 'meetings-dashboard',
-        title: 'See All Meetings',
-        text: `
-          <div class="space-y-3">
-            <p>This is where you can access all your meetings!</p>
-            <p>Click on the Meetings link anytime to view, manage, and review your meeting recordings and transcripts.</p>
-          </div>
-        `,
-        popperOptions: {
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [20, 0],
-              },
-            },
-          ],
-        },
-        beforeShowPromise: () => {
-          return new Promise<void>((resolve) => {
-            // Wait for sidebar animations to complete (up to 0.6s + buffer)
-            setTimeout(() => {
-              const element = findMeetingsDashboardButton();
-              console.log('Step 6 - Meetings dashboard button found:', element);
-              if (element) {
-                addHighlight(element);
-                element.scrollIntoView({ 
-                  behavior: 'smooth', 
-                  block: 'center',
-                  inline: 'nearest' 
-                });
-              } else {
-                console.warn('Step 6 - Meetings dashboard button not found, continuing anyway');
-              }
-              resolve();
-            }, 800);
-          });
-        },
-        beforeHidePromise: () => {
-          return new Promise<void>((resolve) => {
-            const element = findMeetingsDashboardButton();
-            if (element) {
-              removeHighlight(element);
-            }
-            resolve();
-          });
-        },
-        buttons: [
-          {
-            text: 'Back',
-            action: () => tourRef.current?.back(),
-            classes: 'shepherd-button-secondary'
-          },
-          {
-            text: 'Next',
-            action: () => {
-              console.log('Step 6 (meetings-dashboard) Next button clicked, proceeding to step 7');
-              tourRef.current?.next();
-            },
-            classes: 'shepherd-button-primary'
-          }
-        ]
-      };
+      // Step 6: Meetings Hub (keeping the enhanced version only)
 
-      // Add attachTo only if element is found
-      const meetingsDashboardElement = findMeetingsDashboardButton();
-      if (meetingsDashboardElement) {
-        meetingsDashboardStep.attachTo = {
-          element: meetingsDashboardElement,
-          on: 'right'
-        };
-      }
-
-      tourRef.current.addStep(meetingsDashboardStep);
-
-      // Step 7: Sidebar Meetings Link - Enhanced
+      // Step 6: Sidebar Meetings Link - Enhanced  
       const sidebarMeetingsStep: any = {
         id: 'sidebar-meetings',
         title: '🎙️ Meetings Hub',
@@ -1132,24 +1037,19 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             const tryFindElement = () => {
               attempts++;
               const element = findSidebarMeetingsLink();
-              console.log(`🔍 Step 7 - Attempt ${attempts} - Sidebar meetings element:`, element);
+              console.log(`🔍 Step 6 - Attempt ${attempts} - Sidebar meetings element:`, element);
               
               if (element && element.offsetParent !== null) {
-                // Element found and visible
+                // Element found and visible - highlight but don't scroll
                 addHighlight(element);
-                element.scrollIntoView({ 
-                  behavior: 'smooth', 
-                  block: 'center',
-                  inline: 'nearest' 
-                });
-                console.log('✅ Step 7 - Successfully found and highlighted meetings link');
+                console.log('✅ Step 6 - Successfully found and highlighted meetings link');
                 resolve();
               } else if (attempts < maxAttempts) {
                 // Try again after a short delay
                 setTimeout(tryFindElement, 300);
               } else {
                 // Max attempts reached, continue anyway
-                console.warn('⚠️ Step 7 - Meetings element not found after all attempts, continuing tour');
+                console.warn('⚠️ Step 6 - Meetings element not found after all attempts, continuing tour');
                 resolve();
               }
             };
@@ -1163,7 +1063,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             const element = findSidebarMeetingsLink();
             if (element) {
               removeHighlight(element);
-              console.log('✅ Step 7 - Removed highlight from meetings link');
+              console.log('✅ Step 6 - Removed highlight from meetings link');
             }
             resolve();
           });
@@ -1172,7 +1072,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Back',
             action: () => {
-              console.log('Step 7 (sidebar-meetings) Back button clicked');
+              console.log('Step 6 (sidebar-meetings) Back button clicked');
               tourRef.current?.back();
             },
             classes: 'shepherd-button-secondary'
@@ -1180,7 +1080,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Got it! 👍',
             action: () => {
-              console.log('Step 7 (sidebar-meetings) Next button clicked, proceeding to step 8');
+              console.log('Step 6 (sidebar-meetings) Next button clicked, proceeding to step 7');
               tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
@@ -1199,7 +1099,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.addStep(sidebarMeetingsStep);
 
-      // Step 8: Sidebar Agents Link  
+      // Step 7: Sidebar Agents Link  
       const sidebarAgentsStep: any = {
         id: 'sidebar-agents',
         title: 'Your Agents',
@@ -1224,7 +1124,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findSidebarAgentsLink();
-              console.log('Step 8 - Sidebar agents element:', element);
+              console.log('Step 7 - Sidebar agents element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1233,7 +1133,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
               } else {
-                console.warn('Step 8 - Sidebar agents element not found, continuing anyway');
+                console.warn('Step 7 - Sidebar agents element not found, continuing anyway');
               }
               resolve();
             }, 800);
@@ -1257,7 +1157,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Next',
             action: () => {
-              console.log('Step 8 Next button clicked, proceeding to step 9');
+              console.log('Step 7 Next button clicked, proceeding to step 8');
               tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
@@ -1276,7 +1176,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.addStep(sidebarAgentsStep);
 
-      // Step 9: Sidebar Marketplace/Agent Library
+      // Step 8: Sidebar Marketplace/Agent Library
       tourRef.current.addStep({
         id: 'sidebar-marketplace',
         title: 'Agent Library',
@@ -1290,7 +1190,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           return new Promise<void>((resolve) => {
               setTimeout(() => {
               const element = findSidebarMarketplaceLink();
-              console.log('Step 9 - Sidebar marketplace element:', element);
+              console.log('Step 8 - Sidebar marketplace element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1299,7 +1199,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
               } else {
-                console.warn('Step 9 - Sidebar marketplace element not found, continuing anyway');
+                console.warn('Step 8 - Sidebar marketplace element not found, continuing anyway');
               }
               resolve();
             }, 800);
@@ -1323,7 +1223,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Next',
             action: () => {
-              console.log('Step 9 Next button clicked, proceeding to step 10');
+              console.log('Step 8 Next button clicked, proceeding to step 9');
                 tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
@@ -1331,7 +1231,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-            // Step 10: Sidebar Tasks/Past Chats
+      // Step 9: Sidebar Tasks/Past Chats
       tourRef.current.addStep({
         id: 'sidebar-tasks',
         title: 'Your Tasks & Past Chats',
@@ -1360,7 +1260,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findSidebarTasksSection();
-              console.log('Step 10 - Sidebar tasks section element:', element);
+              console.log('Step 9 - Sidebar tasks section element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1369,7 +1269,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
       } else {
-                console.warn('Step 10 - Sidebar tasks section element not found, continuing anyway');
+                console.warn('Step 9 - Sidebar tasks section element not found, continuing anyway');
               }
               resolve();
             }, 800);
@@ -1398,7 +1298,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 11: User Profile
+      // Step 10: User Profile
       tourRef.current.addStep({
         id: 'sidebar-profile',
         title: 'Your Profile',
@@ -1427,7 +1327,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findUserProfileButton();
-              console.log('Step 11 - User profile button element:', element);
+              console.log('Step 10 - User profile button element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1436,7 +1336,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
               } else {
-                console.warn('Step 11 - User profile button element not found, continuing anyway');
+                console.warn('Step 10 - User profile button element not found, continuing anyway');
               }
               resolve();
             }, 800);
@@ -1465,7 +1365,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 12: New Task Button
+      // Step 11: New Task Button
       tourRef.current.addStep({
         id: 'new-task',
         title: 'Create a New Task',
@@ -1544,7 +1444,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 13: Send Message
+      // Step 12: Send Message
       tourRef.current.addStep({
         id: 'send-message',
         title: 'Send Your Message',
