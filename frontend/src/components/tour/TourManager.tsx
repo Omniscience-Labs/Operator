@@ -30,4 +30,4 @@ export function TourManager() {
   // For other pages, we don't show a global tour
   // Each page will handle its own tour
   return null;
-} 
+}

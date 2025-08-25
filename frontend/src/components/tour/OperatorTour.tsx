@@ -274,40 +274,73 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
   };
 
     const findSidebarMeetingsLink = () => {
-    console.log('Searching for Sidebar Meetings link...');
+    console.log('🔍 Searching for Sidebar Meetings link...');
     
-    // Wait for animations to complete
-    setTimeout(() => {}, 1000);
+    // Enhanced search with multiple strategies and better timing
+    const searchStrategies = [
+      // Strategy 1: Direct href selector (most reliable)
+      () => document.querySelector('a[href="/meetings"]'),
+      
+      // Strategy 2: FileAudio icon with meetings href
+      () => {
+        const fileAudioIcons = document.querySelectorAll('.lucide-file-audio, svg[data-lucide="file-audio"], [data-testid="meetings-icon"]');
+        for (const icon of fileAudioIcons) {
+          const link = icon.closest('a');
+          if (link && (link.getAttribute('href') === '/meetings' || link.href?.endsWith('/meetings'))) {
+            return link;
+          }
+        }
+        return null;
+      },
+      
+      // Strategy 3: Sidebar navigation context with meetings text
+      () => {
+        const sidebarNavs = document.querySelectorAll('nav, [role="navigation"], .sidebar, [data-sidebar]');
+        for (const nav of sidebarNavs) {
+          const links = nav.querySelectorAll('a');
+          for (const link of links) {
+            const text = link.textContent?.toLowerCase() || '';
+            const href = link.getAttribute('href') || '';
+            if (text.includes('meetings') && (href.includes('/meetings') || href === '/meetings')) {
+              return link;
+            }
+          }
+        }
+        return null;
+      },
+      
+      // Strategy 4: Any link with meetings text and proper href
+      () => {
+        const links = document.querySelectorAll('a[href*="/meetings"], a[href="/meetings"]');
+        for (const link of links) {
+          const text = link.textContent?.toLowerCase() || '';
+          if (text.includes('meetings') || link.querySelector('.lucide-file-audio')) {
+            return link;
+          }
+        }
+        return null;
+      },
+      
+      // Strategy 5: Fallback - any meetings link
+      () => {
+        return document.querySelector('a[href="/meetings"], a[href*="/meetings"]');
+      }
+    ];
     
-    // Most reliable - direct href selector
-    let element = document.querySelector('a[href="/meetings"]');
-    if (element) {
-      console.log('Found meetings link by href:', element);
-      return element;
-    }
-    
-    // Find by FileAudio icon (meetings use FileAudio icon)
-    const fileAudioIcons = document.querySelectorAll('.lucide-file-audio, svg[data-lucide="file-audio"]');
-    for (const icon of fileAudioIcons) {
-      const link = icon.closest('a');
-      if (link && link.getAttribute('href') === '/meetings') {
-        console.log('Found meetings link by FileAudio icon:', link);
-        return link;
+    // Try each strategy
+    for (let i = 0; i < searchStrategies.length; i++) {
+      try {
+        const element = searchStrategies[i]();
+        if (element instanceof HTMLElement && element.offsetParent !== null) { // Check if element is visible
+          console.log(`✅ Found meetings link using strategy ${i + 1}:`, element);
+          return element;
+        }
+      } catch (error) {
+        console.warn(`⚠️ Strategy ${i + 1} failed:`, error);
       }
     }
     
-    // Search by text content in sidebar context
-    const links = document.querySelectorAll('a');
-    for (const link of links) {
-      const text = link.textContent?.toLowerCase() || '';
-      const href = link.getAttribute('href') || '';
-      if (text.includes('meetings') && href.includes('/meetings')) {
-        console.log('Found meetings link by text and href:', link);
-        return link;
-      }
-    }
-    
-    console.log('No sidebar meetings link found');
+    console.log('❌ No sidebar meetings link found after trying all strategies');
     return null;
   };
 
@@ -568,6 +601,110 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         attachTo: {
           element: 'textarea[placeholder*="message"], input[placeholder*="message"], .chat-input textarea, [data-testid="chat-input"]',
           on: 'top'
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 2.5: Agent Dropdown - NEW STEP
+      tourRef.current.addStep({
+        id: 'agent-dropdown',
+        title: 'Choose Your Agent',
+        text: `
+          <div class="space-y-3">
+            <p>Click this dropdown to choose from different types of agents!</p>
+            <p>Each agent has unique capabilities:</p>
+            <ul>
+              <li>• <strong>Operator:</strong> General-purpose AI assistant</li>
+              <li>• <strong>Specialized Agents:</strong> Custom agents with specific expertise</li>
+              <li>• <strong>Team Agents:</strong> Agents shared with your team</li>
+            </ul>
+            <p>Switch between agents to get the best help for your specific task!</p>
+          </div>
+        `,
+        attachTo: {
+          element: '[data-testid="agent-selector"], .agent-dropdown, button:has([data-lucide="chevron-down"]):has([data-lucide="bot"])',
+          on: 'bottom'
+        },
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [0, 10],
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 20,
+              },
+            },
+            {
+              name: 'flip',
+              options: {
+                fallbackPlacements: ['top', 'left', 'right'],
+              },
+            },
+          ],
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              // Look for agent selector dropdown
+              const selectors = [
+                '[data-testid="agent-selector"]',
+                '.agent-dropdown',
+                'button:has([data-lucide="chevron-down"]):has([data-lucide="bot"])',
+                'button:has(.lucide-chevron-down):has(.lucide-bot)',
+                // Look for any dropdown near the chat area
+                '[role="combobox"]',
+                'button[aria-haspopup="listbox"]'
+              ];
+              
+              let element = null;
+              for (const selector of selectors) {
+                try {
+                  element = document.querySelector(selector);
+                  if (element) break;
+                } catch (e) {
+                  continue;
+                }
+              }
+              
+              if (element) {
+                addHighlight(element);
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            // Remove highlight from agent selector
+            document.querySelectorAll('.shepherd-highlight').forEach(el => {
+              removeHighlight(el);
+            });
+            resolve();
+          });
         },
         buttons: [
           {
@@ -909,7 +1046,111 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.addStep(meetingsDashboardStep);
 
-      // Removed duplicate Sidebar Meetings step to avoid showing two join meeting/sidebar steps
+      // Step 7: Sidebar Meetings Link - Enhanced
+      const sidebarMeetingsStep: any = {
+        id: 'sidebar-meetings',
+        title: '🎙️ Meetings Hub',
+        text: `
+          <div class="space-y-4">
+            <p><strong>Your Meeting Command Center!</strong></p>
+            <p>This is where you can:</p>
+            <ul class="list-disc list-inside space-y-1 text-sm">
+              <li>📝 View all your meeting recordings and transcripts</li>
+              <li>🔍 Search through past meeting content</li>
+              <li>📊 Review meeting analytics and insights</li>
+              <li>🎯 Access AI-generated meeting summaries</li>
+            </ul>
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-3 mt-3">
+              <p class="text-sm"><strong>💡 Pro Tip:</strong> You can quickly search for specific topics discussed across all your meetings using the search feature!</p>
+            </div>
+          </div>
+        `,
+        popperOptions: {
+          modifiers: [
+            {
+              name: 'offset',
+              options: {
+                offset: [25, 10],
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                boundary: 'viewport',
+                padding: 16,
+              },
+            },
+          ],
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            // Enhanced timing with multiple attempts
+            let attempts = 0;
+            const maxAttempts = 5;
+            
+            const tryFindElement = () => {
+              attempts++;
+              const element = findSidebarMeetingsLink();
+              console.log(`🔍 Step 7 - Attempt ${attempts} - Sidebar meetings element:`, element);
+              
+              if (element && element.offsetParent !== null) {
+                // Element found and visible
+                addHighlight(element);
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
+                console.log('✅ Step 7 - Successfully found and highlighted meetings link');
+                resolve();
+              } else if (attempts < maxAttempts) {
+                // Try again after a short delay
+                setTimeout(tryFindElement, 300);
+              } else {
+                // Max attempts reached, continue anyway
+                console.warn('⚠️ Step 7 - Meetings element not found after all attempts, continuing tour');
+                resolve();
+              }
+            };
+            
+            // Start searching after initial delay for animations
+            setTimeout(tryFindElement, 600);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = findSidebarMeetingsLink();
+            if (element) {
+              removeHighlight(element);
+              console.log('✅ Step 7 - Removed highlight from meetings link');
+            }
+            resolve();
+          });
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Got it! 👍',
+            action: () => tourRef.current?.next(),
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      };
+
+      // Add attachTo only if element is found, otherwise show in center
+      const meetingsElement = findSidebarMeetingsLink();
+      if (meetingsElement) {
+        sidebarMeetingsStep.attachTo = {
+          element: meetingsElement,
+          on: 'right'
+        };
+      }
+
+      tourRef.current.addStep(sidebarMeetingsStep);
 
       // Step 8: Sidebar Agents Link  
       const sidebarAgentsStep: any = {
@@ -988,8 +1229,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.addStep(sidebarAgentsStep);
 
-      // Step 9: Sidebar Marketplace/Agent Library - FIXED
-      const marketplaceStep: any = {
+      // Step 9: Sidebar Marketplace/Agent Library
+      tourRef.current.addStep({
         id: 'sidebar-marketplace',
         title: 'Agent Library',
         text: `
@@ -998,19 +1239,9 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>Browse, try, and add pre-built agents to your library to expand your capabilities instantly.</p>
           </div>
         `,
-        popperOptions: {
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [20, 0],
-              },
-            },
-          ],
-        },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
-            setTimeout(() => {
+              setTimeout(() => {
               const element = findSidebarMarketplaceLink();
               console.log('Step 9 - Sidebar marketplace element:', element);
               if (element) {
@@ -1046,26 +1277,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             text: 'Next',
             action: () => {
               console.log('Step 9 Next button clicked, proceeding to step 10');
-              tourRef.current?.next();
+                tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
           }
         ]
-      };
+      });
 
-      // Add attachTo only if element is found, otherwise show in center
-      const marketplaceElement = findSidebarMarketplaceLink();
-      if (marketplaceElement) {
-        marketplaceStep.attachTo = {
-          element: marketplaceElement,
-          on: 'right'
-        };
-      }
-
-      tourRef.current.addStep(marketplaceStep);
-
-      // Step 10: Sidebar Tasks/Past Chats - FIXED
-      const tasksStep: any = {
+            // Step 10: Sidebar Tasks/Past Chats
+      tourRef.current.addStep({
         id: 'sidebar-tasks',
         title: 'Your Tasks & Past Chats',
         text: `
@@ -1074,6 +1294,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>Easily access your chat history, continue previous conversations, and manage your ongoing projects.</p>
           </div>
         `,
+        attachTo: {
+          element: findSidebarTasksSection,
+          on: 'right'
+        },
         popperOptions: {
           modifiers: [
             {
@@ -1086,6 +1310,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
+            // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findSidebarTasksSection();
               console.log('Step 10 - Sidebar tasks section element:', element);
@@ -1096,7 +1321,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   block: 'center',
                   inline: 'nearest' 
                 });
-              } else {
+      } else {
                 console.warn('Step 10 - Sidebar tasks section element not found, continuing anyway');
               }
               resolve();
@@ -1124,21 +1349,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      };
+      });
 
-      // Add attachTo only if element is found
-      const tasksElement = findSidebarTasksSection();
-      if (tasksElement) {
-        tasksStep.attachTo = {
-          element: tasksElement,
-          on: 'right'
-        };
-      }
-
-      tourRef.current.addStep(tasksStep);
-
-      // Step 11: User Profile - FIXED
-      const profileStep: any = {
+      // Step 11: User Profile
+      tourRef.current.addStep({
         id: 'sidebar-profile',
         title: 'Your Profile',
         text: `
@@ -1147,6 +1361,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>Manage your account, billing, team settings, and customize your Operator experience.</p>
           </div>
         `,
+        attachTo: {
+          element: findUserProfileButton,
+          on: 'right'
+        },
         popperOptions: {
           modifiers: [
             {
@@ -1159,6 +1377,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         },
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
+            // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findUserProfileButton();
               console.log('Step 11 - User profile button element:', element);
@@ -1197,21 +1416,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      };
+      });
 
-      // Add attachTo only if element is found
-      const profileElement = findUserProfileButton();
-      if (profileElement) {
-        profileStep.attachTo = {
-          element: profileElement,
-          on: 'right'
-        };
-      }
-
-      tourRef.current.addStep(profileStep);
-
-      // Step 12: New Task Button - FIXED
-      const newTaskStep: any = {
+      // Step 12: New Task Button
+      tourRef.current.addStep({
         id: 'new-task',
         title: 'Create a New Task',
         text: `
@@ -1220,12 +1428,16 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>You can add a title, description, and due date to organize your work efficiently.</p>
           </div>
         `,
+        attachTo: {
+          element: findNewTaskElement,
+          on: 'right'
+        },
         popperOptions: {
           modifiers: [
             {
               name: 'offset',
               options: {
-                offset: [20, 0],
+                offset: [20, 0], // Position popup to the right of the button with proper spacing
               },
             },
             {
@@ -1249,6 +1461,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
               const element = findNewTaskElement();
               if (element) {
                 addHighlight(element);
+                // Ensure element is scrolled into view with extra space
                 element.scrollIntoView({ 
                   behavior: 'smooth', 
                   block: 'center',
@@ -1282,21 +1495,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      };
+      });
 
-      // Add attachTo only if element is found
-      const newTaskElement = findNewTaskElement();
-      if (newTaskElement) {
-        newTaskStep.attachTo = {
-          element: newTaskElement,
-          on: 'right'
-        };
-      }
-
-      tourRef.current.addStep(newTaskStep);
-
-      // Step 13: Send Message - FIXED
-      const sendStep: any = {
+      // Step 13: Send Message
+      tourRef.current.addStep({
         id: 'send-message',
         title: 'Send Your Message',
         text: `
@@ -1305,6 +1507,10 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             <p>I'll analyze your request and provide helpful responses, execute tasks, or ask clarifying questions if needed.</p>
           </div>
         `,
+        attachTo: {
+          element: findSendButton,
+          on: 'left'
+        },
         popperOptions: {
           modifiers: [
             {
@@ -1329,18 +1535,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-primary'
           }
         ]
-      };
-
-      // Add attachTo only if element is found
-      const sendElement = findSendButton();
-      if (sendElement) {
-        sendStep.attachTo = {
-          element: sendElement,
-          on: 'left'
-        };
-      }
-
-      tourRef.current.addStep(sendStep);
+      });
 
       // Tour event handlers
       tourRef.current.on('complete', () => {
