@@ -661,7 +661,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           return new Promise<void>((resolve) => {
             setTimeout(() => {
               // Find and click the agent dropdown button first
-              const findAgentSelectorButton = () => {
+              const findAgentSelectorButton = (): HTMLElement | null => {
                 console.log('🔍 Searching for agent selector button with pen and bot icons...');
                 
                 // Look for buttons that contain both pen and bot icons
@@ -673,7 +673,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   
                   if ((hasPenIcon || hasChevronDown) && hasBotIcon) {
                     console.log('✅ Found agent selector button:', button);
-                    return button;
+                    return button as HTMLElement;
                   }
                 }
                 
@@ -682,7 +682,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                 for (const button of allButtons) {
                   if (button.querySelector('.lucide-chevron-down, svg[data-lucide="chevron-down"]')) {
                     console.log('✅ Found agent selector by bot + chevron:', button);
-                    return button;
+                    return button as HTMLElement;
                   }
                 }
                 
