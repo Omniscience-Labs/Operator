@@ -284,12 +284,12 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
       // Strategy 2: FileAudio icon with meetings href
       () => {
         const fileAudioIcons = document.querySelectorAll('.lucide-file-audio, svg[data-lucide="file-audio"], [data-testid="meetings-icon"]');
-        for (const icon of fileAudioIcons) {
-          const link = icon.closest('a');
+    for (const icon of fileAudioIcons) {
+      const link = icon.closest('a');
           if (link && (link.getAttribute('href') === '/meetings' || link.href?.endsWith('/meetings'))) {
-            return link;
-          }
-        }
+        return link;
+      }
+    }
         return null;
       },
       
@@ -298,13 +298,13 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         const sidebarNavs = document.querySelectorAll('nav, [role="navigation"], .sidebar, [data-sidebar]');
         for (const nav of sidebarNavs) {
           const links = nav.querySelectorAll('a');
-          for (const link of links) {
-            const text = link.textContent?.toLowerCase() || '';
-            const href = link.getAttribute('href') || '';
+    for (const link of links) {
+      const text = link.textContent?.toLowerCase() || '';
+      const href = link.getAttribute('href') || '';
             if (text.includes('meetings') && (href.includes('/meetings') || href === '/meetings')) {
-              return link;
-            }
-          }
+        return link;
+      }
+    }
         }
         return null;
       },
@@ -581,50 +581,13 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 2: Chat Input
-      tourRef.current.addStep({
-        id: 'chat-input',
-        title: 'Start Your Conversation',
-        text: `
-          <div class="space-y-3">
-            <p>This is where the magic happens! Type your message or question here.</p>
-            <p>I can help with tasks like:</p>
-            <ul>
-              <li>• Analyzing spreadsheets and data</li>
-              <li>• Creating presentations and reports</li>
-              <li>• Writing and editing documents</li>
-              <li>• Research and web browsing</li>
-              <li>• And much more!</li>
-            </ul>
-          </div>
-        `,
-        attachTo: {
-          element: 'textarea[placeholder*="message"], input[placeholder*="message"], .chat-input textarea, [data-testid="chat-input"]',
-          on: 'top'
-        },
-        buttons: [
-          {
-            text: 'Back',
-            action: () => tourRef.current?.back(),
-            classes: 'shepherd-button-secondary'
-          },
-          {
-            text: 'Next',
-            action: () => {
-              tourRef.current?.next();
-            },
-            classes: 'shepherd-button-primary'
-          }
-        ]
-      });
-
-      // Step 2.5: Agent Dropdown - NEW STEP
+      // Step 2: Agent Dropdown - MOVED UP
       tourRef.current.addStep({
         id: 'agent-dropdown',
         title: 'Choose Your Agent',
         text: `
           <div class="space-y-3">
-            <p><strong>This is your Agent Selector!</strong> Click this button (with the pen and dropdown arrow) to choose different AI agents.</p>
+            <p><strong>This is your Agent Selector!</strong> Click this button (with the Bot, Edit, and ChevronDown icons) to choose different AI agents.</p>
             <p>Each agent has unique capabilities:</p>
             <ul>
               <li>• <strong>Operator:</strong> General-purpose AI assistant</li>
@@ -815,7 +778,76 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 3: Attachments Guide - IMPROVED POSITIONING
+      // Step 3: Chat Input
+      tourRef.current.addStep({
+        id: 'chat-input',
+        title: 'Start Your Conversation',
+        text: `
+          <div class="space-y-3">
+            <p>This is where the magic happens! Type your message or question here.</p>
+            <p>I can help with tasks like:</p>
+            <ul>
+              <li>• Analyzing spreadsheets and data</li>
+              <li>• Creating presentations and reports</li>
+              <li>• Writing and editing documents</li>
+              <li>• Research and web browsing</li>
+              <li>• And much more!</li>
+            </ul>
+          </div>
+        `,
+        attachTo: {
+          element: 'textarea[placeholder*="message"], input[placeholder*="message"], .chat-input textarea, [data-testid="chat-input"]',
+          on: 'top'
+        },
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 4: End Chat Feature
+      tourRef.current.addStep({
+        id: 'end-chat',
+        title: 'End Chat When Done',
+        text: `
+          <div class="space-y-3">
+            <p>When you're finished with a conversation, you can end the chat session.</p>
+            <p>This helps you:</p>
+            <ul>
+              <li>• Start fresh with a new topic</li>
+              <li>• Keep your conversations organized</li>
+              <li>• Clear the context for a new task</li>
+            </ul>
+            <p>Look for end chat options in the chat interface when you're ready to start over!</p>
+          </div>
+        `,
+        buttons: [
+          {
+            text: 'Back',
+            action: () => tourRef.current?.back(),
+            classes: 'shepherd-button-secondary'
+          },
+          {
+            text: 'Next',
+            action: () => {
+              tourRef.current?.next();
+            },
+            classes: 'shepherd-button-primary'
+          }
+        ]
+      });
+
+      // Step 5: Attachments Guide - IMPROVED POSITIONING  
       tourRef.current.addStep({
         id: 'attachments',
         title: 'Attach Files & Documents',
@@ -894,7 +926,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 4: Plugins Guide - IMPROVED POSITIONING
+      // Step 6: Plugins Guide - IMPROVED POSITIONING
       tourRef.current.addStep({
         id: 'plugins',
         title: 'Integrations & Plugins',
@@ -973,7 +1005,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 5: Join Online Meeting Button
+      // Step 7: Join Online Meeting Button
       tourRef.current.addStep({
         id: 'join-online-meeting',
         title: 'Join Online Meeting',
@@ -1048,17 +1080,17 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             text: 'Next',
             action: () => {
               // Just proceed to next step without navigating
-              console.log('Step 5 Next button clicked, proceeding to step 6');
-              tourRef.current?.next();
+              console.log('Step 7 Next button clicked, proceeding to step 8');
+                tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
           }
         ]
       });
 
-      // Step 6: Meetings Hub (keeping the enhanced version only)
+      // Step 8: Meetings Hub (keeping the enhanced version only)
 
-      // Step 6: Sidebar Meetings Link - Enhanced  
+      // Step 8: Sidebar Meetings Link - Enhanced  
       const sidebarMeetingsStep: any = {
         id: 'sidebar-meetings',
         title: '🎙️ Meetings Hub',
@@ -1103,20 +1135,20 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             const tryFindElement = () => {
               attempts++;
               const element = findSidebarMeetingsLink();
-              console.log(`🔍 Step 6 - Attempt ${attempts} - Sidebar meetings element:`, element);
+              console.log(`🔍 Step 8 - Attempt ${attempts} - Sidebar meetings element:`, element);
               
               if (element && element.offsetParent !== null) {
                 // Element found and visible - highlight but don't scroll
                 addHighlight(element);
-                console.log('✅ Step 6 - Successfully found and highlighted meetings link');
+                console.log('✅ Step 8 - Successfully found and highlighted meetings link');
                 resolve();
               } else if (attempts < maxAttempts) {
                 // Try again after a short delay
                 setTimeout(tryFindElement, 300);
               } else {
                 // Max attempts reached, continue anyway
-                console.warn('⚠️ Step 6 - Meetings element not found after all attempts, continuing tour');
-                resolve();
+                console.warn('⚠️ Step 8 - Meetings element not found after all attempts, continuing tour');
+              resolve();
               }
             };
             
@@ -1129,7 +1161,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             const element = findSidebarMeetingsLink();
             if (element) {
               removeHighlight(element);
-              console.log('✅ Step 6 - Removed highlight from meetings link');
+              console.log('✅ Step 8 - Removed highlight from meetings link');
             }
             resolve();
           });
@@ -1138,7 +1170,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Back',
             action: () => {
-              console.log('Step 6 (sidebar-meetings) Back button clicked');
+              console.log('Step 8 (sidebar-meetings) Back button clicked');
               tourRef.current?.back();
             },
             classes: 'shepherd-button-secondary'
@@ -1146,7 +1178,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Got it! 👍',
             action: () => {
-              console.log('Step 6 (sidebar-meetings) Next button clicked, proceeding to step 7');
+              console.log('Step 8 (sidebar-meetings) Next button clicked, proceeding to step 9');
               tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
@@ -1165,7 +1197,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.addStep(sidebarMeetingsStep);
 
-      // Step 7: Sidebar Agents Link  
+      // Step 9: Sidebar Agents Link  
       const sidebarAgentsStep: any = {
         id: 'sidebar-agents',
         title: 'Your Agents',
@@ -1190,7 +1222,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findSidebarAgentsLink();
-              console.log('Step 7 - Sidebar agents element:', element);
+              console.log('Step 9 - Sidebar agents element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1199,7 +1231,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
               } else {
-                console.warn('Step 7 - Sidebar agents element not found, continuing anyway');
+                console.warn('Step 9 - Sidebar agents element not found, continuing anyway');
               }
               resolve();
             }, 800);
@@ -1242,7 +1274,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.addStep(sidebarAgentsStep);
 
-      // Step 8: Sidebar Marketplace/Agent Library
+      // Step 10: Sidebar Marketplace/Agent Library
       tourRef.current.addStep({
         id: 'sidebar-marketplace',
         title: 'Agent Library',
@@ -1254,9 +1286,9 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         `,
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
-              setTimeout(() => {
+            setTimeout(() => {
               const element = findSidebarMarketplaceLink();
-              console.log('Step 8 - Sidebar marketplace element:', element);
+              console.log('Step 10 - Sidebar marketplace element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1265,7 +1297,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
               } else {
-                console.warn('Step 8 - Sidebar marketplace element not found, continuing anyway');
+                console.warn('Step 10 - Sidebar marketplace element not found, continuing anyway');
               }
               resolve();
             }, 800);
@@ -1289,15 +1321,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Next',
             action: () => {
-              console.log('Step 8 Next button clicked, proceeding to step 9');
-                tourRef.current?.next();
+              console.log('Step 10 Next button clicked, proceeding to step 11');
+              tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
           }
         ]
       });
 
-      // Step 9: Sidebar Tasks/Past Chats
+      // Step 11: Sidebar Tasks/Past Chats
       tourRef.current.addStep({
         id: 'sidebar-tasks',
         title: 'Your Tasks & Past Chats',
@@ -1326,7 +1358,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findSidebarTasksSection();
-              console.log('Step 9 - Sidebar tasks section element:', element);
+              console.log('Step 11 - Sidebar tasks section element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1334,8 +1366,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   block: 'center',
                   inline: 'nearest' 
                 });
-      } else {
-                console.warn('Step 9 - Sidebar tasks section element not found, continuing anyway');
+              } else {
+                console.warn('Step 11 - Sidebar tasks section element not found, continuing anyway');
               }
               resolve();
             }, 800);
@@ -1364,7 +1396,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 10: User Profile
+      // Step 12: User Profile
       tourRef.current.addStep({
         id: 'sidebar-profile',
         title: 'Your Profile',
@@ -1393,7 +1425,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             // Wait for sidebar animations to complete (up to 0.6s + buffer)
             setTimeout(() => {
               const element = findUserProfileButton();
-              console.log('Step 10 - User profile button element:', element);
+              console.log('Step 12 - User profile button element:', element);
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -1402,7 +1434,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                   inline: 'nearest' 
                 });
               } else {
-                console.warn('Step 10 - User profile button element not found, continuing anyway');
+                console.warn('Step 12 - User profile button element not found, continuing anyway');
               }
               resolve();
             }, 800);
@@ -1431,7 +1463,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 11: New Task Button
+      // Step 13: New Task Button
       tourRef.current.addStep({
         id: 'new-task',
         title: 'Create a New Task',
@@ -1510,7 +1542,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 12: Send Message
+      // Step 14: Send Message
       tourRef.current.addStep({
         id: 'send-message',
         title: 'Send Your Message',
