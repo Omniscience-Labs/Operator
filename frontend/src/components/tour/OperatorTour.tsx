@@ -587,7 +587,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         title: 'Choose Your Agent',
         text: `
           <div class="space-y-3">
-            <p><strong>This is your Agent Selector!</strong> Click this button (with the Bot, Edit, and ChevronDown icons) to choose different AI agents.</p>
+            <p><strong>This is your Agent Selector!</strong> Click this button (with the Bot icon, Edit pen icon, and down arrow ChevronDown icon) to choose different AI agents.</p>
             <p>Each agent has unique capabilities:</p>
             <ul>
               <li>• <strong>Operator:</strong> General-purpose AI assistant</li>
@@ -595,7 +595,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
               <li>• <strong>Team Agents:</strong> Agents shared with your team</li>
               <li>• <strong>Marketplace Agents:</strong> Community-created agents</li>
             </ul>
-            <p>The dropdown menu will show all available agents for you to choose from!</p>
+            <p>The down arrow indicates this is a dropdown menu that will show all available agents for you to choose from!</p>
           </div>
         `,
         popperOptions: {
@@ -815,22 +815,45 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         ]
       });
 
-      // Step 4: End Chat Feature
+      // Step 4: Send Message
       tourRef.current.addStep({
-        id: 'end-chat',
-        title: 'End Chat When Done',
+        id: 'send-message',
+        title: 'Send Your Message',
         text: `
           <div class="space-y-3">
-            <p>When you're finished with a conversation, you can end the chat session.</p>
-            <p>This helps you:</p>
-            <ul>
-              <li>• Start fresh with a new topic</li>
-              <li>• Keep your conversations organized</li>
-              <li>• Clear the context for a new task</li>
-            </ul>
-            <p>Look for end chat options in the chat interface when you're ready to start over!</p>
+            <p>Once you've typed your message and added any attachments, click this send button to start the conversation with your AI agent!</p>
+            <p><strong>Pro tip:</strong> Be specific about what you need - the more detail you provide, the better I can help you!</p>
           </div>
         `,
+        attachTo: {
+          element: '[data-testid="send-button"], button[type="submit"]:has(svg), .send-button',
+          on: 'top'
+        },
+        beforeShowPromise: () => {
+          return new Promise<void>((resolve) => {
+            setTimeout(() => {
+              const element = findSendButton();
+              if (element) {
+                addHighlight(element);
+                element.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center',
+                  inline: 'nearest' 
+                });
+              }
+              resolve();
+            }, 100);
+          });
+        },
+        beforeHidePromise: () => {
+          return new Promise<void>((resolve) => {
+            const element = findSendButton();
+            if (element) {
+              removeHighlight(element);
+            }
+            resolve();
+          });
+        },
         buttons: [
           {
             text: 'Back',
@@ -1533,46 +1556,6 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             classes: 'shepherd-button-secondary'
           },
           {
-            text: 'Next',
-            action: () => {
-              tourRef.current?.next();
-            },
-            classes: 'shepherd-button-primary'
-          }
-        ]
-      });
-
-      // Step 14: Send Message
-      tourRef.current.addStep({
-        id: 'send-message',
-        title: 'Send Your Message',
-        text: `
-          <div class="space-y-3">
-            <p>Once you've typed your message and added any files, click this button to send it to me!</p>
-            <p>I'll analyze your request and provide helpful responses, execute tasks, or ask clarifying questions if needed.</p>
-          </div>
-        `,
-        attachTo: {
-          element: findSendButton,
-          on: 'left'
-        },
-        popperOptions: {
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [0, -80],
-              },
-            },
-          ],
-        },
-        buttons: [
-          {
-            text: 'Back',
-            action: () => tourRef.current?.back(),
-            classes: 'shepherd-button-secondary'
-          },
-          {
             text: 'Finish Tour',
             action: () => {
               tourRef.current?.complete();
@@ -1581,6 +1564,8 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           }
         ]
       });
+
+
 
       // Tour event handlers
       tourRef.current.on('complete', () => {
