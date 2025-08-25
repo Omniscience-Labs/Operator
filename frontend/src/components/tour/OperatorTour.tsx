@@ -635,7 +635,29 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           </div>
         `,
         attachTo: {
-          element: '[data-testid="agent-selector"], .agent-dropdown, button:has([data-lucide="chevron-down"]):has([data-lucide="bot"])',
+          element: () => {
+            // Look for agent selector dropdown - button with pen and bot icon
+            const buttons = document.querySelectorAll('button');
+            for (const button of buttons) {
+              const hasPenIcon = button.querySelector('.lucide-pen, .lucide-edit, .lucide-settings, svg[data-lucide="pen"], svg[data-lucide="edit"], svg[data-lucide="settings"]');
+              const hasBotIcon = button.querySelector('.lucide-bot, svg[data-lucide="bot"]');
+              const hasChevronDown = button.querySelector('.lucide-chevron-down, svg[data-lucide="chevron-down"]');
+              
+              if ((hasPenIcon || hasChevronDown) && hasBotIcon) {
+                return button;
+              }
+            }
+            
+            // Fallback: Look for any button with bot icon and dropdown
+            const botButtons = document.querySelectorAll('button:has(.lucide-bot), button:has(svg[data-lucide="bot"])');
+            for (const button of botButtons) {
+              if (button.querySelector('.lucide-chevron-down, svg[data-lucide="chevron-down"]')) {
+                return button;
+              }
+            }
+            
+            return null;
+          },
           on: 'bottom'
         },
         popperOptions: {
@@ -664,27 +686,52 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         beforeShowPromise: () => {
           return new Promise<void>((resolve) => {
             setTimeout(() => {
-              // Look for agent selector dropdown
-              const selectors = [
-                '[data-testid="agent-selector"]',
-                '.agent-dropdown',
-                'button:has([data-lucide="chevron-down"]):has([data-lucide="bot"])',
-                'button:has(.lucide-chevron-down):has(.lucide-bot)',
-                // Look for any dropdown near the chat area
-                '[role="combobox"]',
-                'button[aria-haspopup="listbox"]'
-              ];
-              
-              let element = null;
-              for (const selector of selectors) {
-                try {
-                  element = document.querySelector(selector);
-                  if (element) break;
-                } catch (e) {
-                  continue;
+              // Look for agent selector dropdown - button with pen and bot icon
+              const findAgentSelectorButton = () => {
+                console.log('🔍 Searching for agent selector button with pen and bot icons...');
+                
+                // Look for buttons that contain both pen and bot icons
+                const buttons = document.querySelectorAll('button');
+                for (const button of buttons) {
+                  const hasPenIcon = button.querySelector('.lucide-pen, .lucide-edit, .lucide-settings, svg[data-lucide="pen"], svg[data-lucide="edit"], svg[data-lucide="settings"]');
+                  const hasBotIcon = button.querySelector('.lucide-bot, svg[data-lucide="bot"]');
+                  const hasChevronDown = button.querySelector('.lucide-chevron-down, svg[data-lucide="chevron-down"]');
+                  
+                  if ((hasPenIcon || hasChevronDown) && hasBotIcon) {
+                    console.log('✅ Found agent selector button:', button);
+                    return button;
+                  }
                 }
-              }
+                
+                // Fallback: Look for any button near chat input that has dropdown behavior
+                const chatArea = document.querySelector('textarea, input[placeholder*="message"], .chat-input');
+                if (chatArea) {
+                  const chatContainer = chatArea.closest('form, .chat-container, [class*="chat"]');
+                  if (chatContainer) {
+                    const nearbyButtons = chatContainer.querySelectorAll('button[role="combobox"], button[aria-haspopup="listbox"], button:has(.lucide-chevron-down)');
+                    for (const button of nearbyButtons) {
+                      if (button.querySelector('.lucide-bot, svg[data-lucide="bot"]')) {
+                        console.log('✅ Found agent selector by proximity to chat:', button);
+                        return button;
+                      }
+                    }
+                  }
+                }
+                
+                // Final fallback: any button with bot icon and dropdown indicator
+                const allButtons = document.querySelectorAll('button:has(.lucide-bot), button:has(svg[data-lucide="bot"])');
+                for (const button of allButtons) {
+                  if (button.querySelector('.lucide-chevron-down, svg[data-lucide="chevron-down"]')) {
+                    console.log('✅ Found agent selector by bot + chevron:', button);
+                    return button;
+                  }
+                }
+                
+                console.log('❌ Agent selector button not found');
+                return null;
+              };
               
+              const element = findAgentSelectorButton();
               if (element) {
                 addHighlight(element);
                 element.scrollIntoView({ 
@@ -954,15 +1001,9 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Next',
             action: () => {
-              // Click the meetings dashboard button
-              const meetingsButton = findMeetingsDashboardButton();
-              if (meetingsButton && meetingsButton instanceof HTMLElement) {
-                meetingsButton.click();
-              }
-              // Small delay to allow navigation, then show next step
-              setTimeout(() => {
-                tourRef.current?.next();
-              }, 500);
+              // Just proceed to next step without navigating
+              console.log('Step 5 Next button clicked, proceeding to step 6');
+              tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
           }
@@ -1027,7 +1068,7 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
           {
             text: 'Next',
             action: () => {
-              console.log('Step 6 Next button clicked, proceeding to step 7');
+              console.log('Step 6 (meetings-dashboard) Next button clicked, proceeding to step 7');
               tourRef.current?.next();
             },
             classes: 'shepherd-button-primary'
@@ -1130,12 +1171,18 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         buttons: [
           {
             text: 'Back',
-            action: () => tourRef.current?.back(),
+            action: () => {
+              console.log('Step 7 (sidebar-meetings) Back button clicked');
+              tourRef.current?.back();
+            },
             classes: 'shepherd-button-secondary'
           },
           {
             text: 'Got it! 👍',
-            action: () => tourRef.current?.next(),
+            action: () => {
+              console.log('Step 7 (sidebar-meetings) Next button clicked, proceeding to step 8');
+              tourRef.current?.next();
+            },
             classes: 'shepherd-button-primary'
           }
         ]
@@ -1556,6 +1603,20 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
 
       tourRef.current.on('hide', (event) => {
         console.log('Tour step hidden:', event.step?.id);
+      });
+
+      // Add error handling
+      tourRef.current.on('start', () => {
+        console.log('Tour started');
+      });
+
+      // Prevent tour from canceling due to element not found
+      window.addEventListener('error', (e) => {
+        if (e.message.includes('The element for this Shepherd step was not found')) {
+          console.warn('Shepherd element not found, but continuing tour:', e.message);
+          e.preventDefault();
+          return false;
+        }
       });
 
       // Debug: Log tour steps
