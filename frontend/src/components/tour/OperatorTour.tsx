@@ -624,14 +624,15 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
         title: 'Choose Your Agent',
         text: `
           <div class="space-y-3">
-            <p><strong>Click the dropdown button first!</strong> This will open the agent selection menu.</p>
+            <p><strong>This is your Agent Selector!</strong> Click this button (with the pen and dropdown arrow) to choose different AI agents.</p>
             <p>Each agent has unique capabilities:</p>
             <ul>
               <li>• <strong>Operator:</strong> General-purpose AI assistant</li>
-              <li>• <strong>Specialized Agents:</strong> Custom agents with specific expertise</li>
+              <li>• <strong>Custom Agents:</strong> Specialized agents you've created</li>
               <li>• <strong>Team Agents:</strong> Agents shared with your team</li>
+              <li>• <strong>Marketplace Agents:</strong> Community-created agents</li>
             </ul>
-            <p>Switch between agents to get the best help for your specific task!</p>
+            <p>The dropdown menu will show all available agents for you to choose from!</p>
           </div>
         `,
         popperOptions: {
@@ -662,26 +663,43 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
             setTimeout(() => {
               // Find and click the agent dropdown button first
               const findAgentSelectorButton = (): HTMLElement | null => {
-                console.log('🔍 Searching for agent selector button with pen and bot icons...');
+                console.log('🔍 Searching for agent selector button with chevron and pen icons...');
                 
-                // Look for buttons that contain both pen and bot icons
+                // Look for buttons that contain both chevron-down and pen/edit icons (the specific button shown)
                 const buttons = document.querySelectorAll('button');
                 for (const button of buttons) {
                   const hasPenIcon = button.querySelector('.lucide-pen, .lucide-edit, .lucide-settings, svg[data-lucide="pen"], svg[data-lucide="edit"], svg[data-lucide="settings"]');
-                  const hasBotIcon = button.querySelector('.lucide-bot, svg[data-lucide="bot"]');
                   const hasChevronDown = button.querySelector('.lucide-chevron-down, svg[data-lucide="chevron-down"]');
                   
-                  if ((hasPenIcon || hasChevronDown) && hasBotIcon) {
-                    console.log('✅ Found agent selector button:', button);
+                  // Priority: Button with both chevron-down and pen/edit icons
+                  if (hasPenIcon && hasChevronDown) {
+                    console.log('✅ Found agent selector button (chevron + pen):', button);
                     return button as HTMLElement;
                   }
                 }
                 
-                // Fallback: Look for any button with bot icon and dropdown indicator
-                const allButtons = document.querySelectorAll('button:has(.lucide-bot), button:has(svg[data-lucide="bot"])');
-                for (const button of allButtons) {
-                  if (button.querySelector('.lucide-chevron-down, svg[data-lucide="chevron-down"]')) {
-                    console.log('✅ Found agent selector by bot + chevron:', button);
+                // Fallback 1: Look for button with chevron-down near chat area
+                const chatArea = document.querySelector('textarea, input[placeholder*="message"], .chat-input');
+                if (chatArea) {
+                  const chatContainer = chatArea.closest('form, .chat-container, [class*="chat"]');
+                  if (chatContainer) {
+                    const dropdownButtons = chatContainer.querySelectorAll('button:has(.lucide-chevron-down), button[aria-haspopup="listbox"]');
+                    if (dropdownButtons.length > 0) {
+                      console.log('✅ Found agent selector by proximity to chat + chevron:', dropdownButtons[0]);
+                      return dropdownButtons[0] as HTMLElement;
+                    }
+                  }
+                }
+                
+                // Fallback 2: Any button with chevron-down that looks like a dropdown
+                const chevronButtons = document.querySelectorAll('button:has(.lucide-chevron-down), button:has(svg[data-lucide="chevron-down"])');
+                for (const button of chevronButtons) {
+                  // Check if it's likely an agent selector (near chat or has role attributes)
+                  const hasRole = button.getAttribute('role') === 'combobox' || button.getAttribute('aria-haspopup') === 'listbox';
+                  const nearChat = !!button.closest('form, .chat-container, [class*="chat"]');
+                  
+                  if (hasRole || nearChat) {
+                    console.log('✅ Found agent selector by chevron + context:', button);
                     return button as HTMLElement;
                   }
                 }
@@ -698,16 +716,41 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
                 
                 // Wait a moment for dropdown to appear, then highlight it
                 setTimeout(() => {
-                  const dropdown = document.querySelector('[role="listbox"], [role="menu"], .dropdown-menu, [class*="dropdown"], [class*="popover"]');
+                  // Look for various dropdown menu patterns
+                  const dropdownSelectors = [
+                    '[role="listbox"]',
+                    '[role="menu"]', 
+                    '[role="combobox"][aria-expanded="true"] + *',
+                    '.dropdown-menu',
+                    '[class*="dropdown"][class*="open"]',
+                    '[class*="popover"]',
+                    '[class*="menu"][class*="open"]',
+                    '[data-state="open"]',
+                    '[class*="select"][class*="content"]',
+                    // Common UI library patterns
+                    '.radix-dropdown-menu-content',
+                    '.radix-select-content',
+                    '[data-radix-select-content]',
+                    '[data-radix-dropdown-menu-content]'
+                  ];
+                  
+                  let dropdown = null;
+                  for (const selector of dropdownSelectors) {
+                    dropdown = document.querySelector(selector);
+                    if (dropdown && dropdown.offsetParent !== null) { // Check if visible
+                      console.log(`✅ Found agent dropdown menu with selector "${selector}":`, dropdown);
+                      break;
+                    }
+                  }
+                  
                   if (dropdown) {
-                    console.log('✅ Found agent dropdown menu:', dropdown);
                     addHighlight(dropdown);
                   } else {
                     console.log('⚠️ Dropdown menu not found, highlighting button instead');
                     addHighlight(button);
                   }
                   resolve();
-                }, 200);
+                }, 300);
               } else {
                 console.log('❌ Could not find agent selector button');
                 resolve();
@@ -722,11 +765,34 @@ export function OperatorTour({ isFirstTime = false, onComplete }: OperatorTourPr
               removeHighlight(el);
             });
             
-            // Close dropdown if it's open by clicking elsewhere or pressing escape
-            const dropdown = document.querySelector('[role="listbox"], [role="menu"], .dropdown-menu, [class*="dropdown"], [class*="popover"]');
+            // Close dropdown if it's open
+            const dropdownSelectors = [
+              '[role="listbox"]',
+              '[role="menu"]', 
+              '.dropdown-menu',
+              '[class*="dropdown"][class*="open"]',
+              '[class*="popover"]',
+              '[data-state="open"]',
+              '.radix-dropdown-menu-content',
+              '.radix-select-content'
+            ];
+            
+            let dropdown = null;
+            for (const selector of dropdownSelectors) {
+              dropdown = document.querySelector(selector);
+              if (dropdown && dropdown.offsetParent !== null) {
+                break;
+              }
+            }
+            
             if (dropdown) {
               // Try to close dropdown by clicking outside or pressing escape
               document.body.click(); // Click outside to close
+              
+              // Also try pressing escape key
+              const escEvent = new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27 });
+              document.dispatchEvent(escEvent);
+              
               console.log('🔄 Closed agent dropdown menu');
             }
             
