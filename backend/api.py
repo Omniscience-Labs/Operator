@@ -140,13 +140,26 @@ async def log_requests_middleware(request: Request, call_next):
         raise
 
 # Define allowed origins based on environment
-allowed_origins = [ "http://localhost:3000", "https://operator.becomeomni.com", "https://dev1.operator.becomeomni.com", "https://huston.becomeomni.net", "https://mssc.becomeomni.net","https://coldchain.becomeomni.net","https://kellybox.becomeomni.net", "https://www.becomeomni.com", "https://www.becomeomni.net"]
-allow_origin_regex = None
+# CORS_ALLOWED_ORIGINS should be a comma-separated string of allowed origins
+cors_origins_str = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000')
+allowed_origins = [origin.strip() for origin in cors_origins_str.split(',') if origin.strip()]
 
-# Add staging-specific origins
+# Allow regex pattern for dynamic origins (optional)
+allow_origin_regex = os.getenv('CORS_ALLOWED_ORIGIN_REGEX', None)
+
+# Add staging-specific origins if not already included
 if config.ENV_MODE == EnvMode.STAGING:
-    allowed_origins.append("https://operator.staging.becomeomni.com")
-    allow_origin_regex = r"https://suna-.*-prjcts\.vercel\.app"
+    staging_origin = "https://operator.staging.becomeomni.com"
+    if staging_origin not in allowed_origins:
+        allowed_origins.append(staging_origin)
+    # Use regex from env or default staging regex
+    if not allow_origin_regex:
+        allow_origin_regex = r"https://suna-.*-prjcts\.vercel\.app"
+
+# Log configured CORS origins for debugging
+logger.info(f"CORS allowed origins: {allowed_origins}")
+if allow_origin_regex:
+    logger.info(f"CORS allowed origin regex: {allow_origin_regex}")
 
 app.add_middleware(
     CORSMiddleware,
